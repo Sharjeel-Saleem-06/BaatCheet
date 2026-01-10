@@ -111,6 +111,19 @@ router.post(
 // Event Handlers
 // ============================================
 
+// ============================================
+// Admin/Moderator Email Mappings
+// ============================================
+const ADMIN_EMAILS = ['sharry00010@gmail.com'];
+const MODERATOR_EMAILS = ['clashroyale8ab@gmail.com'];
+
+function getRoleForEmail(email: string): 'admin' | 'moderator' | 'user' {
+  const lowerEmail = email.toLowerCase();
+  if (ADMIN_EMAILS.includes(lowerEmail)) return 'admin';
+  if (MODERATOR_EMAILS.includes(lowerEmail)) return 'moderator';
+  return 'user';
+}
+
 async function handleUserCreated(data: ClerkUserData): Promise<void> {
   const email = data.email_addresses[0]?.email_address;
 
@@ -129,6 +142,9 @@ async function handleUserCreated(data: ClerkUserData): Promise<void> {
     return;
   }
 
+  // Determine role based on email
+  const role = getRoleForEmail(email);
+
   // Create user
   const user = await prisma.user.create({
     data: {
@@ -138,6 +154,7 @@ async function handleUserCreated(data: ClerkUserData): Promise<void> {
       firstName: data.first_name,
       lastName: data.last_name,
       avatar: data.image_url,
+      role, // Assign role based on email
     },
   });
 
@@ -148,11 +165,11 @@ async function handleUserCreated(data: ClerkUserData): Promise<void> {
       action: 'user.created',
       resource: 'user',
       resourceId: user.id,
-      metadata: { source: 'clerk_webhook' },
+      metadata: { source: 'clerk_webhook', assignedRole: role },
     },
   });
 
-  logger.info(`User created via webhook: ${email}`);
+  logger.info(`User created via webhook: ${email} (role: ${role})`);
 }
 
 async function handleUserUpdated(data: ClerkUserData): Promise<void> {

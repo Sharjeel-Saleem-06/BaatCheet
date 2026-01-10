@@ -13,6 +13,19 @@ import { UserRole } from '@prisma/client';
 import { ClerkUser } from '../types/index.js';
 
 // ============================================
+// Admin/Moderator Email Mappings
+// ============================================
+const ADMIN_EMAILS = ['sharry00010@gmail.com'];
+const MODERATOR_EMAILS = ['clashroyale8ab@gmail.com'];
+
+function getRoleForEmail(email: string): UserRole {
+  const lowerEmail = email.toLowerCase();
+  if (ADMIN_EMAILS.includes(lowerEmail)) return 'admin';
+  if (MODERATOR_EMAILS.includes(lowerEmail)) return 'moderator';
+  return 'user';
+}
+
+// ============================================
 // Clerk Authentication Middleware
 // ============================================
 
@@ -43,20 +56,25 @@ export const clerkAuth = async (
     if (!user) {
       // Fetch user details from Clerk
       const clerkUser = await clerkClient.users.getUser(clerkUserId);
+      const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+      
+      // Determine role based on email
+      const role = getRoleForEmail(email);
 
       // Create user in database
       user = await prisma.user.create({
         data: {
           clerkId: clerkUserId,
-          email: clerkUser.emailAddresses[0]?.emailAddress || '',
+          email,
           username: clerkUser.username,
           firstName: clerkUser.firstName,
           lastName: clerkUser.lastName,
           avatar: clerkUser.imageUrl,
+          role, // Assign role based on email
         },
       });
 
-      logger.info(`New user created from Clerk: ${user.email}`);
+      logger.info(`New user created from Clerk: ${user.email} (role: ${role})`);
     } else {
       // Update last login
       await prisma.user.update({
