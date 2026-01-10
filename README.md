@@ -1,84 +1,141 @@
 # 🗣️ BaatCheet
 
-<p align="center">
-  <img src="BaatCheetLogo.jpg" alt="BaatCheet Logo" width="200"/>
-</p>
+**BaatCheet** (باتچیت - "Conversation" in Urdu) is an advanced, free AI chat application that rivals ChatGPT. Built with modern technologies and designed for scalability, it supports multiple AI providers with intelligent failover.
 
-<p align="center">
-  <strong>Advanced AI Chat Application with Multi-Language Support</strong>
-</p>
-
-<p align="center">
-  <em>"Baatcheet" means "Conversation" in Urdu/Hindi</em>
-</p>
-
----
+![BaatCheet Logo](BaatCheetLogo.jpg)
 
 ## ✨ Features
 
+### Core Features
 - 🤖 **Multiple AI Providers** - Groq, Together AI, DeepSeek with automatic failover
-- 🔄 **Real-time Streaming** - Server-Sent Events for instant responses
-- 📁 **Project Organization** - Organize conversations by topic
-- 🔍 **Full-text Search** - Search across all your conversations
-- 🌐 **Multi-language** - English and Urdu support with RTL text
-- 🖼️ **Image Analysis** - OCR and vision capabilities (coming soon)
-- 🌙 **Dark/Light Theme** - Beautiful UI with theme support
-- 🔐 **Secure** - JWT authentication, rate limiting, input validation
+- 🔄 **10 Groq API Keys** - Intelligent round-robin rotation with 14,400 requests/day each
+- 📡 **Real-time Streaming** - Server-Sent Events for instant responses
+- 💾 **Context Management** - Redis caching with PostgreSQL persistence
+- 🔐 **JWT Authentication** - Secure user authentication
+- 🌍 **Multi-language Support** - English and Urdu
 
-## 🏗️ Tech Stack
+### Technical Highlights
+- TypeScript with strict mode
+- Clean Architecture with SOLID principles
+- Rate limiting and security headers
+- Comprehensive error handling
+- Winston logging
 
-### Backend
-- **Runtime:** Node.js + TypeScript
-- **Framework:** Express.js
-- **Database:** MongoDB + Redis
-- **AI:** Groq SDK (10-key rotation for 144K+ daily requests)
-- **Auth:** JWT + bcrypt
-- **Validation:** Zod
+## 🏗️ Architecture
 
-### Frontend (Testing)
-- **Framework:** React + Vite
-- **Styling:** Tailwind CSS
-- **State:** React Query
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        BaatCheet Backend                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │   Express    │    │   AI Router  │    │   Streaming  │      │
+│  │   Server     │───▶│   Service    │───▶│   Service    │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                   │               │
+│         ▼                   ▼                   ▼               │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │  PostgreSQL  │    │    Redis     │    │   Context    │      │
+│  │   (Prisma)   │    │   (Cache)    │    │   Manager    │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📁 Project Structure
+
+```
+baatcheet/
+├── backend/
+│   ├── src/
+│   │   ├── config/          # Configuration files
+│   │   ├── middleware/      # Express middleware
+│   │   ├── routes/          # API routes
+│   │   ├── services/        # Business logic
+│   │   ├── types/           # TypeScript types
+│   │   ├── utils/           # Utility functions
+│   │   └── index.ts         # Entry point
+│   ├── prisma/
+│   │   └── schema.prisma    # Database schema
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/                 # React frontend (testing)
+└── README.md
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
-- MongoDB (local or Atlas)
+- PostgreSQL 14+
 - Redis (optional, for caching)
 - Groq API Key(s)
 
-### Backend Setup
+### Installation
 
-```bash
-# Navigate to backend
-cd backend
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Sharjeel-Saleem-06/BaatCheet.git
+   cd BaatCheet
+   ```
 
-# Install dependencies
-npm install
+2. **Setup Backend**
+   ```bash
+   cd backend
+   npm install
+   ```
 
-# Create environment file
-cp env.example .env
+3. **Configure Environment**
+   ```bash
+   cp env.example .env
+   # Edit .env with your database credentials and API keys
+   ```
 
-# Edit .env with your API keys
-nano .env
+4. **Setup Database**
+   ```bash
+   # Create PostgreSQL database
+   psql postgres -c "CREATE DATABASE baatcheet;"
+   
+   # Run Prisma migrations
+   npx prisma generate
+   npx prisma db push
+   ```
 
-# Start development server
-npm run dev
-```
+5. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+The server will start at `http://localhost:5001`
+
+## 🔧 Configuration
 
 ### Environment Variables
 
 ```env
-# Required
-MONGODB_URI=mongodb://localhost:27017/baatcheet
-JWT_SECRET=your-super-secret-key
-GROQ_API_KEY_1=your-groq-api-key
+# Server
+PORT=5001
+NODE_ENV=development
 
-# Optional (for load balancing)
-GROQ_API_KEY_2=your-second-groq-key
-GROQ_API_KEY_3=your-third-groq-key
-# ... up to 10 keys
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/baatcheet"
+
+# Redis (optional)
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=7d
+
+# Groq API Keys (up to 10)
+GROQ_API_KEY_1=gsk_xxx
+GROQ_API_KEY_2=gsk_xxx
+# ... up to GROQ_API_KEY_10
+
+# Fallback Providers
+TOGETHER_API_KEY=xxx
+DEEPSEEK_API_KEY=xxx
 ```
 
 ## 📚 API Endpoints
@@ -86,7 +143,7 @@ GROQ_API_KEY_3=your-third-groq-key
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Create account |
+| POST | `/api/v1/auth/register` | Register new user |
 | POST | `/api/v1/auth/login` | User login |
 | POST | `/api/v1/auth/logout` | User logout |
 | GET | `/api/v1/auth/me` | Get current user |
@@ -96,103 +153,128 @@ GROQ_API_KEY_3=your-third-groq-key
 |--------|----------|-------------|
 | POST | `/api/v1/chat/completions` | Send message (streaming) |
 | POST | `/api/v1/chat/regenerate` | Regenerate response |
-| GET | `/api/v1/chat/providers/health` | Check AI status |
-| GET | `/api/v1/chat/models` | List available models |
+| GET | `/api/v1/chat/models` | List AI models |
+| GET | `/api/v1/chat/providers/health` | Provider status |
 
 ### Conversations
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/conversations` | List conversations |
+| POST | `/api/v1/conversations` | Create conversation |
 | GET | `/api/v1/conversations/:id` | Get conversation |
 | PUT | `/api/v1/conversations/:id` | Update conversation |
 | DELETE | `/api/v1/conversations/:id` | Delete conversation |
-| GET | `/api/v1/conversations/search` | Search conversations |
 
 ### Projects
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/projects` | List projects |
 | POST | `/api/v1/projects` | Create project |
+| GET | `/api/v1/projects/:id` | Get project |
 | PUT | `/api/v1/projects/:id` | Update project |
 | DELETE | `/api/v1/projects/:id` | Delete project |
 
-## 🎨 Color Palette
+## 🔑 AI Provider Rotation
 
-Based on our logo:
-- **Primary (Navy):** `#1e293b`
-- **Secondary (Green):** `#22c55e`
-- **Background:** `#f1f5f9` (light) / `#0f172a` (dark)
+BaatCheet implements intelligent API key rotation:
 
-## 📁 Project Structure
+1. **Round-Robin Selection** - Keys are used in rotation
+2. **Daily Limits** - Each key has 14,400 requests/day limit
+3. **Automatic Failover** - When Groq is exhausted:
+   - Groq → Together AI → DeepSeek → Puter.js
+4. **Midnight Reset** - Counters reset at UTC midnight
 
+## 🛡️ Security Features
+
+- 🔐 JWT Authentication
+- 🚦 Rate Limiting (100 req/15min)
+- 🛡️ Helmet security headers
+- ✅ Zod input validation
+- 🔒 CORS configuration
+- 🔑 Bcrypt password hashing
+
+## 📊 Database Schema
+
+```prisma
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  preferences   Json
+  conversations Conversation[]
+  projects      Project[]
+}
+
+model Conversation {
+  id           String    @id @default(uuid())
+  userId       String
+  title        String
+  systemPrompt String?
+  model        String
+  messages     Message[]
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  role           Role     // system, user, assistant
+  content        String
+  tokens         Int
+}
 ```
-BaatCheet/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # Configuration files
-│   │   ├── middleware/     # Express middleware
-│   │   ├── models/         # MongoDB models
-│   │   ├── routes/         # API routes
-│   │   ├── services/       # Business logic
-│   │   ├── types/          # TypeScript types
-│   │   ├── utils/          # Utility functions
-│   │   └── index.ts        # Entry point
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/               # React testing frontend (coming soon)
-├── docs/                   # Documentation
-└── README.md
-```
 
-## 🔧 Development
+## 🧪 Testing
 
 ```bash
-# Run backend in development
-cd backend && npm run dev
+# Health check
+curl http://localhost:5001/health
 
-# Build for production
-npm run build
+# Register
+curl -X POST http://localhost:5001/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123","name":"Test"}'
 
-# Run production
-npm start
-
-# Run tests
-npm test
+# Login
+curl -X POST http://localhost:5001/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123"}'
 ```
 
-## 🚢 Deployment
+## 🚧 Development Roadmap
 
-### Recommended Platforms
-- **Backend:** Render.com, Railway.app, Fly.io
-- **Database:** MongoDB Atlas (free tier)
-- **Cache:** Redis Cloud (free tier)
+- [x] Phase 1: Backend Foundation
+  - [x] PostgreSQL + Prisma setup
+  - [x] Authentication system
+  - [x] AI Router with key rotation
+  - [x] Streaming service
+  - [x] REST API endpoints
 
-## 📈 Performance
+- [ ] Phase 2: Enhanced Features
+  - [ ] Image analysis (OCR, Vision)
+  - [ ] Voice input support
+  - [ ] Export conversations
+  - [ ] Custom prompts library
 
-- **API Response:** < 200ms
-- **First Token:** < 1 second
-- **Streaming:** 50-300 tokens/second
-- **Concurrent Users:** 1000+
+- [ ] Phase 3: Frontend
+  - [ ] React UI with Tailwind
+  - [ ] Dark/Light theme
+  - [ ] Mobile responsive
+  - [ ] PWA support
 
-## 🔒 Security
+## 📝 License
 
-- JWT authentication with 7-day expiry
-- Rate limiting (100 req/15 min)
-- Input validation with Zod
-- Password hashing with bcrypt
-- Helmet security headers
-- CORS protection
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our contributing guidelines first.
 
-## 📄 License
+## 📧 Contact
 
-MIT License - see [LICENSE](LICENSE) for details.
+- **Author**: Sharjeel Saleem
+- **GitHub**: [@Sharjeel-Saleem-06](https://github.com/Sharjeel-Saleem-06)
 
 ---
 
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/Sharjeel-Saleem-06">Sharjeel Saleem</a>
-</p>
+<p align="center">Made with ❤️ for the open-source community</p>

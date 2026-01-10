@@ -2,96 +2,81 @@
 // BaatCheet Type Definitions
 // ============================================
 
-// User Types
-export interface IUser {
-  _id?: string;
-  email: string;
-  password: string;
-  name: string;
-  avatar?: string;
-  preferences: IUserPreferences;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { User, Conversation, Message, Project, Role, Prisma } from '@prisma/client';
 
-export interface IUserPreferences {
+// Re-export Prisma types
+export { User, Conversation, Message, Project, Role };
+
+// ============================================
+// User Types
+// ============================================
+
+export interface UserPreferences {
   theme: 'light' | 'dark';
   defaultModel: string;
   language: 'en' | 'ur';
 }
 
-// Message Types
-export interface IMessage {
-  messageId: string;
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-  attachments?: IAttachment[];
-  model?: string;
-  tokens?: number;
-  timestamp: Date;
-}
+export type UserWithoutPassword = Omit<User, 'password'>;
 
-export interface IAttachment {
-  attachmentId: string;
-  type: 'image' | 'document';
-  url: string;
-  extractedText?: string;
-  metadata?: Record<string, unknown>;
-}
-
+// ============================================
 // Conversation Types
-export interface IConversation {
-  _id?: string;
-  conversationId: string;
-  userId: string;
-  projectId?: string;
+// ============================================
+
+export interface ConversationWithMessages extends Conversation {
+  messages: Message[];
+}
+
+export interface ConversationListItem {
+  id: string;
   title: string;
-  messages: IMessage[];
-  systemPrompt?: string;
   model: string;
   tags: string[];
-  isArchived: boolean;
   isPinned: boolean;
+  isArchived: boolean;
   totalTokens: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  updatedAt: Date;
+  createdAt: Date;
+  messageCount?: number;
 }
 
-// Project Types
-export interface IProject {
-  _id?: string;
-  projectId: string;
-  userId: string;
-  name: string;
-  description?: string;
-  conversationCount: number;
-  color?: string;
-  icon?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
+// ============================================
 // AI Provider Types
+// ============================================
+
 export type AIProvider = 'groq' | 'together' | 'deepseek' | 'puter';
 
-export interface IAIProviderStatus {
+export interface AIProviderStatus {
   provider: AIProvider;
   isAvailable: boolean;
-  currentKeyIndex?: number;
+  availableKeys?: number;
   totalKeys?: number;
+  currentKeyIndex?: number;
   lastError?: string;
   lastChecked: Date;
 }
 
-export interface IChatRequest {
+export interface AIKeyState {
+  key: string;
+  index: number;
+  requestCount: number;
+  isAvailable: boolean;
+  lastUsed: Date;
+  lastError?: string;
+}
+
+// ============================================
+// Chat Types
+// ============================================
+
+export interface ChatRequest {
   message: string;
   conversationId?: string;
   model?: string;
   systemPrompt?: string;
-  attachments?: IAttachment[];
 }
 
-export interface IChatResponse {
+export interface ChatResponse {
   messageId: string;
   content: string;
   model: string;
@@ -100,35 +85,91 @@ export interface IChatResponse {
   conversationId: string;
 }
 
+export interface StreamChunk {
+  type: 'start' | 'content' | 'error' | 'done';
+  content?: string;
+  error?: string;
+  conversationId?: string;
+  messageId?: string;
+}
+
+// ============================================
 // API Response Types
-export interface IApiResponse<T = unknown> {
+// ============================================
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
   message?: string;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+// ============================================
 // Auth Types
-export interface IAuthPayload {
+// ============================================
+
+export interface AuthPayload {
   userId: string;
   email: string;
 }
 
-export interface ILoginRequest {
+export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface IRegisterRequest {
+export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
 }
 
-// Streaming Types
-export interface IStreamChunk {
-  type: 'content' | 'error' | 'done';
-  content?: string;
-  error?: string;
-  messageId?: string;
+export interface AuthResponse {
+  user: UserWithoutPassword;
+  token: string;
 }
+
+// ============================================
+// Context Manager Types
+// ============================================
+
+export interface ConversationContext {
+  conversationId: string;
+  systemPrompt?: string;
+  messages: ContextMessage[];
+  totalTokens: number;
+}
+
+export interface ContextMessage {
+  role: Role;
+  content: string;
+  tokens: number;
+}
+
+// ============================================
+// Express Extensions
+// ============================================
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthPayload;
+    }
+  }
+}
+
+// ============================================
+// Utility Types
+// ============================================
+
+export type JsonValue = Prisma.JsonValue;

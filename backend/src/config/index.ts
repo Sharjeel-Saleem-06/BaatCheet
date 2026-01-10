@@ -2,29 +2,35 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Helper to get Groq API keys
+/**
+ * Get all configured Groq API keys
+ */
 const getGroqKeys = (): string[] => {
   const keys: string[] = [];
   for (let i = 1; i <= 10; i++) {
     const key = process.env[`GROQ_API_KEY_${i}`];
-    if (key && key !== `your-groq-api-key-${i}`) {
+    if (key && !key.startsWith('gsk_your_')) {
       keys.push(key);
     }
   }
   return keys;
 };
 
+/**
+ * Application configuration
+ */
 export const config = {
   // Server
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '5000', 10),
+  apiVersion: process.env.API_VERSION || 'v1',
   
   // Database
-  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/baatcheet',
+  databaseUrl: process.env.DATABASE_URL || 'postgresql://baatcheet_user:BaatCheet2024Secure!@localhost:5432/baatcheet?schema=public',
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   
   // JWT
-  jwtSecret: process.env.JWT_SECRET || 'default-secret-change-me',
+  jwtSecret: process.env.JWT_SECRET || 'default-secret-change-me-in-production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   
   // AI Providers
@@ -42,10 +48,14 @@ export const config = {
   // Logging
   logLevel: process.env.LOG_LEVEL || 'debug',
   
-  // AI Models
-  defaultModel: 'llama-3.1-70b-versatile',
-  maxContextMessages: 50,
-  maxTokens: 8000,
-};
+  // AI Model Configuration
+  defaultModel: process.env.DEFAULT_MODEL || 'llama-3.1-70b-versatile',
+  maxContextMessages: parseInt(process.env.MAX_CONTEXT_MESSAGES || '50', 10),
+  maxTokens: parseInt(process.env.MAX_TOKENS || '8000', 10),
+  
+  // Groq limits
+  groqDailyLimit: 14400, // requests per key per day
+} as const;
 
+export type Config = typeof config;
 export default config;

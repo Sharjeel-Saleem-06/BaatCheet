@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
+import { config } from '../config/index.js';
 
 // ============================================
 // Error Handler Middleware
@@ -8,8 +9,12 @@ import { logger } from '../utils/logger.js';
 export interface AppError extends Error {
   statusCode?: number;
   isOperational?: boolean;
+  code?: string;
 }
 
+/**
+ * Global error handler
+ */
 export const errorHandler = (
   err: AppError,
   req: Request,
@@ -21,20 +26,45 @@ export const errorHandler = (
     stack: err.stack,
     path: req.path,
     method: req.method,
+    code: err.code,
   });
 
-  // Default values
-  const statusCode = err.statusCode || 500;
-  const message = err.isOperational ? err.message : 'Internal server error';
+  // Determine status code
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Internal server error';
+
+  // Handle specific error types
+  if (err.code === 'P2002') {
+    // Prisma unique constraint violation
+    statusCode = 409;
+    message = 'A record with this value already exists';
+  } else if (err.code === 'P2025') {
+    // Prisma record not found
+    statusCode = 404;
+    message = 'Record not found';
+  } else if (err.name === 'JsonWebTokenError') {
+    statusCode = 401;
+    message = 'Invalid token';
+  } else if (err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Token expired';
+  }
+
+  // Don't expose internal errors in production
+  if (statusCode === 500 && config.nodeEnv === 'production') {
+    message = 'Internal server error';
+  }
 
   res.status(statusCode).json({
     success: false,
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(config.nodeEnv === 'development' && { stack: err.stack }),
   });
 };
 
-// Not found handler
+/**
+ * Not found handler for undefined routes
+ */
 export const notFoundHandler = (
   req: Request,
   res: Response,
@@ -46,7 +76,9 @@ export const notFoundHandler = (
   });
 };
 
-// Create operational error
+/**
+ * Create an operational error
+ */
 export const createError = (message: string, statusCode: number): AppError => {
   const error: AppError = new Error(message);
   error.statusCode = statusCode;

@@ -1,7 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { Project } from '../models/Project.js';
-import { Conversation } from '../models/Conversation.js';
+import { prisma } from '../config/database.js';
 import { authenticate, validate, schemas } from '../middleware/index.js';
 import { logger } from '../utils/logger.js';
 
@@ -11,7 +9,10 @@ const router = Router();
 // Project Routes
 // ============================================
 
-// GET /api/v1/projects - List all projects
+/**
+ * GET /api/v1/projects
+ * List all projects for the user
+ */
 router.get(
   '/',
   authenticate,
@@ -19,11 +20,26 @@ router.get(
     try {
       const userId = req.user!.userId;
 
-      const projects = await Project.find({ userId }).sort({ createdAt: -1 });
+      const projects = await prisma.project.findMany({
+        where: { userId },
+        include: {
+          _count: {
+            select: { conversations: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Transform to include conversation count
+      const items = projects.map((p) => ({
+        ...p,
+        conversationCount: p._count.conversations,
+        _count: undefined,
+      }));
 
       res.json({
         success: true,
-        data: projects,
+        data: items,
       });
     } catch (error) {
       logger.error('List projects error:', error);
@@ -35,7 +51,10 @@ router.get(
   }
 );
 
-// GET /api/v1/projects/:id - Get single project
+/**
+ * GET /api/v1/projects/:id
+ * Get a single project
+ */
 router.get(
   '/:id',
   authenticate,
@@ -44,7 +63,14 @@ router.get(
       const userId = req.user!.userId;
       const { id } = req.params;
 
-      const project = await Project.findOne({ projectId: id, userId });
+      const project = await prisma.project.findFirst({
+        where: { id, userId },
+        include: {
+          _count: {
+            select: { conversations: true },
+          },
+        },
+      });
 
       if (!project) {
         res.status(404).json({
@@ -56,7 +82,11 @@ router.get(
 
       res.json({
         success: true,
-        data: project,
+        data: {
+          ...project,
+          conversationCount: project._count.conversations,
+          _count: undefined,
+        },
       });
     } catch (error) {
       logger.error('Get project error:', error);
@@ -68,7 +98,10 @@ router.get(
   }
 );
 
-// POST /api/v1/projects - Create new project
+/**
+ * POST /api/v1/projects
+ * Create a new project
+ */
 router.post(
   '/',
   authenticate,
@@ -78,16 +111,15 @@ router.post(
       const userId = req.user!.userId;
       const { name, description, color, icon } = req.body;
 
-      const project = new Project({
-        projectId: uuidv4(),
-        userId,
-        name,
-        description,
-        color,
-        icon,
+      const project = await prisma.project.create({
+        data: {
+          userId,
+          name,
+          description,
+          color,
+          icon,
+        },
       });
-
-      await project.save();
 
       res.status(201).json({
         success: true,
@@ -104,29 +136,36 @@ router.post(
   }
 );
 
-// PUT /api/v1/projects/:id - Update project
+/**
+ * PUT /api/v1/projects/:id
+ * Update a project
+ */
 router.put(
   '/:id',
   authenticate,
+  validate(schemas.updateProject),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.userId;
       const { id } = req.params;
-      const { name, description, color, icon } = req.body;
 
-      const project = await Project.findOneAndUpdate(
-        { projectId: id, userId },
-        { $set: { name, description, color, icon } },
-        { new: true }
-      );
+      // Verify ownership
+      const existing = await prisma.project.findFirst({
+        where: { id, userId },
+      });
 
-      if (!project) {
+      if (!existing) {
         res.status(404).json({
           success: false,
           error: 'Project not found',
         });
         return;
       }
+
+      const project = await prisma.project.update({
+        where: { id },
+        data: req.body,
+      });
 
       res.json({
         success: true,
@@ -143,7 +182,10 @@ router.put(
   }
 );
 
-// DELETE /api/v1/projects/:id - Delete project
+/**
+ * DELETE /api/v1/projects/:id
+ * Delete a project (conversations are unlinked, not deleted)
+ */
 router.delete(
   '/:id',
   authenticate,
@@ -152,9 +194,12 @@ router.delete(
       const userId = req.user!.userId;
       const { id } = req.params;
 
-      const project = await Project.findOneAndDelete({ projectId: id, userId });
+      // Verify ownership
+      const existing = await prisma.project.findFirst({
+        where: { id, userId },
+      });
 
-      if (!project) {
+      if (!existing) {
         res.status(404).json({
           success: false,
           error: 'Project not found',
@@ -162,11 +207,8 @@ router.delete(
         return;
       }
 
-      // Optionally: Remove project reference from conversations
-      await Conversation.updateMany(
-        { projectId: id, userId },
-        { $set: { projectId: null } }
-      );
+      // Delete project (conversations will have projectId set to null)
+      await prisma.project.delete({ where: { id } });
 
       res.json({
         success: true,
@@ -182,7 +224,10 @@ router.delete(
   }
 );
 
-// GET /api/v1/projects/:id/conversations - Get project conversations
+/**
+ * GET /api/v1/projects/:id/conversations
+ * Get all conversations in a project
+ */
 router.get(
   '/:id/conversations',
   authenticate,
@@ -191,8 +236,11 @@ router.get(
       const userId = req.user!.userId;
       const { id } = req.params;
 
-      // Verify project exists
-      const project = await Project.findOne({ projectId: id, userId });
+      // Verify project ownership
+      const project = await prisma.project.findFirst({
+        where: { id, userId },
+      });
+
       if (!project) {
         res.status(404).json({
           success: false,
@@ -201,16 +249,34 @@ router.get(
         return;
       }
 
-      const conversations = await Conversation.find({
-        projectId: id,
-        userId,
-      })
-        .select('conversationId title model tags isPinned createdAt updatedAt')
-        .sort({ updatedAt: -1 });
+      const conversations = await prisma.conversation.findMany({
+        where: { projectId: id, userId },
+        select: {
+          id: true,
+          title: true,
+          model: true,
+          tags: true,
+          isPinned: true,
+          isArchived: true,
+          totalTokens: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: { messages: true },
+          },
+        },
+        orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+      });
+
+      const items = conversations.map((c) => ({
+        ...c,
+        messageCount: c._count.messages,
+        _count: undefined,
+      }));
 
       res.json({
         success: true,
-        data: conversations,
+        data: items,
       });
     } catch (error) {
       logger.error('Get project conversations error:', error);

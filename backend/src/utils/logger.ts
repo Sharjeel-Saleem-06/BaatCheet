@@ -1,14 +1,26 @@
 import winston from 'winston';
 import { config } from '../config/index.js';
+import { mkdirSync } from 'fs';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
-// Custom log format
+// Create logs directory
+try {
+  mkdirSync('logs', { recursive: true });
+} catch {
+  // Directory already exists
+}
+
+/**
+ * Custom log format
+ */
 const logFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} [${level}]: ${stack || message}`;
 });
 
-// Create logger instance
+/**
+ * Winston logger instance
+ */
 export const logger = winston.createLogger({
   level: config.logLevel,
   format: combine(
@@ -26,21 +38,13 @@ export const logger = winston.createLogger({
         logFormat
       ),
     }),
-    // File transport for all logs
+    // Single file for all logs (as per user preference)
     new winston.transports.File({
       filename: 'logs/app.log',
-      maxsize: 5242880, // 5MB
+      maxsize: 10485760, // 10MB
       maxFiles: 5,
     }),
   ],
 });
-
-// Create logs directory if it doesn't exist
-import { mkdirSync } from 'fs';
-try {
-  mkdirSync('logs', { recursive: true });
-} catch (e) {
-  // Directory already exists
-}
 
 export default logger;

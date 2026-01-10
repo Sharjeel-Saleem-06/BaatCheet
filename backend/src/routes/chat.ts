@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticate, chatLimiter, validate, schemas } from '../middleware/index.js';
 import { chatService } from '../services/ChatService.js';
 import { aiRouter } from '../services/AIRouter.js';
+import { streamingService } from '../services/StreamingService.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -10,7 +11,10 @@ const router = Router();
 // Chat Routes
 // ============================================
 
-// POST /api/v1/chat/completions - Send message (streaming)
+/**
+ * POST /api/v1/chat/completions
+ * Send a chat message and receive streaming response
+ */
 router.post(
   '/completions',
   authenticate,
@@ -19,12 +23,10 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      
       await chatService.streamChat(userId, req.body, res);
     } catch (error) {
       logger.error('Chat completion error:', error);
-      
-      // If headers already sent, we can't send JSON
+
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
@@ -35,28 +37,24 @@ router.post(
   }
 );
 
-// POST /api/v1/chat/regenerate - Regenerate last response
+/**
+ * POST /api/v1/chat/regenerate
+ * Regenerate the last assistant response
+ */
 router.post(
   '/regenerate',
   authenticate,
   chatLimiter,
+  validate(schemas.regenerate),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { conversationId } = req.body;
-      
-      if (!conversationId) {
-        res.status(400).json({
-          success: false,
-          error: 'conversationId is required',
-        });
-        return;
-      }
-
       const userId = req.user!.userId;
+
       await chatService.regenerateResponse(userId, conversationId, res);
     } catch (error) {
       logger.error('Regenerate error:', error);
-      
+
       if (!res.headersSent) {
         res.status(500).json({
           success: false,
@@ -67,17 +65,23 @@ router.post(
   }
 );
 
-// GET /api/v1/chat/providers/health - Check AI providers status
+/**
+ * GET /api/v1/chat/providers/health
+ * Get health status of all AI providers
+ */
 router.get('/providers/health', (_req: Request, res: Response): void => {
   try {
     const health = aiRouter.getProvidersHealth();
-    const stats = aiRouter.getUsageStats();
+    const usage = aiRouter.getUsageStats();
+    const activeConnections = streamingService.getActiveConnectionCount();
 
     res.json({
       success: true,
       data: {
         providers: health,
-        usage: stats,
+        usage,
+        activeConnections,
+        currentProvider: aiRouter.getCurrentProvider(),
       },
     });
   } catch (error) {
@@ -89,31 +93,42 @@ router.get('/providers/health', (_req: Request, res: Response): void => {
   }
 });
 
-// GET /api/v1/chat/models - List available models
+/**
+ * GET /api/v1/chat/models
+ * List available AI models
+ */
 router.get('/models', (_req: Request, res: Response): void => {
-  // Available models from different providers
   const models = [
     {
       id: 'llama-3.1-70b-versatile',
-      name: 'Llama 3.1 70B',
+      name: 'Llama 3.1 70B Versatile',
       provider: 'groq',
-      description: 'Fast and powerful general-purpose model',
+      description: 'Most capable model, best for complex tasks',
       contextLength: 8192,
       isDefault: true,
     },
     {
       id: 'llama-3.1-8b-instant',
-      name: 'Llama 3.1 8B',
+      name: 'Llama 3.1 8B Instant',
       provider: 'groq',
-      description: 'Faster responses for simpler tasks',
+      description: 'Fastest model for quick responses',
       contextLength: 8192,
       isDefault: false,
+    },
+    {
+      id: 'llama-3.2-90b-vision-preview',
+      name: 'Llama 3.2 90B Vision',
+      provider: 'groq',
+      description: 'Vision-capable model for image analysis',
+      contextLength: 8192,
+      isDefault: false,
+      supportsVision: true,
     },
     {
       id: 'mixtral-8x7b-32768',
       name: 'Mixtral 8x7B',
       provider: 'groq',
-      description: 'Mixture of experts model',
+      description: 'Mixture of experts with long context',
       contextLength: 32768,
       isDefault: false,
     },
@@ -121,7 +136,7 @@ router.get('/models', (_req: Request, res: Response): void => {
       id: 'gemma2-9b-it',
       name: 'Gemma 2 9B',
       provider: 'groq',
-      description: 'Google Gemma model',
+      description: 'Google Gemma model, efficient and fast',
       contextLength: 8192,
       isDefault: false,
     },

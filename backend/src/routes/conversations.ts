@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { Conversation } from '../models/Conversation.js';
+import { prisma } from '../config/database.js';
 import { authenticate, validate, schemas } from '../middleware/index.js';
+import { contextManager } from '../services/ContextManager.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -9,40 +10,77 @@ const router = Router();
 // Conversation Routes
 // ============================================
 
-// GET /api/v1/conversations - List all conversations
+/**
+ * GET /api/v1/conversations
+ * List all conversations for the user
+ */
 router.get(
   '/',
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { projectId, archived, pinned, limit = 50, skip = 0 } = req.query;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+      const projectId = req.query.projectId as string | undefined;
+      const archived = req.query.archived as string | undefined;
+      const pinned = req.query.pinned as string | undefined;
 
-      // Build query
-      const query: Record<string, unknown> = { userId };
-      
-      if (projectId) query.projectId = projectId;
-      if (archived === 'true') query.isArchived = true;
-      if (archived === 'false') query.isArchived = false;
-      if (pinned === 'true') query.isPinned = true;
+      // Build where clause
+      const where: Record<string, unknown> = { userId };
+      if (projectId) where.projectId = projectId;
+      if (archived === 'true') where.isArchived = true;
+      if (archived === 'false') where.isArchived = false;
+      if (pinned === 'true') where.isPinned = true;
 
-      const conversations = await Conversation.find(query)
-        .select('conversationId title model tags isPinned isArchived createdAt updatedAt')
-        .sort({ isPinned: -1, updatedAt: -1 })
-        .limit(Number(limit))
-        .skip(Number(skip));
+      // Get conversations with message count
+      const [conversations, total] = await Promise.all([
+        prisma.conversation.findMany({
+          where,
+          select: {
+            id: true,
+            title: true,
+            model: true,
+            tags: true,
+            isPinned: true,
+            isArchived: true,
+            totalTokens: true,
+            createdAt: true,
+            updatedAt: true,
+            _count: {
+              select: { messages: true },
+            },
+          },
+          orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
+          take: limit,
+          skip: offset,
+        }),
+        prisma.conversation.count({ where }),
+      ]);
 
-      const total = await Conversation.countDocuments(query);
+      // Transform to include message count
+      const items = conversations.map((c) => ({
+        id: c.id,
+        title: c.title,
+        model: c.model,
+        tags: c.tags,
+        isPinned: c.isPinned,
+        isArchived: c.isArchived,
+        totalTokens: c.totalTokens,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        messageCount: c._count.messages,
+      }));
 
       res.json({
         success: true,
         data: {
-          conversations,
+          items,
           pagination: {
             total,
-            limit: Number(limit),
-            skip: Number(skip),
-            hasMore: total > Number(skip) + Number(limit),
+            limit,
+            offset,
+            hasMore: total > offset + limit,
           },
         },
       });
@@ -56,16 +94,20 @@ router.get(
   }
 );
 
-// GET /api/v1/conversations/search - Search conversations
+/**
+ * GET /api/v1/conversations/search
+ * Search conversations by content
+ */
 router.get(
   '/search',
   authenticate,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const { q, limit = 20 } = req.query;
+      const q = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 20;
 
-      if (!q || typeof q !== 'string') {
+      if (!q) {
         res.status(400).json({
           success: false,
           error: 'Search query is required',
@@ -73,13 +115,32 @@ router.get(
         return;
       }
 
-      const conversations = await Conversation.find({
-        userId,
-        $text: { $search: q },
-      })
-        .select('conversationId title model tags createdAt')
-        .limit(Number(limit))
-        .sort({ score: { $meta: 'textScore' } });
+      // Search in title and message content
+      const conversations = await prisma.conversation.findMany({
+        where: {
+          userId,
+          OR: [
+            { title: { contains: q, mode: 'insensitive' } },
+            {
+              messages: {
+                some: {
+                  content: { contains: q, mode: 'insensitive' },
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          model: true,
+          tags: true,
+          updatedAt: true,
+          createdAt: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: limit,
+      });
 
       res.json({
         success: true,
@@ -95,7 +156,10 @@ router.get(
   }
 );
 
-// GET /api/v1/conversations/:id - Get single conversation
+/**
+ * GET /api/v1/conversations/:id
+ * Get a single conversation with messages
+ */
 router.get(
   '/:id',
   authenticate,
@@ -104,9 +168,23 @@ router.get(
       const userId = req.user!.userId;
       const { id } = req.params;
 
-      const conversation = await Conversation.findOne({
-        conversationId: id,
-        userId,
+      const conversation = await prisma.conversation.findFirst({
+        where: { id, userId },
+        include: {
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            include: {
+              attachments: true,
+            },
+          },
+          project: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+        },
       });
 
       if (!conversation) {
@@ -131,7 +209,48 @@ router.get(
   }
 );
 
-// PUT /api/v1/conversations/:id - Update conversation
+/**
+ * POST /api/v1/conversations
+ * Create a new conversation
+ */
+router.post(
+  '/',
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user!.userId;
+      const { title, model, systemPrompt, projectId, tags } = req.body;
+
+      const conversation = await prisma.conversation.create({
+        data: {
+          userId,
+          title: title || 'New Conversation',
+          model: model || 'llama-3.1-70b-versatile',
+          systemPrompt,
+          projectId,
+          tags: tags || [],
+        },
+      });
+
+      res.status(201).json({
+        success: true,
+        data: conversation,
+        message: 'Conversation created',
+      });
+    } catch (error) {
+      logger.error('Create conversation error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create conversation',
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/v1/conversations/:id
+ * Update a conversation
+ */
 router.put(
   '/:id',
   authenticate,
@@ -140,20 +259,28 @@ router.put(
     try {
       const userId = req.user!.userId;
       const { id } = req.params;
-      const updates = req.body;
 
-      const conversation = await Conversation.findOneAndUpdate(
-        { conversationId: id, userId },
-        { $set: updates },
-        { new: true }
-      );
+      // Verify ownership
+      const existing = await prisma.conversation.findFirst({
+        where: { id, userId },
+      });
 
-      if (!conversation) {
+      if (!existing) {
         res.status(404).json({
           success: false,
           error: 'Conversation not found',
         });
         return;
+      }
+
+      const conversation = await prisma.conversation.update({
+        where: { id },
+        data: req.body,
+      });
+
+      // Clear cache if system prompt changed
+      if (req.body.systemPrompt !== undefined) {
+        await contextManager.clearCache(id);
       }
 
       res.json({
@@ -171,7 +298,10 @@ router.put(
   }
 );
 
-// DELETE /api/v1/conversations/:id - Delete conversation
+/**
+ * DELETE /api/v1/conversations/:id
+ * Delete a conversation
+ */
 router.delete(
   '/:id',
   authenticate,
@@ -180,18 +310,24 @@ router.delete(
       const userId = req.user!.userId;
       const { id } = req.params;
 
-      const result = await Conversation.findOneAndDelete({
-        conversationId: id,
-        userId,
+      // Verify ownership
+      const existing = await prisma.conversation.findFirst({
+        where: { id, userId },
       });
 
-      if (!result) {
+      if (!existing) {
         res.status(404).json({
           success: false,
           error: 'Conversation not found',
         });
         return;
       }
+
+      // Delete conversation (cascades to messages)
+      await prisma.conversation.delete({ where: { id } });
+
+      // Clear cache
+      await contextManager.clearCache(id);
 
       res.json({
         success: true,

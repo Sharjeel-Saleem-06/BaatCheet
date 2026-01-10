@@ -1,30 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
-import { IAuthPayload } from '../types/index.js';
-
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IAuthPayload;
-    }
-  }
-}
+import { AuthPayload } from '../types/index.js';
 
 // ============================================
 // Authentication Middleware
 // ============================================
 
+/**
+ * Verify JWT token and attach user to request
+ */
 export const authenticate = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
   try {
-    // Get token from header
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         success: false,
@@ -34,11 +27,8 @@ export const authenticate = (
     }
 
     const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, config.jwtSecret) as AuthPayload;
 
-    // Verify token
-    const decoded = jwt.verify(token, config.jwtSecret) as IAuthPayload;
-    
-    // Attach user to request
     req.user = decoded;
     next();
   } catch (error) {
@@ -49,7 +39,9 @@ export const authenticate = (
   }
 };
 
-// Optional authentication (doesn't fail if no token)
+/**
+ * Optional authentication - doesn't fail if no token
+ */
 export const optionalAuth = (
   req: Request,
   res: Response,
@@ -57,13 +49,13 @@ export const optionalAuth = (
 ): void => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const decoded = jwt.verify(token, config.jwtSecret) as IAuthPayload;
+      const decoded = jwt.verify(token, config.jwtSecret) as AuthPayload;
       req.user = decoded;
     }
-    
+
     next();
   } catch {
     // Continue without user
