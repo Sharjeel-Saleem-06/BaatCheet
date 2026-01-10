@@ -400,6 +400,68 @@ model RateLimit {
 }
 
 // ============================================
+// Flagged Content (Content Moderation)
+// ============================================
+model FlaggedContent {
+  id             String    @id @default(uuid())
+  conversationId String    @map("conversation_id")
+  messageId      String?   @map("message_id")
+  reason         String    // spam, abuse, inappropriate, other
+  severity       String    @default("medium") // low, medium, high, critical
+  flaggedBy      String    @map("flagged_by") // Admin user ID
+  status         String    @default("pending") // pending, reviewed, actioned, dismissed
+  reviewedBy     String?   @map("reviewed_by")
+  reviewedAt     DateTime? @map("reviewed_at")
+  action         String?   // deleted, warned, none
+  notes          String?
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([status])
+  @@index([severity])
+  @@index([conversationId])
+  @@map("flagged_content")
+}
+
+// ============================================
+// System Settings
+// ============================================
+model SystemSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedBy String?  @map("updated_by")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@map("system_settings")
+}
+
+// ============================================
+// API Usage Tracking (for Admin Analytics)
+// ============================================
+model ApiUsageLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  provider  String   // groq, openrouter, deepseek, etc.
+  model     String
+  endpoint  String
+  tokens    Int      @default(0)
+  cost      Float    @default(0)
+  latency   Int      @default(0) // milliseconds
+  status    String   // success, error, rate_limited
+  errorMsg  String?  @map("error_msg")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([userId])
+  @@index([provider])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
+
+// ============================================
 // Enums
 // ============================================
 enum Role {

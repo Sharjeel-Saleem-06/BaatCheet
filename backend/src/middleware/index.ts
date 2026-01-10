@@ -6,9 +6,22 @@ export {
   clerkAuth, 
   optionalClerkAuth, 
   requireRole, 
-  requireAdmin, 
-  requireModerator 
+  requireAdmin as requireAdminRole, 
+  requireModerator,
+  requireClerkAuth
 } from './clerkAuth.js';
+
+// Admin Auth (permissions & audit)
+export {
+  requireAdmin,
+  requireFullAdmin,
+  requirePermission,
+  logAdminAction,
+  auditLog,
+  adminRateLimit,
+  AdminPermission,
+  ROLE_PERMISSIONS,
+} from './adminAuth.js';
 
 // Error Handling
 export { errorHandler, notFoundHandler, createError, AppError } from './errorHandler.js';

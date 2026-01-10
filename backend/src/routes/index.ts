@@ -19,6 +19,7 @@ import analyticsRoutes from './analytics.js';
 import webhookRoutes from './webhooks.js';
 import apiKeyRoutes from './apikeys.js';
 import healthRoutes from './health.js';
+import adminRoutes from './admin.js';
 
 const router = Router();
 
@@ -64,5 +65,8 @@ router.use('/webhooks', webhookRoutes);
 
 // API Keys
 router.use('/api-keys', apiKeyRoutes);
+
+// Admin Panel (requires admin role)
+router.use('/admin', adminRoutes);
 
 export default router;

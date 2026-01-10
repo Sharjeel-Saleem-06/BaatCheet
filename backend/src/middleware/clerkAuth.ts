@@ -166,4 +166,9 @@ export const requireAdmin = requireRole(['admin']);
  */
 export const requireModerator = requireRole(['admin', 'moderator']);
 
+/**
+ * Alias for clerkAuth (clearer naming)
+ */
+export const requireClerkAuth = clerkAuth;
+
 export default clerkAuth;
