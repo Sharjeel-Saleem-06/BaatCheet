@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/database.js';
-import { authenticate, validate, schemas } from '../middleware/index.js';
+import { clerkAuth, validate, schemas } from '../middleware/index.js';
 import { contextManager } from '../services/ContextManager.js';
 import { logger } from '../utils/logger.js';
 
@@ -16,10 +16,10 @@ const router = Router();
  */
 router.get(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const limit = parseInt(req.query.limit as string) || 50;
       const offset = parseInt(req.query.offset as string) || 0;
       const projectId = req.query.projectId as string | undefined;
@@ -100,10 +100,10 @@ router.get(
  */
 router.get(
   '/search',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const q = req.query.q as string;
       const limit = parseInt(req.query.limit as string) || 20;
 
@@ -162,10 +162,10 @@ router.get(
  */
 router.get(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const conversation = await prisma.conversation.findFirst({
@@ -215,10 +215,10 @@ router.get(
  */
 router.post(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { title, model, systemPrompt, projectId, tags } = req.body;
 
       const conversation = await prisma.conversation.create({
@@ -253,11 +253,11 @@ router.post(
  */
 router.put(
   '/:id',
-  authenticate,
+  clerkAuth,
   validate(schemas.updateConversation),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       // Verify ownership
@@ -304,10 +304,10 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       // Verify ownership

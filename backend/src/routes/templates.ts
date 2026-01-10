@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate, validate, schemas } from '../middleware/index.js';
+import { clerkAuth, validate, schemas } from '../middleware/index.js';
 import { templateService } from '../services/TemplateService.js';
 import { prisma } from '../config/database.js';
 import { logger } from '../utils/logger.js';
@@ -23,10 +23,10 @@ const router = Router();
  */
 router.get(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { category } = req.query;
 
       let templates;
@@ -83,7 +83,7 @@ router.get(
  */
 router.get(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
@@ -118,10 +118,10 @@ router.get(
  */
 router.post(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { name, description, systemPrompt, category, icon, isPublic } = req.body;
 
       if (!name || !systemPrompt) {
@@ -170,10 +170,10 @@ router.post(
  */
 router.put(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const result = await templateService.updateTemplate(id, userId, req.body);
@@ -207,10 +207,10 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const result = await templateService.deleteTemplate(id, userId);
@@ -243,10 +243,10 @@ router.delete(
  */
 router.post(
   '/:id/use',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
       const { title, projectId } = req.body;
 

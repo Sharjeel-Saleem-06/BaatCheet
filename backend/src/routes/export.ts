@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../middleware/index.js';
+import { clerkAuth } from '../middleware/index.js';
 import { exportService } from '../services/ExportService.js';
 import { logger } from '../utils/logger.js';
 
@@ -22,10 +22,10 @@ const router = Router();
  */
 router.get(
   '/:conversationId',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { conversationId } = req.params;
       const format = (req.query.format as string || 'json').toLowerCase();
 
@@ -76,10 +76,10 @@ router.get(
  */
 router.get(
   '/:conversationId/preview',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { conversationId } = req.params;
       const format = (req.query.format as string || 'json').toLowerCase();
 

@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate, chatLimiter, validate, schemas } from '../middleware/index.js';
+import { clerkAuth, chatLimiter, validate, schemas } from '../middleware/index.js';
 import { chatService } from '../services/ChatService.js';
 import { aiRouter, MODELS } from '../services/AIRouter.js';
 import { providerManager, ProviderType } from '../services/ProviderManager.js';
@@ -26,12 +26,12 @@ const router = Router();
  */
 router.post(
   '/completions',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   validate(schemas.chatMessage),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { message, conversationId, model, systemPrompt, stream = true } = req.body;
 
       if (stream) {
@@ -81,13 +81,13 @@ router.post(
  */
 router.post(
   '/regenerate',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   validate(schemas.regenerate),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { conversationId, model, temperature } = req.body;
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
 
       const result = await chatService.regenerateResponse(conversationId, userId, {
         model,
@@ -129,7 +129,7 @@ router.post(
  */
 router.post(
   '/vision/analyze',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -172,7 +172,7 @@ router.post(
  */
 router.post(
   '/ocr/extract',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -221,7 +221,7 @@ router.post(
  */
 router.post(
   '/ocr/process',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -383,7 +383,7 @@ router.get('/models', (_req: Request, res: Response): void => {
  * POST /api/v1/chat/test
  * Test all providers
  */
-router.post('/test', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.post('/test', clerkAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const results: Record<string, { success: boolean; latency?: number; error?: string }> = {};
 

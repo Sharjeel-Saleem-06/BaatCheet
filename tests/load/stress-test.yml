@@ -1,0 +1,63 @@
+# Artillery Stress Test - High Load Scenarios
+# Run: npx artillery run tests/load/stress-test.yml
+
+config:
+  target: "http://localhost:5001"
+  phases:
+    # Extreme load test
+    - duration: 60
+      arrivalRate: 100
+      rampTo: 500
+      name: "Extreme ramp up"
+    # Sustained extreme load
+    - duration: 120
+      arrivalRate: 500
+      name: "Sustained extreme load"
+    # Recovery
+    - duration: 60
+      arrivalRate: 500
+      rampTo: 10
+      name: "Recovery"
+  
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  
+  ensure:
+    p99: 3000     # 99th percentile under 3 seconds
+    maxErrorRate: 5  # Max 5% error rate
+
+scenarios:
+  # Health check - should always be fast
+  - name: "Health Check Under Load"
+    weight: 30
+    flow:
+      - get:
+          url: "/health"
+
+  # Readiness probe
+  - name: "Readiness Probe"
+    weight: 20
+    flow:
+      - get:
+          url: "/ready"
+
+  # Liveness probe
+  - name: "Liveness Probe"
+    weight: 20
+    flow:
+      - get:
+          url: "/live"
+
+  # API endpoints under stress
+  - name: "Chat Models"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/v1/chat/models"
+
+  - name: "Provider Health"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/v1/chat/providers/health"

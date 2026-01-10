@@ -1,16 +1,15 @@
 /**
  * Layout Component
- * Main app layout with sidebar
+ * Main app layout with sidebar and Clerk user button
  */
 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/auth';
+import { UserButton, useUser } from '@clerk/clerk-react';
 import {
   MessageSquare,
   FolderOpen,
   BarChart3,
   Settings,
-  LogOut,
   Menu,
   X,
 } from 'lucide-react';
@@ -25,14 +24,9 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { user, logout } = useAuthStore();
+  const { user } = useUser();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="flex h-screen bg-dark-900">
@@ -54,7 +48,7 @@ export default function Layout() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b border-dark-700">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
                 <span className="text-white font-bold">B</span>
               </div>
@@ -90,30 +84,25 @@ export default function Layout() {
             ))}
           </nav>
 
-          {/* User section */}
+          {/* User section with Clerk UserButton */}
           <div className="p-4 border-t border-dark-700">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center">
-                <span className="text-primary-400 font-medium">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
-                </span>
-              </div>
+            <div className="flex items-center gap-3">
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: 'w-10 h-10',
+                  },
+                }}
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-dark-100 truncate">
-                  {user?.name || 'User'}
+                  {user?.fullName || user?.username || 'User'}
                 </p>
                 <p className="text-xs text-dark-500 truncate">
-                  {user?.email || 'user@example.com'}
+                  {user?.primaryEmailAddress?.emailAddress || ''}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-            >
-              <LogOut size={18} />
-              <span>Logout</span>
-            </button>
           </div>
         </div>
       </aside>
@@ -129,6 +118,9 @@ export default function Layout() {
             <Menu size={24} />
           </button>
           <span className="text-lg font-semibold text-dark-100">BaatCheet</span>
+          <div className="ml-auto">
+            <UserButton />
+          </div>
         </header>
 
         {/* Page content */}

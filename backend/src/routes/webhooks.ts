@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../middleware/index.js';
+import { clerkAuth } from '../middleware/index.js';
 import { webhookService, WebhookEvent } from '../services/WebhookService.js';
 import { logger } from '../utils/logger.js';
 
@@ -22,10 +22,10 @@ const router = Router();
  */
 router.get(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const webhooks = await webhookService.getUserWebhooks(userId);
 
       res.json({
@@ -67,10 +67,10 @@ router.get(
  */
 router.post(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { url, events } = req.body;
 
       if (!url || !events || !Array.isArray(events) || events.length === 0) {
@@ -112,10 +112,10 @@ router.post(
  */
 router.get(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const webhooks = await webhookService.getUserWebhooks(userId);
@@ -149,10 +149,10 @@ router.get(
  */
 router.put(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
       const { url, events, isActive } = req.body;
 
@@ -190,10 +190,10 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const deleted = await webhookService.deleteWebhook(id, userId);
@@ -226,10 +226,10 @@ router.delete(
  */
 router.post(
   '/:id/test',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const result = await webhookService.sendTestWebhook(id, userId);
@@ -262,10 +262,10 @@ router.post(
  */
 router.get(
   '/:id/deliveries',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
       const limit = parseInt(req.query.limit as string, 10) || 50;
 

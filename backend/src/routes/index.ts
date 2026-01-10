@@ -18,12 +18,16 @@ import audioRoutes from './audio.js';
 import analyticsRoutes from './analytics.js';
 import webhookRoutes from './webhooks.js';
 import apiKeyRoutes from './apikeys.js';
+import healthRoutes from './health.js';
 
 const router = Router();
 
 // ============================================
 // Mount Routes
 // ============================================
+
+// Health checks (no auth required)
+router.use('/health', healthRoutes);
 
 // Authentication
 router.use('/auth', authRoutes);

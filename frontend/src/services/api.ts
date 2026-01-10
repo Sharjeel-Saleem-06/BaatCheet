@@ -1,6 +1,6 @@
 /**
  * API Service
- * Handles all HTTP requests to the backend
+ * Handles all HTTP requests to the backend with Clerk authentication
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
@@ -15,11 +15,19 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - add auth token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Request interceptor - add Clerk auth token
+api.interceptors.request.use(async (config) => {
+  // Get Clerk token if available
+  try {
+    const Clerk = (window as unknown as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+    if (Clerk?.session) {
+      const token = await Clerk.session.getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+  } catch {
+    // No Clerk session, continue without token
   }
   return config;
 });
@@ -29,8 +37,8 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Redirect to sign-in if unauthorized
+      window.location.href = '/sign-in';
     }
     return Promise.reject(error);
   }
@@ -41,16 +49,13 @@ api.interceptors.response.use(
 // ============================================
 
 export const auth = {
-  register: (email: string, password: string, name: string) =>
-    api.post('/auth/register', { email, password, name }),
-
-  login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
-
+  sync: () => api.post('/auth/sync'),
   me: () => api.get('/auth/me'),
-
+  session: () => api.get('/auth/session'),
   updatePreferences: (preferences: Record<string, unknown>) =>
-    api.put('/auth/preferences', { preferences }),
+    api.put('/auth/preferences', preferences),
+  exportData: () => api.get('/auth/export', { responseType: 'blob' }),
+  deleteAccount: () => api.delete('/auth/account'),
 };
 
 // ============================================
@@ -61,68 +66,71 @@ export const chat = {
   sendMessage: (message: string, conversationId?: string, model?: string) =>
     api.post('/chat/completions', { message, conversationId, model, stream: false }),
 
-  streamMessage: (
+  streamMessage: async (
     message: string,
     conversationId: string | undefined,
     onChunk: (chunk: string) => void,
     onDone: (data: { conversationId: string; model: string }) => void,
     onError: (error: string) => void
   ) => {
-    const token = localStorage.getItem('token');
-    const eventSource = new EventSource(
-      `${API_BASE}/chat/completions?token=${token}&message=${encodeURIComponent(message)}&conversationId=${conversationId || ''}`
-    );
-
-    // For SSE, we need to use fetch with streaming
-    fetch(`${API_BASE}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ message, conversationId, stream: true }),
-    })
-      .then(async (response) => {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-
-        if (!reader) {
-          onError('No response body');
-          return;
+    try {
+      // Get Clerk token
+      let token = '';
+      try {
+        const Clerk = (window as unknown as { Clerk?: { session?: { getToken: () => Promise<string | null> } } }).Clerk;
+        if (Clerk?.session) {
+          token = (await Clerk.session.getToken()) || '';
         }
+      } catch {
+        // No token
+      }
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      const response = await fetch(`${API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ message, conversationId, stream: true }),
+      });
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  onChunk(data.content);
-                }
-                if (data.done) {
-                  onDone({ conversationId: data.conversationId, model: data.model });
-                }
-                if (data.error) {
-                  onError(data.error);
-                }
-              } catch {
-                // Skip invalid JSON
+      if (!reader) {
+        onError('No response body');
+        return;
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.content) {
+                onChunk(data.content);
               }
+              if (data.done) {
+                onDone({ conversationId: data.conversationId, model: data.model });
+              }
+              if (data.error) {
+                onError(data.error);
+              }
+            } catch {
+              // Skip invalid JSON
             }
           }
         }
-      })
-      .catch((error) => {
-        onError(error.message);
-      });
-
-    return eventSource;
+      }
+    } catch (error) {
+      onError((error as Error).message);
+    }
   },
 
   regenerate: (conversationId: string, model?: string) =>

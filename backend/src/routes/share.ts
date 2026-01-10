@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../middleware/index.js';
+import { clerkAuth } from '../middleware/index.js';
 import { shareService } from '../services/ShareService.js';
 import { logger } from '../utils/logger.js';
 
@@ -22,10 +22,10 @@ const router = Router();
  */
 router.post(
   '/:conversationId',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { conversationId } = req.params;
       const { expiresInDays, isPublic = true } = req.body;
 
@@ -65,10 +65,10 @@ router.post(
  */
 router.get(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
 
       const result = await shareService.listUserShareLinks(userId);
 
@@ -134,10 +134,10 @@ router.get(
  */
 router.delete(
   '/:shareId',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { shareId } = req.params;
 
       const result = await shareService.revokeShareLink(shareId, userId);

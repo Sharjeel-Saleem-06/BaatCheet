@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../middleware/index.js';
+import { clerkAuth } from '../middleware/index.js';
 import { analyticsService } from '../services/AnalyticsService.js';
 import { logger } from '../utils/logger.js';
 
@@ -22,10 +22,10 @@ const router = Router();
  */
 router.get(
   '/dashboard',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const stats = await analyticsService.getDashboard(userId);
 
       res.json({
@@ -48,10 +48,10 @@ router.get(
  */
 router.get(
   '/usage',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const period = req.query.period as string || '7d';
 
       // Parse period (7d, 14d, 30d, 90d)
@@ -84,10 +84,10 @@ router.get(
  */
 router.get(
   '/tokens',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const days = parseInt(req.query.days as string, 10) || 30;
 
       const breakdown = await analyticsService.getTokenBreakdown(userId, days);
@@ -116,10 +116,10 @@ router.get(
  */
 router.get(
   '/conversations',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const stats = await analyticsService.getConversationStats(userId);
 
       res.json({
@@ -142,10 +142,10 @@ router.get(
  */
 router.get(
   '/export',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const format = (req.query.format as string || 'json').toLowerCase();
       const days = parseInt(req.query.days as string, 10) || 30;
 
@@ -185,10 +185,10 @@ router.get(
  */
 router.get(
   '/insights',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
 
       // Get recent usage data
       const [dashboard, weekUsage, prevWeekUsage] = await Promise.all([
@@ -279,11 +279,11 @@ router.get(
  */
 router.get(
   '/admin/global',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       // TODO: Add admin check
-      // const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+      // const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
       // if (user?.role !== 'admin') { res.status(403)... }
 
       const stats = await analyticsService.getGlobalStats();

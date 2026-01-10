@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate } from '../middleware/index.js';
+import { clerkAuth } from '../middleware/index.js';
 import { apiKeyService } from '../services/ApiKeyService.js';
 import { logger } from '../utils/logger.js';
 
@@ -22,10 +22,10 @@ const router = Router();
  */
 router.get(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const keys = await apiKeyService.getUserApiKeys(userId);
 
       res.json({
@@ -48,10 +48,10 @@ router.get(
  */
 router.post(
   '/',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { name, permissions, rateLimit, expiresInDays } = req.body;
 
       if (!name) {
@@ -100,10 +100,10 @@ router.post(
  */
 router.get(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const keys = await apiKeyService.getUserApiKeys(userId);
@@ -137,10 +137,10 @@ router.get(
  */
 router.put(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
       const { name, permissions, rateLimit, isActive } = req.body;
 
@@ -179,10 +179,10 @@ router.put(
  */
 router.delete(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const revoked = await apiKeyService.revokeApiKey(id, userId);
@@ -215,10 +215,10 @@ router.delete(
  */
 router.post(
   '/:id/rotate',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const result = await apiKeyService.rotateApiKey(id, userId);
@@ -254,10 +254,10 @@ router.post(
  */
 router.get(
   '/:id/usage',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const stats = await apiKeyService.getKeyUsageStats(id, userId);

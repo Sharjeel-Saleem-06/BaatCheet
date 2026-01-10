@@ -31,14 +31,25 @@ Advanced AI Chat Application with Multi-Provider Support
 - 📝 Conversation templates
 
 ## Authentication
-Most endpoints require JWT authentication. Include the token in the Authorization header:
+BaatCheet uses **Clerk** for authentication. Most endpoints require a valid Clerk session token.
+
+Include the token in the Authorization header:
 \`\`\`
-Authorization: Bearer <your-jwt-token>
+Authorization: Bearer <your-clerk-session-token>
 \`\`\`
 
 ## Rate Limiting
-- General API: 100 requests per 15 minutes
-- Chat endpoints: 30 requests per minute
+- Global: 1000 requests per hour per IP
+- Auth endpoints: 5 requests per 15 minutes
+- Chat endpoints: 100-10000 requests per hour (tier-based)
+- Image uploads: 50 per hour
+- Audio transcription: 20 per hour
+- Search: 100 per hour
+
+## Tiers
+- **Free**: 100 chat requests/hour
+- **Pro**: 1000 chat requests/hour
+- **Enterprise**: 10000 chat requests/hour
       `,
       contact: {
         name: 'Sharjeel Saleem',
@@ -156,14 +167,19 @@ Authorization: Bearer <your-jwt-token>
       },
     },
     tags: [
-      { name: 'Auth', description: 'Authentication endpoints' },
+      { name: 'Auth', description: 'Authentication & user profile' },
       { name: 'Chat', description: 'Chat and AI endpoints' },
       { name: 'Conversations', description: 'Conversation management' },
       { name: 'Projects', description: 'Project management' },
       { name: 'Images', description: 'Image upload and processing' },
+      { name: 'Audio', description: 'Voice input and transcription' },
       { name: 'Export', description: 'Conversation export' },
       { name: 'Share', description: 'Conversation sharing' },
       { name: 'Templates', description: 'Conversation templates' },
+      { name: 'Analytics', description: 'Usage analytics and statistics' },
+      { name: 'Webhooks', description: 'Webhook management' },
+      { name: 'API Keys', description: 'API key management' },
+      { name: 'Health', description: 'Health checks and monitoring' },
     ],
     paths: {
       // Auth

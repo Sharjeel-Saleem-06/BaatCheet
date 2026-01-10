@@ -7,7 +7,7 @@
 
 import { Router, Request, Response } from 'express';
 import path from 'path';
-import { authenticate, chatLimiter } from '../middleware/index.js';
+import { clerkAuth, chatLimiter } from '../middleware/index.js';
 import { audioService, audioUpload } from '../services/AudioService.js';
 import { chatService } from '../services/ChatService.js';
 import { analyticsService } from '../services/AnalyticsService.js';
@@ -25,11 +25,11 @@ const router = Router();
  */
 router.post(
   '/upload',
-  authenticate,
+  clerkAuth,
   audioUpload.single('audio'),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const file = req.file;
       const { conversationId } = req.body;
 
@@ -63,11 +63,11 @@ router.post(
  */
 router.post(
   '/transcribe',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { audioId, language } = req.body;
 
       if (!audioId) {
@@ -114,12 +114,12 @@ router.post(
  */
 router.post(
   '/transcribe-upload',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   audioUpload.single('audio'),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const file = req.file;
       const { language, conversationId } = req.body;
 
@@ -171,12 +171,12 @@ router.post(
  */
 router.post(
   '/voice-chat',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   audioUpload.single('audio'),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const file = req.file;
       const { conversationId, language, model, systemPrompt, stream = false } = req.body;
 
@@ -267,10 +267,10 @@ router.post(
  */
 router.get(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
       const { download } = req.query;
 
@@ -310,10 +310,10 @@ router.get(
  */
 router.delete(
   '/:id',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const { id } = req.params;
 
       const deleted = await audioService.deleteAudio(id, userId);

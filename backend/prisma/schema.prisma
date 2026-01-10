@@ -1,7 +1,7 @@
 // ============================================
 // BaatCheet Database Schema
 // PostgreSQL with Prisma ORM
-// Phase 3: Voice, Analytics, Webhooks, API Keys
+// Phase 4: Clerk Auth, Production Ready
 // ============================================
 
 generator client {
@@ -14,20 +14,34 @@ datasource db {
 }
 
 // ============================================
-// User Model
+// User Model (Clerk Integrated)
 // ============================================
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  avatar    String?
+  id            String   @id @default(uuid())
+  clerkId       String   @unique @map("clerk_id") // Clerk user ID
+  email         String   @unique
+  username      String?  @unique
+  firstName     String?  @map("first_name")
+  lastName      String?  @map("last_name")
+  avatar        String?
+  
+  // Role-based access control
+  role          UserRole @default(user)
   
   // Preferences stored as JSON
-  preferences Json @default("{\"theme\": \"dark\", \"defaultModel\": \"llama-3.3-70b-versatile\", \"language\": \"en\"}")
+  preferences   Json     @default("{\"theme\": \"dark\", \"defaultModel\": \"llama-3.3-70b-versatile\", \"language\": \"en\"}")
   
   // Tier for rate limiting
-  tier      String   @default("free") // free, pro, enterprise
+  tier          String   @default("free") // free, pro, enterprise
+  
+  // Account status
+  isActive      Boolean  @default(true) @map("is_active")
+  isBanned      Boolean  @default(false) @map("is_banned")
+  banReason     String?  @map("ban_reason")
+  
+  // Metadata
+  lastLoginAt   DateTime? @map("last_login_at")
+  loginCount    Int       @default(0) @map("login_count")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -41,8 +55,34 @@ model User {
   analytics     Analytics[]
   webhooks      Webhook[]
   apiKeys       ApiKey[]
+  auditLogs     AuditLog[]
   
+  @@index([clerkId])
+  @@index([email])
   @@map("users")
+}
+
+// ============================================
+// Audit Log Model (Security)
+// ============================================
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String   // login, logout, create, update, delete, etc.
+  resource  String   // conversation, message, project, etc.
+  resourceId String? @map("resource_id")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  metadata  Json?
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
 
 // ============================================
@@ -345,6 +385,21 @@ model ApiKeyUsage {
 }
 
 // ============================================
+// Rate Limit Tracking
+// ============================================
+model RateLimit {
+  id          String   @id @default(uuid())
+  identifier  String   // IP address or user ID
+  endpoint    String
+  count       Int      @default(0)
+  windowStart DateTime @map("window_start")
+  
+  @@unique([identifier, endpoint, windowStart])
+  @@index([identifier, endpoint])
+  @@map("rate_limits")
+}
+
+// ============================================
 // Enums
 // ============================================
 enum Role {
@@ -356,4 +411,10 @@ enum Role {
 enum AttachmentType {
   image
   document
+}
+
+enum UserRole {
+  user
+  moderator
+  admin
 }

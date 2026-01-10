@@ -1,25 +1,27 @@
+/**
+ * Authentication Routes
+ * Handles user authentication with Clerk
+ * 
+ * @module Routes/Auth
+ */
+
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import { clerkClient, getAuth } from '@clerk/express';
 import { prisma } from '../config/database.js';
-import { jwtSecret } from '../config/index.js';
-import { authenticate, authLimiter, validate, schemas } from '../middleware/index.js';
+import { clerkAuth, optionalClerkAuth } from '../middleware/index.js';
 import { logger } from '../utils/logger.js';
 import { UserPreferences } from '../types/index.js';
 
 const router = Router();
 
 // ============================================
-// Authentication Routes
+// Helper Functions
 // ============================================
 
-/**
- * Parse user preferences from JSON
- */
 const parsePreferences = (prefs: unknown): UserPreferences => {
   const defaults: UserPreferences = {
     theme: 'dark',
-    defaultModel: 'llama-3.1-70b-versatile',
+    defaultModel: 'llama-3.3-70b-versatile',
     language: 'en',
   };
 
@@ -35,175 +37,40 @@ const parsePreferences = (prefs: unknown): UserPreferences => {
   return defaults;
 };
 
-/**
- * POST /api/v1/auth/register
- * Create a new user account
- */
-router.post(
-  '/register',
-  authLimiter,
-  validate(schemas.register),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { email, password, name } = req.body;
-
-      // Check if user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      });
-
-      if (existingUser) {
-        res.status(400).json({
-          success: false,
-          error: 'User already exists with this email',
-        });
-        return;
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create user
-      const user = await prisma.user.create({
-        data: {
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          name,
-        },
-      });
-
-      // Generate token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        jwtSecret,
-        { expiresIn: '7d' }
-      );
-
-      logger.info(`New user registered: ${email}`);
-
-      res.status(201).json({
-        success: true,
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            preferences: parsePreferences(user.preferences),
-            createdAt: user.createdAt,
-          },
-          token,
-        },
-        message: 'Registration successful',
-      });
-    } catch (error) {
-      logger.error('Registration error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Registration failed',
-      });
-    }
-  }
-);
-
-/**
- * POST /api/v1/auth/login
- * User login
- */
-router.post(
-  '/login',
-  authLimiter,
-  validate(schemas.login),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { email, password } = req.body;
-
-      // Find user
-      const user = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      });
-
-      if (!user) {
-        res.status(401).json({
-          success: false,
-          error: 'Invalid email or password',
-        });
-        return;
-      }
-
-      // Verify password
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        res.status(401).json({
-          success: false,
-          error: 'Invalid email or password',
-        });
-        return;
-      }
-
-      // Generate token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        jwtSecret,
-        { expiresIn: '7d' }
-      );
-
-      logger.info(`User logged in: ${email}`);
-
-      res.json({
-        success: true,
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            preferences: parsePreferences(user.preferences),
-            createdAt: user.createdAt,
-          },
-          token,
-        },
-        message: 'Login successful',
-      });
-    } catch (error) {
-      logger.error('Login error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Login failed',
-      });
-    }
-  }
-);
-
-/**
- * POST /api/v1/auth/logout
- * User logout (client should remove token)
- */
-router.post('/logout', authenticate, (_req: Request, res: Response): void => {
-  res.json({
-    success: true,
-    message: 'Logout successful',
-  });
-});
+// ============================================
+// Authentication Routes
+// ============================================
 
 /**
  * GET /api/v1/auth/me
- * Get current user profile
+ * Get current user profile (syncs with Clerk)
  */
 router.get(
   '/me',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const user = await prisma.user.findUnique({
-        where: { id: req.user!.userId },
+        where: { id: req.user!.id },
         select: {
           id: true,
+          clerkId: true,
           email: true,
-          name: true,
+          username: true,
+          firstName: true,
+          lastName: true,
           avatar: true,
+          role: true,
+          tier: true,
           preferences: true,
           createdAt: true,
           updatedAt: true,
+          _count: {
+            select: {
+              conversations: true,
+              projects: true,
+            },
+          },
         },
       });
 
@@ -233,18 +100,99 @@ router.get(
 );
 
 /**
+ * POST /api/v1/auth/sync
+ * Sync user data from Clerk to database
+ */
+router.post(
+  '/sync',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId: clerkUserId } = getAuth(req);
+
+      if (!clerkUserId) {
+        res.status(401).json({
+          success: false,
+          error: 'Not authenticated',
+        });
+        return;
+      }
+
+      // Get user from Clerk
+      const clerkUser = await clerkClient.users.getUser(clerkUserId);
+
+      // Upsert user in database
+      const user = await prisma.user.upsert({
+        where: { clerkId: clerkUserId },
+        update: {
+          email: clerkUser.emailAddresses[0]?.emailAddress || '',
+          username: clerkUser.username,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          avatar: clerkUser.imageUrl,
+          lastLoginAt: new Date(),
+          loginCount: { increment: 1 },
+        },
+        create: {
+          clerkId: clerkUserId,
+          email: clerkUser.emailAddresses[0]?.emailAddress || '',
+          username: clerkUser.username,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          avatar: clerkUser.imageUrl,
+        },
+      });
+
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'user.sync',
+          resource: 'user',
+          resourceId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        },
+      });
+
+      logger.info(`User synced: ${user.email}`);
+
+      res.json({
+        success: true,
+        data: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatar: user.avatar,
+          role: user.role,
+          tier: user.tier,
+          preferences: parsePreferences(user.preferences),
+        },
+      });
+    } catch (error) {
+      logger.error('Sync user error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to sync user',
+      });
+    }
+  }
+);
+
+/**
  * PUT /api/v1/auth/preferences
  * Update user preferences
  */
 router.put(
   '/preferences',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { theme, defaultModel, language } = req.body;
 
       const currentUser = await prisma.user.findUnique({
-        where: { id: req.user!.userId },
+        where: { id: req.user!.id },
       });
 
       if (!currentUser) {
@@ -263,7 +211,7 @@ router.put(
       };
 
       const user = await prisma.user.update({
-        where: { id: req.user!.userId },
+        where: { id: req.user!.id },
         data: { preferences: newPreferences },
         select: {
           id: true,
@@ -281,6 +229,193 @@ router.put(
       res.status(500).json({
         success: false,
         error: 'Failed to update preferences',
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/auth/account
+ * Delete user account (GDPR compliance)
+ */
+router.delete(
+  '/account',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          error: 'User not found',
+        });
+        return;
+      }
+
+      // Create audit log before deletion
+      await prisma.auditLog.create({
+        data: {
+          action: 'user.deleted',
+          resource: 'user',
+          resourceId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          metadata: { email: user.email, reason: 'user_requested' },
+        },
+      });
+
+      // Delete user from database (cascades to all related data)
+      await prisma.user.delete({
+        where: { id: user.id },
+      });
+
+      // Delete user from Clerk
+      try {
+        await clerkClient.users.deleteUser(user.clerkId);
+      } catch (clerkError) {
+        logger.warn('Failed to delete user from Clerk:', clerkError);
+      }
+
+      logger.info(`User account deleted: ${user.email}`);
+
+      res.json({
+        success: true,
+        message: 'Account deleted successfully',
+      });
+    } catch (error) {
+      logger.error('Delete account error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete account',
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/v1/auth/export
+ * Export user data (GDPR compliance)
+ */
+router.get(
+  '/export',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+        include: {
+          conversations: {
+            include: {
+              messages: true,
+            },
+          },
+          projects: true,
+          audioFiles: true,
+          analytics: true,
+          webhooks: true,
+          apiKeys: {
+            select: {
+              id: true,
+              name: true,
+              keyPrefix: true,
+              permissions: true,
+              createdAt: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          error: 'User not found',
+        });
+        return;
+      }
+
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'user.data_export',
+          resource: 'user',
+          resourceId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        },
+      });
+
+      // Remove sensitive fields
+      const exportData = {
+        ...user,
+        clerkId: undefined,
+      };
+
+      res.setHeader('Content-Disposition', `attachment; filename="baatcheet-data-${Date.now()}.json"`);
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify(exportData, null, 2));
+    } catch (error) {
+      logger.error('Export data error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export data',
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/v1/auth/session
+ * Get current session info
+ */
+router.get(
+  '/session',
+  optionalClerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId: clerkUserId, sessionId } = getAuth(req);
+
+      if (!clerkUserId) {
+        res.json({
+          success: true,
+          data: {
+            authenticated: false,
+          },
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          tier: true,
+        },
+      });
+
+      res.json({
+        success: true,
+        data: {
+          authenticated: true,
+          sessionId,
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            tier: user.tier,
+          } : null,
+        },
+      });
+    } catch (error) {
+      logger.error('Session check error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to check session',
       });
     }
   }

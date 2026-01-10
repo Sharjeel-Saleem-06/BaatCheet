@@ -7,7 +7,7 @@
 
 import { Router, Request, Response } from 'express';
 import path from 'path';
-import { authenticate, chatLimiter } from '../middleware/index.js';
+import { clerkAuth, chatLimiter } from '../middleware/index.js';
 import { imageService, upload } from '../services/ImageService.js';
 import { logger } from '../utils/logger.js';
 
@@ -23,11 +23,11 @@ const router = Router();
  */
 router.post(
   '/upload',
-  authenticate,
+  clerkAuth,
   upload.array('images', 5),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.userId;
+      const userId = req.user!.id;
       const files = req.files as Express.Multer.File[];
       const { messageId } = req.body;
 
@@ -66,7 +66,7 @@ router.post(
  */
 router.post(
   '/ocr',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   upload.single('image'),
   async (req: Request, res: Response): Promise<void> => {
@@ -113,7 +113,7 @@ router.post(
  */
 router.post(
   '/analyze',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   upload.single('image'),
   async (req: Request, res: Response): Promise<void> => {
@@ -161,7 +161,7 @@ router.post(
  */
 router.post(
   '/process',
-  authenticate,
+  clerkAuth,
   chatLimiter,
   upload.single('image'),
   async (req: Request, res: Response): Promise<void> => {
@@ -210,7 +210,7 @@ router.post(
  */
 router.get(
   '/:filename',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { filename } = req.params;
@@ -255,7 +255,7 @@ router.get(
  */
 router.delete(
   '/:filename',
-  authenticate,
+  clerkAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { filename } = req.params;

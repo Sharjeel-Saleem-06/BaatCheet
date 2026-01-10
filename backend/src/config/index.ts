@@ -93,7 +93,16 @@ export const config = {
   },
   
   // ============================================
-  // Authentication Configuration
+  // Clerk Authentication Configuration
+  // ============================================
+  clerk: {
+    publishableKey: getOptional('CLERK_PUBLISHABLE_KEY', ''),
+    secretKey: getOptional('CLERK_SECRET_KEY', ''),
+    webhookSecret: getOptional('CLERK_WEBHOOK_SECRET', ''),
+  },
+  
+  // ============================================
+  // Legacy JWT Configuration (backup)
   // ============================================
   auth: {
     jwtSecret: getOptional('JWT_SECRET', 'default-secret-change-me-in-production'),

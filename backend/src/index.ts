@@ -1,20 +1,24 @@
 /**
  * BaatCheet Backend Server
  * Advanced AI Chat Application with Multi-Provider Support
+ * Phase 4: Clerk Auth, Production Ready
  * 
  * @module Server
  */
 
-import express, { Application } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { clerkMiddleware } from '@clerk/express';
 import { config } from './config/index.js';
-import { connectPostgreSQL, connectRedis, disconnectDatabases } from './config/database.js';
+import { connectPostgreSQL, connectRedis, disconnectDatabases, prisma } from './config/database.js';
 import { setupSwagger } from './config/swagger.js';
 import { logger } from './utils/logger.js';
 import { errorHandler, notFoundHandler, apiLimiter } from './middleware/index.js';
 import routes from './routes/index.js';
+import clerkWebhookRoutes from './routes/clerkWebhook.js';
 import { providerManager } from './services/ProviderManager.js';
 import { templateService } from './services/TemplateService.js';
 
@@ -25,34 +29,107 @@ import { templateService } from './services/TemplateService.js';
 const app: Application = express();
 
 // ============================================
-// Middleware Configuration
+// Request ID & Timing Middleware
 // ============================================
 
-// Security headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Add unique request ID
+  const requestId = uuidv4();
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  
+  // Track response time
+  const startTime = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    res.setHeader('X-Response-Time', `${duration}ms`);
+  });
+  
+  next();
+});
+
+// ============================================
+// Security Headers (Helmet)
+// ============================================
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false, // Disable for Swagger UI
+  contentSecurityPolicy: config.server.isProduction ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://api.clerk.dev'],
+    },
+  } : false,
+  hsts: config.server.isProduction ? {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  } : false,
 }));
 
-// CORS configuration
+// ============================================
+// CORS Configuration
+// ============================================
+
+const allowedOrigins = config.server.isProduction
+  ? ['https://baatcheet.app', 'https://www.baatcheet.app']
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+    ];
+
 app.use(
   cors({
-    origin:
-      config.server.nodeEnv === 'production'
-        ? ['https://baatcheet.app']
-        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    exposedHeaders: ['X-Request-ID', 'X-Response-Time', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
+    maxAge: 86400, // 24 hours
   })
 );
 
-// Body parsing with increased limit for images
+// ============================================
+// Body Parsing
+// ============================================
+
+// Raw body for Clerk webhooks (must be before json parser)
+app.use('/api/v1/clerk/webhook', express.raw({ type: 'application/json' }));
+
+// JSON body parsing with increased limit
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve uploaded files
+// ============================================
+// Clerk Middleware
+// ============================================
+
+app.use(clerkMiddleware());
+
+// ============================================
+// Static Files
+// ============================================
+
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Rate limiting
+// ============================================
+// Rate Limiting
+// ============================================
+
 app.use('/api/', apiLimiter);
 
 // ============================================
@@ -66,24 +143,56 @@ setupSwagger(app);
 // ============================================
 
 // Health check endpoint
-app.get('/health', (_req, res) => {
+app.get('/health', async (_req, res) => {
   const summary = providerManager.getSummary();
   
+  // Check database connection
+  let dbStatus = 'connected';
+  let dbLatency = 0;
+  try {
+    const start = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    dbLatency = Date.now() - start;
+  } catch {
+    dbStatus = 'disconnected';
+  }
+  
   res.json({
-    success: true,
-    message: 'BaatCheet API is running',
+    status: 'healthy',
     timestamp: new Date().toISOString(),
-    environment: config.server.nodeEnv,
     version: '1.0.0',
-    providers: {
-      active: summary.activeProviders,
-      total: summary.totalProviders,
-      capacity: summary.totalCapacity,
-      used: summary.totalUsed,
+    environment: config.server.nodeEnv,
+    uptime: process.uptime(),
+    services: {
+      database: { status: dbStatus, latency: dbLatency },
+      providers: {
+        active: summary.activeProviders,
+        total: summary.totalProviders,
+        capacity: summary.totalCapacity,
+        used: summary.totalUsed,
+      },
     },
     docs: '/api/docs',
   });
 });
+
+// Readiness probe (for Kubernetes)
+app.get('/ready', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({ status: 'ready' });
+  } catch {
+    res.status(503).json({ status: 'not ready' });
+  }
+});
+
+// Liveness probe (for Kubernetes)
+app.get('/live', (_req, res) => {
+  res.status(200).json({ status: 'alive' });
+});
+
+// Clerk webhook routes (before auth middleware)
+app.use('/api/v1/clerk', clerkWebhookRoutes);
 
 // API routes
 app.use('/api/v1', routes);
@@ -112,21 +221,29 @@ const startServer = async (): Promise<void> => {
 
     // Get provider summary
     const summary = providerManager.getSummary();
+    
+    // Check Clerk configuration
+    const clerkConfigured = !!(config.clerk.publishableKey && config.clerk.secretKey);
 
     // Start server
     app.listen(config.server.port, () => {
       logger.info(`
 ╔═══════════════════════════════════════════════════════════════════╗
 ║                                                                   ║
-║   🗣️  BaatCheet API Server v1.0.0                                 ║
+║   🗣️  BaatCheet API Server v1.0.0 (Phase 4)                       ║
 ║                                                                   ║
 ║   Environment: ${config.server.nodeEnv.padEnd(51)}║
 ║   Port: ${config.server.port.toString().padEnd(58)}║
 ║                                                                   ║
 ║   ┌─────────────────────────────────────────────────────────────┐ ║
-║   │ PROVIDERS                                                   │ ║
+║   │ AUTHENTICATION                                              │ ║
+║   │ Clerk: ${clerkConfigured ? '✅ Configured' : '❌ Not configured'}                                      │ ║
+║   └─────────────────────────────────────────────────────────────┘ ║
+║                                                                   ║
+║   ┌─────────────────────────────────────────────────────────────┐ ║
+║   │ AI PROVIDERS                                                │ ║
 ║   │ Active: ${summary.activeProviders}/${summary.totalProviders} providers                                        │ ║
-║   │ Keys: ${summary.totalKeys} total                                              │ ║
+║   │ Keys: ${summary.totalKeys.toString().padEnd(52)}│ ║
 ║   │ Capacity: ${summary.totalCapacity.toLocaleString().padEnd(47)}│ ║
 ║   └─────────────────────────────────────────────────────────────┘ ║
 ║                                                                   ║
@@ -151,6 +268,15 @@ const startServer = async (): Promise<void> => {
 
 const gracefulShutdown = async (signal: string): Promise<void> => {
   logger.info(`${signal} received. Shutting down gracefully...`);
+
+  // Stop accepting new requests
+  const server = app.listen();
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+
+  // Wait for existing requests to finish (max 30 seconds)
+  await new Promise((resolve) => setTimeout(resolve, 30000));
 
   await disconnectDatabases();
 

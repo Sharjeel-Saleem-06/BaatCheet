@@ -27,6 +27,8 @@
   "author": "Sharjeel Saleem",
   "license": "MIT",
   "dependencies": {
+    "@clerk/backend": "^2.29.2",
+    "@clerk/express": "^1.7.62",
     "@prisma/client": "^5.7.1",
     "@types/crypto-js": "^4.2.2",
     "@types/fluent-ffmpeg": "^2.1.28",
@@ -48,6 +50,7 @@
     "openai": "^6.16.0",
     "pdfkit": "^0.17.2",
     "redis": "^4.6.12",
+    "svix": "^1.84.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^9.0.1",

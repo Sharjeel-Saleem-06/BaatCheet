@@ -1,14 +1,15 @@
 /**
  * BaatCheet Type Definitions
  * Centralized type definitions for the entire backend
+ * Phase 4: Clerk Auth Integration
  * 
  * @module Types
  */
 
-import { User, Conversation, Message, Project, Role, Prisma } from '@prisma/client';
+import { User, Conversation, Message, Project, Role, UserRole, Prisma } from '@prisma/client';
 
 // Re-export Prisma types
-export { User, Conversation, Message, Project, Role };
+export { User, Conversation, Message, Project, Role, UserRole };
 
 // ============================================
 // User Types
@@ -21,6 +22,55 @@ export interface UserPreferences {
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;
+
+// ============================================
+// Auth Types (Clerk Integration)
+// ============================================
+
+export interface ClerkUser {
+  id: string;
+  clerkId: string;
+  email: string;
+  role: UserRole;
+  tier: string;
+}
+
+// Legacy auth payload (for backward compatibility)
+export interface LegacyAuthPayload {
+  userId: string;
+  email: string;
+}
+
+// Combined auth payload
+export type AuthPayload = ClerkUser;
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface AuthResponse {
+  user: UserWithoutPassword;
+  token: string;
+}
+
+// ============================================
+// Express Extensions
+// ============================================
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: ClerkUser;
+    }
+  }
+}
 
 // ============================================
 // Conversation Types
@@ -170,31 +220,6 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// Auth Types
-// ============================================
-
-export interface AuthPayload {
-  userId: string;
-  email: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  name: string;
-}
-
-export interface AuthResponse {
-  user: UserWithoutPassword;
-  token: string;
-}
-
-// ============================================
 // Context Manager Types
 // ============================================
 
@@ -209,18 +234,6 @@ export interface ContextMessage {
   role: Role;
   content: string;
   tokens: number;
-}
-
-// ============================================
-// Express Extensions
-// ============================================
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthPayload;
-    }
-  }
 }
 
 // ============================================

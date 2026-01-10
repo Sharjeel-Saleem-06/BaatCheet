@@ -1,0 +1,139 @@
+# Artillery Load Test - Chat Endpoints
+# Run: npx artillery run tests/load/chat-load-test.yml
+
+config:
+  target: "http://localhost:5001"
+  phases:
+    # Warm up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    # Ramp up load
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 50
+      name: "Ramp up load"
+    # Sustained load
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustained load"
+    # Spike test
+    - duration: 30
+      arrivalRate: 100
+      name: "Spike test"
+    # Cool down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down"
+  
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  
+  variables:
+    testMessages:
+      - "Hello, how are you?"
+      - "What is the capital of France?"
+      - "Explain quantum computing in simple terms"
+      - "Write a haiku about coding"
+      - "What are the benefits of TypeScript?"
+  
+  plugins:
+    expect: {}
+
+scenarios:
+  # Health check scenario
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+  # Provider health check
+  - name: "Provider Health"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/v1/chat/providers/health"
+          expect:
+            - statusCode: 200
+
+  # Models list
+  - name: "List Models"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/v1/chat/models"
+          expect:
+            - statusCode: 200
+
+  # Chat completion (non-streaming)
+  - name: "Chat Completion"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/v1/chat/completions"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.TEST_AUTH_TOKEN }}"
+          json:
+            message: "{{ $randomItem(testMessages) }}"
+            stream: false
+          expect:
+            - statusCode:
+                - 200
+                - 401
+                - 429
+
+  # Search conversations
+  - name: "Search"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/conversations?search=test"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.TEST_AUTH_TOKEN }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # Templates list
+  - name: "List Templates"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/templates"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.TEST_AUTH_TOKEN }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # Analytics dashboard
+  - name: "Analytics Dashboard"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/analytics/dashboard"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.TEST_AUTH_TOKEN }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # Projects list
+  - name: "List Projects"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/v1/projects"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.TEST_AUTH_TOKEN }}"
+          expect:
+            - statusCode:
+                - 200
+                - 401
