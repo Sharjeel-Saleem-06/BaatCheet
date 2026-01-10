@@ -38,3 +38,14 @@ export { webhookService, WebhookEvent, WebhookPayload, WebhookConfig } from './W
 
 // API Key Service
 export { apiKeyService, ApiKeyInfo, ApiKeyValidation } from './ApiKeyService.js';
+
+// Queue Service (Background Jobs)
+export { 
+  queueService, 
+  ocrQueue, 
+  audioQueue, 
+  exportQueue, 
+  webhookQueue, 
+  analyticsQueue,
+  triggerWebhooks 
+} from './QueueService.js';

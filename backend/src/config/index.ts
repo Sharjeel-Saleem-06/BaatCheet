@@ -93,6 +93,13 @@ export const config = {
   },
   
   // ============================================
+  // Redis Configuration (separate for clarity)
+  // ============================================
+  redis: {
+    url: getOptional('REDIS_URL', 'redis://localhost:6379'),
+  },
+  
+  // ============================================
   // Clerk Authentication Configuration
   // ============================================
   clerk: {
