@@ -112,6 +112,13 @@ class ContextManagerService {
   }
 
   /**
+   * Alias for clearContext (backward compatibility)
+   */
+  public async clearCache(conversationId: string): Promise<void> {
+    return this.clearContext(conversationId);
+  }
+
+  /**
    * Optimize context to fit within token limits
    */
   private optimizeContext(messages: Message[]): Message[] {

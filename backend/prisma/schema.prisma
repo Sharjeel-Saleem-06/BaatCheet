@@ -23,7 +23,7 @@ model User {
   avatar    String?
   
   // Preferences stored as JSON
-  preferences Json @default("{\"theme\": \"dark\", \"defaultModel\": \"llama-3.1-70b-versatile\", \"language\": \"en\"}")
+  preferences Json @default("{\"theme\": \"dark\", \"defaultModel\": \"llama-3.3-70b-versatile\", \"language\": \"en\"}")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -31,6 +31,8 @@ model User {
   // Relations
   conversations Conversation[]
   projects      Project[]
+  templates     Template[]
+  shareLinks    ShareLink[]
   
   @@map("users")
 }
@@ -45,6 +47,7 @@ model Project {
   description String?
   color       String   @default("#1e293b")
   icon        String   @default("folder")
+  isDefault   Boolean  @default(false) @map("is_default")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -66,23 +69,27 @@ model Conversation {
   projectId    String?  @map("project_id")
   title        String   @default("New Conversation")
   systemPrompt String?  @map("system_prompt")
-  model        String   @default("llama-3.1-70b-versatile")
+  model        String   @default("llama-3.3-70b-versatile")
   tags         String[] @default([])
   isArchived   Boolean  @default(false) @map("is_archived")
   isPinned     Boolean  @default(false) @map("is_pinned")
+  rating       Int?     @default(0)
   totalTokens  Int      @default(0) @map("total_tokens")
+  lastAccessedAt DateTime? @map("last_accessed_at")
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
   // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project  Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  messages Message[]
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  messages   Message[]
+  shareLinks ShareLink[]
   
   @@index([userId])
   @@index([projectId])
   @@index([userId, updatedAt])
+  @@index([userId, isArchived])
   @@map("conversations")
 }
 
@@ -96,6 +103,7 @@ model Message {
   content        String
   model          String?
   tokens         Int      @default(0)
+  isEdited       Boolean  @default(false) @map("is_edited")
   
   createdAt DateTime @default(now()) @map("created_at")
   
@@ -112,12 +120,17 @@ model Message {
 // Attachment Model (for images/documents)
 // ============================================
 model Attachment {
-  id            String  @id @default(uuid())
-  messageId     String  @map("message_id")
-  type          AttachmentType
-  url           String
-  extractedText String? @map("extracted_text")
-  metadata      Json?
+  id              String         @id @default(uuid())
+  messageId       String         @map("message_id")
+  type            AttachmentType
+  originalName    String?        @map("original_name")
+  storedName      String?        @map("stored_name")
+  url             String
+  fileSize        Int?           @map("file_size")
+  mimeType        String?        @map("mime_type")
+  extractedText   String?        @map("extracted_text")
+  analysisResult  String?        @map("analysis_result")
+  metadata        Json?
   
   createdAt DateTime @default(now()) @map("created_at")
   
@@ -129,11 +142,60 @@ model Attachment {
 }
 
 // ============================================
+// Share Link Model
+// ============================================
+model ShareLink {
+  id             String    @id @default(uuid())
+  conversationId String    @map("conversation_id")
+  userId         String    @map("user_id")
+  shareId        String    @unique @map("share_id")
+  expiresAt      DateTime? @map("expires_at")
+  isPublic       Boolean   @default(true) @map("is_public")
+  accessCount    Int       @default(0) @map("access_count")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([shareId])
+  @@index([userId])
+  @@map("share_links")
+}
+
+// ============================================
+// Template Model (for quick-start conversations)
+// ============================================
+model Template {
+  id           String  @id @default(uuid())
+  userId       String? @map("user_id")
+  name         String
+  description  String?
+  systemPrompt String  @map("system_prompt")
+  category     String  @default("general")
+  icon         String  @default("message-square")
+  isDefault    Boolean @default(false) @map("is_default")
+  isPublic     Boolean @default(false) @map("is_public")
+  usageCount   Int     @default(0) @map("usage_count")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([category])
+  @@index([isDefault])
+  @@map("templates")
+}
+
+// ============================================
 // API Key Usage Tracking
 // ============================================
 model ApiKeyUsage {
   id           String   @id @default(uuid())
-  provider     String   // groq, together, deepseek
+  provider     String   // groq, openrouter, deepseek, etc.
   keyIndex     Int      @map("key_index")
   requestCount Int      @default(0) @map("request_count")
   date         DateTime @default(now()) @db.Date

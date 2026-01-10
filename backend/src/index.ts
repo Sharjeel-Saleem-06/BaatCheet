@@ -8,12 +8,15 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { config } from './config/index.js';
 import { connectPostgreSQL, connectRedis, disconnectDatabases } from './config/database.js';
+import { setupSwagger } from './config/swagger.js';
 import { logger } from './utils/logger.js';
 import { errorHandler, notFoundHandler, apiLimiter } from './middleware/index.js';
 import routes from './routes/index.js';
 import { providerManager } from './services/ProviderManager.js';
+import { templateService } from './services/TemplateService.js';
 
 // ============================================
 // Initialize Express Application
@@ -28,6 +31,7 @@ const app: Application = express();
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false, // Disable for Swagger UI
 }));
 
 // CORS configuration
@@ -45,8 +49,17 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Rate limiting
 app.use('/api/', apiLimiter);
+
+// ============================================
+// Swagger Documentation
+// ============================================
+
+setupSwagger(app);
 
 // ============================================
 // Routes
@@ -68,6 +81,7 @@ app.get('/health', (_req, res) => {
       capacity: summary.totalCapacity,
       used: summary.totalUsed,
     },
+    docs: '/api/docs',
   });
 });
 
@@ -93,6 +107,9 @@ const startServer = async (): Promise<void> => {
     // Connect to Redis (optional)
     await connectRedis();
 
+    // Initialize default templates
+    await templateService.initializeDefaults();
+
     // Get provider summary
     const summary = providerManager.getSummary();
 
@@ -115,6 +132,7 @@ const startServer = async (): Promise<void> => {
 ║                                                                   ║
 ║   API Base: http://localhost:${config.server.port}/api/v1                   ║
 ║   Health: http://localhost:${config.server.port}/health                     ║
+║   📚 Docs: http://localhost:${config.server.port}/api/docs                  ║
 ║                                                                   ║
 ║   ✅ Ready to accept connections!                                 ║
 ║                                                                   ║
