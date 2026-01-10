@@ -44,7 +44,7 @@ export interface ConversationListItem {
 // AI Provider Types
 // ============================================
 
-export type AIProvider = 'groq' | 'together' | 'deepseek' | 'puter';
+export type AIProvider = 'groq' | 'openrouter' | 'deepseek' | 'huggingface' | 'gemini' | 'puter';
 
 export interface AIProviderStatus {
   provider: AIProvider;
@@ -74,6 +74,10 @@ export interface ChatRequest {
   conversationId?: string;
   model?: string;
   systemPrompt?: string;
+  image?: {
+    base64: string;
+    mimeType: string;
+  };
 }
 
 export interface ChatResponse {
@@ -94,6 +98,26 @@ export interface StreamChunk {
 }
 
 // ============================================
+// Vision Types
+// ============================================
+
+export interface VisionRequest {
+  image: string; // base64
+  mimeType: string;
+  prompt?: string;
+  task: 'ocr' | 'analyze' | 'describe';
+}
+
+export interface VisionResponse {
+  success: boolean;
+  text?: string;
+  description?: string;
+  provider: AIProvider;
+  model: string;
+  error?: string;
+}
+
+// ============================================
 // API Response Types
 // ============================================
 
@@ -102,6 +126,13 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  error: string;
+  code?: string;
+  details?: unknown;
 }
 
 export interface PaginatedResponse<T> {
