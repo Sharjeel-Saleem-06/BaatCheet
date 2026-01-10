@@ -1,293 +1,420 @@
+/**
+ * Chat Service
+ * High-level service for handling chat conversations with
+ * context management, streaming, and conversation persistence.
+ * 
+ * @module ChatService
+ */
+
 import { Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import { aiRouter } from './AIRouter.js';
+import { logger } from '../utils/logger.js';
+import { aiRouter, Message, ChatRequest } from './AIRouter.js';
 import { contextManager } from './ContextManager.js';
-import { streamingService } from './StreamingService.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
-import { logger } from '../utils/logger.js';
-import { ChatRequest, AIProvider } from '../types/index.js';
-import { Role } from '@prisma/client';
 
 // ============================================
-// Chat Service
-// Handles AI chat completions with streaming
+// Types
 // ============================================
 
-class ChatService {
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+export interface ChatOptions {
+  conversationId?: string;
+  userId: string;
+  model?: string;
+  systemPrompt?: string;
+  maxTokens?: number;
+  temperature?: number;
+  stream?: boolean;
+}
+
+export interface ChatResult {
+  success: boolean;
+  message?: ChatMessage;
+  conversationId?: string;
+  model?: string;
+  provider?: string;
+  tokens?: {
+    prompt: number;
+    completion: number;
+    total: number;
+  };
+  error?: string;
+}
+
+// ============================================
+// Chat Service Class
+// ============================================
+
+class ChatServiceClass {
   /**
-   * Send a chat message and stream the response
+   * Process a chat message with context and optional streaming
    */
-  public async streamChat(
-    userId: string,
-    request: ChatRequest,
-    res: Response
-  ): Promise<void> {
-    const { message, conversationId: existingConvId, model, systemPrompt } = request;
-    const connectionId = uuidv4();
-
-    // Initialize SSE
-    streamingService.initializeSSE(res, connectionId);
-
+  public async processMessage(
+    userMessage: string,
+    options: ChatOptions
+  ): Promise<ChatResult> {
     try {
       // Get or create conversation
-      let conversationId = existingConvId;
-      let context = existingConvId
-        ? await contextManager.getContext(existingConvId)
-        : null;
+      let conversationId = options.conversationId;
+      let conversation;
 
-      // Create new conversation if needed
-      if (!context) {
-        const conversation = await prisma.conversation.create({
+      if (conversationId) {
+        conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
+        });
+
+        if (!conversation || conversation.userId !== options.userId) {
+          return { success: false, error: 'Conversation not found' };
+        }
+      } else {
+        // Create new conversation
+        conversation = await prisma.conversation.create({
           data: {
-            userId,
-            title: this.generateTitle(message),
-            model: model || config.defaultModel,
-            systemPrompt,
+            userId: options.userId,
+            title: this.generateTitle(userMessage),
+            model: options.model || config.ai.defaultModel,
+            systemPrompt: options.systemPrompt,
           },
+          include: { messages: true },
         });
         conversationId = conversation.id;
-        context = contextManager.createInitialContext(conversationId, systemPrompt);
       }
 
-      // Send start event with conversation ID
-      streamingService.sendStart(res, conversationId!);
+      // Build messages array with context
+      const messages: Message[] = [];
 
-      // Add user message to context and database
-      await contextManager.addMessage(conversationId!, Role.user, message);
+      // Add system prompt
+      const systemPrompt = options.systemPrompt || conversation.systemPrompt || this.getDefaultSystemPrompt();
+      messages.push({ role: 'system', content: systemPrompt });
 
-      // Get AI provider and stream response
-      const provider = aiRouter.getCurrentProvider();
-      let fullResponse = '';
-
-      if (provider === 'groq') {
-        fullResponse = await this.streamGroqResponse(
-          context,
-          message,
-          model || config.defaultModel,
-          res
-        );
-      } else {
-        // Fallback providers
-        fullResponse = await this.handleFallbackProvider(provider, message, res);
-      }
-
-      // Save assistant response
-      const { messageId } = await contextManager.addMessage(
-        conversationId!,
-        Role.assistant,
-        fullResponse,
-        model || config.defaultModel
-      );
-
-      // Send done event
-      streamingService.sendDone(res, connectionId, messageId);
-
-      logger.info(`Chat completed: ${conversationId}, ${fullResponse.length} chars`);
-    } catch (error) {
-      logger.error('Chat streaming error:', error);
-      streamingService.sendError(
-        res,
-        error instanceof Error ? error.message : 'An error occurred'
-      );
-      streamingService.sendDone(res, connectionId);
-    }
-  }
-
-  /**
-   * Stream response from Groq API
-   */
-  private async streamGroqResponse(
-    context: { conversationId: string; systemPrompt?: string; messages: Array<{ role: Role; content: string; tokens: number }> },
-    newMessage: string,
-    model: string,
-    res: Response
-  ): Promise<string> {
-    const groqResult = await aiRouter.getGroqClient();
-
-    if (!groqResult) {
-      throw new Error('No Groq API keys available. Please try again later.');
-    }
-
-    const { client: groq, keyIndex } = groqResult;
-
-    try {
-      // Build messages for API
-      const apiMessages = contextManager.buildApiMessages(
-        context as Parameters<typeof contextManager.buildApiMessages>[0],
-        newMessage
-      );
-
-      // Create streaming completion
-      const stream = await groq.chat.completions.create({
-        model,
-        messages: apiMessages,
-        stream: true,
-        max_tokens: 4096,
-        temperature: 0.7,
-      });
-
-      // Stream the response manually
-      let fullResponse = '';
-
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          fullResponse += content;
-          streamingService.sendContent(res, content);
+      // Add conversation history
+      if (conversation.messages) {
+        for (const msg of conversation.messages) {
+          messages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
         }
       }
 
-      return fullResponse;
-    } catch (error: unknown) {
-      // Handle rate limiting
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
-      if (errorMessage.includes('rate_limit') || errorMessage.includes('429')) {
-        aiRouter.markKeyRateLimited(keyIndex, errorMessage);
-        
-        // Try with another key
-        logger.warn(`Groq key #${keyIndex + 1} rate limited, trying another...`);
-        return this.streamGroqResponse(context, newMessage, model, res);
+      // Add current user message
+      messages.push({ role: 'user', content: userMessage });
+
+      // Save user message to database
+      await prisma.message.create({
+        data: {
+          conversationId,
+          role: 'user',
+          content: userMessage,
+          tokens: this.estimateTokens(userMessage),
+        },
+      });
+
+      // Get AI response
+      const request: ChatRequest = {
+        messages,
+        model: options.model || conversation.model,
+        maxTokens: options.maxTokens,
+        temperature: options.temperature,
+      };
+
+      const response = await aiRouter.chat(request);
+
+      if (!response.success) {
+        return { success: false, error: response.error };
       }
 
-      aiRouter.markKeyError(keyIndex, errorMessage);
-      throw error;
+      // Save assistant message to database
+      await prisma.message.create({
+        data: {
+          conversationId,
+          role: 'assistant',
+          content: response.content,
+          model: response.model,
+          tokens: response.tokens?.completion || this.estimateTokens(response.content),
+        },
+      });
+
+      // Update conversation total tokens
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          totalTokens: { increment: response.tokens?.total || 0 },
+          updatedAt: new Date(),
+        },
+      });
+
+      // Update context cache
+      await contextManager.updateContext(conversationId, [
+        ...messages,
+        { role: 'assistant', content: response.content },
+      ]);
+
+      return {
+        success: true,
+        message: { role: 'assistant', content: response.content },
+        conversationId,
+        model: response.model,
+        provider: response.provider,
+        tokens: response.tokens,
+      };
+    } catch (error) {
+      logger.error('Chat processing error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to process message',
+      };
     }
   }
 
   /**
-   * Handle fallback providers (Together AI, DeepSeek, Puter)
+   * Stream a chat response with SSE
    */
-  private async handleFallbackProvider(
-    provider: AIProvider,
-    message: string,
-    res: Response
-  ): Promise<string> {
-    // TODO: Implement Together AI and DeepSeek integrations
-    const fallbackMessage = `I'm currently using ${provider} as a fallback provider. Full integration coming soon!\n\nYour message: "${message}"`;
-    
-    // Simulate streaming for fallback
-    const words = fallbackMessage.split(' ');
-    for (const word of words) {
-      streamingService.sendContent(res, word + ' ');
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
+  public async streamMessage(
+    res: Response,
+    userMessage: string,
+    options: ChatOptions
+  ): Promise<void> {
+    try {
+      // Set SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
 
-    return fallbackMessage;
+      // Get or create conversation
+      let conversationId = options.conversationId;
+      let conversation;
+
+      if (conversationId) {
+        conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
+        });
+
+        if (!conversation || conversation.userId !== options.userId) {
+          this.sendSSE(res, { error: 'Conversation not found' });
+          res.end();
+          return;
+        }
+      } else {
+        conversation = await prisma.conversation.create({
+          data: {
+            userId: options.userId,
+            title: this.generateTitle(userMessage),
+            model: options.model || config.ai.defaultModel,
+            systemPrompt: options.systemPrompt,
+          },
+          include: { messages: true },
+        });
+        conversationId = conversation.id;
+      }
+
+      // Build messages array
+      const messages: Message[] = [];
+      const systemPrompt = options.systemPrompt || conversation.systemPrompt || this.getDefaultSystemPrompt();
+      messages.push({ role: 'system', content: systemPrompt });
+
+      if (conversation.messages) {
+        for (const msg of conversation.messages) {
+          messages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          });
+        }
+      }
+
+      messages.push({ role: 'user', content: userMessage });
+
+      // Save user message
+      await prisma.message.create({
+        data: {
+          conversationId,
+          role: 'user',
+          content: userMessage,
+          tokens: this.estimateTokens(userMessage),
+        },
+      });
+
+      // Send conversation ID
+      this.sendSSE(res, { conversationId });
+
+      // Stream response
+      let fullContent = '';
+      let model = '';
+      let provider = '';
+
+      const request: ChatRequest = {
+        messages,
+        model: options.model || conversation.model,
+        maxTokens: options.maxTokens,
+        temperature: options.temperature,
+        stream: true,
+      };
+
+      for await (const chunk of aiRouter.chatStream(request)) {
+        if (chunk.content) {
+          fullContent += chunk.content;
+          this.sendSSE(res, { content: chunk.content });
+        }
+        if (chunk.model) model = chunk.model;
+        if (chunk.provider) provider = chunk.provider;
+        if (chunk.done) break;
+      }
+
+      // Save assistant message
+      const tokens = this.estimateTokens(fullContent);
+      await prisma.message.create({
+        data: {
+          conversationId,
+          role: 'assistant',
+          content: fullContent,
+          model,
+          tokens,
+        },
+      });
+
+      // Update conversation
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          totalTokens: { increment: tokens },
+          updatedAt: new Date(),
+        },
+      });
+
+      // Send completion event
+      this.sendSSE(res, {
+        done: true,
+        model,
+        provider,
+        tokens,
+      });
+
+      res.end();
+    } catch (error) {
+      logger.error('Stream error:', error);
+      this.sendSSE(res, { error: error instanceof Error ? error.message : 'Stream failed' });
+      res.end();
+    }
   }
 
   /**
    * Regenerate the last assistant response
    */
   public async regenerateResponse(
-    userId: string,
     conversationId: string,
-    res: Response
-  ): Promise<void> {
-    const connectionId = uuidv4();
-    streamingService.initializeSSE(res, connectionId);
-
+    userId: string,
+    options?: { model?: string; temperature?: number }
+  ): Promise<ChatResult> {
     try {
-      // Get conversation
-      const conversation = await prisma.conversation.findFirst({
-        where: { id: conversationId, userId },
-        include: {
-          messages: {
-            orderBy: { createdAt: 'desc' },
-            take: 2,
-          },
-        },
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        include: { messages: { orderBy: { createdAt: 'asc' } } },
       });
 
-      if (!conversation) {
-        throw new Error('Conversation not found');
+      if (!conversation || conversation.userId !== userId) {
+        return { success: false, error: 'Conversation not found' };
       }
 
-      // Find last user message
-      const lastUserMessage = conversation.messages.find((m) => m.role === Role.user);
-      if (!lastUserMessage) {
-        throw new Error('No user message to regenerate from');
+      // Find the last user message
+      const messages = conversation.messages;
+      let lastUserMessageIndex = -1;
+
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          lastUserMessageIndex = i;
+          break;
+        }
       }
 
-      // Delete last assistant message if exists
-      const lastAssistantMessage = conversation.messages.find(
-        (m) => m.role === Role.assistant
-      );
-      if (lastAssistantMessage) {
-        await prisma.message.delete({
-          where: { id: lastAssistantMessage.id },
-        });
-
-        // Update token count
-        await prisma.conversation.update({
-          where: { id: conversationId },
-          data: {
-            totalTokens: { decrement: lastAssistantMessage.tokens },
-          },
-        });
+      if (lastUserMessageIndex === -1) {
+        return { success: false, error: 'No user message to regenerate from' };
       }
 
-      // Clear cache
-      await contextManager.clearCache(conversationId);
+      // Delete messages after the last user message
+      const messagesToDelete = messages.slice(lastUserMessageIndex + 1);
+      await prisma.message.deleteMany({
+        where: { id: { in: messagesToDelete.map(m => m.id) } },
+      });
 
-      // Stream new response
-      const context = await contextManager.getContext(conversationId);
-      if (!context) {
-        throw new Error('Could not load conversation context');
-      }
+      // Get the last user message content
+      const lastUserMessage = messages[lastUserMessageIndex].content;
 
-      streamingService.sendStart(res, conversationId);
-
-      const provider = aiRouter.getCurrentProvider();
-      let fullResponse = '';
-
-      if (provider === 'groq') {
-        fullResponse = await this.streamGroqResponse(
-          context,
-          lastUserMessage.content,
-          conversation.model,
-          res
-        );
-      } else {
-        fullResponse = await this.handleFallbackProvider(
-          provider,
-          lastUserMessage.content,
-          res
-        );
-      }
-
-      // Save new response
-      const { messageId } = await contextManager.addMessage(
+      // Process with new response
+      return this.processMessage(lastUserMessage, {
         conversationId,
-        Role.assistant,
-        fullResponse,
-        conversation.model
-      );
-
-      streamingService.sendDone(res, connectionId, messageId);
+        userId,
+        model: options?.model || conversation.model,
+        temperature: options?.temperature,
+      });
     } catch (error) {
       logger.error('Regenerate error:', error);
-      streamingService.sendError(
-        res,
-        error instanceof Error ? error.message : 'Regeneration failed'
-      );
-      streamingService.sendDone(res, connectionId);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to regenerate',
+      };
     }
   }
 
   /**
-   * Generate conversation title from first message
+   * Get default system prompt
+   */
+  private getDefaultSystemPrompt(): string {
+    return `You are BaatCheet, a helpful, intelligent, and friendly AI assistant.
+
+Key traits:
+- You provide accurate, helpful, and thoughtful responses
+- You're conversational and engaging while remaining professional
+- You can understand and respond in multiple languages including English and Urdu
+- You format responses with markdown when helpful (code blocks, lists, headers)
+- You acknowledge when you're unsure about something
+- You're concise but thorough
+
+Current date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+  }
+
+  /**
+   * Generate a title from the first message
    */
   private generateTitle(message: string): string {
-    const maxLength = 50;
-    const cleaned = message.replace(/\n/g, ' ').trim();
-    return cleaned.length > maxLength
-      ? cleaned.substring(0, maxLength) + '...'
-      : cleaned || 'New Conversation';
+    // Clean and truncate
+    const cleaned = message
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (cleaned.length <= 50) return cleaned;
+
+    // Try to break at a word boundary
+    const truncated = cleaned.substring(0, 50);
+    const lastSpace = truncated.lastIndexOf(' ');
+
+    return lastSpace > 30 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+  }
+
+  /**
+   * Estimate token count (rough approximation)
+   */
+  private estimateTokens(text: string): number {
+    // Rough estimate: ~4 characters per token for English
+    return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Send SSE event
+   */
+  private sendSSE(res: Response, data: Record<string, unknown>): void {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
   }
 }
 
 // Export singleton instance
-export const chatService = new ChatService();
+export const chatService = new ChatServiceClass();
 export default chatService;

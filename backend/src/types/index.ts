@@ -1,6 +1,9 @@
-// ============================================
-// BaatCheet Type Definitions
-// ============================================
+/**
+ * BaatCheet Type Definitions
+ * Centralized type definitions for the entire backend
+ * 
+ * @module Types
+ */
 
 import { User, Conversation, Message, Project, Role, Prisma } from '@prisma/client';
 
@@ -44,15 +47,14 @@ export interface ConversationListItem {
 // AI Provider Types
 // ============================================
 
-export type AIProvider = 'groq' | 'openrouter' | 'deepseek' | 'huggingface' | 'gemini' | 'puter';
+export type ProviderName = 'groq' | 'openrouter' | 'deepseek' | 'huggingface' | 'gemini' | 'ocrspace';
 
-export interface AIProviderStatus {
-  provider: AIProvider;
-  isAvailable: boolean;
-  availableKeys?: number;
-  totalKeys?: number;
-  currentKeyIndex?: number;
-  lastError?: string;
+export interface ProviderHealth {
+  available: boolean;
+  totalKeys: number;
+  availableKeys: number;
+  totalCapacity: number;
+  usedToday: number;
   lastChecked: Date;
 }
 
@@ -63,6 +65,7 @@ export interface AIKeyState {
   isAvailable: boolean;
   lastUsed: Date;
   lastError?: string;
+  errorCount: number;
 }
 
 // ============================================
@@ -74,6 +77,7 @@ export interface ChatRequest {
   conversationId?: string;
   model?: string;
   systemPrompt?: string;
+  stream?: boolean;
   image?: {
     base64: string;
     mimeType: string;
@@ -84,7 +88,7 @@ export interface ChatResponse {
   messageId: string;
   content: string;
   model: string;
-  provider: AIProvider;
+  provider: ProviderName;
   tokens: number;
   conversationId: string;
 }
@@ -95,25 +99,44 @@ export interface StreamChunk {
   error?: string;
   conversationId?: string;
   messageId?: string;
+  model?: string;
+  provider?: ProviderName;
 }
 
 // ============================================
-// Vision Types
+// Vision & OCR Types
 // ============================================
 
 export interface VisionRequest {
   image: string; // base64
   mimeType: string;
   prompt?: string;
-  task: 'ocr' | 'analyze' | 'describe';
+  language?: 'en' | 'ur';
 }
 
 export interface VisionResponse {
   success: boolean;
-  text?: string;
-  description?: string;
-  provider: AIProvider;
-  model: string;
+  response: string;
+  provider: ProviderName | 'unknown';
+  model?: string;
+  processingTime?: number;
+  error?: string;
+}
+
+export interface OCRRequest {
+  image: string; // base64
+  mimeType: string;
+  language?: string;
+  isTable?: boolean;
+}
+
+export interface OCRResponse {
+  success: boolean;
+  text: string;
+  provider: ProviderName | 'unknown';
+  confidence?: number;
+  language?: string;
+  processingTime?: number;
   error?: string;
 }
 
@@ -126,6 +149,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+  code?: string;
 }
 
 export interface ApiErrorResponse {

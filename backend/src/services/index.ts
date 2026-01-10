@@ -1,7 +1,16 @@
-export { providerManager } from './ProviderManager.js';
-export type { ProviderType, TaskType } from './ProviderManager.js';
-export { aiRouter } from './AIRouter.js';
+/**
+ * Services Index
+ * Central export point for all services
+ * 
+ * @module Services
+ */
+
+// Core Services
+export { providerManager, ProviderType, TaskType } from './ProviderManager.js';
+export { aiRouter, Message, ChatRequest, ChatResponse, StreamChunk, MODELS } from './AIRouter.js';
+export { chatService, ChatMessage, ChatOptions, ChatResult } from './ChatService.js';
 export { contextManager } from './ContextManager.js';
-export { streamingService } from './StreamingService.js';
-export { chatService } from './ChatService.js';
-export { visionService } from './VisionService.js';
+
+// Vision & OCR Services
+export { visionService, VisionResult, VisionOptions } from './VisionService.js';
+export { ocrService, OCRResult, OCROptions } from './OCRService.js';

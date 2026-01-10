@@ -1,280 +1,214 @@
-# 🗣️ BaatCheet
+# 🗣️ BaatCheet - Advanced AI Chat Application
 
-**BaatCheet** (باتچیت - "Conversation" in Urdu) is an advanced, free AI chat application that rivals ChatGPT. Built with modern technologies and designed for scalability, it supports multiple AI providers with intelligent failover.
+<p align="center">
+  <img src="BaatCheetLogo.jpg" alt="BaatCheet Logo" width="200"/>
+</p>
 
-![BaatCheet Logo](BaatCheetLogo.jpg)
+> A powerful, free ChatGPT alternative with multi-provider AI support, OCR capabilities, and enterprise features.
 
 ## ✨ Features
 
-### Core Features
-- 🤖 **Multiple AI Providers** - Groq, Together AI, DeepSeek with automatic failover
-- 🔄 **10 Groq API Keys** - Intelligent round-robin rotation with 14,400 requests/day each
-- 📡 **Real-time Streaming** - Server-Sent Events for instant responses
-- 💾 **Context Management** - Redis caching with PostgreSQL persistence
-- 🔐 **JWT Authentication** - Secure user authentication
-- 🌍 **Multi-language Support** - English and Urdu
+### 🤖 Multi-Provider AI System
+- **Groq** - Primary chat provider (14 keys, 201,600 req/day)
+- **OpenRouter** - Access to 100+ models (12 keys)
+- **DeepSeek** - Backup chat provider (4 keys)
+- **Google Gemini** - Vision and multimodal (3 keys)
+- **Hugging Face** - Image captioning (5 keys)
+- **OCR.space** - Text extraction (6 keys)
 
-### Technical Highlights
-- TypeScript with strict mode
-- Clean Architecture with SOLID principles
-- Rate limiting and security headers
-- Comprehensive error handling
-- Winston logging
+### 📸 Vision & OCR
+- Extract text from images (60+ languages)
+- Analyze and describe images
+- Process documents and receipts
+- Urdu/English language support
+
+### 💬 Chat Features
+- Real-time streaming responses (SSE)
+- Conversation history & context
+- Multiple AI model selection
+- Custom system prompts
+
+### 🔒 Security
+- JWT authentication
+- Rate limiting
+- Input validation (Zod)
+- Helmet security headers
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- Redis (optional, for caching)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Sharjeel-Saleem-06/BaatCheet.git
+cd BaatCheet
+
+# Backend setup
+cd backend
+cp env.example .env
+npm install
+npx prisma generate
+npx prisma db push
+
+# Start the server
+npm run dev
+```
+
+### Environment Setup
+
+Create a `.env` file in the backend directory:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/baatcheet
+
+# Auth
+JWT_SECRET=your-secret-key
+
+# AI Providers (add your keys)
+GROQ_API_KEY_1=gsk_...
+OPENROUTER_API_KEY_1=sk-or-...
+GEMINI_API_KEY_1=AIza...
+OCR_SPACE_API_KEY_1=K...
+```
+
+## 📖 API Documentation
+
+### Chat Endpoints
+
+```
+POST /api/v1/chat/completions    - Send chat message
+POST /api/v1/chat/regenerate     - Regenerate response
+GET  /api/v1/chat/models         - List available models
+GET  /api/v1/chat/providers/health - Provider status
+```
+
+### Vision & OCR Endpoints
+
+```
+POST /api/v1/chat/vision/analyze - Analyze image
+POST /api/v1/chat/ocr/extract    - Extract text (OCR)
+POST /api/v1/chat/ocr/process    - OCR + AI processing
+```
+
+### Auth Endpoints
+
+```
+POST /api/v1/auth/register - Create account
+POST /api/v1/auth/login    - Login
+GET  /api/v1/auth/me       - Get current user
+```
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        BaatCheet Backend                        │
+│                        BaatCheet Backend                         │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │   Express    │    │   AI Router  │    │   Streaming  │      │
-│  │   Server     │───▶│   Service    │───▶│   Service    │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│         │                   │                   │               │
-│         ▼                   ▼                   ▼               │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │  PostgreSQL  │    │    Redis     │    │   Context    │      │
-│  │   (Prisma)   │    │   (Cache)    │    │   Manager    │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│                                                                 │
+│  Routes → Services → Provider Manager → AI Providers            │
+│                                                                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │   Chat   │  │  Vision  │  │   OCR    │  │   Auth   │        │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
+│                       │                                          │
+│                       ▼                                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Provider Manager (44 keys)                  │   │
+│  │  Groq • OpenRouter • DeepSeek • Gemini • HF • OCR.space │   │
+│  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+## 📊 Provider Capacity
+
+| Provider | Keys | Daily Limit | Total Capacity |
+|----------|------|-------------|----------------|
+| Groq | 14 | 14,400/key | 201,600 |
+| OpenRouter | 12 | 200/key | 2,400 |
+| DeepSeek | 4 | 1,000/key | 4,000 |
+| Gemini | 3 | 1,500/key | 4,500 |
+| Hugging Face | 5 | 1,000/key | 5,000 |
+| OCR.space | 6 | 500/key | 3,000 |
+| **TOTAL** | **44** | - | **220,500/day** |
 
 ## 📁 Project Structure
 
 ```
-baatcheet/
+BaatCheet/
 ├── backend/
 │   ├── src/
-│   │   ├── config/          # Configuration files
-│   │   ├── middleware/      # Express middleware
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic
-│   │   ├── types/           # TypeScript types
-│   │   ├── utils/           # Utility functions
-│   │   └── index.ts         # Entry point
-│   ├── prisma/
-│   │   └── schema.prisma    # Database schema
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/                 # React frontend (testing)
+│   │   ├── config/       # Configuration
+│   │   ├── middleware/   # Auth, validation, rate limiting
+│   │   ├── routes/       # API endpoints
+│   │   ├── services/     # Business logic
+│   │   │   ├── AIRouter.ts        # Chat routing
+│   │   │   ├── ChatService.ts     # Chat handling
+│   │   │   ├── ContextManager.ts  # Conversation context
+│   │   │   ├── OCRService.ts      # OCR processing
+│   │   │   ├── ProviderManager.ts # Key management
+│   │   │   └── VisionService.ts   # Image analysis
+│   │   ├── types/        # TypeScript types
+│   │   └── utils/        # Utilities
+│   ├── prisma/           # Database schema
+│   └── package.json
+├── frontend/             # React frontend (coming soon)
+├── resources/            # Documentation
+│   ├── API_KEYS_GUIDE.md
+│   ├── API_KEY_MECHANISM.md
+│   ├── DATABASE_GUIDE.md
+│   └── PRISMA_GUIDE.md
 └── README.md
 ```
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- PostgreSQL 14+
-- Redis (optional, for caching)
-- Groq API Key(s)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Sharjeel-Saleem-06/BaatCheet.git
-   cd BaatCheet
-   ```
-
-2. **Setup Backend**
-   ```bash
-   cd backend
-   npm install
-   ```
-
-3. **Configure Environment**
-   ```bash
-   cp env.example .env
-   # Edit .env with your database credentials and API keys
-   ```
-
-4. **Setup Database**
-   ```bash
-   # Create PostgreSQL database
-   psql postgres -c "CREATE DATABASE baatcheet;"
-   
-   # Run Prisma migrations
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-The server will start at `http://localhost:5001`
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```env
-# Server
-PORT=5001
-NODE_ENV=development
-
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/baatcheet"
-
-# Redis (optional)
-REDIS_URL=redis://localhost:6379
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRES_IN=7d
-
-# Groq API Keys (up to 10)
-GROQ_API_KEY_1=gsk_xxx
-GROQ_API_KEY_2=gsk_xxx
-# ... up to GROQ_API_KEY_10
-
-# Fallback Providers
-TOGETHER_API_KEY=xxx
-DEEPSEEK_API_KEY=xxx
-```
-
-## 📚 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register new user |
-| POST | `/api/v1/auth/login` | User login |
-| POST | `/api/v1/auth/logout` | User logout |
-| GET | `/api/v1/auth/me` | Get current user |
-
-### Chat
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/chat/completions` | Send message (streaming) |
-| POST | `/api/v1/chat/regenerate` | Regenerate response |
-| GET | `/api/v1/chat/models` | List AI models |
-| GET | `/api/v1/chat/providers/health` | Provider status |
-
-### Conversations
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/conversations` | List conversations |
-| POST | `/api/v1/conversations` | Create conversation |
-| GET | `/api/v1/conversations/:id` | Get conversation |
-| PUT | `/api/v1/conversations/:id` | Update conversation |
-| DELETE | `/api/v1/conversations/:id` | Delete conversation |
-
-### Projects
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/projects` | List projects |
-| POST | `/api/v1/projects` | Create project |
-| GET | `/api/v1/projects/:id` | Get project |
-| PUT | `/api/v1/projects/:id` | Update project |
-| DELETE | `/api/v1/projects/:id` | Delete project |
-
-## 🔑 AI Provider Rotation
-
-BaatCheet implements intelligent API key rotation:
-
-1. **Round-Robin Selection** - Keys are used in rotation
-2. **Daily Limits** - Each key has 14,400 requests/day limit
-3. **Automatic Failover** - When Groq is exhausted:
-   - Groq → Together AI → DeepSeek → Puter.js
-4. **Midnight Reset** - Counters reset at UTC midnight
-
-## 🛡️ Security Features
-
-- 🔐 JWT Authentication
-- 🚦 Rate Limiting (100 req/15min)
-- 🛡️ Helmet security headers
-- ✅ Zod input validation
-- 🔒 CORS configuration
-- 🔑 Bcrypt password hashing
-
-## 📊 Database Schema
-
-```prisma
-model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  name          String
-  preferences   Json
-  conversations Conversation[]
-  projects      Project[]
-}
-
-model Conversation {
-  id           String    @id @default(uuid())
-  userId       String
-  title        String
-  systemPrompt String?
-  model        String
-  messages     Message[]
-}
-
-model Message {
-  id             String   @id @default(uuid())
-  conversationId String
-  role           Role     // system, user, assistant
-  content        String
-  tokens         Int
-}
-```
-
-## 🧪 Testing
+## 🔧 Development
 
 ```bash
-# Health check
-curl http://localhost:5001/health
+# Run in development mode
+npm run dev
 
-# Register
-curl -X POST http://localhost:5001/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123","name":"Test"}'
+# Build for production
+npm run build
 
-# Login
-curl -X POST http://localhost:5001/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123"}'
+# Run tests
+npm test
+
+# Database commands
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema to database
+npm run db:studio    # Open Prisma Studio
 ```
 
-## 🚧 Development Roadmap
+## 📚 Documentation
 
-- [x] Phase 1: Backend Foundation
-  - [x] PostgreSQL + Prisma setup
-  - [x] Authentication system
-  - [x] AI Router with key rotation
-  - [x] Streaming service
-  - [x] REST API endpoints
+See the `resources/` folder for detailed guides:
 
-- [ ] Phase 2: Enhanced Features
-  - [ ] Image analysis (OCR, Vision)
-  - [ ] Voice input support
-  - [ ] Export conversations
-  - [ ] Custom prompts library
-
-- [ ] Phase 3: Frontend
-  - [ ] React UI with Tailwind
-  - [ ] Dark/Light theme
-  - [ ] Mobile responsive
-  - [ ] PWA support
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details.
+- [API Keys Guide](resources/API_KEYS_GUIDE.md) - How to obtain API keys
+- [API Key Mechanism](resources/API_KEY_MECHANISM.md) - How the key system works
+- [Database Guide](resources/DATABASE_GUIDE.md) - PostgreSQL setup
+- [Prisma Guide](resources/PRISMA_GUIDE.md) - ORM documentation
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our contributing guidelines first.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing`)
+5. Open a Pull Request
 
-## 📧 Contact
+## 📄 License
 
-- **Author**: Sharjeel Saleem
-- **GitHub**: [@Sharjeel-Saleem-06](https://github.com/Sharjeel-Saleem-06)
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 👨‍💻 Author
+
+**Sharjeel Saleem**
+- GitHub: [@Sharjeel-Saleem-06](https://github.com/Sharjeel-Saleem-06)
 
 ---
 
-<p align="center">Made with ❤️ for the open-source community</p>
+<p align="center">Made with ❤️ in Pakistan</p>

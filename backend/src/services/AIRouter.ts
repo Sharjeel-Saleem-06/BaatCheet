@@ -1,363 +1,576 @@
+/**
+ * AI Router Service
+ * Intelligent routing of chat requests to AI providers with
+ * automatic failover, load balancing, and streaming support.
+ * 
+ * @module AIRouter
+ */
+
 import Groq from 'groq-sdk';
 import axios from 'axios';
-import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
-import { providerManager, ProviderType, TaskType } from './ProviderManager.js';
-import { AIProvider, AIProviderStatus } from '../types/index.js';
+import { providerManager, ProviderType } from './ProviderManager.js';
+import { config } from '../config/index.js';
 
 // ============================================
-// AI Router Service
-// Routes requests to the best available provider
+// Types
 // ============================================
 
-interface ChatMessage {
+export interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-interface ChatCompletionOptions {
+export interface ChatRequest {
+  messages: Message[];
   model?: string;
   maxTokens?: number;
   temperature?: number;
   stream?: boolean;
 }
 
+export interface ChatResponse {
+  success: boolean;
+  content: string;
+  model: string;
+  provider: ProviderType | 'unknown';
+  tokens?: {
+    prompt: number;
+    completion: number;
+    total: number;
+  };
+  error?: string;
+  processingTime?: number;
+}
+
+export interface StreamChunk {
+  content: string;
+  done: boolean;
+  model?: string;
+  provider?: ProviderType;
+}
+
+// ============================================
+// Model Configuration
+// ============================================
+
+export const MODELS = {
+  groq: [
+    { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', context: 131072, isDefault: true },
+    { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant', context: 8192 },
+    { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', context: 32768 },
+    { id: 'gemma2-9b-it', name: 'Gemma 2 9B', context: 8192 },
+  ],
+  openrouter: [
+    { id: 'meta-llama/llama-3.1-70b-instruct:free', name: 'Llama 3.1 70B (Free)', context: 131072, isDefault: true },
+    { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free)', context: 1000000 },
+    { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Free)', context: 32768 },
+  ],
+  deepseek: [
+    { id: 'deepseek-chat', name: 'DeepSeek Chat', context: 32768, isDefault: true },
+    { id: 'deepseek-coder', name: 'DeepSeek Coder', context: 16384 },
+  ],
+  gemini: [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', context: 1000000, isDefault: true },
+    { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', context: 1000000 },
+  ],
+};
+
+// ============================================
+// AI Router Class
+// ============================================
+
 class AIRouterService {
   /**
-   * Get Groq client with next available key
+   * Send a chat completion request with automatic failover
    */
-  public async getGroqClient(): Promise<{ client: Groq; keyIndex: number } | null> {
-    const keyData = providerManager.getNextKey('groq');
-    if (!keyData) {
-      return null;
+  public async chat(request: ChatRequest): Promise<ChatResponse> {
+    const startTime = Date.now();
+    const providers: ProviderType[] = ['groq', 'openrouter', 'deepseek', 'gemini'];
+
+    for (const provider of providers) {
+      if (!providerManager.hasCapacity(provider)) {
+        logger.debug(`${provider} has no capacity, trying next...`);
+        continue;
+      }
+
+      try {
+        let response: ChatResponse;
+
+        switch (provider) {
+          case 'groq':
+            response = await this.groqChat(request);
+            break;
+          case 'openrouter':
+            response = await this.openRouterChat(request);
+            break;
+          case 'deepseek':
+            response = await this.deepSeekChat(request);
+            break;
+          case 'gemini':
+            response = await this.geminiChat(request);
+            break;
+          default:
+            continue;
+        }
+
+        if (response.success) {
+          response.processingTime = Date.now() - startTime;
+          return response;
+        }
+      } catch (error) {
+        logger.warn(`Chat with ${provider} failed:`, error);
+        continue;
+      }
     }
 
     return {
-      client: new Groq({ apiKey: keyData.key }),
-      keyIndex: keyData.index,
+      success: false,
+      content: '',
+      model: 'unknown',
+      provider: 'unknown',
+      error: 'All AI providers are currently unavailable. Please try again later.',
+      processingTime: Date.now() - startTime,
     };
   }
 
   /**
-   * Get the best provider for chat
+   * Stream a chat completion with automatic failover
    */
-  public getCurrentProvider(): AIProvider {
-    const provider = providerManager.getBestProviderForTask('chat');
-    
-    if (!provider) {
-      logger.warn('⚠️ No chat providers available, using fallback');
-      return 'puter';
-    }
+  public async *chatStream(request: ChatRequest): AsyncGenerator<StreamChunk> {
+    const providers: ProviderType[] = ['groq', 'openrouter', 'deepseek'];
 
-    return provider as AIProvider;
-  }
-
-  /**
-   * Make chat completion request with automatic failover
-   */
-  public async chatCompletion(
-    messages: ChatMessage[],
-    options: ChatCompletionOptions = {}
-  ): Promise<{ content: string; provider: ProviderType; model: string }> {
-    const providers: ProviderType[] = ['groq', 'openrouter', 'deepseek', 'gemini'];
-    
     for (const provider of providers) {
       if (!providerManager.hasCapacity(provider)) {
         continue;
       }
 
       try {
-        const result = await this.callProvider(provider, messages, options);
-        return { ...result, provider };
+        switch (provider) {
+          case 'groq':
+            yield* this.groqStream(request);
+            return;
+          case 'openrouter':
+            yield* this.openRouterStream(request);
+            return;
+          case 'deepseek':
+            yield* this.deepSeekStream(request);
+            return;
+        }
       } catch (error) {
-        logger.warn(`${provider} failed, trying next provider...`);
+        logger.warn(`Stream with ${provider} failed:`, error);
         continue;
       }
     }
 
-    throw new Error('All AI providers exhausted. Please try again later.');
+    yield {
+      content: 'All AI providers are currently unavailable. Please try again later.',
+      done: true,
+    };
   }
 
   /**
-   * Call a specific provider
+   * Groq chat completion
    */
-  private async callProvider(
-    provider: ProviderType,
-    messages: ChatMessage[],
-    options: ChatCompletionOptions
-  ): Promise<{ content: string; model: string }> {
-    const keyData = providerManager.getNextKey(provider);
-    if (!keyData) {
-      throw new Error(`No keys available for ${provider}`);
-    }
+  private async groqChat(request: ChatRequest): Promise<ChatResponse> {
+    const keyData = providerManager.getNextKey('groq');
+    if (!keyData) throw new Error('No Groq keys available');
 
     try {
-      let result: { content: string; model: string };
+      const groq = new Groq({ apiKey: keyData.key });
+      const model = request.model || 'llama-3.3-70b-versatile';
 
-      switch (provider) {
-        case 'groq':
-          result = await this.callGroq(keyData.key, messages, options);
-          break;
-        case 'openrouter':
-          result = await this.callOpenRouter(keyData.key, messages, options);
-          break;
-        case 'deepseek':
-          result = await this.callDeepSeek(keyData.key, messages, options);
-          break;
-        case 'gemini':
-          result = await this.callGemini(keyData.key, messages, options);
-          break;
-        default:
-          throw new Error(`Unknown provider: ${provider}`);
-      }
+      const completion = await groq.chat.completions.create({
+        model,
+        messages: request.messages,
+        max_tokens: request.maxTokens || config.ai.maxTokens,
+        temperature: request.temperature || 0.7,
+      });
 
-      providerManager.markKeySuccess(provider, keyData.index);
-      return result;
+      providerManager.markKeySuccess('groq', keyData.index);
+
+      return {
+        success: true,
+        content: completion.choices[0]?.message?.content || '',
+        model,
+        provider: 'groq',
+        tokens: {
+          prompt: completion.usage?.prompt_tokens || 0,
+          completion: completion.usage?.completion_tokens || 0,
+          total: completion.usage?.total_tokens || 0,
+        },
+      };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429') || errorMessage.includes('quota');
-      
-      providerManager.markKeyError(provider, keyData.index, errorMessage, isRateLimit);
+      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+      providerManager.markKeyError('groq', keyData.index, errorMessage, isRateLimit);
       throw error;
     }
   }
 
   /**
-   * Call Groq API
+   * Groq streaming
    */
-  private async callGroq(
-    apiKey: string,
-    messages: ChatMessage[],
-    options: ChatCompletionOptions
-  ): Promise<{ content: string; model: string }> {
-    const groq = new Groq({ apiKey });
-    const model = options.model || 'llama-3.3-70b-versatile';
+  private async *groqStream(request: ChatRequest): AsyncGenerator<StreamChunk> {
+    const keyData = providerManager.getNextKey('groq');
+    if (!keyData) throw new Error('No Groq keys available');
 
-    const response = await groq.chat.completions.create({
-      model,
-      messages,
-      max_tokens: options.maxTokens || 4096,
-      temperature: options.temperature || 0.7,
-    });
+    try {
+      const groq = new Groq({ apiKey: keyData.key });
+      const model = request.model || 'llama-3.3-70b-versatile';
 
-    return {
-      content: response.choices[0]?.message?.content || '',
-      model,
-    };
-  }
-
-  /**
-   * Call OpenRouter API
-   */
-  private async callOpenRouter(
-    apiKey: string,
-    messages: ChatMessage[],
-    options: ChatCompletionOptions
-  ): Promise<{ content: string; model: string }> {
-    const model = options.model || 'meta-llama/llama-3.2-3b-instruct:free';
-
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
+      const stream = await groq.chat.completions.create({
         model,
-        messages,
-        max_tokens: options.maxTokens || 4096,
-        temperature: options.temperature || 0.7,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://baatcheet.app',
-          'X-Title': 'BaatCheet',
-        },
-      }
-    );
-
-    return {
-      content: response.data.choices[0]?.message?.content || '',
-      model,
-    };
-  }
-
-  /**
-   * Call DeepSeek API
-   */
-  private async callDeepSeek(
-    apiKey: string,
-    messages: ChatMessage[],
-    options: ChatCompletionOptions
-  ): Promise<{ content: string; model: string }> {
-    const model = options.model || 'deepseek-chat';
-
-    const response = await axios.post(
-      'https://api.deepseek.com/v1/chat/completions',
-      {
-        model,
-        messages,
-        max_tokens: options.maxTokens || 4096,
-        temperature: options.temperature || 0.7,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    return {
-      content: response.data.choices[0]?.message?.content || '',
-      model,
-    };
-  }
-
-  /**
-   * Call Gemini API
-   */
-  private async callGemini(
-    apiKey: string,
-    messages: ChatMessage[],
-    options: ChatCompletionOptions
-  ): Promise<{ content: string; model: string }> {
-    const model = 'gemini-2.5-flash';
-
-    // Convert messages to Gemini format
-    const contents = messages
-      .filter(m => m.role !== 'system')
-      .map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-      }));
-
-    // Add system instruction if present
-    const systemMessage = messages.find(m => m.role === 'system');
-
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        contents,
-        systemInstruction: systemMessage ? { parts: [{ text: systemMessage.content }] } : undefined,
-        generationConfig: {
-          maxOutputTokens: options.maxTokens || 4096,
-          temperature: options.temperature || 0.7,
-        },
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    const content = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    return { content, model };
-  }
-
-  /**
-   * Create streaming chat completion (Groq only for now)
-   */
-  public async createStreamingCompletion(
-    messages: ChatMessage[],
-    model: string = 'llama-3.3-70b-versatile'
-  ): Promise<{ stream: AsyncIterable<{ choices: Array<{ delta: { content?: string | null } }> }>; keyIndex: number; provider: ProviderType } | null> {
-    // Try Groq first (best streaming support)
-    const groqResult = await this.getGroqClient();
-    if (groqResult) {
-      const stream = await groqResult.client.chat.completions.create({
-        model,
-        messages,
+        messages: request.messages,
+        max_tokens: request.maxTokens || config.ai.maxTokens,
+        temperature: request.temperature || 0.7,
         stream: true,
-        max_tokens: 4096,
-        temperature: 0.7,
       });
 
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          yield { content, done: false, model, provider: 'groq' };
+        }
+      }
+
+      yield { content: '', done: true, model, provider: 'groq' };
+      providerManager.markKeySuccess('groq', keyData.index);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      providerManager.markKeyError('groq', keyData.index, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * OpenRouter chat completion
+   */
+  private async openRouterChat(request: ChatRequest): Promise<ChatResponse> {
+    const keyData = providerManager.getNextKey('openrouter');
+    if (!keyData) throw new Error('No OpenRouter keys available');
+
+    try {
+      const model = request.model || 'meta-llama/llama-3.1-70b-instruct:free';
+
+      const response = await axios.post(
+        `${config.urls.openRouter}/chat/completions`,
+        {
+          model,
+          messages: request.messages,
+          max_tokens: request.maxTokens || config.ai.maxTokens,
+          temperature: request.temperature || 0.7,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${keyData.key}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://baatcheet.app',
+            'X-Title': 'BaatCheet',
+          },
+          timeout: 60000,
+        }
+      );
+
+      providerManager.markKeySuccess('openrouter', keyData.index);
+
       return {
-        stream,
-        keyIndex: groqResult.keyIndex,
-        provider: 'groq',
+        success: true,
+        content: response.data.choices?.[0]?.message?.content || '',
+        model,
+        provider: 'openrouter',
+        tokens: {
+          prompt: response.data.usage?.prompt_tokens || 0,
+          completion: response.data.usage?.completion_tokens || 0,
+          total: response.data.usage?.total_tokens || 0,
+        },
       };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+      providerManager.markKeyError('openrouter', keyData.index, errorMessage, isRateLimit);
+      throw error;
     }
-
-    // Fallback to OpenRouter streaming
-    const openRouterKey = providerManager.getNextKey('openrouter');
-    if (openRouterKey) {
-      // OpenRouter also supports streaming via SSE
-      // For now, return null and let ChatService handle non-streaming fallback
-      logger.warn('Groq unavailable, falling back to non-streaming response');
-    }
-
-    return null;
   }
 
   /**
-   * Mark a Groq key as rate limited
+   * OpenRouter streaming
    */
-  public markKeyRateLimited(keyIndex: number, error?: string): void {
-    providerManager.markKeyError('groq', keyIndex, error || 'Rate limited', true);
+  private async *openRouterStream(request: ChatRequest): AsyncGenerator<StreamChunk> {
+    const keyData = providerManager.getNextKey('openrouter');
+    if (!keyData) throw new Error('No OpenRouter keys available');
+
+    try {
+      const model = request.model || 'meta-llama/llama-3.1-70b-instruct:free';
+
+      const response = await axios.post(
+        `${config.urls.openRouter}/chat/completions`,
+        {
+          model,
+          messages: request.messages,
+          max_tokens: request.maxTokens || config.ai.maxTokens,
+          temperature: request.temperature || 0.7,
+          stream: true,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${keyData.key}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://baatcheet.app',
+          },
+          responseType: 'stream',
+          timeout: 60000,
+        }
+      );
+
+      let buffer = '';
+      
+      for await (const chunk of response.data) {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              yield { content: '', done: true, model, provider: 'openrouter' };
+              providerManager.markKeySuccess('openrouter', keyData.index);
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                yield { content, done: false, model, provider: 'openrouter' };
+              }
+            } catch {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      providerManager.markKeyError('openrouter', keyData.index, errorMessage);
+      throw error;
+    }
   }
 
   /**
-   * Mark a Groq key as having an error
+   * DeepSeek chat completion
    */
-  public markKeyError(keyIndex: number, error: string): void {
-    providerManager.markKeyError('groq', keyIndex, error, false);
+  private async deepSeekChat(request: ChatRequest): Promise<ChatResponse> {
+    const keyData = providerManager.getNextKey('deepseek');
+    if (!keyData) throw new Error('No DeepSeek keys available');
+
+    try {
+      const model = request.model || 'deepseek-chat';
+
+      const response = await axios.post(
+        `${config.urls.deepSeek}/chat/completions`,
+        {
+          model,
+          messages: request.messages,
+          max_tokens: request.maxTokens || config.ai.maxTokens,
+          temperature: request.temperature || 0.7,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${keyData.key}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 60000,
+        }
+      );
+
+      providerManager.markKeySuccess('deepseek', keyData.index);
+
+      return {
+        success: true,
+        content: response.data.choices?.[0]?.message?.content || '',
+        model,
+        provider: 'deepseek',
+        tokens: {
+          prompt: response.data.usage?.prompt_tokens || 0,
+          completion: response.data.usage?.completion_tokens || 0,
+          total: response.data.usage?.total_tokens || 0,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+      providerManager.markKeyError('deepseek', keyData.index, errorMessage, isRateLimit);
+      throw error;
+    }
+  }
+
+  /**
+   * DeepSeek streaming
+   */
+  private async *deepSeekStream(request: ChatRequest): AsyncGenerator<StreamChunk> {
+    const keyData = providerManager.getNextKey('deepseek');
+    if (!keyData) throw new Error('No DeepSeek keys available');
+
+    try {
+      const model = request.model || 'deepseek-chat';
+
+      const response = await axios.post(
+        `${config.urls.deepSeek}/chat/completions`,
+        {
+          model,
+          messages: request.messages,
+          max_tokens: request.maxTokens || config.ai.maxTokens,
+          temperature: request.temperature || 0.7,
+          stream: true,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${keyData.key}`,
+            'Content-Type': 'application/json',
+          },
+          responseType: 'stream',
+          timeout: 60000,
+        }
+      );
+
+      let buffer = '';
+      
+      for await (const chunk of response.data) {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              yield { content: '', done: true, model, provider: 'deepseek' };
+              providerManager.markKeySuccess('deepseek', keyData.index);
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                yield { content, done: false, model, provider: 'deepseek' };
+              }
+            } catch {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      providerManager.markKeyError('deepseek', keyData.index, errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * Gemini chat completion
+   */
+  private async geminiChat(request: ChatRequest): Promise<ChatResponse> {
+    const keyData = providerManager.getNextKey('gemini');
+    if (!keyData) throw new Error('No Gemini keys available');
+
+    try {
+      const model = request.model || 'gemini-2.5-flash';
+
+      // Convert messages to Gemini format
+      const contents = request.messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        }));
+
+      // Add system instruction if present
+      const systemMessage = request.messages.find(m => m.role === 'system');
+      
+      const response = await axios.post(
+        `${config.urls.gemini}/models/${model}:generateContent?key=${keyData.key}`,
+        {
+          contents,
+          systemInstruction: systemMessage ? { parts: [{ text: systemMessage.content }] } : undefined,
+          generationConfig: {
+            maxOutputTokens: request.maxTokens || config.ai.maxTokens,
+            temperature: request.temperature || 0.7,
+          },
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 60000,
+        }
+      );
+
+      providerManager.markKeySuccess('gemini', keyData.index);
+
+      return {
+        success: true,
+        content: response.data.candidates?.[0]?.content?.parts?.[0]?.text || '',
+        model,
+        provider: 'gemini',
+        tokens: {
+          prompt: response.data.usageMetadata?.promptTokenCount || 0,
+          completion: response.data.usageMetadata?.candidatesTokenCount || 0,
+          total: response.data.usageMetadata?.totalTokenCount || 0,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+      providerManager.markKeyError('gemini', keyData.index, errorMessage, isRateLimit);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all available models
+   */
+  public getAvailableModels(): Array<{
+    id: string;
+    name: string;
+    provider: ProviderType;
+    context: number;
+    available: boolean;
+  }> {
+    const models: Array<{
+      id: string;
+      name: string;
+      provider: ProviderType;
+      context: number;
+      available: boolean;
+    }> = [];
+
+    for (const [provider, providerModels] of Object.entries(MODELS)) {
+      const hasCapacity = providerManager.hasCapacity(provider as ProviderType);
+      for (const model of providerModels) {
+        models.push({
+          id: model.id,
+          name: model.name,
+          provider: provider as ProviderType,
+          context: model.context,
+          available: hasCapacity,
+        });
+      }
+    }
+
+    return models;
   }
 
   /**
    * Get health status of all providers
    */
-  public getProvidersHealth(): AIProviderStatus[] {
-    const health = providerManager.getHealthStatus();
-    
-    return Object.entries(health).map(([provider, status]) => ({
-      provider: provider as AIProvider,
-      isAvailable: status.available,
-      availableKeys: status.availableKeys,
-      totalKeys: status.totalKeys,
-      lastChecked: new Date(),
-    }));
-  }
-
-  /**
-   * Get detailed usage statistics
-   */
-  public getUsageStats(): {
-    totalRequests: number;
-    availableKeys: number;
-    exhaustedKeys: number;
-    keyDetails: Array<{
-      index: number;
-      requests: number;
-      limit: number;
-      available: boolean;
-    }>;
-    byProvider: Record<string, { used: number; capacity: number }>;
-  } {
-    const health = providerManager.getHealthStatus();
-    const groqDetails = providerManager.getKeyDetails('groq');
-    
-    let totalRequests = 0;
-    let availableKeys = 0;
-    let exhaustedKeys = 0;
-    const byProvider: Record<string, { used: number; capacity: number }> = {};
-
-    Object.entries(health).forEach(([provider, status]) => {
-      totalRequests += status.usedToday;
-      availableKeys += status.availableKeys;
-      exhaustedKeys += status.totalKeys - status.availableKeys;
-      byProvider[provider] = {
-        used: status.usedToday,
-        capacity: status.totalCapacity,
-      };
-    });
-
+  public getHealth(): Record<ProviderType, boolean> {
     return {
-      totalRequests,
-      availableKeys,
-      exhaustedKeys,
-      keyDetails: groqDetails,
-      byProvider,
+      groq: providerManager.hasCapacity('groq'),
+      openrouter: providerManager.hasCapacity('openrouter'),
+      deepseek: providerManager.hasCapacity('deepseek'),
+      huggingface: providerManager.hasCapacity('huggingface'),
+      gemini: providerManager.hasCapacity('gemini'),
+      ocrspace: providerManager.hasCapacity('ocrspace'),
     };
   }
 }

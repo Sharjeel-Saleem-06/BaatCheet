@@ -1,3 +1,10 @@
+/**
+ * BaatCheet Backend Server
+ * Advanced AI Chat Application with Multi-Provider Support
+ * 
+ * @module Server
+ */
+
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -6,37 +13,39 @@ import { connectPostgreSQL, connectRedis, disconnectDatabases } from './config/d
 import { logger } from './utils/logger.js';
 import { errorHandler, notFoundHandler, apiLimiter } from './middleware/index.js';
 import routes from './routes/index.js';
+import { providerManager } from './services/ProviderManager.js';
 
 // ============================================
-// BaatCheet Backend Server
-// Advanced AI Chat Application
+// Initialize Express Application
 // ============================================
 
 const app: Application = express();
 
 // ============================================
-// Middleware
+// Middleware Configuration
 // ============================================
 
 // Security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // CORS configuration
 app.use(
   cors({
     origin:
-      config.nodeEnv === 'production'
+      config.server.nodeEnv === 'production'
         ? ['https://baatcheet.app']
-        : ['http://localhost:3000', 'http://localhost:5173'],
+        : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true,
   })
 );
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing with increased limit for images
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Rate limiting (apply to all API routes)
+// Rate limiting
 app.use('/api/', apiLimiter);
 
 // ============================================
@@ -45,12 +54,20 @@ app.use('/api/', apiLimiter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
+  const summary = providerManager.getSummary();
+  
   res.json({
     success: true,
     message: 'BaatCheet API is running',
     timestamp: new Date().toISOString(),
-    environment: config.nodeEnv,
+    environment: config.server.nodeEnv,
     version: '1.0.0',
+    providers: {
+      active: summary.activeProviders,
+      total: summary.totalProviders,
+      capacity: summary.totalCapacity,
+      used: summary.totalUsed,
+    },
   });
 });
 
@@ -76,24 +93,32 @@ const startServer = async (): Promise<void> => {
     // Connect to Redis (optional)
     await connectRedis();
 
+    // Get provider summary
+    const summary = providerManager.getSummary();
+
     // Start server
-    app.listen(config.port, () => {
+    app.listen(config.server.port, () => {
       logger.info(`
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║   🗣️  BaatCheet API Server v1.0.0                          ║
-║                                                            ║
-║   Environment: ${config.nodeEnv.padEnd(42)}║
-║   Port: ${config.port.toString().padEnd(49)}║
-║   PostgreSQL: Connected                                    ║
-║   Groq Keys: ${config.groqApiKeys.length.toString().padEnd(45)}║
-║                                                            ║
-║   API Base: http://localhost:${config.port}/api/v1              ║
-║   Health: http://localhost:${config.port}/health                ║
-║                                                            ║
-║   Ready to accept connections!                             ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║   🗣️  BaatCheet API Server v1.0.0                                 ║
+║                                                                   ║
+║   Environment: ${config.server.nodeEnv.padEnd(51)}║
+║   Port: ${config.server.port.toString().padEnd(58)}║
+║                                                                   ║
+║   ┌─────────────────────────────────────────────────────────────┐ ║
+║   │ PROVIDERS                                                   │ ║
+║   │ Active: ${summary.activeProviders}/${summary.totalProviders} providers                                        │ ║
+║   │ Keys: ${summary.totalKeys} total                                              │ ║
+║   │ Capacity: ${summary.totalCapacity.toLocaleString().padEnd(47)}│ ║
+║   └─────────────────────────────────────────────────────────────┘ ║
+║                                                                   ║
+║   API Base: http://localhost:${config.server.port}/api/v1                   ║
+║   Health: http://localhost:${config.server.port}/health                     ║
+║                                                                   ║
+║   ✅ Ready to accept connections!                                 ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
       `);
     });
   } catch (error) {
