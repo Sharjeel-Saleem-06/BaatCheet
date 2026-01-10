@@ -34,16 +34,22 @@ const app: Application = express();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Add unique request ID
-  const requestId = uuidv4();
+  const requestId = req.headers['x-request-id'] as string || uuidv4();
   req.headers['x-request-id'] = requestId;
   res.setHeader('X-Request-ID', requestId);
   
-  // Track response time
+  // Track response time (set before sending, not after)
   const startTime = Date.now();
-  res.on('finish', () => {
+  
+  // Override res.json to add response time header
+  const originalJson = res.json.bind(res);
+  res.json = function(body: any) {
     const duration = Date.now() - startTime;
-    res.setHeader('X-Response-Time', `${duration}ms`);
-  });
+    if (!res.headersSent) {
+      res.setHeader('X-Response-Time', `${duration}ms`);
+    }
+    return originalJson(body);
+  };
   
   next();
 });
@@ -226,7 +232,7 @@ const startServer = async (): Promise<void> => {
     const clerkConfigured = !!(config.clerk.publishableKey && config.clerk.secretKey);
 
     // Start server
-    app.listen(config.server.port, () => {
+    httpServer = app.listen(config.server.port, () => {
       logger.info(`
 ╔═══════════════════════════════════════════════════════════════════╗
 ║                                                                   ║
@@ -266,22 +272,48 @@ const startServer = async (): Promise<void> => {
 // Graceful Shutdown
 // ============================================
 
+let httpServer: ReturnType<typeof app.listen> | null = null;
+
 const gracefulShutdown = async (signal: string): Promise<void> => {
-  logger.info(`${signal} received. Shutting down gracefully...`);
+  logger.info(`${signal} received. Starting graceful shutdown...`);
 
-  // Stop accepting new requests
-  const server = app.listen();
-  server.close(() => {
-    logger.info('HTTP server closed');
-  });
+  // Set timeout for forced shutdown
+  const forceShutdownTimeout = setTimeout(() => {
+    logger.error('Forced shutdown after 30s timeout');
+    process.exit(1);
+  }, 30000);
 
-  // Wait for existing requests to finish (max 30 seconds)
-  await new Promise((resolve) => setTimeout(resolve, 30000));
+  try {
+    // Stop accepting new requests
+    if (httpServer) {
+      await new Promise<void>((resolve) => {
+        httpServer!.close(() => {
+          logger.info('HTTP server closed');
+          resolve();
+        });
+      });
+    }
 
-  await disconnectDatabases();
+    // Close job queues
+    try {
+      const { queueService } = await import('./services/QueueService.js');
+      await queueService.shutdown();
+      logger.info('Job queues closed');
+    } catch (error) {
+      logger.warn('Error closing job queues:', error);
+    }
 
-  logger.info('Server shut down complete');
-  process.exit(0);
+    // Disconnect databases
+    await disconnectDatabases();
+
+    clearTimeout(forceShutdownTimeout);
+    logger.info('Graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown:', error);
+    clearTimeout(forceShutdownTimeout);
+    process.exit(1);
+  }
 };
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

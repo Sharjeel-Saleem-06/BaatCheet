@@ -450,6 +450,36 @@ class ProviderManagerService {
   }
 
   /**
+   * Get health status for a specific provider
+   */
+  public getProviderHealth(providerName: string): {
+    available: boolean;
+    totalKeys: number;
+    availableKeys: number;
+    totalCapacity: number;
+    usedToday: number;
+    percentUsed: number;
+  } | null {
+    const state = this.providers.get(providerName as ProviderType);
+    if (!state) return null;
+
+    const totalKeys = state.keys.length;
+    const availableKeys = state.keys.filter(k => k.isAvailable).length;
+    const totalCapacity = totalKeys * state.dailyLimit;
+    const usedToday = state.keys.reduce((sum, k) => sum + k.requestCount, 0);
+    const percentUsed = totalCapacity > 0 ? Math.round((usedToday / totalCapacity) * 100) : 0;
+
+    return {
+      available: availableKeys > 0,
+      totalKeys,
+      availableKeys,
+      totalCapacity,
+      usedToday,
+      percentUsed,
+    };
+  }
+
+  /**
    * Get summary statistics
    */
   public getSummary(): {

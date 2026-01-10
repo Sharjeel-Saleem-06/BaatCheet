@@ -49,3 +49,10 @@ export {
   analyticsQueue,
   triggerWebhooks 
 } from './QueueService.js';
+
+// Cache Service (Redis)
+export { 
+  cacheService, 
+  CACHE_PREFIXES, 
+  CACHE_TTL 
+} from './CacheService.js';
