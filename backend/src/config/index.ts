@@ -3,15 +3,34 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Get all configured Groq API keys
+ * Get all configured Groq API keys (supports up to 20 keys)
  */
 const getGroqKeys = (): string[] => {
   const keys: string[] = [];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 20; i++) {
     const key = process.env[`GROQ_API_KEY_${i}`];
-    if (key && !key.startsWith('gsk_your_')) {
+    if (key && key.startsWith('gsk_')) {
       keys.push(key);
     }
+  }
+  return keys;
+};
+
+/**
+ * Get all configured DeepSeek API keys
+ */
+const getDeepSeekKeys = (): string[] => {
+  const keys: string[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const key = process.env[`DEEPSEEK_API_KEY_${i}`];
+    if (key && key.startsWith('sk-')) {
+      keys.push(key);
+    }
+  }
+  // Also check single key format
+  const singleKey = process.env.DEEPSEEK_API_KEY;
+  if (singleKey && singleKey.startsWith('sk-') && !keys.includes(singleKey)) {
+    keys.push(singleKey);
   }
   return keys;
 };
@@ -22,7 +41,7 @@ const getGroqKeys = (): string[] => {
 export const config = {
   // Server
   nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '5001', 10),
   apiVersion: process.env.API_VERSION || 'v1',
   
   // Database
@@ -35,8 +54,8 @@ export const config = {
   
   // AI Providers
   groqApiKeys: getGroqKeys(),
+  deepseekApiKeys: getDeepSeekKeys(),
   togetherApiKey: process.env.TOGETHER_API_KEY || '',
-  deepseekApiKey: process.env.DEEPSEEK_API_KEY || '',
   
   // OCR
   ocrSpaceApiKey: process.env.OCR_SPACE_API_KEY || '',

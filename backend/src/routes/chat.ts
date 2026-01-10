@@ -99,45 +99,48 @@ router.get('/providers/health', (_req: Request, res: Response): void => {
  */
 router.get('/models', (_req: Request, res: Response): void => {
   const models = [
+    // Llama 4 Models (Latest)
     {
-      id: 'llama-3.1-70b-versatile',
-      name: 'Llama 3.1 70B Versatile',
+      id: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      name: 'Llama 4 Scout 17B',
+      provider: 'groq',
+      description: 'Latest Llama 4 model, fast and efficient',
+      contextLength: 131072,
+      isDefault: false,
+    },
+    {
+      id: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+      name: 'Llama 4 Maverick 17B',
+      provider: 'groq',
+      description: 'Llama 4 with extended training',
+      contextLength: 131072,
+      isDefault: false,
+    },
+    // Llama 3.3 (Recommended)
+    {
+      id: 'llama-3.3-70b-versatile',
+      name: 'Llama 3.3 70B Versatile',
       provider: 'groq',
       description: 'Most capable model, best for complex tasks',
-      contextLength: 8192,
+      contextLength: 131072,
       isDefault: true,
     },
+    // Compound Model
     {
-      id: 'llama-3.1-8b-instant',
-      name: 'Llama 3.1 8B Instant',
+      id: 'groq/compound',
+      name: 'Groq Compound',
       provider: 'groq',
-      description: 'Fastest model for quick responses',
-      contextLength: 8192,
+      description: 'Multi-model compound AI system',
+      contextLength: 131072,
       isDefault: false,
     },
+    // DeepSeek
     {
-      id: 'llama-3.2-90b-vision-preview',
-      name: 'Llama 3.2 90B Vision',
-      provider: 'groq',
-      description: 'Vision-capable model for image analysis',
-      contextLength: 8192,
-      isDefault: false,
-      supportsVision: true,
-    },
-    {
-      id: 'mixtral-8x7b-32768',
-      name: 'Mixtral 8x7B',
-      provider: 'groq',
-      description: 'Mixture of experts with long context',
-      contextLength: 32768,
-      isDefault: false,
-    },
-    {
-      id: 'gemma2-9b-it',
-      name: 'Gemma 2 9B',
-      provider: 'groq',
-      description: 'Google Gemma model, efficient and fast',
-      contextLength: 8192,
+      id: 'deepseek-chat',
+      name: 'DeepSeek Chat',
+      provider: 'deepseek',
+      description: 'DeepSeek conversational model',
+      contextLength: 4096,
       isDefault: false,
     },
   ];
