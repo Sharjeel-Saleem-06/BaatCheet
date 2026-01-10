@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database.js';
-import { config } from '../config/index.js';
+import { jwtSecret } from '../config/index.js';
 import { authenticate, authLimiter, validate, schemas } from '../middleware/index.js';
 import { logger } from '../utils/logger.js';
 import { UserPreferences } from '../types/index.js';
@@ -75,7 +75,7 @@ router.post(
       // Generate token
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        config.jwtSecret,
+        jwtSecret,
         { expiresIn: '7d' }
       );
 
@@ -143,7 +143,7 @@ router.post(
       // Generate token
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        config.jwtSecret,
+        jwtSecret,
         { expiresIn: '7d' }
       );
 

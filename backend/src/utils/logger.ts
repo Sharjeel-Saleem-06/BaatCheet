@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { config } from '../config/index.js';
+import { logLevel } from '../config/index.js';
 import { mkdirSync } from 'fs';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
@@ -22,7 +22,7 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
  * Winston logger instance
  */
 export const logger = winston.createLogger({
-  level: config.logLevel,
+  level: logLevel,
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }),

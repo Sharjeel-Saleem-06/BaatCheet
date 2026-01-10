@@ -223,7 +223,7 @@ class ExportServiceClass {
         });
 
         const chunks: Buffer[] = [];
-        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => {
           const buffer = Buffer.concat(chunks);
           const filename = `${this.sanitizeFilename(data.title)}-${Date.now()}.pdf`;

@@ -14,6 +14,10 @@ import imageRoutes from './images.js';
 import exportRoutes from './export.js';
 import shareRoutes from './share.js';
 import templateRoutes from './templates.js';
+import audioRoutes from './audio.js';
+import analyticsRoutes from './analytics.js';
+import webhookRoutes from './webhooks.js';
+import apiKeyRoutes from './apikeys.js';
 
 const router = Router();
 
@@ -36,6 +40,9 @@ router.use('/projects', projectRoutes);
 // Images (upload, OCR, analysis)
 router.use('/images', imageRoutes);
 
+// Audio (voice input, transcription)
+router.use('/audio', audioRoutes);
+
 // Export (PDF, TXT, JSON, MD)
 router.use('/export', exportRoutes);
 
@@ -44,5 +51,14 @@ router.use('/share', shareRoutes);
 
 // Templates
 router.use('/templates', templateRoutes);
+
+// Analytics
+router.use('/analytics', analyticsRoutes);
+
+// Webhooks
+router.use('/webhooks', webhookRoutes);
+
+// API Keys
+router.use('/api-keys', apiKeyRoutes);
 
 export default router;

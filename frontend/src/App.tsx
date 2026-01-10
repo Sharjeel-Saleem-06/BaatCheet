@@ -1,69 +1,46 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import Login from './pages/Login'
-import Chat from './pages/Chat'
+/**
+ * BaatCheet Frontend App
+ * Testing interface for all backend APIs
+ */
 
-// Protected Route Component
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './store/auth';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Chat from './pages/Chat';
+import Projects from './pages/Projects';
+import Analytics from './pages/Analytics';
+import Settings from './pages/Settings';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-primary-700 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    )
-  }
-
+  const { isAuthenticated } = useAuthStore();
+  
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
-
-  return <>{children}</>
+  
+  return <>{children}</>;
 }
 
-function AppRoutes() {
-  const { isAuthenticated } = useAuth()
-
+export default function App() {
   return (
     <Routes>
-      <Route 
-        path="/login" 
-        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
-      />
+      <Route path="/login" element={<Login />} />
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Chat />
+            <Layout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<Chat />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="chat/:conversationId" element={<Chat />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="settings" element={<Settings />} />
+      </Route>
     </Routes>
-  )
+  );
 }
-
-function App() {
-  const [darkMode, setDarkMode] = useState(true)
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [darkMode])
-
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
-          <AppRoutes />
-        </div>
-      </AuthProvider>
-    </BrowserRouter>
-  )
-}
-
-export default App

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/index.js';
+import { jwtSecret } from '../config/index.js';
 import { AuthPayload } from '../types/index.js';
 
 // ============================================
@@ -27,7 +27,7 @@ export const authenticate = (
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, config.jwtSecret) as AuthPayload;
+    const decoded = jwt.verify(token, jwtSecret) as AuthPayload;
 
     req.user = decoded;
     next();
@@ -52,7 +52,7 @@ export const optionalAuth = (
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      const decoded = jwt.verify(token, config.jwtSecret) as AuthPayload;
+      const decoded = jwt.verify(token, jwtSecret) as AuthPayload;
       req.user = decoded;
     }
 

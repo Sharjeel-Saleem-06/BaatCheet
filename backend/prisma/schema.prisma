@@ -1,6 +1,7 @@
 // ============================================
 // BaatCheet Database Schema
 // PostgreSQL with Prisma ORM
+// Phase 3: Voice, Analytics, Webhooks, API Keys
 // ============================================
 
 generator client {
@@ -25,6 +26,9 @@ model User {
   // Preferences stored as JSON
   preferences Json @default("{\"theme\": \"dark\", \"defaultModel\": \"llama-3.3-70b-versatile\", \"language\": \"en\"}")
   
+  // Tier for rate limiting
+  tier      String   @default("free") // free, pro, enterprise
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
@@ -33,12 +37,16 @@ model User {
   projects      Project[]
   templates     Template[]
   shareLinks    ShareLink[]
+  audioFiles    Audio[]
+  analytics     Analytics[]
+  webhooks      Webhook[]
+  apiKeys       ApiKey[]
   
   @@map("users")
 }
 
 // ============================================
-// Project Model (for organizing conversations)
+// Project Model
 // ============================================
 model Project {
   id          String   @id @default(uuid())
@@ -52,7 +60,6 @@ model Project {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
-  // Relations
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations Conversation[]
   
@@ -80,11 +87,11 @@ model Conversation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
-  // Relations
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   project    Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
   messages   Message[]
   shareLinks ShareLink[]
+  audioFiles Audio[]
   
   @@index([userId])
   @@index([projectId])
@@ -104,12 +111,13 @@ model Message {
   model          String?
   tokens         Int      @default(0)
   isEdited       Boolean  @default(false) @map("is_edited")
+  audioId        String?  @map("audio_id")
   
   createdAt DateTime @default(now()) @map("created_at")
   
-  // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   attachments  Attachment[]
+  audio        Audio?       @relation(fields: [audioId], references: [id])
   
   @@index([conversationId])
   @@index([conversationId, createdAt])
@@ -117,7 +125,7 @@ model Message {
 }
 
 // ============================================
-// Attachment Model (for images/documents)
+// Attachment Model
 // ============================================
 model Attachment {
   id              String         @id @default(uuid())
@@ -134,11 +142,39 @@ model Attachment {
   
   createdAt DateTime @default(now()) @map("created_at")
   
-  // Relations
   message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
   
   @@index([messageId])
   @@map("attachments")
+}
+
+// ============================================
+// Audio Model (Voice Input)
+// ============================================
+model Audio {
+  id               String  @id @default(uuid())
+  userId           String  @map("user_id")
+  conversationId   String? @map("conversation_id")
+  originalFilename String  @map("original_filename")
+  storedFilename   String  @map("stored_filename")
+  fileSize         Int     @map("file_size")
+  duration         Float?  // seconds
+  format           String  // mp3, wav, ogg, webm
+  storageUrl       String  @map("storage_url")
+  transcription    String?
+  detectedLanguage String? @map("detected_language")
+  confidence       Float?
+  transcriptionModel String? @map("transcription_model")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  messages     Message[]
+  
+  @@index([userId])
+  @@index([conversationId])
+  @@map("audio_files")
 }
 
 // ============================================
@@ -155,7 +191,6 @@ model ShareLink {
   
   createdAt DateTime @default(now()) @map("created_at")
   
-  // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   
@@ -165,7 +200,7 @@ model ShareLink {
 }
 
 // ============================================
-// Template Model (for quick-start conversations)
+// Template Model
 // ============================================
 model Template {
   id           String  @id @default(uuid())
@@ -182,7 +217,6 @@ model Template {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
-  // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([category])
@@ -191,11 +225,113 @@ model Template {
 }
 
 // ============================================
+// Analytics Model
+// ============================================
+model Analytics {
+  id                    String   @id @default(uuid())
+  userId                String   @map("user_id")
+  date                  DateTime @db.Date
+  messagesCount         Int      @default(0) @map("messages_count")
+  responsesCount        Int      @default(0) @map("responses_count")
+  tokensByModel         Json     @default("{}") @map("tokens_by_model")
+  conversationsCreated  Int      @default(0) @map("conversations_created")
+  projectsCreated       Int      @default(0) @map("projects_created")
+  imagesUploaded        Int      @default(0) @map("images_uploaded")
+  audioTranscribed      Float    @default(0) @map("audio_transcribed") // minutes
+  exportsGenerated      Int      @default(0) @map("exports_generated")
+  searchesPerformed     Int      @default(0) @map("searches_performed")
+  averageResponseTime   Float    @default(0) @map("avg_response_time") // ms
+  topTags               String[] @default([]) @map("top_tags")
+  topModels             String[] @default([]) @map("top_models")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("analytics")
+}
+
+// ============================================
+// Webhook Model
+// ============================================
+model Webhook {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  url          String
+  events       String[]  @default([])
+  secret       String
+  isActive     Boolean   @default(true) @map("is_active")
+  failureCount Int       @default(0) @map("failure_count")
+  lastTriggered DateTime? @map("last_triggered")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+  
+  @@index([userId])
+  @@map("webhooks")
+}
+
+// ============================================
+// Webhook Delivery Model
+// ============================================
+model WebhookDelivery {
+  id           String   @id @default(uuid())
+  webhookId    String   @map("webhook_id")
+  event        String
+  payload      Json
+  status       String   // pending, success, failed
+  statusCode   Int?     @map("status_code")
+  response     String?
+  attempts     Int      @default(0)
+  nextRetry    DateTime? @map("next_retry")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  @@index([webhookId])
+  @@index([status])
+  @@map("webhook_deliveries")
+}
+
+// ============================================
+// API Key Model
+// ============================================
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  name        String
+  keyHash     String    @map("key_hash")
+  keyPrefix   String    @map("key_prefix") // First 8 chars for identification
+  permissions String[]  @default(["read", "write"])
+  rateLimit   Int       @default(100) @map("rate_limit") // requests per hour
+  lastUsed    DateTime? @map("last_used")
+  expiresAt   DateTime? @map("expires_at")
+  isActive    Boolean   @default(true) @map("is_active")
+  usageCount  Int       @default(0) @map("usage_count")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([keyPrefix])
+  @@map("api_keys")
+}
+
+// ============================================
 // API Key Usage Tracking
 // ============================================
 model ApiKeyUsage {
   id           String   @id @default(uuid())
-  provider     String   // groq, openrouter, deepseek, etc.
+  provider     String
   keyIndex     Int      @map("key_index")
   requestCount Int      @default(0) @map("request_count")
   date         DateTime @default(now()) @db.Date

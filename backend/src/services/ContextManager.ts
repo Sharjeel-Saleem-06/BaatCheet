@@ -84,7 +84,7 @@ class ContextManagerService {
     const redisClient = getRedis();
     if (redisClient) {
       try {
-        await redisClient.setex(
+        await redisClient.setEx(
           `context:${conversationId}`,
           this.CACHE_TTL,
           JSON.stringify(context)

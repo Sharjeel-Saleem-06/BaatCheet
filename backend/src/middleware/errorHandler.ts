@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
-import { config } from '../config/index.js';
+import { nodeEnv } from '../config/index.js';
 
 // ============================================
 // Error Handler Middleware
@@ -51,14 +51,14 @@ export const errorHandler = (
   }
 
   // Don't expose internal errors in production
-  if (statusCode === 500 && config.nodeEnv === 'production') {
+  if (statusCode === 500 && nodeEnv === 'production') {
     message = 'Internal server error';
   }
 
   res.status(statusCode).json({
     success: false,
     error: message,
-    ...(config.nodeEnv === 'development' && { stack: err.stack }),
+    ...(nodeEnv === 'development' && { stack: err.stack }),
   });
 };
 

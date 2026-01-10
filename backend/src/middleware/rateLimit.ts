@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import { config } from '../config/index.js';
+import { rateLimitWindowMs, rateLimitMaxRequests } from '../config/index.js';
 
 // ============================================
 // Rate Limiting Middleware
@@ -10,8 +10,8 @@ import { config } from '../config/index.js';
  * 100 requests per 15 minutes per IP
  */
 export const apiLimiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMaxRequests,
+  windowMs: rateLimitWindowMs,
+  max: rateLimitMaxRequests,
   message: {
     success: false,
     error: 'Too many requests. Please try again later.',
