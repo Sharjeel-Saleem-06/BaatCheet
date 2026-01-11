@@ -21,6 +21,12 @@ export { imageService, upload, UploadedImage, ImageAnalysisResult } from './Imag
 // Audio Service
 export { audioService, audioUpload, TranscriptionResult, AudioUploadResult } from './AudioService.js';
 
+// Whisper Service (Advanced Transcription)
+export { whisperService, TranscriptionOptions } from './WhisperService.js';
+
+// Language Handler (Roman Urdu Support)
+export { languageHandler, LanguageDetectionResult, TranslationResult } from './LanguageHandler.js';
+
 // Export Service
 export { exportService, ExportResult } from './ExportService.js';
 

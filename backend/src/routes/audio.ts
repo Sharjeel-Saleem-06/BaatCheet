@@ -11,6 +11,8 @@ import { clerkAuth, chatLimiter } from '../middleware/index.js';
 import { audioService, audioUpload } from '../services/AudioService.js';
 import { chatService } from '../services/ChatService.js';
 import { analyticsService } from '../services/AnalyticsService.js';
+import { languageHandler } from '../services/LanguageHandler.js';
+import { whisperService } from '../services/WhisperService.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -143,6 +145,11 @@ router.post(
         });
       }
 
+      // Detect language and Roman Urdu
+      const languageAnalysis = result.success && result.text 
+        ? languageHandler.detectLanguage(result.text)
+        : null;
+
       res.json({
         success: result.success,
         data: result.success ? {
@@ -150,8 +157,13 @@ router.post(
           audioUrl: uploaded.url,
           text: result.text,
           language: result.language,
+          isRomanUrdu: languageAnalysis?.isRomanUrdu || false,
+          isMixedLanguage: languageAnalysis?.primaryLanguage === 'mixed',
+          primaryLanguage: languageAnalysis?.primaryLanguage || result.language,
+          confidence: result.confidence || languageAnalysis?.confidence,
           duration: result.duration,
           provider: result.provider,
+          metadata: languageAnalysis?.metadata,
         } : undefined,
         error: result.error,
       });
@@ -335,6 +347,103 @@ router.delete(
       res.status(500).json({
         success: false,
         error: 'Failed to delete audio',
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/audio/translate
+ * Translate text between Roman Urdu and English
+ */
+router.post(
+  '/translate',
+  clerkAuth,
+  chatLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { text, from, to } = req.body;
+
+      if (!text) {
+        res.status(400).json({
+          success: false,
+          error: 'Text is required',
+        });
+        return;
+      }
+
+      let result;
+      
+      if (from === 'roman-urdu' && to === 'english') {
+        result = await languageHandler.translateToEnglish(text);
+      } else if (from === 'english' && to === 'roman-urdu') {
+        result = await languageHandler.translateToRomanUrdu(text);
+      } else {
+        // Auto-detect source language
+        const detection = languageHandler.detectLanguage(text);
+        
+        if (detection.isRomanUrdu || detection.primaryLanguage === 'urdu' || detection.primaryLanguage === 'mixed') {
+          result = await languageHandler.translateToEnglish(text);
+        } else {
+          result = await languageHandler.translateToRomanUrdu(text);
+        }
+      }
+
+      res.json({
+        success: result.success,
+        data: result.success ? {
+          originalText: result.originalText,
+          translatedText: result.translatedText,
+          sourceLanguage: result.sourceLanguage,
+          targetLanguage: result.targetLanguage,
+        } : undefined,
+        error: result.error,
+      });
+    } catch (error) {
+      logger.error('Translation error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Translation failed',
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/audio/detect-language
+ * Detect language of text
+ */
+router.post(
+  '/detect-language',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { text } = req.body;
+
+      if (!text) {
+        res.status(400).json({
+          success: false,
+          error: 'Text is required',
+        });
+        return;
+      }
+
+      const detection = languageHandler.detectLanguage(text);
+
+      res.json({
+        success: true,
+        data: {
+          primaryLanguage: detection.primaryLanguage,
+          isRomanUrdu: detection.isRomanUrdu,
+          confidence: detection.confidence,
+          metadata: detection.metadata,
+        },
+      });
+    } catch (error) {
+      logger.error('Language detection error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Language detection failed',
       });
     }
   }

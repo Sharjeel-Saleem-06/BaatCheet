@@ -27,6 +27,8 @@ export interface TranscriptionResult {
   success: boolean;
   text?: string;
   language?: string;
+  isRomanUrdu?: boolean;
+  isMixedLanguage?: boolean;
   confidence?: number;
   duration?: number;
   provider?: string;

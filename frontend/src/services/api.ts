@@ -254,6 +254,19 @@ export const audio = {
   },
 
   getLanguages: () => api.get('/audio/config/languages'),
+
+  // Translation APIs for Roman Urdu
+  translate: (text: string, from?: string, to?: string) =>
+    api.post('/audio/translate', { text, from, to }),
+
+  translateToEnglish: (text: string) =>
+    api.post('/audio/translate', { text, from: 'roman-urdu', to: 'english' }),
+
+  translateToRomanUrdu: (text: string) =>
+    api.post('/audio/translate', { text, from: 'english', to: 'roman-urdu' }),
+
+  detectLanguage: (text: string) =>
+    api.post('/audio/detect-language', { text }),
 };
 
 // ============================================

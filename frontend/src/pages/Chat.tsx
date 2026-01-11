@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { conversations, images, audio } from '../services/api';
 import { getClerkToken } from '../utils/auth';
+import TranslationButton from '../components/TranslationButton';
 import clsx from 'clsx';
 
 // Web Speech API TypeScript declarations
@@ -62,6 +63,11 @@ interface Message {
   model?: string;
   imageUrl?: string; // Image attachment URL
   createdAt: string;
+  // Language metadata for voice input
+  isRomanUrdu?: boolean;
+  isMixedLanguage?: boolean;
+  primaryLanguage?: string;
+  inputMethod?: 'text' | 'voice';
 }
 
 interface UploadedFile {
@@ -102,6 +108,14 @@ export default function Chat() {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcribing, setTranscribing] = useState(false);
+  
+  // Language metadata for voice input
+  const [voiceInputMetadata, setVoiceInputMetadata] = useState<{
+    isRomanUrdu: boolean;
+    isMixedLanguage: boolean;
+    primaryLanguage: string;
+    inputMethod: 'voice' | 'text';
+  } | null>(null);
   
   // Refs for voice mode
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
@@ -197,8 +211,18 @@ export default function Chat() {
       content: userMessage,
       imageUrl: uploadedImages.length > 0 ? uploadedImages[0].previewUrl : undefined,
       createdAt: new Date().toISOString(),
+      // Include language metadata if from voice input
+      ...(voiceInputMetadata && {
+        isRomanUrdu: voiceInputMetadata.isRomanUrdu,
+        isMixedLanguage: voiceInputMetadata.isMixedLanguage,
+        primaryLanguage: voiceInputMetadata.primaryLanguage,
+        inputMethod: voiceInputMetadata.inputMethod,
+      }),
     };
     setMessages((prev) => [...prev, tempUserMsg]);
+    
+    // Clear voice input metadata after using it
+    setVoiceInputMetadata(null);
 
     try {
       setStreaming(true);
@@ -779,11 +803,34 @@ export default function Chat() {
             const { data } = await audio.transcribeUpload(file);
             if (data.success && data.data.text) {
               setInput(prev => prev ? `${prev} ${data.data.text}` : data.data.text);
+              
+              // Set language metadata from transcription
+              setVoiceInputMetadata({
+                isRomanUrdu: data.data.isRomanUrdu || false,
+                isMixedLanguage: data.data.isMixedLanguage || false,
+                primaryLanguage: data.data.primaryLanguage || data.data.language || 'english',
+                inputMethod: 'voice',
+              });
             }
           } catch (error) {
             console.error('Fallback transcription error:', error);
           } finally {
             setTranscribing(false);
+          }
+        } else if (currentTranscript) {
+          // For live transcription, detect language from the transcript
+          try {
+            const { data } = await audio.detectLanguage(currentTranscript);
+            if (data.success) {
+              setVoiceInputMetadata({
+                isRomanUrdu: data.data.isRomanUrdu || false,
+                isMixedLanguage: data.data.primaryLanguage === 'mixed',
+                primaryLanguage: data.data.primaryLanguage || 'english',
+                inputMethod: 'voice',
+              });
+            }
+          } catch (error) {
+            console.error('Language detection error:', error);
           }
         }
       };
@@ -990,6 +1037,22 @@ export default function Chat() {
                 <div className="prose prose-invert max-w-none">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
+
+                {/* Language indicator and translation for user messages */}
+                {msg.role === 'user' && msg.isRomanUrdu && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {/* Language badge */}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-dark-600/50 text-dark-400">
+                      {msg.isMixedLanguage ? '🌐 Mixed' : '🇵🇰 Roman Urdu'}
+                      {msg.inputMethod === 'voice' && ' • Voice'}
+                    </span>
+                    {/* Translation button */}
+                    <TranslationButton
+                      originalText={msg.content}
+                      isRomanUrdu={msg.isRomanUrdu}
+                    />
+                  </div>
+                )}
 
                 {msg.role === 'assistant' && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dark-700">
