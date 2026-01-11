@@ -25,6 +25,36 @@ import { conversations, images, audio } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
 
+// Web Speech API TypeScript declarations
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -69,6 +99,17 @@ export default function Chat() {
   const [copied, setCopied] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [transcribing, setTranscribing] = useState(false);
+  
+  // Refs for voice mode
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -554,47 +595,248 @@ export default function Chat() {
     }
   }, [handleImageUpload]);
 
+  // Cleanup function for voice mode
+  const cleanupVoiceMode = useCallback(() => {
+    // Stop speech recognition
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current = null;
+    }
+    
+    // Stop media recorder
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    setMediaRecorder(null);
+    
+    // Stop audio stream
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    
+    // Close audio context
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    // Clear timeouts and animation frames
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
+    setRecording(false);
+    setAudioLevel(0);
+  }, [mediaRecorder]);
+
+  // Monitor audio levels for visualization
+  const monitorAudioLevel = useCallback(() => {
+    if (!analyserRef.current) return;
+    
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    
+    const updateLevel = () => {
+      if (!analyserRef.current || !recording) {
+        setAudioLevel(0);
+        return;
+      }
+      
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      // Calculate average volume
+      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const normalizedLevel = Math.min(average / 128, 1); // Normalize to 0-1
+      
+      setAudioLevel(normalizedLevel);
+      animationFrameRef.current = requestAnimationFrame(updateLevel);
+    };
+    
+    updateLevel();
+  }, [recording]);
+
+  // Start advanced voice recording with live transcription
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        } 
+      });
+      audioStreamRef.current = stream;
+      
+      // Setup audio context for level monitoring
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyserRef.current = analyser;
+      
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      // Setup MediaRecorder for backup/fallback transcription
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       const chunks: Blob[] = [];
-
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
-        
-        setLoading(true);
-        try {
-          const { data } = await audio.transcribeUpload(file);
-          if (data.success && data.data.text) {
-            setInput(data.data.text);
-          }
-        } catch (error) {
-          console.error('Transcription error:', error);
-        } finally {
-          setLoading(false);
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
         }
-
-        stream.getTracks().forEach((track) => track.stop());
       };
-
-      recorder.start();
+      
+      recorder.onstop = async () => {
+        // If we have a transcript from speech recognition, use it
+        // Otherwise, fall back to server-side transcription
+        if (!liveTranscript.trim()) {
+          setTranscribing(true);
+          try {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
+            const { data } = await audio.transcribeUpload(file);
+            if (data.success && data.data.text) {
+              setInput(prev => prev ? `${prev} ${data.data.text}` : data.data.text);
+            }
+          } catch (error) {
+            console.error('Fallback transcription error:', error);
+            setError('Failed to transcribe audio');
+          } finally {
+            setTranscribing(false);
+          }
+        }
+      };
+      
       setMediaRecorder(recorder);
+      recorder.start(1000); // Collect data every second
+      
+      // Setup Web Speech API for live transcription
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US'; // Can be made configurable
+        
+        let finalTranscript = '';
+        let lastSpeechTime = Date.now();
+        
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+              // Update input with final transcript
+              setInput(prev => {
+                const newText = prev ? `${prev} ${transcript}` : transcript;
+                return newText.trim();
+              });
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          // Show live transcript (interim + final)
+          setLiveTranscript(finalTranscript + interimTranscript);
+          lastSpeechTime = Date.now();
+          
+          // Reset silence timeout
+          if (silenceTimeoutRef.current) {
+            clearTimeout(silenceTimeoutRef.current);
+          }
+          
+          // Auto-stop after 2 seconds of silence
+          silenceTimeoutRef.current = setTimeout(() => {
+            const silenceDuration = Date.now() - lastSpeechTime;
+            if (silenceDuration >= 2000 && recording) {
+              console.log('Auto-stopping due to silence');
+              stopRecording();
+            }
+          }, 2500);
+        };
+        
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'no-speech') {
+            // Auto-stop if no speech detected for a while
+            setTimeout(() => {
+              if (recording) {
+                stopRecording();
+              }
+            }, 1000);
+          }
+        };
+        
+        recognition.onend = () => {
+          // Restart if still recording (browser may stop it)
+          if (recording && speechRecognitionRef.current) {
+            try {
+              speechRecognitionRef.current.start();
+            } catch (e) {
+              // Already started or stopped
+            }
+          }
+        };
+        
+        speechRecognitionRef.current = recognition;
+        recognition.start();
+      }
+      
       setRecording(true);
+      setLiveTranscript('');
+      
+      // Start audio level monitoring
+      monitorAudioLevel();
+      
     } catch (error) {
       console.error('Recording error:', error);
+      setError('Failed to access microphone');
+      cleanupVoiceMode();
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setRecording(false);
-      setMediaRecorder(null);
+  const stopRecording = useCallback(() => {
+    // Get final transcript before cleanup
+    const transcript = liveTranscript.trim();
+    
+    // Stop speech recognition first
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+      speechRecognitionRef.current = null;
     }
-  };
+    
+    // Stop media recorder
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    
+    // Cleanup
+    cleanupVoiceMode();
+    
+    // Clear live transcript display
+    setTimeout(() => {
+      setLiveTranscript('');
+    }, 500);
+    
+  }, [mediaRecorder, liveTranscript, cleanupVoiceMode]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupVoiceMode();
+    };
+  }, [cleanupVoiceMode]);
 
   return (
     <div className="flex h-full">
@@ -879,45 +1121,110 @@ export default function Chat() {
               />
             </label>
 
-            {/* Voice input */}
+            {/* Voice input button */}
             <button
               type="button"
               onClick={recording ? stopRecording : startRecording}
               className={clsx(
-                'p-2.5 transition-colors',
+                'p-2.5 transition-colors relative',
                 recording
-                  ? 'text-red-400 animate-pulse'
-                  : 'text-dark-500 hover:text-dark-300'
+                  ? 'text-red-400'
+                  : transcribing
+                    ? 'text-primary-400'
+                    : 'text-dark-500 hover:text-dark-300'
               )}
-              disabled={loading}
+              disabled={loading || transcribing}
+              title={recording ? "Click to stop recording" : "Click to start voice input"}
             >
-              <Mic size={20} />
+              {transcribing ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <>
+                  <Mic size={20} />
+                  {/* Audio level indicator */}
+                  {recording && (
+                    <span 
+                      className="absolute inset-0 rounded-full bg-red-400/30 animate-ping"
+                      style={{ 
+                        transform: `scale(${1 + audioLevel * 0.5})`,
+                        opacity: 0.3 + audioLevel * 0.4
+                      }}
+                    />
+                  )}
+                </>
+              )}
             </button>
 
-            {/* Text input */}
+            {/* Text input with voice overlay */}
             <div className="flex-1 relative">
+              {/* Voice recording overlay */}
+              {recording && (
+                <div className="absolute inset-0 z-10 bg-dark-700 border border-red-500/50 rounded-xl flex items-center px-4 gap-3">
+                  {/* Audio visualizer bars */}
+                  <div className="flex items-center gap-0.5 h-6">
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-red-400 rounded-full transition-all duration-75"
+                        style={{
+                          height: `${Math.max(4, Math.min(24, 4 + audioLevel * 20 * (1 + Math.sin(Date.now() / 100 + i) * 0.3)))}px`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Live transcript or listening indicator */}
+                  <div className="flex-1 overflow-hidden">
+                    {liveTranscript ? (
+                      <p className="text-dark-100 text-sm truncate animate-pulse">
+                        {liveTranscript}
+                      </p>
+                    ) : (
+                      <p className="text-dark-400 text-sm flex items-center gap-2">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        Listening... Speak now
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Stop button */}
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Stop
+                  </button>
+                </div>
+              )}
+              
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey && allImagesReady) {
+                  if (e.key === 'Enter' && !e.shiftKey && allImagesReady && !recording) {
                     e.preventDefault();
                     handleSubmit();
                   }
                 }}
                 onPaste={handlePaste}
                 placeholder={
-                  imagesProcessing 
-                    ? "Wait for image analysis to complete..." 
-                    : uploadedImages.length > 0 
-                      ? "Ask about these images..." 
-                      : "Type a message..."
+                  transcribing
+                    ? "Transcribing audio..."
+                    : imagesProcessing 
+                      ? "Wait for image analysis to complete..." 
+                      : uploadedImages.length > 0 
+                        ? "Ask about these images..." 
+                        : "Type a message..."
                 }
                 rows={1}
-                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none transition-colors"
+                className={clsx(
+                  "w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none transition-colors",
+                  recording && "opacity-0"
+                )}
                 style={{ minHeight: '44px', maxHeight: '200px' }}
-                disabled={loading || streaming || imagesProcessing}
+                disabled={loading || streaming || imagesProcessing || recording}
               />
             </div>
 
