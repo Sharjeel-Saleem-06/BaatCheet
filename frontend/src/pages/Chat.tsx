@@ -3,13 +3,13 @@
  * Main chat interface with streaming
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import {
   Send,
   Mic,
-  Image,
+  Image as ImageIcon,
   Plus,
   Loader2,
   RefreshCw,
@@ -18,8 +18,11 @@ import {
   Bot,
   User,
   StopCircle,
+  X,
+  Paperclip,
 } from 'lucide-react';
-import { chat, conversations, images, audio } from '../services/api';
+import { conversations, images } from '../services/api';
+import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
 
 interface Message {
@@ -27,7 +30,15 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   model?: string;
+  imageUrl?: string; // Image attachment URL
   createdAt: string;
+}
+
+interface UploadedImage {
+  id: string;
+  url: string;
+  file: File;
+  previewUrl: string;
 }
 
 interface Conversation {
@@ -50,10 +61,14 @@ export default function Chat() {
   const [copied, setCopied] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load conversation
   useEffect(() => {
@@ -109,11 +124,12 @@ export default function Chat() {
     setInput('');
     setLoading(true);
 
-    // Add user message optimistically
+    // Add user message optimistically (with image if attached)
     const tempUserMsg: Message = {
       id: `temp-${Date.now()}`,
       role: 'user',
       content: userMessage,
+      imageUrl: uploadedImages.length > 0 ? uploadedImages[0].previewUrl : undefined,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, tempUserMsg]);
@@ -121,9 +137,22 @@ export default function Chat() {
     try {
       setStreaming(true);
       setStreamContent('');
+      setError(null);
       
       abortControllerRef.current = new AbortController();
-      const token = localStorage.getItem('token');
+      
+      // Get Clerk token properly
+      const token = await getClerkToken();
+
+      if (!token) {
+        setError('Authentication required. Please sign in.');
+        setLoading(false);
+        setStreaming(false);
+        return;
+      }
+
+      // Include image IDs if any
+      const imageIds = uploadedImages.map(img => img.id);
 
       const response = await fetch('/api/v1/chat/completions', {
         method: 'POST',
@@ -134,10 +163,30 @@ export default function Chat() {
         body: JSON.stringify({
           message: userMessage,
           conversationId: conversationId || conversation?.id,
+          imageIds: imageIds.length > 0 ? imageIds : undefined,
           stream: true,
         }),
         signal: abortControllerRef.current.signal,
       });
+
+      // Check for auth errors
+      if (response.status === 401) {
+        setError('Session expired. Please sign in again.');
+        setLoading(false);
+        setStreaming(false);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || `Request failed: ${response.status}`);
+        setLoading(false);
+        setStreaming(false);
+        return;
+      }
+
+      // Clear uploaded images after successful send
+      setUploadedImages([]);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -238,20 +287,98 @@ export default function Chat() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handle image file selection
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setLoading(true);
-    try {
-      const { data } = await images.analyze(file, 'Describe this image in detail');
-      setInput((prev) => prev + `\n[Image Analysis: ${data.data.analysis}]`);
-    } catch (error) {
-      console.error('Image upload error:', error);
-    } finally {
-      setLoading(false);
+    setUploading(true);
+    setError(null);
+
+    for (const file of Array.from(files)) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        continue;
+      }
+
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Image must be less than 10MB');
+        continue;
+      }
+
+      // Create preview immediately (like ChatGPT)
+      const previewUrl = URL.createObjectURL(file);
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Add to state with preview
+      setUploadedImages(prev => [...prev, {
+        id: tempId,
+        url: '',
+        file,
+        previewUrl,
+      }]);
+
+      try {
+        // Upload to backend
+        const { data } = await images.upload(file);
+        const imageData = data?.data;
+
+        // Update with real ID and URL
+        setUploadedImages(prev => prev.map(img => 
+          img.id === tempId 
+            ? { ...img, id: imageData?.id || tempId, url: imageData?.url || previewUrl }
+            : img
+        ));
+      } catch (error) {
+        console.error('Image upload error:', error);
+        // Remove failed upload
+        setUploadedImages(prev => prev.filter(img => img.id !== tempId));
+        URL.revokeObjectURL(previewUrl);
+        setError('Failed to upload image');
+      }
     }
-  };
+
+    setUploading(false);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  // Remove uploaded image
+  const removeImage = useCallback((imageId: string) => {
+    setUploadedImages(prev => {
+      const img = prev.find(i => i.id === imageId);
+      if (img?.previewUrl) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+      return prev.filter(i => i.id !== imageId);
+    });
+  }, []);
+
+  // Handle paste for images
+  const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          // Create a synthetic event to reuse handleImageUpload
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          const syntheticEvent = {
+            target: { files: dt.files }
+          } as React.ChangeEvent<HTMLInputElement>;
+          await handleImageUpload(syntheticEvent);
+        }
+      }
+    }
+  }, [handleImageUpload]);
 
   const startRecording = async () => {
     try {
@@ -376,6 +503,18 @@ export default function Chat() {
                     : 'bg-dark-800 mr-12'
                 )}
               >
+                {/* Image attachment (show first, like ChatGPT) */}
+                {msg.imageUrl && (
+                  <div className="mb-3">
+                    <img
+                      src={msg.imageUrl}
+                      alt="Attached"
+                      className="max-w-sm max-h-64 rounded-lg border border-dark-600 cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(msg.imageUrl, '_blank')}
+                    />
+                  </div>
+                )}
+
                 <div className="prose prose-invert max-w-none">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
@@ -424,16 +563,62 @@ export default function Chat() {
 
         {/* Input area */}
         <div className="border-t border-dark-700 p-4 bg-dark-800/50">
+          {/* Error message */}
+          {error && (
+            <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-between">
+              <span className="text-red-400 text-sm">{error}</span>
+              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Image previews (like ChatGPT) */}
+          {uploadedImages.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {uploadedImages.map((img) => (
+                <div key={img.id} className="relative group">
+                  <img
+                    src={img.previewUrl}
+                    alt="To upload"
+                    className="w-20 h-20 object-cover rounded-lg border border-dark-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(img.id)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12} />
+                  </button>
+                  {uploading && img.url === '' && (
+                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                      <Loader2 className="animate-spin text-white" size={20} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
             {/* Image upload */}
-            <label className="p-2.5 text-dark-500 hover:text-dark-300 cursor-pointer transition-colors">
-              <Image size={20} />
+            <label className={clsx(
+              "p-2.5 cursor-pointer transition-colors",
+              uploading ? "text-primary-400" : "text-dark-500 hover:text-dark-300"
+            )}>
+              {uploading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <ImageIcon size={20} />
+              )}
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={handleImageUpload}
-                disabled={loading}
+                disabled={loading || uploading}
               />
             </label>
 
@@ -464,7 +649,8 @@ export default function Chat() {
                     handleSubmit();
                   }
                 }}
-                placeholder="Type a message..."
+                onPaste={handlePaste}
+                placeholder={uploadedImages.length > 0 ? "Ask about these images..." : "Type a message..."}
                 rows={1}
                 className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none transition-colors"
                 style={{ minHeight: '44px', maxHeight: '200px' }}

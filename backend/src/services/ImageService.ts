@@ -107,34 +107,42 @@ export const upload = multer({
 class ImageServiceClass {
   /**
    * Process uploaded file and save metadata
+   * Returns image ID that can be attached to messages later
    */
   public async processUpload(
     file: Express.Multer.File,
     userId: string,
     messageId?: string
-  ): Promise<UploadedImage> {
+  ): Promise<UploadedImage & { id: string }> {
     const imageUrl = `/uploads/images/${file.filename}`;
 
-    // If messageId provided, create attachment record
-    if (messageId) {
-      await prisma.attachment.create({
-        data: {
-          messageId,
-          type: file.mimetype.startsWith('image/') ? 'image' : 'document',
-          url: imageUrl,
-          metadata: {
-            originalName: file.originalname,
-            size: file.size,
-            mimeType: file.mimetype,
-          },
+    // Always create attachment record (can be linked to message later)
+    const attachment = await prisma.attachment.create({
+      data: {
+        userId,
+        messageId: messageId || null,
+        type: file.mimetype.startsWith('image/') ? 'image' : 'document',
+        originalName: file.originalname,
+        storedName: file.filename,
+        url: imageUrl,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        status: 'processing', // Will be updated after OCR/analysis
+        metadata: {
+          originalName: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
         },
-      });
-    }
+      },
+    });
 
-    logger.info(`Image uploaded: ${file.filename} by user ${userId}`);
+    // Queue OCR processing in background (don't wait)
+    this.processImageInBackground(attachment.id, file.filename, file.mimetype, userId);
+
+    logger.info(`Image uploaded: ${file.filename} by user ${userId}, attachment ID: ${attachment.id}`);
 
     return {
-      id: path.basename(file.filename, path.extname(file.filename)),
+      id: attachment.id, // Return database ID
       originalName: file.originalname,
       storedName: file.filename,
       mimeType: file.mimetype,
@@ -142,6 +150,41 @@ class ImageServiceClass {
       path: file.path,
       url: imageUrl,
     };
+  }
+
+  /**
+   * Process image in background (OCR + analysis)
+   * This runs async and doesn't block the upload response
+   */
+  private async processImageInBackground(
+    attachmentId: string,
+    filename: string,
+    mimeType: string,
+    userId: string
+  ): Promise<void> {
+    try {
+      // Run OCR
+      const ocrResult = await this.extractText(filename, mimeType);
+      
+      // Update attachment with OCR result
+      await prisma.attachment.update({
+        where: { id: attachmentId },
+        data: {
+          extractedText: ocrResult.success ? ocrResult.text : null,
+          status: 'completed',
+        },
+      });
+
+      logger.info(`Background processing completed for attachment ${attachmentId}`);
+    } catch (error) {
+      logger.error(`Background processing failed for attachment ${attachmentId}:`, error);
+      
+      // Mark as failed
+      await prisma.attachment.update({
+        where: { id: attachmentId },
+        data: { status: 'failed' },
+      }).catch(() => {});
+    }
   }
 
   /**

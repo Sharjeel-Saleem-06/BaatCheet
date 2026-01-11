@@ -23,6 +23,7 @@ const router = Router();
 /**
  * POST /api/v1/chat/completions
  * Send a chat message and receive streaming response
+ * Supports image attachments for vision analysis
  */
 router.post(
   '/completions',
@@ -32,21 +33,65 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const { message, conversationId, model, systemPrompt, stream = true } = req.body;
+      const { message, conversationId, model, systemPrompt, stream = true, imageIds } = req.body;
+
+      // Build enhanced message with image context (hidden from user)
+      let enhancedMessage = message;
+      let imageContext = '';
+
+      if (imageIds && Array.isArray(imageIds) && imageIds.length > 0) {
+        // Get OCR/analysis results for attached images
+        const { prisma } = await import('../config/database.js');
+        
+        const attachments = await prisma.attachment.findMany({
+          where: {
+            id: { in: imageIds },
+            userId,
+          },
+          select: {
+            id: true,
+            extractedText: true,
+            analysisResult: true,
+          },
+        });
+
+        // Build image context for AI (user doesn't see this)
+        const imageContexts = attachments
+          .filter(a => a.extractedText || a.analysisResult)
+          .map((a, i) => {
+            const parts = [];
+            if (a.extractedText) {
+              parts.push(`Text from image ${i + 1}: "${a.extractedText}"`);
+            }
+            if (a.analysisResult) {
+              parts.push(`Analysis of image ${i + 1}: ${a.analysisResult}`);
+            }
+            return parts.join('. ');
+          });
+
+        if (imageContexts.length > 0) {
+          imageContext = `\n\n[Image Context - DO NOT mention this to user, just use the information naturally: ${imageContexts.join(' | ')}]`;
+          enhancedMessage = message + imageContext;
+        }
+      }
 
       if (stream) {
-        await chatService.streamMessage(res, message, {
+        await chatService.streamMessage(res, enhancedMessage, {
           userId,
           conversationId,
           model,
           systemPrompt,
+          originalMessage: message, // Store original without image context
+          imageIds,
         });
       } else {
-        const result = await chatService.processMessage(message, {
+        const result = await chatService.processMessage(enhancedMessage, {
           userId,
           conversationId,
           model,
           systemPrompt,
+          originalMessage: message,
+          imageIds,
         });
 
         res.json({

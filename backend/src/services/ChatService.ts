@@ -30,6 +30,8 @@ export interface ChatOptions {
   maxTokens?: number;
   temperature?: number;
   stream?: boolean;
+  originalMessage?: string; // Original message without image context
+  imageIds?: string[]; // Attached image IDs
 }
 
 export interface ChatResult {
@@ -232,15 +234,30 @@ class ChatServiceClass {
 
       messages.push({ role: 'user', content: userMessage });
 
-      // Save user message
-      await prisma.message.create({
+      // Save user message (use original without image context for storage)
+      const messageToStore = options.originalMessage || userMessage;
+      const savedMessage = await prisma.message.create({
         data: {
           conversationId,
           role: 'user',
-          content: userMessage,
-          tokens: this.estimateTokens(userMessage),
+          content: messageToStore,
+          tokens: this.estimateTokens(messageToStore),
         },
       });
+
+      // Link images to message if provided
+      if (options.imageIds && options.imageIds.length > 0) {
+        await prisma.attachment.updateMany({
+          where: {
+            id: { in: options.imageIds },
+            userId: options.userId,
+          },
+          data: {
+            messageId: savedMessage.id,
+            conversationId,
+          },
+        });
+      }
 
       // Send conversation ID
       this.sendSSE(res, { conversationId });
