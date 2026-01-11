@@ -110,6 +110,8 @@ export default function Chat() {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const isRecordingRef = useRef(false); // Track recording state in ref for callbacks
+  const recognitionActiveRef = useRef(false); // Track if recognition should be active
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -597,17 +599,19 @@ export default function Chat() {
 
   // Cleanup function for voice mode
   const cleanupVoiceMode = useCallback(() => {
+    // Mark as not recording
+    isRecordingRef.current = false;
+    recognitionActiveRef.current = false;
+    
     // Stop speech recognition
     if (speechRecognitionRef.current) {
-      speechRecognitionRef.current.stop();
+      try {
+        speechRecognitionRef.current.abort();
+      } catch (e) {
+        // Ignore errors
+      }
       speechRecognitionRef.current = null;
     }
-    
-    // Stop media recorder
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-    }
-    setMediaRecorder(null);
     
     // Stop audio stream
     if (audioStreamRef.current) {
@@ -617,7 +621,11 @@ export default function Chat() {
     
     // Close audio context
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
+      try {
+        audioContextRef.current.close();
+      } catch (e) {
+        // Ignore errors
+      }
       audioContextRef.current = null;
     }
     
@@ -631,9 +639,11 @@ export default function Chat() {
       animationFrameRef.current = null;
     }
     
+    analyserRef.current = null;
     setRecording(false);
     setAudioLevel(0);
-  }, [mediaRecorder]);
+    setLiveTranscript('');
+  }, []);
 
   // Monitor audio levels for visualization
   const monitorAudioLevel = useCallback(() => {
@@ -642,7 +652,7 @@ export default function Chat() {
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     
     const updateLevel = () => {
-      if (!analyserRef.current || !recording) {
+      if (!analyserRef.current || !isRecordingRef.current) {
         setAudioLevel(0);
         return;
       }
@@ -658,10 +668,60 @@ export default function Chat() {
     };
     
     updateLevel();
-  }, [recording]);
+  }, []);
 
-  // Start advanced voice recording with live transcription
+  // Cancel recording without saving
+  const cancelRecording = useCallback(() => {
+    // Stop media recorder without triggering onstop handler
+    if (mediaRecorder) {
+      mediaRecorder.ondataavailable = null;
+      mediaRecorder.onstop = null;
+      if (mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
+    setMediaRecorder(null);
+    
+    // Cleanup everything
+    cleanupVoiceMode();
+    
+    // Clear any transcribed text that was added during this session
+    // (Keep existing text, just clear live transcript)
+    setLiveTranscript('');
+  }, [mediaRecorder, cleanupVoiceMode]);
+
+  // Stop recording and save transcript
+  const stopRecording = useCallback(() => {
+    // Mark as stopping
+    isRecordingRef.current = false;
+    recognitionActiveRef.current = false;
+    
+    // Stop speech recognition first
+    if (speechRecognitionRef.current) {
+      try {
+        speechRecognitionRef.current.stop();
+      } catch (e) {
+        // Ignore
+      }
+      speechRecognitionRef.current = null;
+    }
+    
+    // Stop media recorder (this will trigger onstop for fallback transcription)
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    setMediaRecorder(null);
+    
+    // Cleanup
+    cleanupVoiceMode();
+    
+  }, [mediaRecorder, cleanupVoiceMode]);
+
+  // Start voice recording with live transcription
   const startRecording = async () => {
+    // Prevent double-start
+    if (isRecordingRef.current) return;
+    
     try {
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -672,6 +732,12 @@ export default function Chat() {
         } 
       });
       audioStreamRef.current = stream;
+      
+      // Mark as recording
+      isRecordingRef.current = true;
+      recognitionActiveRef.current = true;
+      setRecording(true);
+      setLiveTranscript('');
       
       // Setup audio context for level monitoring
       const audioContext = new AudioContext();
@@ -684,8 +750,16 @@ export default function Chat() {
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
       
-      // Setup MediaRecorder for backup/fallback transcription
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // Start audio level monitoring
+      monitorAudioLevel();
+      
+      // Setup MediaRecorder for fallback transcription
+      let recorder: MediaRecorder;
+      try {
+        recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
       const chunks: Blob[] = [];
       
       recorder.ondataavailable = (e) => {
@@ -695,9 +769,9 @@ export default function Chat() {
       };
       
       recorder.onstop = async () => {
-        // If we have a transcript from speech recognition, use it
-        // Otherwise, fall back to server-side transcription
-        if (!liveTranscript.trim()) {
+        // Only do fallback transcription if no live transcript
+        const currentTranscript = liveTranscript.trim();
+        if (!currentTranscript && chunks.length > 0) {
           setTranscribing(true);
           try {
             const blob = new Blob(chunks, { type: 'audio/webm' });
@@ -708,7 +782,6 @@ export default function Chat() {
             }
           } catch (error) {
             console.error('Fallback transcription error:', error);
-            setError('Failed to transcribe audio');
           } finally {
             setTranscribing(false);
           }
@@ -716,7 +789,7 @@ export default function Chat() {
       };
       
       setMediaRecorder(recorder);
-      recorder.start(1000); // Collect data every second
+      recorder.start(1000);
       
       // Setup Web Speech API for live transcription
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -725,12 +798,16 @@ export default function Chat() {
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'en-US'; // Can be made configurable
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
         
         let finalTranscript = '';
         let lastSpeechTime = Date.now();
         
         recognition.onresult = (event: SpeechRecognitionEvent) => {
+          // Check if we should still be recording
+          if (!recognitionActiveRef.current) return;
+          
           let interimTranscript = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -747,7 +824,7 @@ export default function Chat() {
             }
           }
           
-          // Show live transcript (interim + final)
+          // Show live transcript
           setLiveTranscript(finalTranscript + interimTranscript);
           lastSpeechTime = Date.now();
           
@@ -756,84 +833,63 @@ export default function Chat() {
             clearTimeout(silenceTimeoutRef.current);
           }
           
-          // Auto-stop after 2 seconds of silence
-          silenceTimeoutRef.current = setTimeout(() => {
-            const silenceDuration = Date.now() - lastSpeechTime;
-            if (silenceDuration >= 2000 && recording) {
-              console.log('Auto-stopping due to silence');
-              stopRecording();
-            }
-          }, 2500);
-        };
-        
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error:', event.error);
-          if (event.error === 'no-speech') {
-            // Auto-stop if no speech detected for a while
-            setTimeout(() => {
-              if (recording) {
+          // Auto-stop after 3 seconds of silence (only if we have some transcript)
+          if (finalTranscript.trim()) {
+            silenceTimeoutRef.current = setTimeout(() => {
+              if (recognitionActiveRef.current && Date.now() - lastSpeechTime >= 3000) {
+                console.log('Auto-stopping due to silence');
                 stopRecording();
               }
-            }, 1000);
+            }, 3500);
           }
         };
         
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          // Only log non-aborted errors
+          if (event.error !== 'aborted' && event.error !== 'no-speech') {
+            console.error('Speech recognition error:', event.error);
+          }
+          
+          // Don't auto-stop on no-speech, let user decide
+        };
+        
         recognition.onend = () => {
-          // Restart if still recording (browser may stop it)
-          if (recording && speechRecognitionRef.current) {
+          // Only restart if we're still supposed to be recording
+          if (recognitionActiveRef.current && speechRecognitionRef.current) {
             try {
-              speechRecognitionRef.current.start();
+              // Small delay before restart to prevent rapid cycling
+              setTimeout(() => {
+                if (recognitionActiveRef.current && speechRecognitionRef.current) {
+                  speechRecognitionRef.current.start();
+                }
+              }, 100);
             } catch (e) {
-              // Already started or stopped
+              // Ignore - recognition might have been stopped
             }
           }
         };
         
         speechRecognitionRef.current = recognition;
-        recognition.start();
+        
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error('Failed to start speech recognition:', e);
+        }
       }
-      
-      setRecording(true);
-      setLiveTranscript('');
-      
-      // Start audio level monitoring
-      monitorAudioLevel();
       
     } catch (error) {
       console.error('Recording error:', error);
-      setError('Failed to access microphone');
+      setError('Failed to access microphone. Please check permissions.');
       cleanupVoiceMode();
     }
   };
 
-  const stopRecording = useCallback(() => {
-    // Get final transcript before cleanup
-    const transcript = liveTranscript.trim();
-    
-    // Stop speech recognition first
-    if (speechRecognitionRef.current) {
-      speechRecognitionRef.current.stop();
-      speechRecognitionRef.current = null;
-    }
-    
-    // Stop media recorder
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-    }
-    
-    // Cleanup
-    cleanupVoiceMode();
-    
-    // Clear live transcript display
-    setTimeout(() => {
-      setLiveTranscript('');
-    }, 500);
-    
-  }, [mediaRecorder, liveTranscript, cleanupVoiceMode]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      isRecordingRef.current = false;
+      recognitionActiveRef.current = false;
       cleanupVoiceMode();
     };
   }, [cleanupVoiceMode]);
@@ -1159,9 +1215,9 @@ export default function Chat() {
             <div className="flex-1 relative">
               {/* Voice recording overlay */}
               {recording && (
-                <div className="absolute inset-0 z-10 bg-dark-700 border border-red-500/50 rounded-xl flex items-center px-4 gap-3">
+                <div className="absolute inset-0 z-10 bg-dark-700 border border-red-500/50 rounded-xl flex items-center px-3 gap-2">
                   {/* Audio visualizer bars */}
-                  <div className="flex items-center gap-0.5 h-6">
+                  <div className="flex items-center gap-0.5 h-6 flex-shrink-0">
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
@@ -1174,26 +1230,38 @@ export default function Chat() {
                   </div>
                   
                   {/* Live transcript or listening indicator */}
-                  <div className="flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-hidden min-w-0">
                     {liveTranscript ? (
-                      <p className="text-dark-100 text-sm truncate animate-pulse">
+                      <p className="text-dark-100 text-sm truncate">
                         {liveTranscript}
                       </p>
                     ) : (
                       <p className="text-dark-400 text-sm flex items-center gap-2">
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        Listening... Speak now
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0" />
+                        <span className="truncate">Listening... Speak now</span>
                       </p>
                     )}
                   </div>
                   
-                  {/* Stop button */}
+                  {/* Cancel button - discards recording */}
+                  <button
+                    type="button"
+                    onClick={cancelRecording}
+                    className="px-2 py-1 text-dark-400 hover:text-dark-200 text-sm transition-colors flex-shrink-0"
+                    title="Cancel recording"
+                  >
+                    <X size={18} />
+                  </button>
+                  
+                  {/* Done button - saves recording */}
                   <button
                     type="button"
                     onClick={stopRecording}
-                    className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                    className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 flex-shrink-0"
+                    title="Done - use transcribed text"
                   >
-                    Stop
+                    <Check size={14} />
+                    Done
                   </button>
                 </div>
               )}
