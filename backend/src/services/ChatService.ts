@@ -10,8 +10,11 @@ import { Response } from 'express';
 import { logger } from '../utils/logger.js';
 import { aiRouter, Message, ChatRequest } from './AIRouter.js';
 import { contextManager } from './ContextManager.js';
+import { promptAnalyzer, PromptAnalysis } from './PromptAnalyzer.js';
+import { responseFormatter } from './ResponseFormatter.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
+import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
 
 // ============================================
 // Types
@@ -46,6 +49,11 @@ export interface ChatResult {
     total: number;
   };
   error?: string;
+  metadata?: {
+    intent: string;
+    formatApplied: string;
+    language: string;
+  };
 }
 
 // ============================================
@@ -54,13 +62,23 @@ export interface ChatResult {
 
 class ChatServiceClass {
   /**
-   * Process a chat message with context and optional streaming
+   * Process a chat message with context, prompt analysis, and intelligent formatting
    */
   public async processMessage(
     userMessage: string,
     options: ChatOptions
   ): Promise<ChatResult> {
     try {
+      // Step 1: Analyze the user prompt for intent and formatting needs
+      const promptAnalysis = await promptAnalyzer.analyze(userMessage);
+      
+      logger.info('Prompt analyzed', {
+        intent: promptAnalysis.intent,
+        format: promptAnalysis.formatRequested,
+        complexity: promptAnalysis.complexity,
+        language: promptAnalysis.language,
+      });
+
       // Get or create conversation
       let conversationId = options.conversationId;
       let conversation;
@@ -88,12 +106,16 @@ class ChatServiceClass {
         conversationId = conversation.id;
       }
 
+      // Step 2: Build enhanced system prompt based on analysis
+      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
+      
+      // Add formatting hints based on prompt analysis
+      const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
+      const enhancedSystemPrompt = baseSystemPrompt + formattingHints;
+
       // Build messages array with context
       const messages: Message[] = [];
-
-      // Add system prompt
-      const systemPrompt = options.systemPrompt || conversation.systemPrompt || this.getDefaultSystemPrompt();
-      messages.push({ role: 'system', content: systemPrompt });
+      messages.push({ role: 'system', content: enhancedSystemPrompt });
 
       // Add conversation history
       if (conversation.messages) {
@@ -118,12 +140,12 @@ class ChatServiceClass {
         },
       });
 
-      // Get AI response
+      // Step 3: Get AI response with optimized parameters
       const request: ChatRequest = {
         messages,
         model: options.model || conversation.model,
-        maxTokens: options.maxTokens,
-        temperature: options.temperature,
+        maxTokens: options.maxTokens || promptAnalysis.suggestedMaxTokens,
+        temperature: options.temperature ?? promptAnalysis.suggestedTemperature,
       };
 
       const response = await aiRouter.chat(request);
@@ -132,14 +154,20 @@ class ChatServiceClass {
         return { success: false, error: response.error };
       }
 
+      // Step 4: Post-process response with intelligent formatting
+      const formattedResponse = await responseFormatter.format({
+        promptAnalysis,
+        rawResponse: response.content,
+      });
+
       // Save assistant message to database
       await prisma.message.create({
         data: {
           conversationId,
           role: 'assistant',
-          content: response.content,
+          content: formattedResponse.content,
           model: response.model,
-          tokens: response.tokens?.completion || this.estimateTokens(response.content),
+          tokens: response.tokens?.completion || this.estimateTokens(formattedResponse.content),
         },
       });
 
@@ -155,16 +183,21 @@ class ChatServiceClass {
       // Update context cache
       await contextManager.updateContext(conversationId, [
         ...messages,
-        { role: 'assistant', content: response.content },
+        { role: 'assistant', content: formattedResponse.content },
       ]);
 
       return {
         success: true,
-        message: { role: 'assistant', content: response.content },
+        message: { role: 'assistant', content: formattedResponse.content },
         conversationId,
         model: response.model,
         provider: response.provider,
         tokens: response.tokens,
+        metadata: {
+          intent: promptAnalysis.intent,
+          formatApplied: promptAnalysis.formatRequested,
+          language: promptAnalysis.language,
+        },
       };
     } catch (error) {
       logger.error('Chat processing error:', error);
@@ -176,7 +209,7 @@ class ChatServiceClass {
   }
 
   /**
-   * Stream a chat response with SSE
+   * Stream a chat response with SSE and intelligent formatting
    */
   public async streamMessage(
     res: Response,
@@ -189,6 +222,15 @@ class ChatServiceClass {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
+
+      // Step 1: Analyze the user prompt
+      const promptAnalysis = await promptAnalyzer.analyze(userMessage);
+      
+      logger.info('Stream: Prompt analyzed', {
+        intent: promptAnalysis.intent,
+        format: promptAnalysis.formatRequested,
+        complexity: promptAnalysis.complexity,
+      });
 
       // Get or create conversation
       let conversationId = options.conversationId;
@@ -218,10 +260,14 @@ class ChatServiceClass {
         conversationId = conversation.id;
       }
 
+      // Step 2: Build enhanced system prompt
+      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
+      const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
+      const enhancedSystemPrompt = baseSystemPrompt + formattingHints;
+
       // Build messages array
       const messages: Message[] = [];
-      const systemPrompt = options.systemPrompt || conversation.systemPrompt || this.getDefaultSystemPrompt();
-      messages.push({ role: 'system', content: systemPrompt });
+      messages.push({ role: 'system', content: enhancedSystemPrompt });
 
       if (conversation.messages) {
         for (const msg of conversation.messages) {
@@ -262,7 +308,7 @@ class ChatServiceClass {
       // Send conversation ID
       this.sendSSE(res, { conversationId });
 
-      // Stream response
+      // Stream response with optimized parameters
       let fullContent = '';
       let model = '';
       let provider = '';
@@ -270,8 +316,8 @@ class ChatServiceClass {
       const request: ChatRequest = {
         messages,
         model: options.model || conversation.model,
-        maxTokens: options.maxTokens,
-        temperature: options.temperature,
+        maxTokens: options.maxTokens || promptAnalysis.suggestedMaxTokens,
+        temperature: options.temperature ?? promptAnalysis.suggestedTemperature,
         stream: true,
       };
 
@@ -306,12 +352,17 @@ class ChatServiceClass {
         },
       });
 
-      // Send completion event
+      // Send completion event with metadata
       this.sendSSE(res, {
         done: true,
         model,
         provider,
         tokens,
+        metadata: {
+          intent: promptAnalysis.intent,
+          formatApplied: promptAnalysis.formatRequested,
+          language: promptAnalysis.language,
+        },
       });
 
       res.end();
@@ -381,35 +432,37 @@ class ChatServiceClass {
   }
 
   /**
-   * Get default system prompt with Roman Urdu support
+   * Get advanced system prompt based on prompt analysis
+   */
+  private getAdvancedSystemPrompt(analysis: PromptAnalysis): string {
+    // Build system prompt with relevant enhancements
+    const includeRomanUrdu = analysis.language === 'urdu' || 
+                             analysis.language === 'mixed' ||
+                             analysis.language === 'other';
+    
+    let prompt = getSystemPrompt({
+      includeFormatting: analysis.requiresStructuring,
+      includeRomanUrdu,
+      intentHint: analysis.intent !== 'general_query' ? analysis.intent : undefined,
+    });
+    
+    // Add intent-specific instructions
+    const intentPrompt = getIntentPrompt(analysis.intent);
+    if (intentPrompt) {
+      prompt += '\n\n' + intentPrompt;
+    }
+    
+    return prompt;
+  }
+
+  /**
+   * Get default system prompt (fallback)
    */
   private getDefaultSystemPrompt(): string {
-    return `You are BaatCheet, a helpful, intelligent, and friendly AI assistant.
-
-Key traits:
-- You provide accurate, helpful, and thoughtful responses
-- You're conversational and engaging while remaining professional
-- You format responses with markdown when helpful (code blocks, lists, headers)
-- You acknowledge when you're unsure about something
-- You're concise but thorough
-
-Language Support:
-- You understand and respond fluently in English, Roman Urdu (Urdu written in Latin script), and mixed language (code-mixing)
-- When the user speaks or types in Roman Urdu, respond naturally in the same style
-- Keep responses conversational and culturally appropriate for Pakistani users
-- Use respectful forms (aap) unless the user uses casual forms (tum/yaar)
-
-Examples of Roman Urdu understanding:
-- "Mujhe madad chahiye" = "I need help"
-- "Aap kaise hain?" = "How are you?"
-- "Yaar, kya scene hai?" = "Hey, what's up?"
-- "Theek hai, samajh gaya" = "Okay, I understood"
-
-When user uses mixed language (common in Pakistan):
-- Match their style naturally
-- Example: "Mujhe coding mein help chahiye" → Respond mixing both languages appropriately
-
-Current date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+    return getSystemPrompt({
+      includeFormatting: true,
+      includeRomanUrdu: true,
+    });
   }
 
   /**

@@ -27,6 +27,12 @@ export { whisperService, TranscriptionOptions } from './WhisperService.js';
 // Language Handler (Roman Urdu Support)
 export { languageHandler, LanguageDetectionResult, TranslationResult } from './LanguageHandler.js';
 
+// Prompt Analyzer (Intent & Format Detection)
+export { promptAnalyzer, PromptAnalysis } from './PromptAnalyzer.js';
+
+// Response Formatter (Post-Processing)
+export { responseFormatter, FormattingOptions, FormattedResponse } from './ResponseFormatter.js';
+
 // Export Service
 export { exportService, ExportResult } from './ExportService.js';
 

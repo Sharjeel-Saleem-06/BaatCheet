@@ -24,6 +24,7 @@ import {
 import { conversations, images, audio } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import TranslationButton from '../components/TranslationButton';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 import clsx from 'clsx';
 
 // Web Speech API TypeScript declarations
@@ -1034,9 +1035,13 @@ export default function Chat() {
                   </div>
                 )}
 
-                <div className="prose prose-invert max-w-none">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </div>
+                {msg.role === 'assistant' ? (
+                  <MarkdownRenderer content={msg.content} />
+                ) : (
+                  <div className="prose prose-invert max-w-none">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
 
                 {/* Language indicator and translation for user messages */}
                 {msg.role === 'user' && msg.isRomanUrdu && (
@@ -1085,10 +1090,8 @@ export default function Chat() {
                 <Bot className="text-dark-300" size={18} />
               </div>
               <div className="flex-1 max-w-3xl bg-dark-800 rounded-xl p-4 mr-12">
-                <div className="prose prose-invert max-w-none">
-                  <ReactMarkdown>{streamContent}</ReactMarkdown>
-                  <span className="streaming-cursor" />
-                </div>
+                <MarkdownRenderer content={streamContent} />
+                <span className="streaming-cursor" />
               </div>
             </div>
           )}
