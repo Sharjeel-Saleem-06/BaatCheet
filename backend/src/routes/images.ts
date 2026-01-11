@@ -61,6 +61,60 @@ router.post(
 );
 
 /**
+ * GET /api/v1/images/:id/status
+ * Get image processing status (OCR completion)
+ */
+router.get(
+  '/:id/status',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+      const { id } = req.params;
+
+      // Import prisma
+      const { prisma } = await import('../config/database.js');
+
+      const attachment = await prisma.attachment.findFirst({
+        where: { id, userId },
+        select: {
+          id: true,
+          status: true,
+          extractedText: true,
+          analysisResult: true,
+          url: true,
+        },
+      });
+
+      if (!attachment) {
+        res.status(404).json({
+          success: false,
+          error: 'Image not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          id: attachment.id,
+          status: attachment.status,
+          extractedText: attachment.extractedText,
+          analysisResult: attachment.analysisResult,
+          url: attachment.url,
+        },
+      });
+    } catch (error) {
+      logger.error('Get image status error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get image status',
+      });
+    }
+  }
+);
+
+/**
  * POST /api/v1/images/ocr
  * Extract text from an uploaded image
  */

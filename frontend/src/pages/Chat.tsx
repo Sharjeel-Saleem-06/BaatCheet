@@ -21,7 +21,7 @@ import {
   X,
   Paperclip,
 } from 'lucide-react';
-import { conversations, images } from '../services/api';
+import { conversations, images, audio } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
 
@@ -39,6 +39,8 @@ interface UploadedImage {
   url: string;
   file: File;
   previewUrl: string;
+  status: 'uploading' | 'processing' | 'ready' | 'failed'; // Track OCR status
+  ocrText?: string; // OCR result when ready
 }
 
 interface Conversation {
@@ -287,6 +289,67 @@ export default function Chat() {
     }
   };
 
+  // Poll for image OCR status
+  const pollImageStatus = useCallback(async (imageId: string, tempId: string) => {
+    const maxAttempts = 30; // 30 seconds max
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        const token = await getClerkToken();
+        const response = await fetch(`/api/v1/images/${imageId}/status`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const status = data?.data?.status;
+          
+          if (status === 'completed') {
+            // OCR completed - update image status
+            setUploadedImages(prev => prev.map(img =>
+              img.id === imageId || img.id === tempId
+                ? { ...img, status: 'ready', ocrText: data?.data?.extractedText }
+                : img
+            ));
+            return;
+          } else if (status === 'failed') {
+            // OCR failed but image is still usable
+            setUploadedImages(prev => prev.map(img =>
+              img.id === imageId || img.id === tempId
+                ? { ...img, status: 'ready' } // Still allow sending
+                : img
+            ));
+            return;
+          }
+        }
+        
+        // Continue polling
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 1000);
+        } else {
+          // Timeout - mark as ready anyway
+          setUploadedImages(prev => prev.map(img =>
+            img.id === imageId || img.id === tempId
+              ? { ...img, status: 'ready' }
+              : img
+          ));
+        }
+      } catch (error) {
+        console.error('Status poll error:', error);
+        // On error, mark as ready to not block user
+        setUploadedImages(prev => prev.map(img =>
+          img.id === imageId || img.id === tempId
+            ? { ...img, status: 'ready' }
+            : img
+        ));
+      }
+    };
+
+    poll();
+  }, []);
+
   // Handle image file selection
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -312,30 +375,47 @@ export default function Chat() {
       const previewUrl = URL.createObjectURL(file);
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Add to state with preview
+      // Add to state with uploading status
       setUploadedImages(prev => [...prev, {
         id: tempId,
         url: '',
         file,
         previewUrl,
+        status: 'uploading',
       }]);
 
       try {
         // Upload to backend
         const { data } = await images.upload(file);
-        const imageData = data?.data;
+        const imageData = data?.data?.images?.[0] || data?.data;
 
-        // Update with real ID and URL
+        if (!imageData?.id) {
+          throw new Error('No image ID returned');
+        }
+
+        // Update with real ID and URL, set status to processing (OCR running)
         setUploadedImages(prev => prev.map(img => 
           img.id === tempId 
-            ? { ...img, id: imageData?.id || tempId, url: imageData?.url || previewUrl }
+            ? { 
+                ...img, 
+                id: imageData.id, 
+                url: imageData.url || previewUrl,
+                status: 'processing' // OCR is running
+              }
             : img
         ));
+
+        // Start polling for OCR completion
+        pollImageStatus(imageData.id, tempId);
+
       } catch (error) {
         console.error('Image upload error:', error);
-        // Remove failed upload
-        setUploadedImages(prev => prev.filter(img => img.id !== tempId));
-        URL.revokeObjectURL(previewUrl);
+        // Update status to failed
+        setUploadedImages(prev => prev.map(img =>
+          img.id === tempId
+            ? { ...img, status: 'failed' }
+            : img
+        ));
         setError('Failed to upload image');
       }
     }
@@ -345,7 +425,7 @@ export default function Chat() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, []);
+  }, [pollImageStatus]);
 
   // Remove uploaded image
   const removeImage = useCallback((imageId: string) => {
@@ -357,6 +437,15 @@ export default function Chat() {
       return prev.filter(i => i.id !== imageId);
     });
   }, []);
+
+  // Check if all images are ready
+  const allImagesReady = uploadedImages.length === 0 || 
+    uploadedImages.every(img => img.status === 'ready');
+  
+  // Check if any images are still processing
+  const imagesProcessing = uploadedImages.some(
+    img => img.status === 'uploading' || img.status === 'processing'
+  );
 
   // Handle paste for images
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
@@ -575,28 +664,65 @@ export default function Chat() {
 
           {/* Image previews (like ChatGPT) */}
           {uploadedImages.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {uploadedImages.map((img) => (
-                <div key={img.id} className="relative group">
-                  <img
-                    src={img.previewUrl}
-                    alt="To upload"
-                    className="w-20 h-20 object-cover rounded-lg border border-dark-600"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(img.id)}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={12} />
-                  </button>
-                  {uploading && img.url === '' && (
-                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                      <Loader2 className="animate-spin text-white" size={20} />
-                    </div>
-                  )}
+            <div className="mb-3">
+              {/* Processing notice */}
+              {imagesProcessing && (
+                <div className="mb-2 p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center gap-2">
+                  <Loader2 className="animate-spin text-primary-400" size={16} />
+                  <span className="text-primary-400 text-sm">
+                    Analyzing image{uploadedImages.length > 1 ? 's' : ''}... Please wait
+                  </span>
                 </div>
-              ))}
+              )}
+              
+              <div className="flex flex-wrap gap-2">
+                {uploadedImages.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <img
+                      src={img.previewUrl}
+                      alt="To upload"
+                      className={clsx(
+                        "w-20 h-20 object-cover rounded-lg border-2 transition-all",
+                        img.status === 'ready' ? "border-green-500" :
+                        img.status === 'failed' ? "border-red-500" :
+                        "border-primary-500 animate-pulse"
+                      )}
+                    />
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(img.id)}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <X size={12} />
+                    </button>
+                    
+                    {/* Status overlay */}
+                    {img.status === 'uploading' && (
+                      <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
+                        <Loader2 className="animate-spin text-white" size={20} />
+                        <span className="text-white text-xs mt-1">Uploading</span>
+                      </div>
+                    )}
+                    {img.status === 'processing' && (
+                      <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
+                        <Loader2 className="animate-spin text-primary-400" size={20} />
+                        <span className="text-primary-400 text-xs mt-1">Analyzing</span>
+                      </div>
+                    )}
+                    {img.status === 'ready' && (
+                      <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                        <Check size={10} className="text-white" />
+                      </div>
+                    )}
+                    {img.status === 'failed' && (
+                      <div className="absolute bottom-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                        <X size={10} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -644,17 +770,23 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === 'Enter' && !e.shiftKey && allImagesReady) {
                     e.preventDefault();
                     handleSubmit();
                   }
                 }}
                 onPaste={handlePaste}
-                placeholder={uploadedImages.length > 0 ? "Ask about these images..." : "Type a message..."}
+                placeholder={
+                  imagesProcessing 
+                    ? "Wait for image analysis to complete..." 
+                    : uploadedImages.length > 0 
+                      ? "Ask about these images..." 
+                      : "Type a message..."
+                }
                 rows={1}
                 className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none transition-colors"
                 style={{ minHeight: '44px', maxHeight: '200px' }}
-                disabled={loading || streaming}
+                disabled={loading || streaming || imagesProcessing}
               />
             </div>
 
@@ -670,10 +802,18 @@ export default function Chat() {
             ) : (
               <button
                 type="submit"
-                disabled={!input.trim() || loading}
-                className="p-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-dark-700 disabled:text-dark-500 text-white rounded-xl transition-colors"
+                disabled={!input.trim() || loading || imagesProcessing}
+                className={clsx(
+                  "p-2.5 rounded-xl transition-colors",
+                  imagesProcessing
+                    ? "bg-primary-500/50 text-white/50 cursor-not-allowed"
+                    : "bg-primary-500 hover:bg-primary-600 disabled:bg-dark-700 disabled:text-dark-500 text-white"
+                )}
+                title={imagesProcessing ? "Wait for image analysis to complete" : "Send message"}
               >
                 {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : imagesProcessing ? (
                   <Loader2 className="animate-spin" size={20} />
                 ) : (
                   <Send size={20} />

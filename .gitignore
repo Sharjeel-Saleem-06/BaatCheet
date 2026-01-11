@@ -81,3 +81,4 @@ coverage/
 *.pem
 *.key
 secrets/
+backend/uploads/
