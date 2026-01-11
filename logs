@@ -1,0 +1,66 @@
+react-dom.development.js:29895 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+deprecations.ts:9 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+warnOnce @ deprecations.ts:9
+deprecations.ts:9 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+warnOnce @ deprecations.ts:9
+clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+warnOnce @ clerk.browser.js:19
+Chat.tsx:306 Uncaught TypeError: recentConversations.map is not a function
+    at Chat (Chat.tsx:306:32)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+Chat.tsx:306 Uncaught TypeError: recentConversations.map is not a function
+    at Chat (Chat.tsx:306:32)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at HTMLUnknownElement.callCallback2 (react-dom.development.js:4164:14)
+    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:16)
+    at invokeGuardedCallback (react-dom.development.js:4277:31)
+    at beginWork$1 (react-dom.development.js:27490:7)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+react-dom.development.js:18704 The above error occurred in the <Chat> component:
+
+    at Chat (http://localhost:3000/src/pages/Chat.tsx:38:30)
+    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:4131:5)
+    at Outlet (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:4537:26)
+    at div
+    at main
+    at div
+    at Layout (http://localhost:3000/src/components/Layout.tsx:38:20)
+    at SignedIn (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:3528:19)
+    at RenderedRoute (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:4131:5)
+    at Routes (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:4601:5)
+    at App
+    at Router (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:4544:15)
+    at BrowserRouter (http://localhost:3000/node_modules/.vite/deps/react-router-dom.js?v=e8e88721:5290:5)
+    at __experimental_CheckoutProvider (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:2039:42)
+    at SWRConfig (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:1065:11)
+    at SWRConfigCompat (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:2030:28)
+    at OrganizationProvider (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:2043:31)
+    at ClerkContextProvider (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:6753:11)
+    at ClerkProviderBase (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:6843:11)
+    at Hoc (http://localhost:3000/node_modules/.vite/deps/@clerk_clerk-react.js?v=e8e88721:3731:5)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ react-dom.development.js:18704
+react-dom.development.js:26962 Uncaught TypeError: recentConversations.map is not a function
+    at Chat (Chat.tsx:306:32)
+    at renderWithHooks (react-dom.development.js:15486:18)
+    at updateFunctionComponent (react-dom.development.js:19617:20)
+    at beginWork (react-dom.development.js:21640:16)
+    at beginWork$1 (react-dom.development.js:27465:14)
+    at performUnitOfWork (react-dom.development.js:26596:12)
+    at workLoopSync (react-dom.development.js:26505:5)
+    at renderRootSync (react-dom.development.js:26473:7)
+    at recoverFromConcurrentError (react-dom.development.js:25889:20)
+    at performConcurrentWorkOnRoot (react-dom.development.js:25789:22)

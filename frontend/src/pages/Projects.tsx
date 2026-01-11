@@ -54,9 +54,12 @@ export default function Projects() {
   const loadProjects = async () => {
     try {
       const { data } = await projects.list();
-      setProjectList(data.data || []);
+      // Handle both array and object responses
+      const items = data?.data?.items || data?.data || [];
+      setProjectList(Array.isArray(items) ? items : []);
     } catch (error) {
       console.error('Failed to load projects:', error);
+      setProjectList([]);
     } finally {
       setLoading(false);
     }
@@ -65,9 +68,12 @@ export default function Projects() {
   const loadProjectConversations = async (projectId: string) => {
     try {
       const { data } = await projects.getConversations(projectId);
-      setProjectConversations(data.data || []);
+      // Handle both array and object responses
+      const items = data?.data?.items || data?.data || [];
+      setProjectConversations(Array.isArray(items) ? items : []);
     } catch (error) {
       console.error('Failed to load conversations:', error);
+      setProjectConversations([]);
     }
   };
 

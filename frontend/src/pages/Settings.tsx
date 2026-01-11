@@ -67,17 +67,24 @@ export default function Settings() {
     try {
       if (activeTab === 'apikeys') {
         const { data } = await apiKeys.list();
-        setApiKeyList(data.data || []);
+        // Handle both array and object responses
+        const items = data?.data?.items || data?.data || [];
+        setApiKeyList(Array.isArray(items) ? items : []);
       } else {
         const [webhooksRes, eventsRes] = await Promise.all([
-          webhooks.list(),
-          webhooks.getEvents(),
+          webhooks.list().catch(() => ({ data: { data: [] } })),
+          webhooks.getEvents().catch(() => ({ data: { data: [] } })),
         ]);
-        setWebhookList(webhooksRes.data.data || []);
-        setAvailableEvents(eventsRes.data.data || []);
+        // Handle both array and object responses
+        const webhookItems = webhooksRes?.data?.data?.items || webhooksRes?.data?.data || [];
+        const eventItems = eventsRes?.data?.data?.items || eventsRes?.data?.data || [];
+        setWebhookList(Array.isArray(webhookItems) ? webhookItems : []);
+        setAvailableEvents(Array.isArray(eventItems) ? eventItems : []);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
+      setApiKeyList([]);
+      setWebhookList([]);
     } finally {
       setLoading(false);
     }

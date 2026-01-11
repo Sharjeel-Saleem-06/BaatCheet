@@ -59,16 +59,21 @@ export default function Analytics() {
     setLoading(true);
     try {
       const [dashboardRes, usageRes, insightsRes] = await Promise.all([
-        analytics.getDashboard(),
-        analytics.getUsage(period),
-        analytics.getInsights(),
+        analytics.getDashboard().catch(() => ({ data: { data: null } })),
+        analytics.getUsage(period).catch(() => ({ data: { data: { usage: [] } } })),
+        analytics.getInsights().catch(() => ({ data: { data: { insights: [] } } })),
       ]);
 
-      setDashboard(dashboardRes.data.data);
-      setUsage(usageRes.data.data.usage || []);
-      setInsights(insightsRes.data.data.insights || []);
+      setDashboard(dashboardRes?.data?.data || null);
+      const usageData = usageRes?.data?.data?.usage || usageRes?.data?.data || [];
+      setUsage(Array.isArray(usageData) ? usageData : []);
+      const insightsData = insightsRes?.data?.data?.insights || insightsRes?.data?.data || [];
+      setInsights(Array.isArray(insightsData) ? insightsData : []);
     } catch (error) {
       console.error('Failed to load analytics:', error);
+      setDashboard(null);
+      setUsage([]);
+      setInsights([]);
     } finally {
       setLoading(false);
     }

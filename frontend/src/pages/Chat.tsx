@@ -78,19 +78,26 @@ export default function Chat() {
   const loadConversation = async (id: string) => {
     try {
       const { data } = await conversations.get(id);
-      setConversation(data.data);
-      setMessages(data.data.messages || []);
+      const conv = data?.data;
+      if (conv) {
+        setConversation(conv);
+        setMessages(Array.isArray(conv.messages) ? conv.messages : []);
+      }
     } catch (error) {
       console.error('Failed to load conversation:', error);
+      setMessages([]);
     }
   };
 
   const loadRecentConversations = async () => {
     try {
       const { data } = await conversations.list({ limit: 10 });
-      setRecentConversations(data.data || []);
+      // API returns data.data.items, handle both formats for safety
+      const items = data?.data?.items || data?.data || [];
+      setRecentConversations(Array.isArray(items) ? items : []);
     } catch (error) {
       console.error('Failed to load conversations:', error);
+      setRecentConversations([]);
     }
   };
 
