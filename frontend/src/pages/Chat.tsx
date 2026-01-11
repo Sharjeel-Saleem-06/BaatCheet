@@ -34,14 +34,20 @@ interface Message {
   createdAt: string;
 }
 
-interface UploadedImage {
+interface UploadedFile {
   id: string;
   url: string;
   file: File;
   previewUrl: string;
-  status: 'uploading' | 'processing' | 'ready' | 'failed'; // Track OCR status
-  ocrText?: string; // OCR result when ready
+  status: 'uploading' | 'processing' | 'ready' | 'failed';
+  extractedText?: string; // OCR/text extraction result
+  type: 'image' | 'document'; // File type
+  name: string; // Original filename
+  size: number; // File size in bytes
 }
+
+// Keep old interface name for compatibility
+type UploadedImage = UploadedFile;
 
 interface Conversation {
   id: string;
@@ -82,10 +88,25 @@ export default function Chat() {
     }
   }, [conversationId]);
 
-  // Load recent conversations
+  // Load recent conversations on mount and when auth is ready
   useEffect(() => {
+    // Initial load
     loadRecentConversations();
+    
+    // Retry after a short delay to ensure Clerk is ready
+    const retryTimeout = setTimeout(() => {
+      loadRecentConversations();
+    }, 1000);
+
+    return () => clearTimeout(retryTimeout);
   }, []);
+
+  // Also reload conversations when navigating back to chat
+  useEffect(() => {
+    if (!conversationId) {
+      loadRecentConversations();
+    }
+  }, [conversationId]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -289,15 +310,55 @@ export default function Chat() {
     }
   };
 
-  // Poll for image OCR status
-  const pollImageStatus = useCallback(async (imageId: string, tempId: string) => {
-    const maxAttempts = 30; // 30 seconds max
+  // File size limits (to control token consumption)
+  const FILE_SIZE_LIMITS = {
+    image: 10 * 1024 * 1024,      // 10MB for images
+    document: 5 * 1024 * 1024,    // 5MB for documents (text extraction is expensive)
+    pdf: 5 * 1024 * 1024,         // 5MB for PDFs
+  };
+
+  // Allowed file types
+  const ALLOWED_FILE_TYPES = {
+    image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    document: [
+      'application/pdf',
+      'text/plain',
+      'text/markdown',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/csv',
+      'application/json',
+    ],
+  };
+
+  // Get file type category
+  const getFileCategory = (mimeType: string): 'image' | 'document' | null => {
+    if (ALLOWED_FILE_TYPES.image.includes(mimeType)) return 'image';
+    if (ALLOWED_FILE_TYPES.document.includes(mimeType)) return 'document';
+    if (mimeType.startsWith('text/')) return 'document';
+    return null;
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Poll for file processing status
+  const pollFileStatus = useCallback(async (fileId: string, tempId: string, fileType: 'image' | 'document') => {
+    const maxAttempts = 60; // 60 seconds max for documents (they take longer)
     let attempts = 0;
 
     const poll = async () => {
       try {
         const token = await getClerkToken();
-        const response = await fetch(`/api/v1/images/${imageId}/status`, {
+        const endpoint = fileType === 'image' 
+          ? `/api/v1/images/${fileId}/status`
+          : `/api/v1/files/${fileId}/status`;
+          
+        const response = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -306,41 +367,36 @@ export default function Chat() {
           const status = data?.data?.status;
           
           if (status === 'completed') {
-            // OCR completed - update image status
             setUploadedImages(prev => prev.map(img =>
-              img.id === imageId || img.id === tempId
-                ? { ...img, status: 'ready', ocrText: data?.data?.extractedText }
+              img.id === fileId || img.id === tempId
+                ? { ...img, status: 'ready', extractedText: data?.data?.extractedText }
                 : img
             ));
             return;
           } else if (status === 'failed') {
-            // OCR failed but image is still usable
             setUploadedImages(prev => prev.map(img =>
-              img.id === imageId || img.id === tempId
-                ? { ...img, status: 'ready' } // Still allow sending
+              img.id === fileId || img.id === tempId
+                ? { ...img, status: 'ready' }
                 : img
             ));
             return;
           }
         }
         
-        // Continue polling
         attempts++;
         if (attempts < maxAttempts) {
           setTimeout(poll, 1000);
         } else {
-          // Timeout - mark as ready anyway
           setUploadedImages(prev => prev.map(img =>
-            img.id === imageId || img.id === tempId
+            img.id === fileId || img.id === tempId
               ? { ...img, status: 'ready' }
               : img
           ));
         }
       } catch (error) {
         console.error('Status poll error:', error);
-        // On error, mark as ready to not block user
         setUploadedImages(prev => prev.map(img =>
-          img.id === imageId || img.id === tempId
+          img.id === fileId || img.id === tempId
             ? { ...img, status: 'ready' }
             : img
         ));
@@ -350,8 +406,8 @@ export default function Chat() {
     poll();
   }, []);
 
-  // Handle image file selection
-  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection (images and documents)
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -359,73 +415,102 @@ export default function Chat() {
     setError(null);
 
     for (const file of Array.from(files)) {
+      const fileCategory = getFileCategory(file.type);
+      
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
+      if (!fileCategory) {
+        setError(`Unsupported file type: ${file.type || file.name.split('.').pop()}`);
         continue;
       }
 
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('Image must be less than 10MB');
+      // Validate file size based on type
+      const sizeLimit = fileCategory === 'image' ? FILE_SIZE_LIMITS.image : FILE_SIZE_LIMITS.document;
+      if (file.size > sizeLimit) {
+        setError(`${fileCategory === 'image' ? 'Image' : 'Document'} must be less than ${formatFileSize(sizeLimit)}`);
         continue;
       }
 
-      // Create preview immediately (like ChatGPT)
-      const previewUrl = URL.createObjectURL(file);
+      // Create preview
+      const previewUrl = fileCategory === 'image' 
+        ? URL.createObjectURL(file) 
+        : ''; // No preview for documents
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Add to state with uploading status
+      // Add to state
       setUploadedImages(prev => [...prev, {
         id: tempId,
         url: '',
         file,
         previewUrl,
         status: 'uploading',
+        type: fileCategory,
+        name: file.name,
+        size: file.size,
       }]);
 
       try {
-        // Upload to backend
-        const { data } = await images.upload(file);
-        const imageData = data?.data?.images?.[0] || data?.data;
-
-        if (!imageData?.id) {
-          throw new Error('No image ID returned');
+        // Upload to appropriate endpoint
+        const token = await getClerkToken();
+        const formData = new FormData();
+        
+        if (fileCategory === 'image') {
+          formData.append('images', file);
+        } else {
+          formData.append('file', file);
         }
 
-        // Update with real ID and URL, set status to processing (OCR running)
+        const endpoint = fileCategory === 'image' ? '/api/v1/images/upload' : '/api/v1/files/upload';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const fileData = data?.data?.images?.[0] || data?.data;
+
+        if (!fileData?.id) {
+          throw new Error('No file ID returned');
+        }
+
+        // Update with real ID and URL
         setUploadedImages(prev => prev.map(img => 
           img.id === tempId 
             ? { 
                 ...img, 
-                id: imageData.id, 
-                url: imageData.url || previewUrl,
-                status: 'processing' // OCR is running
+                id: fileData.id, 
+                url: fileData.url || previewUrl,
+                status: 'processing'
               }
             : img
         ));
 
-        // Start polling for OCR completion
-        pollImageStatus(imageData.id, tempId);
+        // Start polling for processing completion
+        pollFileStatus(fileData.id, tempId, fileCategory);
 
       } catch (error) {
-        console.error('Image upload error:', error);
-        // Update status to failed
+        console.error('File upload error:', error);
         setUploadedImages(prev => prev.map(img =>
           img.id === tempId
             ? { ...img, status: 'failed' }
             : img
         ));
-        setError('Failed to upload image');
+        setError('Failed to upload file');
       }
     }
 
     setUploading(false);
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [pollImageStatus]);
+  }, [pollFileStatus]);
+
+  // Legacy handler for backward compatibility
+  const handleImageUpload = handleFileUpload;
 
   // Remove uploaded image
   const removeImage = useCallback((imageId: string) => {
@@ -662,7 +747,7 @@ export default function Chat() {
             </div>
           )}
 
-          {/* Image previews (like ChatGPT) */}
+          {/* File previews (images and documents) */}
           {uploadedImages.length > 0 && (
             <div className="mb-3">
               {/* Processing notice */}
@@ -670,80 +755,126 @@ export default function Chat() {
                 <div className="mb-2 p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center gap-2">
                   <Loader2 className="animate-spin text-primary-400" size={16} />
                   <span className="text-primary-400 text-sm">
-                    Analyzing image{uploadedImages.length > 1 ? 's' : ''}... Please wait
+                    Analyzing file{uploadedImages.length > 1 ? 's' : ''}... Please wait
                   </span>
                 </div>
               )}
               
               <div className="flex flex-wrap gap-2">
-                {uploadedImages.map((img) => (
-                  <div key={img.id} className="relative group">
-                    <img
-                      src={img.previewUrl}
-                      alt="To upload"
-                      className={clsx(
-                        "w-20 h-20 object-cover rounded-lg border-2 transition-all",
-                        img.status === 'ready' ? "border-green-500" :
-                        img.status === 'failed' ? "border-red-500" :
+                {uploadedImages.map((file) => (
+                  <div key={file.id} className="relative group">
+                    {/* Image preview */}
+                    {file.type === 'image' && file.previewUrl ? (
+                      <img
+                        src={file.previewUrl}
+                        alt="To upload"
+                        className={clsx(
+                          "w-20 h-20 object-cover rounded-lg border-2 transition-all",
+                          file.status === 'ready' ? "border-green-500" :
+                          file.status === 'failed' ? "border-red-500" :
+                          "border-primary-500 animate-pulse"
+                        )}
+                      />
+                    ) : (
+                      /* Document preview */
+                      <div className={clsx(
+                        "w-20 h-20 rounded-lg border-2 transition-all flex flex-col items-center justify-center bg-dark-700 p-1",
+                        file.status === 'ready' ? "border-green-500" :
+                        file.status === 'failed' ? "border-red-500" :
                         "border-primary-500 animate-pulse"
-                      )}
-                    />
+                      )}>
+                        <Paperclip className="text-dark-400" size={20} />
+                        <span className="text-dark-300 text-xs mt-1 truncate w-full text-center px-1">
+                          {file.name?.split('.').pop()?.toUpperCase() || 'DOC'}
+                        </span>
+                        <span className="text-dark-500 text-xs">
+                          {formatFileSize(file.size || 0)}
+                        </span>
+                      </div>
+                    )}
+                    
                     {/* Remove button */}
                     <button
                       type="button"
-                      onClick={() => removeImage(img.id)}
+                      onClick={() => removeImage(file.id)}
                       className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                     >
                       <X size={12} />
                     </button>
                     
                     {/* Status overlay */}
-                    {img.status === 'uploading' && (
+                    {file.status === 'uploading' && (
                       <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
                         <Loader2 className="animate-spin text-white" size={20} />
                         <span className="text-white text-xs mt-1">Uploading</span>
                       </div>
                     )}
-                    {img.status === 'processing' && (
+                    {file.status === 'processing' && (
                       <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
                         <Loader2 className="animate-spin text-primary-400" size={20} />
-                        <span className="text-primary-400 text-xs mt-1">Analyzing</span>
+                        <span className="text-primary-400 text-xs mt-1">Reading</span>
                       </div>
                     )}
-                    {img.status === 'ready' && (
+                    {file.status === 'ready' && (
                       <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
                         <Check size={10} className="text-white" />
                       </div>
                     )}
-                    {img.status === 'failed' && (
+                    {file.status === 'failed' && (
                       <div className="absolute bottom-1 right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                         <X size={10} className="text-white" />
+                      </div>
+                    )}
+                    
+                    {/* File name tooltip for documents */}
+                    {file.type === 'document' && file.name && (
+                      <div className="absolute -bottom-6 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-xs text-dark-400 bg-dark-800 px-1 py-0.5 rounded truncate max-w-[80px] inline-block">
+                          {file.name}
+                        </span>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
+              
+              {/* File size info */}
+              <div className="mt-2 text-xs text-dark-500">
+                {uploadedImages.filter(f => f.type === 'image').length > 0 && (
+                  <span className="mr-3">
+                    📷 {uploadedImages.filter(f => f.type === 'image').length} image(s)
+                  </span>
+                )}
+                {uploadedImages.filter(f => f.type === 'document').length > 0 && (
+                  <span>
+                    📄 {uploadedImages.filter(f => f.type === 'document').length} document(s)
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            {/* Image upload */}
-            <label className={clsx(
-              "p-2.5 cursor-pointer transition-colors",
-              uploading ? "text-primary-400" : "text-dark-500 hover:text-dark-300"
-            )}>
+            {/* File upload (images and documents) */}
+            <label 
+              className={clsx(
+                "p-2.5 cursor-pointer transition-colors",
+                uploading ? "text-primary-400" : "text-dark-500 hover:text-dark-300"
+              )}
+              title="Upload images or documents (PDF, TXT, DOC, etc.)"
+            >
               {uploading ? (
                 <Loader2 className="animate-spin" size={20} />
               ) : (
-                <ImageIcon size={20} />
+                <Paperclip size={20} />
               )}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf,.txt,.md,.doc,.docx,.csv,.json"
                 multiple
                 className="hidden"
-                onChange={handleImageUpload}
+                onChange={handleFileUpload}
                 disabled={loading || uploading}
               />
             </label>

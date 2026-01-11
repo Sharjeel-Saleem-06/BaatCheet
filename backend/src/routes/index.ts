@@ -11,6 +11,7 @@ import chatRoutes from './chat.js';
 import conversationRoutes from './conversations.js';
 import projectRoutes from './projects.js';
 import imageRoutes from './images.js';
+import fileRoutes from './files.js';
 import exportRoutes from './export.js';
 import shareRoutes from './share.js';
 import templateRoutes from './templates.js';
@@ -44,6 +45,9 @@ router.use('/projects', projectRoutes);
 
 // Images (upload, OCR, analysis)
 router.use('/images', imageRoutes);
+
+// Files (documents: PDF, TXT, DOC, etc.)
+router.use('/files', fileRoutes);
 
 // Audio (voice input, transcription)
 router.use('/audio', audioRoutes);
