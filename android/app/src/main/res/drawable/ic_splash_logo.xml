@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background circle (for adaptive icon) -->
+    <group
+        android:translateX="18"
+        android:translateY="18">
+        
+        <!-- Chat bubble outline -->
+        <path
+            android:pathData="M12,54 L12,12 Q12,6 18,6 L54,6 Q60,6 60,12 L60,42 Q60,48 54,48 L24,48 L12,60 L12,48 Q6,48 6,42 L6,12 Q6,6 12,6"
+            android:strokeWidth="3"
+            android:strokeColor="#1E3A8A"
+            android:fillColor="#00000000"/>
+        
+        <!-- Circuit lines -->
+        <path
+            android:pathData="M18,18 L54,18"
+            android:strokeWidth="2"
+            android:strokeColor="#14B8A6"
+            android:strokeLineCap="round"/>
+        
+        <path
+            android:pathData="M18,30 L54,30"
+            android:strokeWidth="2"
+            android:strokeColor="#14B8A6"
+            android:strokeLineCap="round"/>
+        
+        <path
+            android:pathData="M18,42 L54,42"
+            android:strokeWidth="2"
+            android:strokeColor="#14B8A6"
+            android:strokeLineCap="round"/>
+        
+        <!-- Circuit nodes -->
+        <path
+            android:pathData="M27,18 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M45,18 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M24,30 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M48,30 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M21,42 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M36,42 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+        <path
+            android:pathData="M51,42 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0"
+            android:fillColor="#14B8A6"/>
+        
+    </group>
+</vector>

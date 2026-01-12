@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme -->
+    <style name="Theme.BaatCheet" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary</item>
+        <item name="android:colorAccent">@color/secondary</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    
+    <!-- Splash Screen Theme (Dark) -->
+    <style name="Theme.BaatCheet.Splash" parent="Theme.BaatCheet">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_icon_background</item>
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+    </style>
+</resources>
