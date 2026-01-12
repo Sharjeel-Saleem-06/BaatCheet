@@ -124,3 +124,12 @@ export {
   DetectedTag,
   TagProcessingResult,
 } from './ChatTagsService.js';
+
+// Mode Detector Service
+export {
+  modeDetector,
+  AIMode,
+  ModeConfig,
+  DetectedModeResult,
+  MODE_CONFIGS,
+} from './ModeDetectorService.js';

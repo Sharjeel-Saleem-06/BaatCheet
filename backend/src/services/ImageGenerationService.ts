@@ -1,12 +1,17 @@
 /**
- * Image Generation Service
- * Generates images using HuggingFace free models
+ * Advanced Image Generation Service
+ * Generates images using HuggingFace free models with advanced features
  * 
  * Features:
- * - Multi-model support (Stable Diffusion, FLUX, etc.)
- * - Per-user daily limits (1 image/24hr for free tier)
- * - Optimized prompts for quality results
+ * - Multi-model support (SDXL, FLUX, Playground v2.5)
+ * - AI-powered prompt enhancement
+ * - Style presets (15+ artistic styles)
+ * - Aspect ratio support
+ * - Image variations
+ * - Per-user daily limits with tier-based quotas
  * - Load balancing across API keys
+ * - Batch generation (Pro users)
+ * - Smart suggestions
  * 
  * @module ImageGenerationService
  */
@@ -14,6 +19,13 @@
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
 import { prisma } from '../config/database.js';
+import { aiRouter } from './AIRouter.js';
+import { 
+  IMAGE_STYLE_PRESETS, 
+  ASPECT_RATIOS, 
+  getStylePreset,
+  getAspectRatioDimensions 
+} from '../config/modePrompts.js';
 
 // ============================================
 // Types
@@ -22,11 +34,15 @@ import { prisma } from '../config/database.js';
 export interface ImageGenerationOptions {
   prompt: string;
   negativePrompt?: string;
+  style?: string;
+  aspectRatio?: string;
   width?: number;
   height?: number;
   steps?: number;
   guidanceScale?: number;
   model?: string;
+  seed?: number;
+  enhancePrompt?: boolean;
 }
 
 export interface ImageGenerationResult {
@@ -34,16 +50,41 @@ export interface ImageGenerationResult {
   imageUrl?: string;
   imageBase64?: string;
   model: string;
-  prompt: string;
+  originalPrompt: string;
+  enhancedPrompt: string;
+  seed: number;
   generationTime: number;
+  style?: string;
+  aspectRatio?: string;
   error?: string;
 }
 
 export interface UserGenerationStatus {
   canGenerate: boolean;
   remainingGenerations: number;
+  dailyLimit: number;
+  usedToday: number;
   nextAvailableAt?: Date;
   totalGenerated: number;
+  tier: string;
+}
+
+export interface PromptSuggestion {
+  improvement: string;
+  reason: string;
+  enhancedPrompt: string;
+}
+
+export interface BatchGenerationResult {
+  success: boolean;
+  results: Array<{
+    success: boolean;
+    prompt: string;
+    imageUrl?: string;
+    error?: string;
+  }>;
+  totalGenerated: number;
+  totalFailed: number;
 }
 
 interface ModelConfig {
@@ -53,64 +94,90 @@ interface ModelConfig {
   maxWidth: number;
   maxHeight: number;
   defaultSteps: number;
-  quality: 'fast' | 'balanced' | 'high';
+  guidanceScale: number;
+  quality: 'fast' | 'balanced' | 'high' | 'excellent';
+  speed: 'fast' | 'medium' | 'slow';
+  dailyLimit: number;
 }
+
+// ============================================
+// Model Configurations
+// ============================================
+
+const MODELS: Record<string, ModelConfig> = {
+  'flux-schnell': {
+    id: 'black-forest-labs/FLUX.1-schnell',
+    name: 'FLUX Schnell',
+    endpoint: 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+    maxWidth: 1024,
+    maxHeight: 1024,
+    defaultSteps: 4,
+    guidanceScale: 0,
+    quality: 'excellent',
+    speed: 'fast',
+    dailyLimit: 1000,
+  },
+  'stable-diffusion-xl': {
+    id: 'stabilityai/stable-diffusion-xl-base-1.0',
+    name: 'Stable Diffusion XL',
+    endpoint: 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
+    maxWidth: 1024,
+    maxHeight: 1024,
+    defaultSteps: 30,
+    guidanceScale: 7.5,
+    quality: 'high',
+    speed: 'medium',
+    dailyLimit: 1000,
+  },
+  'playground-v2.5': {
+    id: 'playgroundai/playground-v2.5-1024px-aesthetic',
+    name: 'Playground v2.5',
+    endpoint: 'https://api-inference.huggingface.co/models/playgroundai/playground-v2.5-1024px-aesthetic',
+    maxWidth: 1024,
+    maxHeight: 1024,
+    defaultSteps: 25,
+    guidanceScale: 3,
+    quality: 'excellent',
+    speed: 'medium',
+    dailyLimit: 1000,
+  },
+  'stable-diffusion-1.5': {
+    id: 'runwayml/stable-diffusion-v1-5',
+    name: 'Stable Diffusion 1.5',
+    endpoint: 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
+    maxWidth: 512,
+    maxHeight: 512,
+    defaultSteps: 25,
+    guidanceScale: 7.5,
+    quality: 'balanced',
+    speed: 'fast',
+    dailyLimit: 1000,
+  },
+};
+
+// ============================================
+// Daily Limits by Tier
+// ============================================
+
+const DAILY_LIMITS = {
+  free: 1,
+  pro: 50,
+  enterprise: 500,
+};
 
 // ============================================
 // Image Generation Service Class
 // ============================================
 
 class ImageGenerationServiceClass {
-  // HuggingFace API keys (multi-key rotation)
   private readonly HF_API_KEYS: string[] = [];
   private currentKeyIndex = 0;
-
-  // Daily limits per tier
-  private readonly DAILY_LIMITS = {
-    free: 1,      // 1 image per 24 hours
-    pro: 10,      // 10 images per 24 hours
-    enterprise: 100, // 100 images per 24 hours
-  };
-
-  // Available models (HuggingFace free inference)
-  private readonly MODELS: ModelConfig[] = [
-    {
-      id: 'stabilityai/stable-diffusion-xl-base-1.0',
-      name: 'Stable Diffusion XL',
-      endpoint: 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
-      maxWidth: 1024,
-      maxHeight: 1024,
-      defaultSteps: 30,
-      quality: 'high',
-    },
-    {
-      id: 'runwayml/stable-diffusion-v1-5',
-      name: 'Stable Diffusion 1.5',
-      endpoint: 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
-      maxWidth: 512,
-      maxHeight: 512,
-      defaultSteps: 25,
-      quality: 'balanced',
-    },
-    {
-      id: 'CompVis/stable-diffusion-v1-4',
-      name: 'Stable Diffusion 1.4',
-      endpoint: 'https://api-inference.huggingface.co/models/CompVis/stable-diffusion-v1-4',
-      maxWidth: 512,
-      maxHeight: 512,
-      defaultSteps: 20,
-      quality: 'fast',
-    },
-  ];
-
-  // Default negative prompt for better results
-  private readonly DEFAULT_NEGATIVE_PROMPT = 
-    'blurry, bad quality, distorted, ugly, deformed, disfigured, ' +
-    'low resolution, pixelated, watermark, text, logo, signature, ' +
-    'cropped, out of frame, worst quality, low quality, jpeg artifacts';
+  private keyUsage: Map<string, number> = new Map();
+  private lastResetDate: Date = new Date();
 
   constructor() {
     this.loadApiKeys();
+    this.resetDailyCountersIfNeeded();
   }
 
   /**
@@ -121,45 +188,71 @@ class ImageGenerationServiceClass {
       const key = process.env[`HUGGINGFACE_API_KEY_${i}`];
       if (key && key.startsWith('hf_')) {
         this.HF_API_KEYS.push(key);
+        this.keyUsage.set(key, 0);
       }
     }
     
     const singleKey = process.env.HUGGINGFACE_API_KEY;
     if (singleKey && singleKey.startsWith('hf_') && !this.HF_API_KEYS.includes(singleKey)) {
       this.HF_API_KEYS.push(singleKey);
+      this.keyUsage.set(singleKey, 0);
     }
     
     logger.info(`Image Generation initialized with ${this.HF_API_KEYS.length} HuggingFace keys`);
   }
 
   /**
-   * Get next available API key (round-robin)
+   * Get next available API key with load balancing
    */
   private getNextApiKey(): string | null {
+    this.resetDailyCountersIfNeeded();
+    
     if (this.HF_API_KEYS.length === 0) return null;
-    const key = this.HF_API_KEYS[this.currentKeyIndex];
-    this.currentKeyIndex = (this.currentKeyIndex + 1) % this.HF_API_KEYS.length;
-    return key;
+    
+    // Find key with lowest usage
+    let bestKey: string | null = null;
+    let lowestUsage = Infinity;
+    
+    for (const key of this.HF_API_KEYS) {
+      const usage = this.keyUsage.get(key) || 0;
+      if (usage < lowestUsage && usage < 1000) {
+        lowestUsage = usage;
+        bestKey = key;
+      }
+    }
+    
+    return bestKey;
   }
 
   /**
-   * Check if user can generate an image
+   * Reset daily counters if new day
+   */
+  private resetDailyCountersIfNeeded(): void {
+    const now = new Date();
+    if (now.getDate() !== this.lastResetDate.getDate()) {
+      this.keyUsage.clear();
+      this.HF_API_KEYS.forEach(key => this.keyUsage.set(key, 0));
+      this.lastResetDate = now;
+      logger.info('Image generation key usage counters reset');
+    }
+  }
+
+  /**
+   * Check user's generation limit and status
    */
   public async checkUserLimit(userId: string): Promise<UserGenerationStatus> {
     try {
-      // Get user tier
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { tier: true },
       });
 
-      const tier = (user?.tier || 'free') as keyof typeof this.DAILY_LIMITS;
-      const dailyLimit = this.DAILY_LIMITS[tier] || this.DAILY_LIMITS.free;
+      const tier = (user?.tier || 'free') as keyof typeof DAILY_LIMITS;
+      const dailyLimit = DAILY_LIMITS[tier] || DAILY_LIMITS.free;
 
-      // Count generations in last 24 hours
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       
-      const recentGenerations = await prisma.imageGeneration.count({
+      const usedToday = await prisma.imageGeneration.count({
         where: {
           userId,
           createdAt: { gte: twentyFourHoursAgo },
@@ -167,15 +260,13 @@ class ImageGenerationServiceClass {
         },
       });
 
-      // Get total generations
       const totalGenerated = await prisma.imageGeneration.count({
         where: { userId, status: 'completed' },
       });
 
-      const canGenerate = recentGenerations < dailyLimit;
-      const remainingGenerations = Math.max(0, dailyLimit - recentGenerations);
+      const canGenerate = usedToday < dailyLimit;
+      const remainingGenerations = Math.max(0, dailyLimit - usedToday);
 
-      // Calculate next available time
       let nextAvailableAt: Date | undefined;
       if (!canGenerate) {
         const oldestRecent = await prisma.imageGeneration.findFirst({
@@ -195,16 +286,71 @@ class ImageGenerationServiceClass {
       return {
         canGenerate,
         remainingGenerations,
+        dailyLimit,
+        usedToday,
         nextAvailableAt,
         totalGenerated,
+        tier,
       };
     } catch (error) {
       logger.error('Error checking user generation limit:', error);
       return {
         canGenerate: false,
         remainingGenerations: 0,
+        dailyLimit: 1,
+        usedToday: 0,
         totalGenerated: 0,
+        tier: 'free',
       };
+    }
+  }
+
+  /**
+   * Enhance user prompt using AI for better results
+   */
+  public async enhancePrompt(
+    userPrompt: string, 
+    style?: string
+  ): Promise<string> {
+    try {
+      const styleInfo = style ? `\nDesired style: ${style}` : '';
+      
+      const enhancementPrompt = `You are an expert prompt engineer for AI image generation. Enhance this user prompt to produce the best possible image. Add specific details about lighting, composition, style, and quality, but keep the core idea intact.
+
+User prompt: "${userPrompt}"${styleInfo}
+
+Rules:
+1. Keep the enhanced prompt under 200 words
+2. Add specific visual details (lighting, colors, textures)
+3. Include quality terms (detailed, high quality, sharp)
+4. Maintain the original subject and intent
+5. Don't add text or watermarks
+
+Return ONLY the enhanced prompt, nothing else:`;
+
+      const response = await aiRouter.chat({
+        messages: [{ role: 'user', content: enhancementPrompt }],
+        temperature: 0.7,
+        max_tokens: 300,
+      });
+
+      let enhanced = response.choices[0]?.message?.content?.trim() || userPrompt;
+      
+      // Add style modifiers if specified
+      if (style && IMAGE_STYLE_PRESETS[style]) {
+        enhanced += ', ' + IMAGE_STYLE_PRESETS[style].prompt;
+      }
+      
+      // Limit length
+      if (enhanced.length > 500) {
+        enhanced = enhanced.substring(0, 500);
+      }
+
+      return enhanced;
+    } catch (error) {
+      logger.error('Prompt enhancement failed:', error);
+      // Return original with basic enhancements
+      return `${userPrompt}, high quality, detailed, sharp focus`;
     }
   }
 
@@ -216,16 +362,19 @@ class ImageGenerationServiceClass {
     options: ImageGenerationOptions
   ): Promise<ImageGenerationResult> {
     const startTime = Date.now();
+    const seed = options.seed || Math.floor(Math.random() * 2147483647);
 
-    // Check user limit first
+    // Check user limit
     const limitStatus = await this.checkUserLimit(userId);
     if (!limitStatus.canGenerate) {
       return {
         success: false,
         model: '',
-        prompt: options.prompt,
+        originalPrompt: options.prompt,
+        enhancedPrompt: '',
+        seed,
         generationTime: 0,
-        error: `Daily limit reached. Next generation available at ${limitStatus.nextAvailableAt?.toISOString()}`,
+        error: `Daily limit reached (${limitStatus.dailyLimit}/day for ${limitStatus.tier} tier). Next generation available at ${limitStatus.nextAvailableAt?.toISOString()}`,
       };
     }
 
@@ -235,29 +384,49 @@ class ImageGenerationServiceClass {
       return {
         success: false,
         model: '',
-        prompt: options.prompt,
+        originalPrompt: options.prompt,
+        enhancedPrompt: '',
+        seed,
         generationTime: 0,
-        error: 'No HuggingFace API keys available',
+        error: 'No HuggingFace API keys available. Please try again later.',
       };
     }
 
-    // Select model (default to balanced)
-    const modelConfig = this.MODELS.find(m => m.id === options.model) || this.MODELS[1];
+    // Select model
+    const modelKey = options.model || 'stable-diffusion-xl';
+    const modelConfig = MODELS[modelKey] || MODELS['stable-diffusion-xl'];
 
-    // Optimize prompt for better results
-    const optimizedPrompt = this.optimizePrompt(options.prompt);
-    const negativePrompt = options.negativePrompt || this.DEFAULT_NEGATIVE_PROMPT;
+    // Enhance prompt if requested (default: true)
+    let enhancedPrompt = options.prompt;
+    if (options.enhancePrompt !== false) {
+      enhancedPrompt = await this.enhancePrompt(options.prompt, options.style);
+    }
 
-    // Constrain dimensions
-    const width = Math.min(options.width || 512, modelConfig.maxWidth);
-    const height = Math.min(options.height || 512, modelConfig.maxHeight);
+    // Get negative prompt
+    let negativePrompt = options.negativePrompt || this.getDefaultNegativePrompt();
+    if (options.style && IMAGE_STYLE_PRESETS[options.style]) {
+      negativePrompt = IMAGE_STYLE_PRESETS[options.style].negativePrompt;
+    }
+
+    // Get dimensions
+    let width = options.width || 1024;
+    let height = options.height || 1024;
+    
+    if (options.aspectRatio) {
+      const dimensions = getAspectRatioDimensions(options.aspectRatio);
+      width = Math.min(dimensions.width, modelConfig.maxWidth);
+      height = Math.min(dimensions.height, modelConfig.maxHeight);
+    } else {
+      width = Math.min(width, modelConfig.maxWidth);
+      height = Math.min(height, modelConfig.maxHeight);
+    }
 
     // Create generation record
     const generationRecord = await prisma.imageGeneration.create({
       data: {
         userId,
         prompt: options.prompt,
-        optimizedPrompt,
+        optimizedPrompt: enhancedPrompt,
         negativePrompt,
         model: modelConfig.id,
         width,
@@ -270,29 +439,38 @@ class ImageGenerationServiceClass {
       logger.info('Starting image generation', {
         userId,
         model: modelConfig.name,
-        promptLength: optimizedPrompt.length,
+        promptLength: enhancedPrompt.length,
+        dimensions: `${width}x${height}`,
       });
+
+      // Prepare request parameters based on model
+      const requestBody: any = {
+        inputs: enhancedPrompt,
+      };
+
+      // Add parameters for non-FLUX models
+      if (!modelKey.includes('flux')) {
+        requestBody.parameters = {
+          negative_prompt: negativePrompt,
+          width,
+          height,
+          num_inference_steps: options.steps || modelConfig.defaultSteps,
+          guidance_scale: options.guidanceScale || modelConfig.guidanceScale,
+          seed,
+        };
+      }
 
       // Call HuggingFace API
       const response = await axios.post(
         modelConfig.endpoint,
-        {
-          inputs: optimizedPrompt,
-          parameters: {
-            negative_prompt: negativePrompt,
-            width,
-            height,
-            num_inference_steps: options.steps || modelConfig.defaultSteps,
-            guidance_scale: options.guidanceScale || 7.5,
-          },
-        },
+        requestBody,
         {
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
           responseType: 'arraybuffer',
-          timeout: 120000, // 2 minutes timeout
+          timeout: 180000, // 3 minutes timeout
         }
       );
 
@@ -312,10 +490,15 @@ class ImageGenerationServiceClass {
         },
       });
 
+      // Update key usage
+      const currentUsage = this.keyUsage.get(apiKey) || 0;
+      this.keyUsage.set(apiKey, currentUsage + 1);
+
       logger.info('Image generation completed', {
         userId,
         model: modelConfig.name,
         generationTime,
+        seed,
       });
 
       return {
@@ -323,14 +506,17 @@ class ImageGenerationServiceClass {
         imageUrl,
         imageBase64,
         model: modelConfig.name,
-        prompt: options.prompt,
+        originalPrompt: options.prompt,
+        enhancedPrompt,
+        seed,
         generationTime,
+        style: options.style,
+        aspectRatio: options.aspectRatio,
       };
 
     } catch (error: any) {
       const generationTime = Date.now() - startTime;
       
-      // Update generation record as failed
       await prisma.imageGeneration.update({
         where: { id: generationRecord.id },
         data: {
@@ -351,53 +537,208 @@ class ImageGenerationServiceClass {
         return {
           success: false,
           model: modelConfig.name,
-          prompt: options.prompt,
+          originalPrompt: options.prompt,
+          enhancedPrompt,
+          seed,
           generationTime,
-          error: 'Model is loading. Please try again in a few seconds.',
+          error: 'Model is loading. Please try again in 30-60 seconds.',
+        };
+      }
+
+      if (error.response?.status === 429) {
+        return {
+          success: false,
+          model: modelConfig.name,
+          originalPrompt: options.prompt,
+          enhancedPrompt,
+          seed,
+          generationTime,
+          error: 'Rate limit exceeded. Please try again in a few minutes.',
         };
       }
 
       return {
         success: false,
         model: modelConfig.name,
-        prompt: options.prompt,
+        originalPrompt: options.prompt,
+        enhancedPrompt,
+        seed,
         generationTime,
-        error: error.message || 'Image generation failed',
+        error: error.message || 'Image generation failed. Please try again.',
       };
     }
   }
 
   /**
-   * Optimize prompt for better image quality
+   * Generate variations of an existing image
    */
-  private optimizePrompt(prompt: string): string {
-    // Add quality enhancers if not present
-    const qualityTerms = [
-      'high quality',
-      'detailed',
-      '4k',
-      'sharp focus',
-      'professional',
-    ];
+  public async generateVariations(
+    userId: string,
+    imageId: string,
+    numVariations: number = 3
+  ): Promise<ImageGenerationResult[]> {
+    // Get original image
+    const original = await prisma.imageGeneration.findFirst({
+      where: { id: imageId, userId },
+    });
 
-    let optimized = prompt.trim();
-    
-    // Check if prompt already has quality terms
-    const hasQualityTerms = qualityTerms.some(term => 
-      optimized.toLowerCase().includes(term)
-    );
-
-    // Add quality enhancement if not present
-    if (!hasQualityTerms && optimized.length < 200) {
-      optimized = `${optimized}, high quality, detailed, sharp focus`;
+    if (!original) {
+      throw new Error('Original image not found');
     }
 
-    // Limit prompt length to avoid token issues
-    if (optimized.length > 500) {
-      optimized = optimized.substring(0, 500);
+    // Check user limit
+    const limitStatus = await this.checkUserLimit(userId);
+    if (limitStatus.remainingGenerations < numVariations) {
+      throw new Error(`Not enough remaining generations. You have ${limitStatus.remainingGenerations} left.`);
     }
 
-    return optimized;
+    const variations: ImageGenerationResult[] = [];
+
+    for (let i = 0; i < numVariations; i++) {
+      const result = await this.generateImage(userId, {
+        prompt: original.prompt,
+        negativePrompt: original.negativePrompt || undefined,
+        model: original.model,
+        width: original.width,
+        height: original.height,
+        enhancePrompt: false, // Use original enhanced prompt
+      });
+
+      variations.push(result);
+
+      // Small delay between generations
+      if (i < numVariations - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    return variations;
+  }
+
+  /**
+   * Batch generate images (Pro users only)
+   */
+  public async batchGenerate(
+    userId: string,
+    prompts: string[],
+    options: Partial<ImageGenerationOptions> = {}
+  ): Promise<BatchGenerationResult> {
+    // Check user tier
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { tier: true },
+    });
+
+    if (user?.tier === 'free') {
+      throw new Error('Batch generation is only available for Pro and Enterprise users');
+    }
+
+    // Check limit
+    const limitStatus = await this.checkUserLimit(userId);
+    if (limitStatus.remainingGenerations < prompts.length) {
+      throw new Error(`Not enough remaining generations. You have ${limitStatus.remainingGenerations} left, but requested ${prompts.length}.`);
+    }
+
+    const results: BatchGenerationResult['results'] = [];
+    let totalGenerated = 0;
+    let totalFailed = 0;
+
+    for (const prompt of prompts) {
+      try {
+        const result = await this.generateImage(userId, {
+          ...options,
+          prompt,
+        });
+
+        if (result.success) {
+          results.push({
+            success: true,
+            prompt,
+            imageUrl: result.imageUrl,
+          });
+          totalGenerated++;
+        } else {
+          results.push({
+            success: false,
+            prompt,
+            error: result.error,
+          });
+          totalFailed++;
+        }
+      } catch (error: any) {
+        results.push({
+          success: false,
+          prompt,
+          error: error.message,
+        });
+        totalFailed++;
+      }
+
+      // Delay between generations
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    return {
+      success: totalGenerated > 0,
+      results,
+      totalGenerated,
+      totalFailed,
+    };
+  }
+
+  /**
+   * Get AI-powered suggestions to improve a prompt
+   */
+  public async getSuggestions(prompt: string): Promise<PromptSuggestion[]> {
+    try {
+      const suggestionPrompt = `Given this image generation prompt, suggest 3 specific improvements that would make the image more interesting, detailed, or beautiful.
+
+Original prompt: "${prompt}"
+
+Return ONLY a JSON array with exactly 3 objects:
+[
+  {"improvement": "specific suggestion", "reason": "why this helps", "enhancedPrompt": "full improved prompt"},
+  {"improvement": "specific suggestion", "reason": "why this helps", "enhancedPrompt": "full improved prompt"},
+  {"improvement": "specific suggestion", "reason": "why this helps", "enhancedPrompt": "full improved prompt"}
+]`;
+
+      const response = await aiRouter.chat({
+        messages: [{ role: 'user', content: suggestionPrompt }],
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '[]';
+      const jsonStr = content.replace(/```json\n?|\n?```/g, '').trim();
+      
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      logger.error('Failed to get suggestions:', error);
+      return [
+        {
+          improvement: 'Add lighting details',
+          reason: 'Specific lighting creates mood and depth',
+          enhancedPrompt: `${prompt}, dramatic lighting, golden hour`,
+        },
+        {
+          improvement: 'Include style reference',
+          reason: 'Style references help achieve consistent aesthetics',
+          enhancedPrompt: `${prompt}, digital art style, trending on artstation`,
+        },
+        {
+          improvement: 'Add quality modifiers',
+          reason: 'Quality terms improve output fidelity',
+          enhancedPrompt: `${prompt}, highly detailed, 8k, professional`,
+        },
+      ];
+    }
+  }
+
+  /**
+   * Get default negative prompt
+   */
+  private getDefaultNegativePrompt(): string {
+    return 'low quality, blurry, distorted, deformed, ugly, bad anatomy, watermark, text, signature, cropped, out of frame, worst quality, jpeg artifacts, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck';
   }
 
   /**
@@ -407,13 +748,36 @@ class ImageGenerationServiceClass {
     id: string;
     name: string;
     quality: string;
+    speed: string;
     maxResolution: string;
   }> {
-    return this.MODELS.map(m => ({
-      id: m.id,
-      name: m.name,
-      quality: m.quality,
-      maxResolution: `${m.maxWidth}x${m.maxHeight}`,
+    return Object.entries(MODELS).map(([key, config]) => ({
+      id: key,
+      name: config.name,
+      quality: config.quality,
+      speed: config.speed,
+      maxResolution: `${config.maxWidth}x${config.maxHeight}`,
+    }));
+  }
+
+  /**
+   * Get available styles
+   */
+  public getAvailableStyles(): Array<{ id: string; name: string }> {
+    return Object.entries(IMAGE_STYLE_PRESETS).map(([id, preset]) => ({
+      id,
+      name: preset.name,
+    }));
+  }
+
+  /**
+   * Get available aspect ratios
+   */
+  public getAvailableAspectRatios(): Array<{ id: string; name: string; dimensions: string }> {
+    return Object.entries(ASPECT_RATIOS).map(([id, config]) => ({
+      id,
+      name: config.name,
+      dimensions: `${config.width}x${config.height}`,
     }));
   }
 
@@ -422,12 +786,14 @@ class ImageGenerationServiceClass {
    */
   public async getUserHistory(
     userId: string,
-    limit: number = 10
+    limit: number = 20,
+    offset: number = 0
   ): Promise<Array<{
     id: string;
     prompt: string;
     imageUrl: string | null;
     model: string;
+    style?: string;
     status: string;
     createdAt: Date;
   }>> {
@@ -435,6 +801,7 @@ class ImageGenerationServiceClass {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
+      skip: offset,
       select: {
         id: true,
         prompt: true,
@@ -453,6 +820,23 @@ class ImageGenerationServiceClass {
    */
   public isAvailable(): boolean {
     return this.HF_API_KEYS.length > 0;
+  }
+
+  /**
+   * Get service status
+   */
+  public getStatus(): {
+    available: boolean;
+    totalKeys: number;
+    modelsAvailable: number;
+    stylesAvailable: number;
+  } {
+    return {
+      available: this.isAvailable(),
+      totalKeys: this.HF_API_KEYS.length,
+      modelsAvailable: Object.keys(MODELS).length,
+      stylesAvailable: Object.keys(IMAGE_STYLE_PRESETS).length,
+    };
   }
 }
 

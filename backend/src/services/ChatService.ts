@@ -15,6 +15,9 @@ import { responseFormatter } from './ResponseFormatter.js';
 import { profileLearning } from './ProfileLearningService.js';
 import { webSearch } from './WebSearchService.js';
 import { chatTags, TagProcessingResult } from './ChatTagsService.js';
+import { modeDetector, AIMode } from './ModeDetectorService.js';
+import { imageGeneration } from './ImageGenerationService.js';
+import { getModeSystemPrompt } from '../config/modePrompts.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
 import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
@@ -56,15 +59,23 @@ export interface ChatResult {
     intent: string;
     formatApplied: string;
     language: string;
+    mode?: string;
+    modeConfidence?: number;
   };
   imageResult?: {
     success: boolean;
     imageUrl?: string;
+    imageBase64?: string;
     model?: string;
+    originalPrompt?: string;
+    enhancedPrompt?: string;
+    seed?: number;
     generationTime?: number;
+    style?: string;
     error?: string;
   };
   tagDetected?: string;
+  modeDetected?: string;
 }
 
 // ============================================
@@ -80,7 +91,61 @@ class ChatServiceClass {
     options: ChatOptions
   ): Promise<ChatResult> {
     try {
-      // Step 0: Detect and process any chat tags
+      // Step 0: Detect AI mode using intelligent mode detector
+      const attachments = options.imageIds?.map(id => ({ type: 'image' as const, id }));
+      const modeResult = modeDetector.detectMode(userMessage, attachments);
+      
+      logger.info('Mode detected', {
+        mode: modeResult.mode,
+        confidence: modeResult.confidence,
+        keywords: modeResult.detectedKeywords,
+        userId: options.userId,
+      });
+
+      // Step 0.5: Handle IMAGE_GEN mode specially
+      if (modeResult.mode === AIMode.IMAGE_GEN && modeResult.confidence > 0.5) {
+        try {
+          // Extract image prompt from message
+          const imagePrompt = this.extractImagePrompt(userMessage);
+          
+          // Generate the image
+          const imageResult = await imageGeneration.generateImage(options.userId, {
+            prompt: imagePrompt,
+            enhancePrompt: true,
+          });
+
+          if (imageResult.success) {
+            return {
+              success: true,
+              message: {
+                role: 'assistant',
+                content: `✅ **Image Generated Successfully!**\n\n**Your Prompt:** ${imageResult.originalPrompt}\n\n**Enhanced Prompt:** ${imageResult.enhancedPrompt}\n\n**Model:** ${imageResult.model}\n**Generation Time:** ${(imageResult.generationTime / 1000).toFixed(1)}s\n**Seed:** ${imageResult.seed}`,
+              },
+              conversationId: options.conversationId,
+              imageResult: {
+                success: true,
+                imageUrl: imageResult.imageUrl,
+                imageBase64: imageResult.imageBase64,
+                model: imageResult.model,
+                originalPrompt: imageResult.originalPrompt,
+                enhancedPrompt: imageResult.enhancedPrompt,
+                seed: imageResult.seed,
+                generationTime: imageResult.generationTime,
+                style: imageResult.style,
+              },
+              modeDetected: AIMode.IMAGE_GEN,
+            };
+          } else {
+            // Image generation failed, continue with chat to explain
+            logger.warn('Image generation failed, continuing with chat', { error: imageResult.error });
+          }
+        } catch (error: any) {
+          logger.error('Image generation error:', error);
+          // Continue with chat to explain the error
+        }
+      }
+
+      // Step 1: Detect and process any chat tags (legacy support)
       const detectedTag = chatTags.detectTags(userMessage);
       let tagResult: TagProcessingResult | null = null;
       let messageForProcessing = userMessage;
@@ -110,11 +175,12 @@ class ChatServiceClass {
             },
             conversationId: options.conversationId,
             imageResult: tagResult.imageResult,
+            modeDetected: modeResult.mode,
           };
         }
       }
 
-      // Step 1: Analyze the user prompt for intent and formatting needs
+      // Step 2: Analyze the user prompt for intent and formatting needs
       const promptAnalysis = await promptAnalyzer.analyze(messageForProcessing);
       
       logger.info('Prompt analyzed', {
@@ -204,16 +270,25 @@ class ChatServiceClass {
         tagSystemPrompt = '\n\n' + tagResult.systemPromptAddition;
       }
 
-      // Step 4: Build enhanced system prompt with user profile context
+      // Step 4: Build enhanced system prompt with user profile context and mode
       const userContext = await profileLearning.getUserContext(options.userId, conversationId);
+      
+      // Get mode-specific system prompt
+      const modeSystemPrompt = getModeSystemPrompt(modeResult.mode);
+      
+      // Use mode temperature and max tokens
+      const modeConfig = modeDetector.getModeConfig(modeResult.mode);
+      const effectiveTemperature = options.temperature ?? modeConfig.temperature;
+      const effectiveMaxTokens = options.maxTokens ?? modeConfig.maxTokens;
       
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
       
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + tag context + profile context + recent conversations + web search + formatting hints
+      // Combine: base prompt + mode prompt + tag context + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
+        '\n\n' + modeSystemPrompt +
         tagSystemPrompt +
         userContext.profile + 
         userContext.recentConversations + 
@@ -228,6 +303,8 @@ class ChatServiceClass {
         hasRecentContext: userContext.recentConversations.length > 0,
         hasTag: detectedTag.type !== 'none',
         tagType: detectedTag.type,
+        mode: modeResult.mode,
+        modeConfidence: modeResult.confidence,
       });
 
       // Build messages array with context
@@ -257,12 +334,12 @@ class ChatServiceClass {
         },
       });
 
-      // Step 3: Get AI response with optimized parameters
+      // Step 3: Get AI response with mode-optimized parameters
       const request: ChatRequest = {
         messages,
         model: options.model || conversation.model,
-        maxTokens: options.maxTokens || promptAnalysis.suggestedMaxTokens,
-        temperature: options.temperature ?? promptAnalysis.suggestedTemperature,
+        maxTokens: effectiveMaxTokens || promptAnalysis.suggestedMaxTokens,
+        temperature: effectiveTemperature ?? promptAnalysis.suggestedTemperature,
       };
 
       const response = await aiRouter.chat(request);
@@ -670,6 +747,37 @@ class ChatServiceClass {
   private estimateTokens(text: string): number {
     // Rough estimate: ~4 characters per token for English
     return Math.ceil(text.length / 4);
+  }
+
+  /**
+   * Extract image generation prompt from user message
+   */
+  private extractImagePrompt(message: string): string {
+    // Remove common image generation keywords
+    const removePatterns = [
+      /^(generate|create|make|draw|paint|visualize|design|illustrate|render)\s+(an?\s+)?(image|picture|illustration|artwork|photo)(\s+of)?/i,
+      /^(show me|i want to see|can you show|can you draw)\s+(an?\s+)?/i,
+      /(image|picture|illustration|artwork)\s+of\s+/i,
+    ];
+
+    let prompt = message;
+    
+    for (const pattern of removePatterns) {
+      prompt = prompt.replace(pattern, '');
+    }
+
+    // Clean up
+    prompt = prompt
+      .replace(/^\s*[,.:;]\s*/, '') // Remove leading punctuation
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // If prompt is too short after cleaning, use original
+    if (prompt.length < 5) {
+      prompt = message;
+    }
+
+    return prompt;
   }
 
   /**

@@ -27,6 +27,7 @@ import searchRoutes from './search.js';
 import gdprRoutes from './gdpr.js';
 import imageGenRoutes from './imageGen.js';
 import tagsRoutes from './tags.js';
+import modesRoutes from './modes.js';
 
 const router = Router();
 
@@ -96,5 +97,8 @@ router.use('/image-gen', imageGenRoutes);
 
 // Chat Tags
 router.use('/tags', tagsRoutes);
+
+// AI Modes
+router.use('/modes', modesRoutes);
 
 export default router;

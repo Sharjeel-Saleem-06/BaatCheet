@@ -64,6 +64,7 @@ model User {
   
   // Image Generation Relations
   imageGenerations ImageGeneration[]
+  imageQuota       ImageGenerationQuota?
   
   @@index([clerkId])
   @@index([email])
@@ -601,25 +602,60 @@ model ImageGeneration {
   id              String   @id @default(uuid())
   userId          String   @map("user_id")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId  String?  @map("conversation_id")
   
+  // Request details
   prompt          String   @db.Text
   optimizedPrompt String?  @map("optimized_prompt") @db.Text
   negativePrompt  String?  @map("negative_prompt") @db.Text
   
+  // Style and configuration
+  style           String?  // realistic, anime, cartoon, etc.
+  aspectRatio     String   @default("1:1") @map("aspect_ratio")
+  seed            Int?     // For reproducibility
+  
+  // Model and dimensions
   model           String   // Model used for generation
   width           Int      @default(512)
   height          Int      @default(512)
   
+  // Result
   status          String   @default("pending") // pending, processing, completed, failed
   imageUrl        String?  @map("image_url") @db.Text // Base64 or URL
+  thumbnailUrl    String?  @map("thumbnail_url") @db.Text
   error           String?  @db.Text
   
+  // Metadata
   generationTime  Int?     @map("generation_time") // milliseconds
+  apiKeyUsed      String?  @map("api_key_used") // Partial key for tracking
   
   createdAt       DateTime @default(now()) @map("created_at")
   
   @@index([userId, createdAt])
   @@index([userId, status])
   @@index([status])
+  @@index([conversationId])
   @@map("image_generations")
+}
+
+// ============================================
+// Image Generation Quota Model
+// ============================================
+model ImageGenerationQuota {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  dailyLimit      Int      @map("daily_limit") // Based on tier
+  dailyUsed       Int      @default(0) @map("daily_used")
+  lastResetDate   DateTime @default(now()) @map("last_reset_date")
+  
+  monthlyLimit    Int      @default(0) @map("monthly_limit")
+  monthlyUsed     Int      @default(0) @map("monthly_used")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([userId])
+  @@map("image_generation_quotas")
 }
