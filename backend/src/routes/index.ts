@@ -21,6 +21,7 @@ import webhookRoutes from './webhooks.js';
 import apiKeyRoutes from './apikeys.js';
 import healthRoutes from './health.js';
 import adminRoutes from './admin.js';
+import profileRoutes from './profile.js';
 
 const router = Router();
 
@@ -72,5 +73,8 @@ router.use('/api-keys', apiKeyRoutes);
 
 // Admin Panel (requires admin role)
 router.use('/admin', adminRoutes);
+
+// User Profile & Memory System
+router.use('/profile', profileRoutes);
 
 export default router;

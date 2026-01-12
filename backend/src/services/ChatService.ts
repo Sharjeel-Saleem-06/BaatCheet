@@ -12,6 +12,7 @@ import { aiRouter, Message, ChatRequest } from './AIRouter.js';
 import { contextManager } from './ContextManager.js';
 import { promptAnalyzer, PromptAnalysis } from './PromptAnalyzer.js';
 import { responseFormatter } from './ResponseFormatter.js';
+import { profileLearning } from './ProfileLearningService.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
 import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
@@ -106,12 +107,45 @@ class ChatServiceClass {
         conversationId = conversation.id;
       }
 
-      // Step 2: Build enhanced system prompt based on analysis
+      // Step 2: Extract facts from user message (async, don't block response)
+      const conversationHistory = conversation.messages?.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })) || [];
+
+      // Run fact extraction in background (non-blocking)
+      profileLearning.extractFactsFromMessage(
+        options.userId,
+        conversationId,
+        userMessage,
+        conversationHistory
+      ).then(async facts => {
+        if (facts.length > 0) {
+          const savedCount = await profileLearning.saveFacts(options.userId, conversationId!, facts);
+          logger.info(`Learned ${savedCount} new facts`, { userId: options.userId });
+        }
+      }).catch(err => logger.error('Background fact extraction failed:', err));
+
+      // Step 3: Build enhanced system prompt with user profile context
+      const userContext = await profileLearning.getUserContext(options.userId, conversationId);
+      
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
       
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
-      const enhancedSystemPrompt = baseSystemPrompt + formattingHints;
+      
+      // Combine: base prompt + profile context + recent conversations + formatting hints
+      const enhancedSystemPrompt = baseSystemPrompt + 
+        userContext.profile + 
+        userContext.recentConversations + 
+        formattingHints;
+      
+      logger.info('Memory context injected', {
+        userId: options.userId,
+        factCount: userContext.factCount,
+        hasProfile: userContext.profile.length > 0,
+        hasRecentContext: userContext.recentConversations.length > 0,
+      });
 
       // Build messages array with context
       const messages: Message[] = [];
@@ -185,6 +219,13 @@ class ChatServiceClass {
         ...messages,
         { role: 'assistant', content: formattedResponse.content },
       ]);
+
+      // Generate conversation summary if needed (every 10 messages, async)
+      profileLearning.shouldGenerateSummary(conversationId).then(async shouldSummarize => {
+        if (shouldSummarize) {
+          await profileLearning.generateConversationSummary(options.userId, conversationId!);
+        }
+      }).catch(err => logger.error('Summary check failed:', err));
 
       return {
         success: true,
@@ -260,10 +301,42 @@ class ChatServiceClass {
         conversationId = conversation.id;
       }
 
-      // Step 2: Build enhanced system prompt
+      // Step 2: Extract facts from user message (async, don't block response)
+      const conversationHistory = conversation.messages?.map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })) || [];
+
+      // Run fact extraction in background (non-blocking)
+      profileLearning.extractFactsFromMessage(
+        options.userId,
+        conversationId!,
+        userMessage,
+        conversationHistory
+      ).then(async facts => {
+        if (facts.length > 0) {
+          const savedCount = await profileLearning.saveFacts(options.userId, conversationId!, facts);
+          logger.info(`Learned ${savedCount} new facts from stream`, { userId: options.userId });
+        }
+      }).catch(err => logger.error('Background fact extraction failed:', err));
+
+      // Step 3: Build enhanced system prompt with user profile context
+      const userContext = await profileLearning.getUserContext(options.userId, conversationId);
+      
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
-      const enhancedSystemPrompt = baseSystemPrompt + formattingHints;
+      
+      // Combine: base prompt + profile context + recent conversations + formatting hints
+      const enhancedSystemPrompt = baseSystemPrompt + 
+        userContext.profile + 
+        userContext.recentConversations + 
+        formattingHints;
+
+      logger.info('Stream: Memory context injected', {
+        userId: options.userId,
+        factCount: userContext.factCount,
+        hasProfile: userContext.profile.length > 0,
+      });
 
       // Build messages array
       const messages: Message[] = [];
@@ -351,6 +424,13 @@ class ChatServiceClass {
           updatedAt: new Date(),
         },
       });
+
+      // Generate conversation summary if needed (every 10 messages, async)
+      profileLearning.shouldGenerateSummary(conversationId!).then(async shouldSummarize => {
+        if (shouldSummarize) {
+          await profileLearning.generateConversationSummary(options.userId, conversationId!);
+        }
+      }).catch(err => logger.error('Summary check failed:', err));
 
       // Send completion event with metadata
       this.sendSSE(res, {

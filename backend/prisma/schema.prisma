@@ -57,6 +57,11 @@ model User {
   apiKeys       ApiKey[]
   auditLogs     AuditLog[]
   
+  // Memory System Relations
+  profile       UserProfile?
+  facts         UserFact[]
+  conversationSummaries ConversationSummary[]
+  
   @@index([clerkId])
   @@index([email])
   @@map("users")
@@ -133,6 +138,7 @@ model Conversation {
   shareLinks  ShareLink[]
   audioFiles  Audio[]
   attachments Attachment[]
+  summary     ConversationSummary?
   
   @@index([userId])
   @@index([projectId])
@@ -487,4 +493,100 @@ enum UserRole {
   user
   moderator
   admin
+}
+
+// ============================================
+// User Profile & Memory System
+// ============================================
+
+// Long-term user profile with learned preferences
+model UserProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Core identity facts
+  fullName      String?  @map("full_name")
+  preferredName String?  @map("preferred_name")
+  occupation    String?
+  education     String?
+  location      String?
+  
+  // Preferences & Interests (JSON arrays/objects)
+  interests     Json     @default("[]")  // ["AI", "coding", "fitness"]
+  preferences   Json     @default("{}")  // { tone: "casual", detailLevel: "detailed" }
+  expertise     Json     @default("[]")  // ["Python", "React", "DevOps"]
+  goals         Json     @default("[]")  // ["Learn AI", "Build startup"]
+  
+  // Communication style
+  preferredLanguage String @default("auto") @map("preferred_language")  // "english", "roman-urdu", "mixed"
+  communicationTone String @default("friendly") @map("communication_tone")  // "professional", "casual", "friendly"
+  responseStyle     String @default("balanced") @map("response_style")  // "concise", "balanced", "comprehensive"
+  
+  // Usage patterns
+  primaryUseCase    String?  @map("primary_use_case")  // "coding", "learning", "business", "creative"
+  typicalQuestions  Json     @default("[]") @map("typical_questions")
+  
+  // Metadata
+  factCount      Int      @default(0) @map("fact_count")
+  lastUpdated    DateTime @updatedAt @map("last_updated")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  @@index([userId])
+  @@map("user_profiles")
+}
+
+// Individual facts learned about users
+model UserFact {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  category       String    // "personal", "professional", "preference", "goal", "skill", "interest", "relationship"
+  factType       String    @map("fact_type")  // "name", "occupation", "interest", "skill", etc.
+  factKey        String    @map("fact_key")   // "preferred_name", "occupation", etc.
+  factValue      String    @map("fact_value") @db.Text  // Actual value
+  confidence     Float     @default(1.0)  // 0-1 confidence score
+  source         String    // "explicit" (user told us) or "inferred" (we detected)
+  
+  conversationId String?   @map("conversation_id")  // Where this fact was learned
+  timestamp      DateTime  @default(now())
+  expiresAt      DateTime? @map("expires_at")  // Optional expiry for temporary facts
+  isActive       Boolean   @default(true) @map("is_active")
+  
+  // For skill tracking
+  skillLevel     String?   @map("skill_level")  // "beginner", "intermediate", "advanced", "expert"
+  
+  // For goal tracking
+  goalStatus     String?   @map("goal_status")  // "active", "completed", "abandoned"
+  goalProgress   String?   @map("goal_progress")  // "just_started", "making_progress", "advanced"
+  
+  @@index([userId, isActive])
+  @@index([userId, category])
+  @@index([category])
+  @@index([factKey])
+  @@map("user_facts")
+}
+
+// Conversation summaries for continuity
+model ConversationSummary {
+  id              String       @id @default(uuid())
+  userId          String       @map("user_id")
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId  String       @map("conversation_id")
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  title           String
+  summary         String       @db.Text  // Brief summary of user's messages
+  keyTopics       Json         @default("[]") @map("key_topics")  // ["Python", "API", "deployment"]
+  mainIntent      String       @map("main_intent")  // "learning", "problem_solving", "brainstorming", "creative", "planning"
+  
+  messageCount    Int          @map("message_count")
+  userMessages    Json         @default("[]") @map("user_messages")  // Array of user message snippets
+  timestamp       DateTime     @default(now())
+  
+  @@unique([conversationId])
+  @@index([userId, timestamp])
+  @@index([conversationId])
+  @@map("conversation_summaries")
 }

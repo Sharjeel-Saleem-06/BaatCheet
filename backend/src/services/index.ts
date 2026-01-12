@@ -68,3 +68,11 @@ export {
   CACHE_PREFIXES, 
   CACHE_TTL 
 } from './CacheService.js';
+
+// Profile Learning Service (Memory System)
+export { 
+  profileLearning, 
+  ExtractedFact, 
+  UserProfileContext,
+  ConversationSummaryData 
+} from './ProfileLearningService.js';
