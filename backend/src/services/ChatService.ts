@@ -13,6 +13,7 @@ import { contextManager } from './ContextManager.js';
 import { promptAnalyzer, PromptAnalysis } from './PromptAnalyzer.js';
 import { responseFormatter } from './ResponseFormatter.js';
 import { profileLearning } from './ProfileLearningService.js';
+import { webSearch } from './WebSearchService.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
 import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
@@ -126,7 +127,23 @@ class ChatServiceClass {
         }
       }).catch(err => logger.error('Background fact extraction failed:', err));
 
-      // Step 3: Build enhanced system prompt with user profile context
+      // Step 3: Check if query needs web search
+      let webSearchContext = '';
+      if (webSearch.needsWebSearch(userMessage)) {
+        logger.info('Web search triggered', { query: userMessage.substring(0, 100) });
+        try {
+          const searchResults = await webSearch.search(userMessage, {
+            numResults: 5,
+            dateFilter: 'month',
+          });
+          webSearchContext = webSearch.formatForAI(searchResults);
+        } catch (err) {
+          logger.error('Web search failed:', err);
+          // Continue without web search
+        }
+      }
+
+      // Step 4: Build enhanced system prompt with user profile context
       const userContext = await profileLearning.getUserContext(options.userId, conversationId);
       
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
@@ -134,13 +151,14 @@ class ChatServiceClass {
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + profile context + recent conversations + formatting hints
+      // Combine: base prompt + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
         userContext.profile + 
         userContext.recentConversations + 
+        webSearchContext +
         formattingHints;
       
-      logger.info('Memory context injected', {
+      logger.info('Context injected', {
         userId: options.userId,
         factCount: userContext.factCount,
         hasProfile: userContext.profile.length > 0,
@@ -320,22 +338,39 @@ class ChatServiceClass {
         }
       }).catch(err => logger.error('Background fact extraction failed:', err));
 
-      // Step 3: Build enhanced system prompt with user profile context
+      // Step 3: Check if query needs web search
+      let webSearchContext = '';
+      if (webSearch.needsWebSearch(userMessage)) {
+        logger.info('Stream: Web search triggered', { query: userMessage.substring(0, 100) });
+        try {
+          const searchResults = await webSearch.search(userMessage, {
+            numResults: 5,
+            dateFilter: 'month',
+          });
+          webSearchContext = webSearch.formatForAI(searchResults);
+        } catch (err) {
+          logger.error('Stream: Web search failed:', err);
+        }
+      }
+
+      // Step 4: Build enhanced system prompt with user profile context
       const userContext = await profileLearning.getUserContext(options.userId, conversationId);
       
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + profile context + recent conversations + formatting hints
+      // Combine: base prompt + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
         userContext.profile + 
         userContext.recentConversations + 
+        webSearchContext +
         formattingHints;
 
-      logger.info('Stream: Memory context injected', {
+      logger.info('Stream: Context injected', {
         userId: options.userId,
         factCount: userContext.factCount,
         hasProfile: userContext.profile.length > 0,
+        hasWebSearch: webSearchContext.length > 0,
       });
 
       // Build messages array

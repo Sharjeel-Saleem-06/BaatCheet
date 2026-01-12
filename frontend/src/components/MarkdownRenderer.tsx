@@ -1,13 +1,17 @@
 /**
  * Markdown Renderer Component
  * Beautiful rendering of AI responses with custom styling
- * Supports tables, code blocks, lists, and more
+ * Supports tables, code blocks, lists, LaTeX math, and more
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Check, Copy, ChevronDown, ChevronRight } from 'lucide-react';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import { Check, Copy, ChevronDown, ChevronRight, Volume2 } from 'lucide-react';
 import clsx from 'clsx';
+import 'katex/dist/katex.min.css';
 
 interface MarkdownRendererProps {
   content: string;
@@ -259,11 +263,31 @@ function CodeBlock({
   );
 }
 
+// Process content to handle LaTeX delimiters
+function preprocessContent(content: string): string {
+  // Convert $$ ... $$ to proper math blocks
+  let processed = content.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+    return `\n$$${math.trim()}$$\n`;
+  });
+  
+  // Convert single $ ... $ to inline math (but not $$)
+  processed = processed.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (_, math) => {
+    return `$${math.trim()}$`;
+  });
+  
+  return processed;
+}
+
 // Main Markdown Renderer
 export default function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+  // Preprocess content for LaTeX
+  const processedContent = useMemo(() => preprocessContent(content), [content]);
+  
   return (
     <div className={clsx('markdown-content', className)}>
       <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // Headings
           h1: ({ children }) => (
@@ -418,8 +442,11 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
           ),
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
 }
+
+// Export named component as well
+export { MarkdownRenderer };

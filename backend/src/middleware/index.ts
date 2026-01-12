@@ -40,15 +40,42 @@ export {
   corsOptions,
   globalRateLimiter,
   authRateLimiter,
-  chatRateLimiter,
+  chatRateLimiter as legacyChatRateLimiter,
   imageRateLimiter,
   audioRateLimiter,
-  searchRateLimiter,
+  searchRateLimiter as legacySearchRateLimiter,
   distributedRateLimiter,
   ipWhitelist,
-  sanitizeInput,
+  sanitizeInput as legacySanitizeInput,
   preventInjection,
   validateFileUpload,
   validateUrl,
   securityMiddleware,
 } from './security.js';
+
+// Advanced Rate Limiting (Tiered)
+export {
+  createTieredRateLimiter,
+  chatRateLimiter,
+  imageUploadRateLimiter,
+  audioRateLimiter as advancedAudioRateLimiter,
+  searchRateLimiter,
+  ttsRateLimiter,
+  exportRateLimiter,
+  profileRateLimiter,
+  apiRateLimiter,
+  ipRateLimiter,
+  burstProtection,
+  RATE_LIMITS,
+} from './advancedRateLimit.js';
+
+// Input Sanitization
+export {
+  sanitizeInput,
+  strictSanitize,
+  sanitizeFileName,
+  sanitizeURL,
+  sanitizeEmail,
+  isSafeForDB,
+  isSafeForHTML,
+} from './sanitization.js';

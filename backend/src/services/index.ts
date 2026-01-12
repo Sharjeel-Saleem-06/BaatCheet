@@ -76,3 +76,35 @@ export {
   UserProfileContext,
   ConversationSummaryData 
 } from './ProfileLearningService.js';
+
+// Web Search Service (Real-time Search)
+export { 
+  webSearch, 
+  SearchResult, 
+  WebSearchResponse, 
+  SearchOptions 
+} from './WebSearchService.js';
+
+// Text-to-Speech Service
+export { 
+  ttsService, 
+  TTSOptions, 
+  TTSResult, 
+  VoiceInfo 
+} from './TTSService.js';
+
+// PDF Parser Service
+export { 
+  pdfParser, 
+  PDFContent, 
+  PDFMetadata, 
+  PDFAnalysisResult 
+} from './PDFParserService.js';
+
+// Data Analysis Service
+export { 
+  dataAnalysis, 
+  DataSummary, 
+  ChartData, 
+  AnalysisResult 
+} from './DataAnalysisService.js';

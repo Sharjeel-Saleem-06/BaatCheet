@@ -22,6 +22,9 @@ import apiKeyRoutes from './apikeys.js';
 import healthRoutes from './health.js';
 import adminRoutes from './admin.js';
 import profileRoutes from './profile.js';
+import ttsRoutes from './tts.js';
+import searchRoutes from './search.js';
+import gdprRoutes from './gdpr.js';
 
 const router = Router();
 
@@ -76,5 +79,14 @@ router.use('/admin', adminRoutes);
 
 // User Profile & Memory System
 router.use('/profile', profileRoutes);
+
+// Text-to-Speech (Voice Output)
+router.use('/tts', ttsRoutes);
+
+// Web Search (Real-time Information)
+router.use('/search', searchRoutes);
+
+// GDPR Compliance (Data Export/Deletion)
+router.use('/gdpr', gdprRoutes);
 
 export default router;
