@@ -75,6 +75,14 @@ export const RATE_LIMITS: Record<string, TierLimits> = {
     window: 60 * 60 * 1000,
   },
   
+  // Image Generation (very strict)
+  'image-gen': {
+    free: 1,         // 1 generation per hour (daily limit also applies)
+    pro: 5,          // 5 per hour
+    enterprise: 20,   // 20 per hour
+    window: 60 * 60 * 1000,
+  },
+  
   // Export
   'export': {
     free: 10,        // 10 exports per hour
@@ -287,6 +295,11 @@ export const profileRateLimiter = createTieredRateLimiter({
 export const apiRateLimiter = createTieredRateLimiter({
   endpoint: 'api',
   limits: RATE_LIMITS.api,
+});
+
+export const imageGenRateLimiter = createTieredRateLimiter({
+  endpoint: 'image-gen',
+  limits: RATE_LIMITS['image-gen'],
 });
 
 // ============================================

@@ -14,6 +14,7 @@ import { promptAnalyzer, PromptAnalysis } from './PromptAnalyzer.js';
 import { responseFormatter } from './ResponseFormatter.js';
 import { profileLearning } from './ProfileLearningService.js';
 import { webSearch } from './WebSearchService.js';
+import { chatTags, TagProcessingResult } from './ChatTagsService.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
 import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
@@ -56,6 +57,14 @@ export interface ChatResult {
     formatApplied: string;
     language: string;
   };
+  imageResult?: {
+    success: boolean;
+    imageUrl?: string;
+    model?: string;
+    generationTime?: number;
+    error?: string;
+  };
+  tagDetected?: string;
 }
 
 // ============================================
@@ -71,8 +80,42 @@ class ChatServiceClass {
     options: ChatOptions
   ): Promise<ChatResult> {
     try {
+      // Step 0: Detect and process any chat tags
+      const detectedTag = chatTags.detectTags(userMessage);
+      let tagResult: TagProcessingResult | null = null;
+      let messageForProcessing = userMessage;
+      
+      if (detectedTag.type !== 'none') {
+        logger.info('Chat tag detected', { 
+          tag: detectedTag.type, 
+          userId: options.userId 
+        });
+        
+        tagResult = await chatTags.processTag(
+          detectedTag, 
+          options.userId, 
+          options.conversationId
+        );
+        
+        // Use cleaned message (without tag) for further processing
+        messageForProcessing = detectedTag.cleanedMessage;
+        
+        // If tag processing returned an image, return early with image result
+        if (tagResult.imageResult?.success && !tagResult.shouldContinueChat) {
+          return {
+            success: true,
+            message: {
+              role: 'assistant',
+              content: tagResult.additionalContext || 'Image generated successfully!',
+            },
+            conversationId: options.conversationId,
+            imageResult: tagResult.imageResult,
+          };
+        }
+      }
+
       // Step 1: Analyze the user prompt for intent and formatting needs
-      const promptAnalysis = await promptAnalyzer.analyze(userMessage);
+      const promptAnalysis = await promptAnalyzer.analyze(messageForProcessing);
       
       logger.info('Prompt analyzed', {
         intent: promptAnalysis.intent,
@@ -127,20 +170,38 @@ class ChatServiceClass {
         }
       }).catch(err => logger.error('Background fact extraction failed:', err));
 
-      // Step 3: Check if query needs web search
+      // Step 3: Check if query needs web search (or if browse tag was used)
       let webSearchContext = '';
-      if (webSearch.needsWebSearch(userMessage)) {
-        logger.info('Web search triggered', { query: userMessage.substring(0, 100) });
-        try {
-          const searchResults = await webSearch.search(userMessage, {
-            numResults: 5,
-            dateFilter: 'month',
-          });
-          webSearchContext = webSearch.formatForAI(searchResults);
-        } catch (err) {
-          logger.error('Web search failed:', err);
-          // Continue without web search
+      const shouldSearch = tagResult?.tag.type === 'browse' || webSearch.needsWebSearch(messageForProcessing);
+      
+      if (shouldSearch) {
+        // Use tag search results if available, otherwise perform new search
+        if (tagResult?.searchResults) {
+          webSearchContext = tagResult.additionalContext || '';
+        } else {
+          logger.info('Web search triggered', { query: messageForProcessing.substring(0, 100) });
+          try {
+            const searchResults = await webSearch.search(messageForProcessing, {
+              numResults: 5,
+              dateFilter: 'month',
+            });
+            webSearchContext = webSearch.formatForAI(searchResults);
+          } catch (err) {
+            logger.error('Web search failed:', err);
+          }
         }
+      }
+      
+      // Add tag-specific context
+      let tagContext = '';
+      if (tagResult?.additionalContext && tagResult.tag.type !== 'browse') {
+        tagContext = tagResult.additionalContext;
+      }
+      
+      // Add tag-specific system prompt addition
+      let tagSystemPrompt = '';
+      if (tagResult?.systemPromptAddition) {
+        tagSystemPrompt = '\n\n' + tagResult.systemPromptAddition;
       }
 
       // Step 4: Build enhanced system prompt with user profile context
@@ -151,11 +212,13 @@ class ChatServiceClass {
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + profile context + recent conversations + web search + formatting hints
+      // Combine: base prompt + tag context + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
+        tagSystemPrompt +
         userContext.profile + 
         userContext.recentConversations + 
         webSearchContext +
+        tagContext +
         formattingHints;
       
       logger.info('Context injected', {
@@ -163,6 +226,8 @@ class ChatServiceClass {
         factCount: userContext.factCount,
         hasProfile: userContext.profile.length > 0,
         hasRecentContext: userContext.recentConversations.length > 0,
+        hasTag: detectedTag.type !== 'none',
+        tagType: detectedTag.type,
       });
 
       // Build messages array with context

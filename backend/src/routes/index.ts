@@ -25,6 +25,8 @@ import profileRoutes from './profile.js';
 import ttsRoutes from './tts.js';
 import searchRoutes from './search.js';
 import gdprRoutes from './gdpr.js';
+import imageGenRoutes from './imageGen.js';
+import tagsRoutes from './tags.js';
 
 const router = Router();
 
@@ -88,5 +90,11 @@ router.use('/search', searchRoutes);
 
 // GDPR Compliance (Data Export/Deletion)
 router.use('/gdpr', gdprRoutes);
+
+// Image Generation
+router.use('/image-gen', imageGenRoutes);
+
+// Chat Tags
+router.use('/tags', tagsRoutes);
 
 export default router;

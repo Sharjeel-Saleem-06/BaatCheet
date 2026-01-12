@@ -108,3 +108,19 @@ export {
   ChartData, 
   AnalysisResult 
 } from './DataAnalysisService.js';
+
+// Image Generation Service
+export {
+  imageGeneration,
+  ImageGenerationOptions,
+  ImageGenerationResult,
+  UserGenerationStatus,
+} from './ImageGenerationService.js';
+
+// Chat Tags Service
+export {
+  chatTags,
+  ChatTagType,
+  DetectedTag,
+  TagProcessingResult,
+} from './ChatTagsService.js';
