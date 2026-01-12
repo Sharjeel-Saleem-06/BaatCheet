@@ -11,18 +11,24 @@ BaatCheet is an advanced AI chat application with features that rival and surpas
 1. [Authentication](#authentication)
 2. [AI Chat System](#ai-chat-system)
 3. [AI Modes](#ai-modes)
-4. [Image Generation](#image-generation)
-5. [Voice Input/Output](#voice-inputoutput)
-6. [Web Search](#web-search)
-7. [File Handling](#file-handling)
-8. [Memory System](#memory-system)
-9. [Conversations](#conversations)
-10. [Templates](#templates)
-11. [Export/Share](#exportshare)
-12. [User Profile](#user-profile)
-13. [Admin Panel](#admin-panel)
-14. [Rate Limits](#rate-limits)
-15. [API Reference](#api-reference)
+4. [Chat Tags](#chat-tags)
+5. [Image Generation](#image-generation)
+6. [Voice Input/Output](#voice-inputoutput)
+7. [Web Search](#web-search)
+8. [File Handling](#file-handling)
+9. [Memory System](#memory-system)
+10. [Conversations](#conversations)
+11. [Projects](#projects)
+12. [Templates](#templates)
+13. [Export/Share](#exportshare)
+14. [User Profile](#user-profile)
+15. [Analytics](#analytics)
+16. [Admin Panel](#admin-panel)
+17. [API Keys Management](#api-keys-management)
+18. [Health & Monitoring](#health--monitoring)
+19. [Rate Limits](#rate-limits)
+20. [GDPR Compliance](#gdpr-compliance)
+21. [API Reference](#api-reference)
 
 ---
 
@@ -117,6 +123,62 @@ while (true) {
     }
   }
 }
+```
+
+---
+
+## 🏷️ Chat Tags
+
+### Available Tags:
+Use these tags at the start of your message to trigger specific actions:
+
+| Tag | Description | Example |
+|-----|-------------|---------|
+| `@image` | Generate an image | `@image A sunset over mountains` |
+| `@browse` | Search the web | `@browse latest AI news` |
+| `@code` | Code assistance mode | `@code write a Python function` |
+| `@explain` | Detailed explanation | `@explain how DNS works` |
+| `@summarize` | Summarize content | `@summarize this article` |
+| `@translate` | Translate text | `@translate Hello to Spanish` |
+| `@math` | Mathematical problems | `@math solve x^2 + 5x + 6 = 0` |
+| `@creative` | Creative writing | `@creative write a haiku` |
+| `@debug` | Debug code | `@debug why is this not working` |
+| `@analyze` | Data analysis | `@analyze this CSV data` |
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/tags` | List all available tags |
+| GET | `/api/v1/tags/help` | Get tag usage help |
+
+### Frontend Implementation:
+```typescript
+// Tag detection and autocomplete
+const TAGS = ['@image', '@browse', '@code', '@explain', '@summarize', 
+              '@translate', '@math', '@creative', '@debug', '@analyze'];
+
+const detectTag = (message: string) => {
+  const tag = TAGS.find(t => message.toLowerCase().startsWith(t));
+  return tag || null;
+};
+
+// Show tag suggestions when user types @
+const TagAutocomplete = ({ input, onSelect }) => {
+  const showSuggestions = input.startsWith('@') && input.length < 10;
+  const filtered = TAGS.filter(t => t.startsWith(input.toLowerCase()));
+  
+  if (!showSuggestions) return null;
+  
+  return (
+    <div className="tag-suggestions">
+      {filtered.map(tag => (
+        <button key={tag} onClick={() => onSelect(tag)}>
+          {tag}
+        </button>
+      ))}
+    </div>
+  );
+};
 ```
 
 ---
@@ -564,6 +626,36 @@ const ProfileSettings = () => {
 
 ---
 
+## 📂 Projects
+
+### Features:
+- ✅ Organize conversations into projects
+- ✅ Project-level settings
+- ✅ Shared context across conversations
+- ✅ Project templates
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/projects` | List user's projects |
+| GET | `/api/v1/projects/:id` | Get project details |
+| POST | `/api/v1/projects` | Create new project |
+| PATCH | `/api/v1/projects/:id` | Update project |
+| DELETE | `/api/v1/projects/:id` | Delete project |
+| GET | `/api/v1/projects/:id/conversations` | Get project conversations |
+
+### Request Body:
+```json
+{
+  "name": "My AI Project",
+  "description": "Project for learning AI",
+  "systemPrompt": "You are a helpful AI tutor",
+  "model": "llama-3.3-70b-versatile"
+}
+```
+
+---
+
 ## 📝 Templates
 
 ### Features:
@@ -640,6 +732,44 @@ const ProfileSettings = () => {
 
 ---
 
+## 📊 Analytics
+
+### Features:
+- ✅ Usage statistics
+- ✅ Token consumption tracking
+- ✅ Model usage breakdown
+- ✅ Daily/weekly/monthly reports
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/analytics/usage` | Get usage statistics |
+| GET | `/api/v1/analytics/tokens` | Token consumption |
+| GET | `/api/v1/analytics/models` | Model usage breakdown |
+| GET | `/api/v1/analytics/daily` | Daily statistics |
+
+### Response:
+```json
+{
+  "success": true,
+  "data": {
+    "totalMessages": 1250,
+    "totalTokens": 450000,
+    "conversationCount": 45,
+    "modelUsage": {
+      "llama-3.3-70b-versatile": 800,
+      "gemini-2.0-flash": 350,
+      "deepseek-chat": 100
+    },
+    "dailyUsage": [
+      { "date": "2026-01-12", "messages": 50, "tokens": 18000 }
+    ]
+  }
+}
+```
+
+---
+
 ## 🔧 Admin Panel
 
 ### Features (Admin only):
@@ -656,6 +786,93 @@ const ProfileSettings = () => {
 | GET | `/api/v1/admin/stats` | System statistics |
 | POST | `/api/v1/admin/users/:id/ban` | Ban user |
 | GET | `/api/v1/admin/audit-logs` | View audit logs |
+
+---
+
+## 🔑 API Keys Management
+
+### Features:
+- ✅ Create personal API keys
+- ✅ Key rotation
+- ✅ Usage tracking per key
+- ✅ Rate limiting per key
+- ✅ Revoke keys
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/api-keys` | List user's API keys |
+| POST | `/api/v1/api-keys` | Create new API key |
+| DELETE | `/api/v1/api-keys/:id` | Revoke API key |
+| GET | `/api/v1/api-keys/:id/usage` | Get key usage stats |
+
+### Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "key-uuid",
+    "name": "My App Key",
+    "key": "baat_sk_xxxx...xxxx", // Only shown once on creation
+    "lastUsed": "2026-01-12T10:00:00Z",
+    "requestCount": 150,
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}
+```
+
+---
+
+## 🏥 Health & Monitoring
+
+### Features:
+- ✅ Health checks
+- ✅ Readiness probes
+- ✅ Liveness probes
+- ✅ Metrics endpoint
+- ✅ Provider status
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/health` | Basic health check |
+| GET | `/api/v1/health/ready` | Readiness probe |
+| GET | `/api/v1/health/live` | Liveness probe |
+| GET | `/api/v1/health/metrics` | System metrics |
+| GET | `/api/v1/health/providers` | AI provider status |
+
+### Health Response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-01-12T10:00:00Z",
+  "version": "1.0.0",
+  "uptime": 86400,
+  "checks": {
+    "database": "healthy",
+    "redis": "healthy",
+    "aiProviders": "healthy"
+  }
+}
+```
+
+### Provider Status Response:
+```json
+{
+  "groq": {
+    "available": true,
+    "totalKeys": 14,
+    "availableKeys": 14,
+    "remainingCapacity": 201600
+  },
+  "openrouter": {
+    "available": true,
+    "totalKeys": 12,
+    "availableKeys": 12,
+    "remainingCapacity": 2400
+  }
+}
+```
 
 ---
 
@@ -681,6 +898,96 @@ X-RateLimit-Reset: 2026-01-12T12:00:00Z
 
 ---
 
+## 🔒 GDPR Compliance
+
+### Features:
+- ✅ Data export (JSON format)
+- ✅ Complete data deletion
+- ✅ Portable data format
+- ✅ Right to be forgotten
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/gdpr/export` | Export all user data |
+| DELETE | `/api/v1/gdpr/delete-all` | Delete all user data |
+| GET | `/api/v1/gdpr/export-portable` | Portable data export |
+
+### Export Response:
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "conversations": [...],
+    "messages": [...],
+    "images": [...],
+    "facts": [...],
+    "exportedAt": "2026-01-12T10:00:00Z"
+  }
+}
+```
+
+### Delete Response:
+```json
+{
+  "success": true,
+  "message": "All user data has been permanently deleted",
+  "deletedItems": {
+    "conversations": 45,
+    "messages": 1250,
+    "images": 30,
+    "facts": 15
+  }
+}
+```
+
+---
+
+## 🔔 Webhooks
+
+### Features:
+- ✅ Event notifications
+- ✅ Custom webhook URLs
+- ✅ Retry on failure
+- ✅ Event filtering
+
+### Supported Events:
+| Event | Description |
+|-------|-------------|
+| `message.created` | New message sent |
+| `conversation.created` | New conversation started |
+| `image.generated` | Image generation completed |
+| `export.completed` | Export ready for download |
+
+### Endpoints:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/webhooks` | List webhooks |
+| POST | `/api/v1/webhooks` | Create webhook |
+| DELETE | `/api/v1/webhooks/:id` | Delete webhook |
+| POST | `/api/v1/webhooks/:id/test` | Test webhook |
+
+### Webhook Payload:
+```json
+{
+  "event": "message.created",
+  "timestamp": "2026-01-12T10:00:00Z",
+  "data": {
+    "conversationId": "uuid",
+    "messageId": "uuid",
+    "role": "assistant",
+    "content": "Hello! How can I help you?"
+  }
+}
+```
+
+---
+
 ## 📚 API Reference
 
 ### Base URL:
@@ -693,6 +1000,124 @@ Development: http://localhost:5001/api/v1
 ```
 Authorization: Bearer <clerk-session-token>
 ```
+
+### All Endpoints Summary:
+
+#### Authentication
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/webhook` | No | Clerk webhook |
+| GET | `/auth/me` | Yes | Get current user |
+
+#### Chat & AI
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/chat/completions` | Yes | Stream chat |
+| POST | `/chat/message` | Yes | Non-stream chat |
+
+#### Modes & Tags
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/modes` | Yes | List AI modes |
+| POST | `/modes/detect` | Yes | Detect mode |
+| GET | `/tags` | Yes | List tags |
+
+#### Image Generation
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/image-gen/generate` | Yes | Generate image |
+| POST | `/image-gen/variations/:id` | Yes | Variations |
+| POST | `/image-gen/batch` | Yes | Batch (Pro) |
+| GET | `/image-gen/status` | Yes | User status |
+| GET | `/image-gen/models` | Yes | Models list |
+| GET | `/image-gen/styles` | Yes | Style presets |
+
+#### Voice & Audio
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/audio/upload` | Yes | Upload audio |
+| POST | `/audio/transcribe` | Yes | Transcribe |
+| POST | `/tts/generate` | Yes | Text to speech |
+| GET | `/tts/voices` | Yes | Available voices |
+
+#### Web Search
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/search` | Yes | Search web |
+| GET | `/search/status` | Yes | Service status |
+
+#### Files & Images
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/images/upload` | Yes | Upload image |
+| GET | `/images/:id` | Yes | Get image |
+| POST | `/files/upload` | Yes | Upload file |
+| GET | `/files/:id` | Yes | Get file |
+
+#### Conversations
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/conversations` | Yes | List |
+| POST | `/conversations` | Yes | Create |
+| GET | `/conversations/:id` | Yes | Get one |
+| PATCH | `/conversations/:id` | Yes | Update |
+| DELETE | `/conversations/:id` | Yes | Delete |
+
+#### Projects
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/projects` | Yes | List |
+| POST | `/projects` | Yes | Create |
+| GET | `/projects/:id` | Yes | Get one |
+| DELETE | `/projects/:id` | Yes | Delete |
+
+#### Profile & Memory
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/profile/facts` | Yes | Get facts |
+| POST | `/profile/teach` | Yes | Teach fact |
+| DELETE | `/profile/facts/:id` | Yes | Delete fact |
+
+#### Export & Share
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/export/:id` | Yes | Export chat |
+| POST | `/share/:id` | Yes | Create link |
+| GET | `/share/:shareId` | No | View shared |
+
+#### Templates
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/templates` | Yes | List |
+| POST | `/templates` | Yes | Create |
+| DELETE | `/templates/:id` | Yes | Delete |
+
+#### Analytics
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/analytics/usage` | Yes | Usage stats |
+| GET | `/analytics/tokens` | Yes | Token usage |
+
+#### GDPR
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/gdpr/export` | Yes | Export data |
+| DELETE | `/gdpr/delete-all` | Yes | Delete all |
+
+#### Health (No Auth)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | No | Health check |
+| GET | `/health/ready` | No | Readiness |
+| GET | `/health/live` | No | Liveness |
+| GET | `/health/metrics` | No | Metrics |
+
+#### Admin (Admin Only)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/admin/users` | Admin | List users |
+| GET | `/admin/stats` | Admin | Statistics |
+| POST | `/admin/users/:id/ban` | Admin | Ban user |
 
 ### Error Response:
 ```json
@@ -750,17 +1175,6 @@ api.interceptors.request.use(async (config) => {
 - Cache images locally
 - Use WebSocket for real-time updates
 - Compress images before upload
-
----
-
-## 🔒 GDPR Compliance
-
-### Endpoints:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/gdpr/export` | Export all user data |
-| DELETE | `/api/v1/gdpr/delete-all` | Delete all user data |
-| GET | `/api/v1/gdpr/export-portable` | Portable data export |
 
 ---
 

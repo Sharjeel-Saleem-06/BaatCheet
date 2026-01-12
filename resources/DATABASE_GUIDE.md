@@ -6,13 +6,13 @@ This guide explains how to access and manage your BaatCheet PostgreSQL database.
 
 ## 📋 Your Database Credentials
 
-| Property | Value |
-|----------|-------|
-| **Host** | `localhost` |
-| **Port** | `5432` |
-| **Database** | `baatcheet` |
-| **Username** | `baatcheet_user` |
-| **Password** | `BaatCheet2024Secure!` |
+| Property                 | Value                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| **Host**           | `localhost`                                                                 |
+| **Port**           | `5432`                                                                      |
+| **Database**       | `baatcheet`                                                                 |
+| **Username**       | `baatcheet_user`                                                            |
+| **Password**       | `BaatCheet2024Secure!`                                                      |
 | **Connection URL** | `postgresql://baatcheet_user:BaatCheet2024Secure!@localhost:5432/baatcheet` |
 
 ---
@@ -66,13 +66,13 @@ SELECT COUNT(*) FROM conversations;
 #### Option A: pgAdmin (Official PostgreSQL GUI)
 
 1. **Download pgAdmin:**
+
    ```
    https://www.pgadmin.org/download/
    ```
-
 2. **Install and Open pgAdmin**
-
 3. **Add New Server:**
+
    - Right-click "Servers" → "Create" → "Server"
    - **General Tab:**
      - Name: `BaatCheet Local`
@@ -83,8 +83,8 @@ SELECT COUNT(*) FROM conversations;
      - Username: `baatcheet_user`
      - Password: `BaatCheet2024Secure!`
    - Click "Save"
-
 4. **Browse Your Data:**
+
    - Expand: Servers → BaatCheet Local → Databases → baatcheet → Schemas → public → Tables
 
 ---
@@ -92,12 +92,14 @@ SELECT COUNT(*) FROM conversations;
 #### Option B: TablePlus (Modern, Beautiful UI)
 
 1. **Download TablePlus:**
+
    ```
    https://tableplus.com/
    ```
-   (Free version available)
 
+   (Free version available)
 2. **Create New Connection:**
+
    - Click "Create a new connection"
    - Select "PostgreSQL"
    - Fill in:
@@ -114,11 +116,12 @@ SELECT COUNT(*) FROM conversations;
 #### Option C: DBeaver (Free, Cross-Platform)
 
 1. **Download DBeaver:**
+
    ```
    https://dbeaver.io/download/
    ```
-
 2. **Create Connection:**
+
    - Click "New Database Connection"
    - Select "PostgreSQL"
    - Enter credentials (same as above)
@@ -129,10 +132,11 @@ SELECT COUNT(*) FROM conversations;
 ### Method 3: VS Code Extension
 
 1. **Install Extension:**
+
    - Search for "PostgreSQL" by Chris Kolkman
    - Or "Database Client" by Weijan Chen
-
 2. **Add Connection:**
+
    - Click database icon in sidebar
    - Add new connection with credentials
 
@@ -141,6 +145,7 @@ SELECT COUNT(*) FROM conversations;
 ## 📊 Database Tables Overview
 
 ### 1. users
+
 ```
 ┌─────────────┬──────────────┬───────────────────────────┐
 │ Column      │ Type         │ Description               │
@@ -157,6 +162,7 @@ SELECT COUNT(*) FROM conversations;
 ```
 
 ### 2. conversations
+
 ```
 ┌───────────────┬──────────────┬───────────────────────────┐
 │ Column        │ Type         │ Description               │
@@ -177,6 +183,7 @@ SELECT COUNT(*) FROM conversations;
 ```
 
 ### 3. messages
+
 ```
 ┌─────────────────┬──────────────┬───────────────────────────┐
 │ Column          │ Type         │ Description               │
@@ -192,6 +199,7 @@ SELECT COUNT(*) FROM conversations;
 ```
 
 ### 4. projects
+
 ```
 ┌─────────────┬──────────────┬───────────────────────────┐
 │ Column      │ Type         │ Description               │
@@ -212,11 +220,13 @@ SELECT COUNT(*) FROM conversations;
 ## 🔧 Common Database Operations
 
 ### View All Users
+
 ```sql
 SELECT id, email, name, created_at FROM users;
 ```
 
 ### View User's Conversations
+
 ```sql
 SELECT c.id, c.title, c.model, c.created_at
 FROM conversations c
@@ -225,6 +235,7 @@ WHERE u.email = 'test@baatcheet.com';
 ```
 
 ### View Messages in a Conversation
+
 ```sql
 SELECT role, content, tokens, created_at
 FROM messages
@@ -233,6 +244,7 @@ ORDER BY created_at;
 ```
 
 ### Count Messages Per Conversation
+
 ```sql
 SELECT c.title, COUNT(m.id) as message_count
 FROM conversations c
@@ -241,6 +253,7 @@ GROUP BY c.id, c.title;
 ```
 
 ### Delete a User (and all their data)
+
 ```sql
 -- This will cascade delete all conversations and messages
 DELETE FROM users WHERE email = 'test@baatcheet.com';
@@ -251,11 +264,13 @@ DELETE FROM users WHERE email = 'test@baatcheet.com';
 ## 🔄 Backup & Restore
 
 ### Backup Database
+
 ```bash
 pg_dump -h localhost -U baatcheet_user -d baatcheet > backup.sql
 ```
 
 ### Restore Database
+
 ```bash
 psql -h localhost -U baatcheet_user -d baatcheet < backup.sql
 ```
