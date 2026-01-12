@@ -143,4 +143,41 @@ router.post('/estimate', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /tts/usage
+ * Get ElevenLabs usage statistics (admin only)
+ */
+router.get('/usage', async (req: Request, res: Response) => {
+  try {
+    // Only allow admin users to see usage stats
+    const user = req.user;
+    if (user?.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    const usageStats = ttsService.getElevenLabsUsageStats();
+    const providerInfo = ttsService.getProviderInfo();
+    
+    res.json({
+      success: true,
+      data: {
+        provider: providerInfo,
+        elevenLabsUsage: usageStats.map(stat => ({
+          keyIndex: stat.keyIndex + 1,
+          charactersUsed: stat.usage.charactersUsed,
+          monthlyLimit: 10000,
+          percentUsed: Math.round((stat.usage.charactersUsed / 10000) * 100),
+          requestCount: stat.usage.requestCount,
+          lastUsed: stat.usage.lastUsed,
+          isExhausted: stat.usage.isExhausted,
+        })),
+      },
+    });
+    
+  } catch (error) {
+    logger.error('Failed to get TTS usage:', error);
+    res.status(500).json({ error: 'Failed to get usage stats' });
+  }
+});
+
 export default router;

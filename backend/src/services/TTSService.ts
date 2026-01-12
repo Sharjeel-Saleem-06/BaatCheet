@@ -4,9 +4,14 @@
  * 
  * Supported Providers:
  * - OpenAI TTS (best quality, paid)
- * - ElevenLabs (free tier: 10k chars/month)
+ * - ElevenLabs (free tier: 10k chars/month per account - MULTIPLE KEYS)
  * - Google Cloud TTS (free tier: 1M chars/month)
  * - Browser Web Speech API (frontend fallback)
+ * 
+ * Features:
+ * - Multi-key rotation for ElevenLabs (5 free accounts)
+ * - Per-key usage tracking to stay within free tier
+ * - Automatic failover when quota exceeded
  * 
  * @module TTSService
  */
@@ -30,6 +35,7 @@ export interface TTSResult {
   format: string;
   duration?: number;
   provider: string;
+  keyIndex?: number;
 }
 
 export interface VoiceInfo {
@@ -40,14 +46,28 @@ export interface VoiceInfo {
   provider: string;
 }
 
+interface KeyUsage {
+  charactersUsed: number;
+  lastReset: Date;
+  requestCount: number;
+  lastUsed: Date;
+  isExhausted: boolean;
+}
+
 // ============================================
 // TTS Service Class
 // ============================================
 
 class TTSServiceClass {
   private readonly OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-  private readonly ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || '';
   private readonly GOOGLE_CLOUD_KEY = process.env.GOOGLE_CLOUD_TTS_KEY || '';
+  
+  // ElevenLabs multi-key support (free tier: 10k chars/month each)
+  private readonly ELEVENLABS_KEYS: string[] = [];
+  private readonly ELEVENLABS_MONTHLY_LIMIT = 10000; // chars per key per month
+  private readonly ELEVENLABS_DAILY_LIMIT = 500; // conservative daily limit per key
+  private keyUsage: Map<number, KeyUsage> = new Map();
+  private currentKeyIndex = 0;
   
   // OpenAI voices
   private readonly OPENAI_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
@@ -55,12 +75,154 @@ class TTSServiceClass {
   // Character limits per provider
   private readonly CHAR_LIMITS = {
     openai: 4096,
-    elevenlabs: 5000,
+    elevenlabs: 2500, // Conservative limit per request
     google: 5000,
   };
 
+  constructor() {
+    // Load all ElevenLabs keys from environment
+    this.loadElevenLabsKeys();
+    this.initializeKeyUsage();
+    
+    // Reset usage daily at midnight
+    this.scheduleDailyReset();
+  }
+
+  /**
+   * Load ElevenLabs API keys from environment
+   */
+  private loadElevenLabsKeys(): void {
+    // Support numbered keys: ELEVENLABS_API_KEY_1, ELEVENLABS_API_KEY_2, etc.
+    for (let i = 1; i <= 10; i++) {
+      const key = process.env[`ELEVENLABS_API_KEY_${i}`];
+      if (key && key.startsWith('sk_')) {
+        this.ELEVENLABS_KEYS.push(key);
+      }
+    }
+    
+    // Also support single key format
+    const singleKey = process.env.ELEVENLABS_API_KEY;
+    if (singleKey && singleKey.startsWith('sk_') && !this.ELEVENLABS_KEYS.includes(singleKey)) {
+      this.ELEVENLABS_KEYS.push(singleKey);
+    }
+    
+    logger.info(`ElevenLabs TTS initialized with ${this.ELEVENLABS_KEYS.length} API keys`);
+  }
+
+  /**
+   * Initialize usage tracking for all keys
+   */
+  private initializeKeyUsage(): void {
+    for (let i = 0; i < this.ELEVENLABS_KEYS.length; i++) {
+      this.keyUsage.set(i, {
+        charactersUsed: 0,
+        lastReset: new Date(),
+        requestCount: 0,
+        lastUsed: new Date(),
+        isExhausted: false,
+      });
+    }
+  }
+
+  /**
+   * Schedule daily usage reset
+   */
+  private scheduleDailyReset(): void {
+    // Reset at midnight every day
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const msUntilMidnight = tomorrow.getTime() - now.getTime();
+    
+    setTimeout(() => {
+      this.resetDailyUsage();
+      // Then reset every 24 hours
+      setInterval(() => this.resetDailyUsage(), 24 * 60 * 60 * 1000);
+    }, msUntilMidnight);
+  }
+
+  /**
+   * Reset daily usage counters
+   */
+  private resetDailyUsage(): void {
+    for (const [index, usage] of this.keyUsage.entries()) {
+      // Only reset daily counters, keep monthly tracking
+      const daysSinceReset = (Date.now() - usage.lastReset.getTime()) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceReset >= 30) {
+        // Monthly reset
+        this.keyUsage.set(index, {
+          charactersUsed: 0,
+          lastReset: new Date(),
+          requestCount: 0,
+          lastUsed: usage.lastUsed,
+          isExhausted: false,
+        });
+        logger.info(`ElevenLabs key ${index + 1} monthly usage reset`);
+      }
+    }
+  }
+
+  /**
+   * Get the best available ElevenLabs key
+   */
+  private getAvailableElevenLabsKey(): { key: string; index: number } | null {
+    if (this.ELEVENLABS_KEYS.length === 0) {
+      return null;
+    }
+
+    // Try to find a key with available quota
+    for (let attempts = 0; attempts < this.ELEVENLABS_KEYS.length; attempts++) {
+      const index = (this.currentKeyIndex + attempts) % this.ELEVENLABS_KEYS.length;
+      const usage = this.keyUsage.get(index);
+      
+      if (usage && !usage.isExhausted && usage.charactersUsed < this.ELEVENLABS_MONTHLY_LIMIT) {
+        // Update current key index for round-robin
+        this.currentKeyIndex = (index + 1) % this.ELEVENLABS_KEYS.length;
+        return { key: this.ELEVENLABS_KEYS[index], index };
+      }
+    }
+    
+    logger.warn('All ElevenLabs keys exhausted for this month');
+    return null;
+  }
+
+  /**
+   * Track usage for an ElevenLabs key
+   */
+  private trackElevenLabsUsage(keyIndex: number, characters: number, success: boolean): void {
+    const usage = this.keyUsage.get(keyIndex);
+    if (usage) {
+      usage.charactersUsed += characters;
+      usage.requestCount++;
+      usage.lastUsed = new Date();
+      
+      if (!success || usage.charactersUsed >= this.ELEVENLABS_MONTHLY_LIMIT) {
+        usage.isExhausted = true;
+      }
+      
+      this.keyUsage.set(keyIndex, usage);
+      
+      logger.info(`ElevenLabs key ${keyIndex + 1} usage: ${usage.charactersUsed}/${this.ELEVENLABS_MONTHLY_LIMIT} chars`);
+    }
+  }
+
+  /**
+   * Get usage statistics for all ElevenLabs keys
+   */
+  public getElevenLabsUsageStats(): Array<{ keyIndex: number; usage: KeyUsage }> {
+    const stats: Array<{ keyIndex: number; usage: KeyUsage }> = [];
+    for (const [index, usage] of this.keyUsage.entries()) {
+      stats.push({ keyIndex: index, usage });
+    }
+    return stats;
+  }
+
   /**
    * Generate speech from text
+   * Priority: ElevenLabs (free, multi-key) > Google Cloud (free tier) > OpenAI (paid)
    */
   public async generateSpeech(
     text: string,
@@ -68,27 +230,40 @@ class TTSServiceClass {
   ): Promise<TTSResult> {
     const { voice = 'alloy', speed = 1.0, language = 'en', format = 'mp3' } = options;
     
-    // Validate and truncate text if needed
-    const maxChars = Math.max(...Object.values(this.CHAR_LIMITS));
+    // Validate and truncate text if needed (conservative limit for free tiers)
+    const maxChars = this.CHAR_LIMITS.elevenlabs;
     const truncatedText = text.length > maxChars ? text.substring(0, maxChars) : text;
     
+    // Log if text was truncated
+    if (text.length > maxChars) {
+      logger.warn(`TTS text truncated from ${text.length} to ${maxChars} characters`);
+    }
+    
     try {
-      // Try OpenAI TTS first (best quality)
+      // Try ElevenLabs first (free tier with multi-key rotation)
+      if (this.ELEVENLABS_KEYS.length > 0) {
+        try {
+          return await this.elevenLabsTTS(truncatedText, voice);
+        } catch (elevenLabsError) {
+          logger.warn('ElevenLabs TTS failed, trying fallback:', elevenLabsError);
+        }
+      }
+      
+      // Try Google Cloud TTS (free tier: 1M chars/month)
+      if (this.GOOGLE_CLOUD_KEY) {
+        try {
+          return await this.googleTTS(truncatedText, language, voice);
+        } catch (googleError) {
+          logger.warn('Google TTS failed, trying fallback:', googleError);
+        }
+      }
+      
+      // Try OpenAI TTS last (paid, but best quality)
       if (this.OPENAI_API_KEY) {
         return await this.openAITTS(truncatedText, voice, speed, format);
       }
       
-      // Try ElevenLabs
-      if (this.ELEVENLABS_API_KEY) {
-        return await this.elevenLabsTTS(truncatedText, voice);
-      }
-      
-      // Try Google Cloud TTS
-      if (this.GOOGLE_CLOUD_KEY) {
-        return await this.googleTTS(truncatedText, language, voice);
-      }
-      
-      throw new Error('No TTS service available. Please configure OPENAI_API_KEY, ELEVENLABS_API_KEY, or GOOGLE_CLOUD_TTS_KEY.');
+      throw new Error('No TTS service available. Please configure ELEVENLABS_API_KEY_1, GOOGLE_CLOUD_TTS_KEY, or OPENAI_API_KEY.');
       
     } catch (error) {
       logger.error('TTS generation failed:', error);
@@ -149,18 +324,36 @@ class TTSServiceClass {
   }
 
   /**
-   * ElevenLabs TTS
+   * ElevenLabs TTS with multi-key rotation
    */
   private async elevenLabsTTS(
     text: string,
     voiceId: string = 'EXAVITQu4vr4xnSDxMaL' // Default: Sarah
   ): Promise<TTSResult> {
+    // Get available key
+    const keyInfo = this.getAvailableElevenLabsKey();
+    if (!keyInfo) {
+      throw new Error('No ElevenLabs API keys available (quota exhausted)');
+    }
+
+    const { key, index } = keyInfo;
+    const textLength = text.length;
+
+    // Check if this request would exceed conservative limits
+    const usage = this.keyUsage.get(index);
+    if (usage && usage.charactersUsed + textLength > this.ELEVENLABS_MONTHLY_LIMIT * 0.95) {
+      logger.warn(`ElevenLabs key ${index + 1} approaching limit, trying next key`);
+      // Mark as exhausted and try next key
+      this.trackElevenLabsUsage(index, 0, false);
+      return this.elevenLabsTTS(text, voiceId); // Recursive call with next key
+    }
+
     try {
       const response = await axios.post(
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
         {
           text,
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_monolingual_v1', // Free tier model
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
@@ -170,21 +363,43 @@ class TTSServiceClass {
           headers: {
             'Accept': 'audio/mpeg',
             'Content-Type': 'application/json',
-            'xi-api-key': this.ELEVENLABS_API_KEY,
+            'xi-api-key': key,
           },
           responseType: 'arraybuffer',
           timeout: 30000,
         }
       );
       
-      logger.info('ElevenLabs TTS completed', { textLength: text.length, voiceId });
+      // Track successful usage
+      this.trackElevenLabsUsage(index, textLength, true);
+      
+      logger.info('ElevenLabs TTS completed', { 
+        textLength, 
+        voiceId,
+        keyIndex: index + 1,
+        totalKeys: this.ELEVENLABS_KEYS.length,
+      });
       
       return {
         audioBuffer: Buffer.from(response.data),
         format: 'mp3',
         provider: 'elevenlabs',
+        keyIndex: index,
       };
     } catch (error: any) {
+      // Track failed usage
+      this.trackElevenLabsUsage(index, textLength, false);
+      
+      // If quota exceeded, mark key and try next
+      if (error.response?.status === 401 || error.response?.status === 429) {
+        logger.warn(`ElevenLabs key ${index + 1} quota exceeded or invalid, trying next key`);
+        
+        // Try next key if available
+        if (this.ELEVENLABS_KEYS.length > 1) {
+          return this.elevenLabsTTS(text, voiceId);
+        }
+      }
+      
       logger.error('ElevenLabs TTS failed:', error.response?.data || error.message);
       throw new Error('ElevenLabs TTS failed');
     }
@@ -243,7 +458,22 @@ class TTSServiceClass {
   public getAvailableVoices(): VoiceInfo[] {
     const voices: VoiceInfo[] = [];
     
-    // OpenAI voices
+    // ElevenLabs voices (free tier - prioritized)
+    if (this.ELEVENLABS_KEYS.length > 0) {
+      voices.push(
+        // Pre-made voices (free to use)
+        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', language: 'en', gender: 'female', provider: 'elevenlabs' },
+        { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', language: 'en', gender: 'female', provider: 'elevenlabs' },
+        { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', language: 'en', gender: 'female', provider: 'elevenlabs' },
+        { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', language: 'en', gender: 'female', provider: 'elevenlabs' },
+        { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', language: 'en', gender: 'male', provider: 'elevenlabs' },
+        { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', language: 'en', gender: 'male', provider: 'elevenlabs' },
+        { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', language: 'en', gender: 'male', provider: 'elevenlabs' },
+        { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', language: 'en', gender: 'male', provider: 'elevenlabs' },
+      );
+    }
+    
+    // OpenAI voices (paid)
     if (this.OPENAI_API_KEY) {
       voices.push(
         { id: 'alloy', name: 'Alloy', language: 'en', gender: 'neutral', provider: 'openai' },
@@ -255,15 +485,6 @@ class TTSServiceClass {
       );
     }
     
-    // ElevenLabs default voices
-    if (this.ELEVENLABS_API_KEY) {
-      voices.push(
-        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', language: 'en', gender: 'female', provider: 'elevenlabs' },
-      );
-    }
-    
     return voices;
   }
 
@@ -271,21 +492,36 @@ class TTSServiceClass {
    * Check if TTS is available
    */
   public isAvailable(): boolean {
-    return !!(this.OPENAI_API_KEY || this.ELEVENLABS_API_KEY || this.GOOGLE_CLOUD_KEY);
+    return !!(this.OPENAI_API_KEY || this.ELEVENLABS_KEYS.length > 0 || this.GOOGLE_CLOUD_KEY);
   }
 
   /**
-   * Get provider info
+   * Get provider info with detailed status
    */
-  public getProviderInfo(): { provider: string; available: boolean } {
-    if (this.OPENAI_API_KEY) {
-      return { provider: 'openai', available: true };
-    }
-    if (this.ELEVENLABS_API_KEY) {
-      return { provider: 'elevenlabs', available: true };
+  public getProviderInfo(): { 
+    provider: string; 
+    available: boolean;
+    elevenLabsKeys?: number;
+    elevenLabsAvailable?: number;
+  } {
+    // Check ElevenLabs first (preferred for free tier)
+    if (this.ELEVENLABS_KEYS.length > 0) {
+      const availableKeys = Array.from(this.keyUsage.values())
+        .filter(u => !u.isExhausted && u.charactersUsed < this.ELEVENLABS_MONTHLY_LIMIT)
+        .length;
+      
+      return { 
+        provider: 'elevenlabs', 
+        available: availableKeys > 0,
+        elevenLabsKeys: this.ELEVENLABS_KEYS.length,
+        elevenLabsAvailable: availableKeys,
+      };
     }
     if (this.GOOGLE_CLOUD_KEY) {
       return { provider: 'google', available: true };
+    }
+    if (this.OPENAI_API_KEY) {
+      return { provider: 'openai', available: true };
     }
     return { provider: 'none', available: false };
   }

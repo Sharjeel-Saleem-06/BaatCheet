@@ -39,8 +39,38 @@ export interface SearchOptions {
 // ============================================
 
 class WebSearchServiceClass {
-  private readonly BRAVE_API_KEY = process.env.BRAVE_SEARCH_KEY || '';
+  // Multi-key support for Brave Search
+  private readonly BRAVE_API_KEYS: string[] = [];
+  private braveKeyIndex = 0;
+  
   private readonly SERPAPI_KEY = process.env.SERPAPI_KEY || '';
+
+  constructor() {
+    // Load all Brave Search keys
+    for (let i = 1; i <= 10; i++) {
+      const key = process.env[`BRAVE_SEARCH_KEY_${i}`];
+      if (key && key.startsWith('BSA')) {
+        this.BRAVE_API_KEYS.push(key);
+      }
+    }
+    // Also support single key format
+    const singleKey = process.env.BRAVE_SEARCH_KEY;
+    if (singleKey && singleKey.startsWith('BSA') && !this.BRAVE_API_KEYS.includes(singleKey)) {
+      this.BRAVE_API_KEYS.push(singleKey);
+    }
+    
+    logger.info(`Web Search initialized with ${this.BRAVE_API_KEYS.length} Brave keys`);
+  }
+
+  /**
+   * Get next available Brave API key (round-robin)
+   */
+  private getNextBraveKey(): string | null {
+    if (this.BRAVE_API_KEYS.length === 0) return null;
+    const key = this.BRAVE_API_KEYS[this.braveKeyIndex];
+    this.braveKeyIndex = (this.braveKeyIndex + 1) % this.BRAVE_API_KEYS.length;
+    return key;
+  }
   
   // Indicators that suggest a query needs web search
   private readonly WEB_SEARCH_INDICATORS = [
@@ -104,8 +134,8 @@ class WebSearchServiceClass {
     const { numResults = 5, dateFilter, safeSearch = true } = options;
     
     try {
-      // Try Brave Search first (best free tier: 2000/month)
-      if (this.BRAVE_API_KEY) {
+      // Try Brave Search first (best free tier: 2000/month per key)
+      if (this.BRAVE_API_KEYS.length > 0) {
         return await this.searchWithBrave(query, numResults, dateFilter, safeSearch);
       }
       
@@ -131,7 +161,7 @@ class WebSearchServiceClass {
   }
 
   /**
-   * Search using Brave Search API
+   * Search using Brave Search API with key rotation
    */
   private async searchWithBrave(
     query: string,
@@ -139,6 +169,11 @@ class WebSearchServiceClass {
     dateFilter?: string,
     safeSearch?: boolean
   ): Promise<WebSearchResponse> {
+    const apiKey = this.getNextBraveKey();
+    if (!apiKey) {
+      throw new Error('No Brave Search API keys available');
+    }
+    
     const url = 'https://api.search.brave.com/res/v1/web/search';
     
     const params: Record<string, string> = {
@@ -157,7 +192,7 @@ class WebSearchServiceClass {
         headers: {
           'Accept': 'application/json',
           'Accept-Encoding': 'gzip',
-          'X-Subscription-Token': this.BRAVE_API_KEY,
+          'X-Subscription-Token': apiKey,
         },
         timeout: 10000,
       });
@@ -346,15 +381,15 @@ class WebSearchServiceClass {
    * Check if web search is available
    */
   public isAvailable(): boolean {
-    return !!(this.BRAVE_API_KEY || this.SERPAPI_KEY);
+    return !!(this.BRAVE_API_KEYS.length > 0 || this.SERPAPI_KEY);
   }
 
   /**
    * Get search provider info
    */
-  public getProviderInfo(): { provider: string; available: boolean } {
-    if (this.BRAVE_API_KEY) {
-      return { provider: 'brave', available: true };
+  public getProviderInfo(): { provider: string; available: boolean; keyCount?: number } {
+    if (this.BRAVE_API_KEYS.length > 0) {
+      return { provider: 'brave', available: true, keyCount: this.BRAVE_API_KEYS.length };
     }
     if (this.SERPAPI_KEY) {
       return { provider: 'serpapi', available: true };
