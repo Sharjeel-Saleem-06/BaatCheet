@@ -20,7 +20,7 @@ import javax.inject.Inject
 class SplashViewModel @Inject constructor() : ViewModel() {
     
     companion object {
-        private const val SPLASH_DURATION_MS = 2000L // 2 seconds
+        private const val SPLASH_DURATION_MS = 100L // Minimal - just pass through quickly
     }
     
     private val _isLoading = MutableStateFlow(true)

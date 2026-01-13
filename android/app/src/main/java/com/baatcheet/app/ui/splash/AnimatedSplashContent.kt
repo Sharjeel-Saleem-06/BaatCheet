@@ -1,28 +1,22 @@
 package com.baatcheet.app.ui.splash
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.baatcheet.app.R
 import com.baatcheet.app.ui.theme.BrandBlue
-import com.baatcheet.app.ui.theme.BrandGreen
-import com.baatcheet.app.ui.theme.BrandTeal
 import kotlinx.coroutines.delay
 
 /**
@@ -58,29 +52,11 @@ fun AnimatedSplashContent(
         label = "logoAlpha"
     )
     
-    val textAlpha by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = ANIMATION_DURATION,
-            delayMillis = STAGGER_DELAY
-        ),
-        label = "textAlpha"
-    )
-    
-    val urduAlpha by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = ANIMATION_DURATION,
-            delayMillis = STAGGER_DELAY * 2
-        ),
-        label = "urduAlpha"
-    )
-    
     val loaderAlpha by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
         animationSpec = tween(
             durationMillis = ANIMATION_DURATION,
-            delayMillis = STAGGER_DELAY * 3
+            delayMillis = STAGGER_DELAY
         ),
         label = "loaderAlpha"
     )
@@ -103,40 +79,16 @@ fun AnimatedSplashContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo and Text Row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // Chat Bubble Icon
-                ChatBubbleIcon(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .scale(logoScale)
-                        .alpha(logoAlpha)
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Brand Text
-                Column {
-                    Text(
-                        text = "BaatCheet",
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandBlue,
-                        modifier = Modifier.alpha(textAlpha)
-                    )
-                    
-                    Text(
-                        text = "باتچیت",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = BrandGreen,
-                        modifier = Modifier.alpha(urduAlpha)
-                    )
-                }
-            }
+            // BaatCheet Logo - larger size for better visibility
+            Image(
+                painter = painterResource(id = R.drawable.splash_logo),
+                contentDescription = "BaatCheet Logo",
+                modifier = Modifier
+                    .size(280.dp)
+                    .scale(logoScale)
+                    .alpha(logoAlpha)
+                    .clip(RoundedCornerShape(56.dp))
+            )
             
             Spacer(modifier = Modifier.height(48.dp))
             
@@ -147,111 +99,6 @@ fun AnimatedSplashContent(
                     .alpha(loaderAlpha),
                 color = BrandBlue,
                 strokeWidth = 3.dp
-            )
-        }
-    }
-}
-
-/**
- * Custom Chat Bubble Icon with Circuit Nodes
- * Matches the Figma design
- */
-@Composable
-fun ChatBubbleIcon(
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val strokeWidth = width * 0.04f
-        
-        // Chat bubble path
-        val bubblePath = Path().apply {
-            val cornerRadius = width * 0.15f
-            val tailWidth = width * 0.12f
-            val tailHeight = height * 0.15f
-            val bubbleHeight = height * 0.75f
-            
-            // Start from bottom left (after tail)
-            moveTo(tailWidth, bubbleHeight)
-            
-            // Bottom left corner
-            lineTo(cornerRadius, bubbleHeight)
-            quadraticBezierTo(0f, bubbleHeight, 0f, bubbleHeight - cornerRadius)
-            
-            // Left side
-            lineTo(0f, cornerRadius)
-            
-            // Top left corner
-            quadraticBezierTo(0f, 0f, cornerRadius, 0f)
-            
-            // Top side
-            lineTo(width - cornerRadius, 0f)
-            
-            // Top right corner
-            quadraticBezierTo(width, 0f, width, cornerRadius)
-            
-            // Right side
-            lineTo(width, bubbleHeight - cornerRadius)
-            
-            // Bottom right corner
-            quadraticBezierTo(width, bubbleHeight, width - cornerRadius, bubbleHeight)
-            
-            // Bottom side to tail
-            lineTo(tailWidth + cornerRadius, bubbleHeight)
-            
-            // Tail
-            lineTo(tailWidth * 0.3f, bubbleHeight + tailHeight)
-            lineTo(tailWidth, bubbleHeight)
-            
-            close()
-        }
-        
-        // Draw bubble outline
-        drawPath(
-            path = bubblePath,
-            color = BrandBlue,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-        )
-        
-        // Draw circuit nodes
-        val nodeRadius = width * 0.04f
-        val lineY1 = height * 0.25f
-        val lineY2 = height * 0.42f
-        val lineY3 = height * 0.59f
-        val lineStartX = width * 0.2f
-        val lineEndX = width * 0.8f
-        
-        // Draw horizontal lines
-        listOf(lineY1, lineY2, lineY3).forEach { y ->
-            drawLine(
-                color = BrandTeal,
-                start = Offset(lineStartX, y),
-                end = Offset(lineEndX, y),
-                strokeWidth = strokeWidth * 0.6f,
-                cap = StrokeCap.Round
-            )
-        }
-        
-        // Draw nodes on lines
-        val nodePositions = listOf(
-            // Line 1 nodes
-            Offset(width * 0.35f, lineY1),
-            Offset(width * 0.65f, lineY1),
-            // Line 2 nodes
-            Offset(width * 0.3f, lineY2),
-            Offset(width * 0.7f, lineY2),
-            // Line 3 nodes
-            Offset(width * 0.25f, lineY3),
-            Offset(width * 0.5f, lineY3),
-            Offset(width * 0.75f, lineY3),
-        )
-        
-        nodePositions.forEach { position ->
-            drawCircle(
-                color = BrandTeal,
-                radius = nodeRadius,
-                center = position
             )
         }
     }

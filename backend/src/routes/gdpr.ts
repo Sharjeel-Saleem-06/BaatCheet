@@ -21,6 +21,29 @@ const router = Router();
 // Apply authentication to all GDPR routes
 router.use(clerkAuth);
 
+// Helper function to convert data to CSV format
+function convertToCSV(data: any): string {
+  if (!data || typeof data !== 'object') return '';
+  const lines: string[] = ['Key,Value'];
+  const processObj = (obj: any, prefix = '') => {
+    for (const key in obj) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      const val = obj[key];
+      if (val === null || val === undefined) {
+        lines.push(`"${fullKey}",""`);
+      } else if (Array.isArray(val)) {
+        lines.push(`"${fullKey}","${JSON.stringify(val).replace(/"/g, '""')}"`);
+      } else if (typeof val === 'object') {
+        processObj(val, fullKey);
+      } else {
+        lines.push(`"${fullKey}","${String(val).replace(/"/g, '""')}"`);
+      }
+    }
+  };
+  processObj(data);
+  return lines.join('\n');
+}
+
 // ============================================
 // Data Export (GDPR Article 15 - Right of Access)
 // ============================================
@@ -480,7 +503,7 @@ router.get('/export-portable', async (req: Request, res: Response) => {
     
     if (format === 'csv') {
       // Convert to CSV format
-      const csvData = this.convertToCSV(portableData);
+      const csvData = convertToCSV(portableData);
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename="baatcheet_portable_${userId}.csv"`);
       return res.send(csvData);

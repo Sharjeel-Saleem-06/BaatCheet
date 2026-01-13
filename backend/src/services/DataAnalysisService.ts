@@ -165,7 +165,7 @@ class DataAnalysisServiceClass {
     }));
     
     if (types.size === 1) {
-      return types.values().next().value;
+      return types.values().next().value || 'mixed';
     }
     
     return 'mixed';

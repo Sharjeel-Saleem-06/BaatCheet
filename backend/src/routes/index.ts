@@ -28,6 +28,7 @@ import gdprRoutes from './gdpr.js';
 import imageGenRoutes from './imageGen.js';
 import tagsRoutes from './tags.js';
 import modesRoutes from './modes.js';
+import mobileAuthRoutes from './mobileAuth.js';
 
 const router = Router();
 
@@ -100,5 +101,8 @@ router.use('/tags', tagsRoutes);
 
 // AI Modes
 router.use('/modes', modesRoutes);
+
+// Mobile Authentication (custom auth for mobile apps)
+router.use('/mobile/auth', mobileAuthRoutes);
 
 export default router;

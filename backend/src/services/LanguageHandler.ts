@@ -219,11 +219,11 @@ English:`;
         maxTokens: 500,
       });
       
-      if (response.success && response.message) {
+      if (response.content) {
         return {
           success: true,
           originalText: romanUrduText,
-          translatedText: response.message.trim(),
+          translatedText: response.content.trim(),
           sourceLanguage: 'roman-urdu',
           targetLanguage: 'english',
         };
@@ -265,11 +265,11 @@ Roman Urdu:`;
         maxTokens: 500,
       });
       
-      if (response.success && response.message) {
+      if (response.content) {
         return {
           success: true,
           originalText: englishText,
-          translatedText: response.message.trim(),
+          translatedText: response.content.trim(),
           sourceLanguage: 'english',
           targetLanguage: 'roman-urdu',
         };

@@ -1,0 +1,17 @@
+//
+//  Release.xcconfig
+//  BaseProject
+//
+//  Created by Afaq Ahmad on 08/01/24.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://help.apple.com/xcode/#/dev745c5c974
+
+APP_NAME = BaseProject
+APP_ICON = 
+APP_BUNDLE_ID = com.example.BaseProject
+APP_VERSION = 1.0.0
+
+BASE_URL = https:/$()/abc.com
+EXAMPLE_KEY = 123455_release

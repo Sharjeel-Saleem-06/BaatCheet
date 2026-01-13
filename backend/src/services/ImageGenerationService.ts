@@ -331,10 +331,10 @@ Return ONLY the enhanced prompt, nothing else:`;
       const response = await aiRouter.chat({
         messages: [{ role: 'user', content: enhancementPrompt }],
         temperature: 0.7,
-        max_tokens: 300,
+        maxTokens: 300,
       });
 
-      let enhanced = response.choices[0]?.message?.content?.trim() || userPrompt;
+      let enhanced = response.content?.trim() || userPrompt;
       
       // Add style modifiers if specified
       if (style && IMAGE_STYLE_PRESETS[style]) {
@@ -705,10 +705,10 @@ Return ONLY a JSON array with exactly 3 objects:
       const response = await aiRouter.chat({
         messages: [{ role: 'user', content: suggestionPrompt }],
         temperature: 0.7,
-        max_tokens: 1000,
+        maxTokens: 1000,
       });
 
-      const content = response.choices[0]?.message?.content?.trim() || '[]';
+      const content = response.content?.trim() || '[]';
       const jsonStr = content.replace(/```json\n?|\n?```/g, '').trim();
       
       return JSON.parse(jsonStr);

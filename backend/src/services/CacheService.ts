@@ -14,6 +14,7 @@ import { logger } from '../utils/logger.js';
 
 const CACHE_PREFIXES = {
   USER_SESSION: 'session:',
+  SESSION: 'session:', // Alias for USER_SESSION
   CONVERSATION_CONTEXT: 'context:',
   PROJECT_STATS: 'project_stats:',
   ANALYTICS_DASHBOARD: 'analytics:dashboard:',
@@ -99,6 +100,13 @@ class CacheServiceClass {
       logger.warn(`Cache delete error for key ${key}:`, error);
       return false;
     }
+  }
+
+  /**
+   * Delete value from cache (alias for del)
+   */
+  async delete(key: string): Promise<boolean> {
+    return this.del(key);
   }
 
   /**
