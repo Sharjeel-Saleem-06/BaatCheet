@@ -1,16 +1,27 @@
 /**
  * Clerk Authentication Middleware
- * Handles authentication using Clerk
+ * Handles authentication using Clerk OR Mobile JWT
  * 
  * @module ClerkAuth
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { clerkClient, getAuth } from '@clerk/express';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../config/database.js';
 import { logger } from '../utils/logger.js';
 import { UserRole } from '@prisma/client';
 import { ClerkUser } from '../types/index.js';
+import { jwtSecret } from '../config/index.js';
+
+// Mobile JWT payload structure
+interface MobileJwtPayload {
+  userId: string;
+  clerkId: string;
+  email: string;
+  iat?: number;
+  exp?: number;
+}
 
 // ============================================
 // Admin/Moderator Email Mappings
@@ -26,11 +37,69 @@ function getRoleForEmail(email: string): UserRole {
 }
 
 // ============================================
+// Mobile JWT Authentication Helper
+// ============================================
+
+async function tryMobileJwtAuth(req: Request): Promise<boolean> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return false;
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Try to verify as mobile JWT
+    const decoded = jwt.verify(token, jwtSecret) as MobileJwtPayload;
+    
+    // Must have userId to be a mobile JWT
+    if (!decoded.userId) {
+      return false;
+    }
+
+    // Lookup full user details from database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        clerkId: true,
+        email: true,
+        role: true,
+        tier: true,
+        isBanned: true,
+        banReason: true,
+      },
+    });
+
+    if (!user) {
+      return false;
+    }
+
+    if (user.isBanned) {
+      return false;
+    }
+
+    req.user = {
+      id: user.id,
+      clerkId: user.clerkId,
+      email: user.email,
+      role: user.role,
+      tier: user.tier,
+    };
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================
 // Clerk Authentication Middleware
 // ============================================
 
 /**
- * Authenticate user via Clerk and sync with database
+ * Authenticate user via Clerk OR Mobile JWT and sync with database
+ * Supports both web (Clerk token) and mobile (JWT token) authentication
  */
 export const clerkAuth = async (
   req: Request,
@@ -38,6 +107,14 @@ export const clerkAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // First, try mobile JWT authentication
+    const isMobileAuth = await tryMobileJwtAuth(req);
+    if (isMobileAuth && req.user) {
+      next();
+      return;
+    }
+
+    // Fall back to Clerk authentication
     const { userId: clerkUserId } = getAuth(req);
 
     if (!clerkUserId) {
@@ -107,7 +184,7 @@ export const clerkAuth = async (
 
     next();
   } catch (error) {
-    logger.error('Clerk auth error:', error);
+    logger.error('Auth error:', error);
     res.status(401).json({
       success: false,
       error: 'Authentication failed',
@@ -117,6 +194,7 @@ export const clerkAuth = async (
 
 /**
  * Optional authentication - doesn't fail if no token
+ * Supports both web (Clerk token) and mobile (JWT token)
  */
 export const optionalClerkAuth = async (
   req: Request,
@@ -124,6 +202,14 @@ export const optionalClerkAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // First, try mobile JWT authentication
+    const isMobileAuth = await tryMobileJwtAuth(req);
+    if (isMobileAuth && req.user) {
+      next();
+      return;
+    }
+
+    // Fall back to Clerk authentication
     const { userId: clerkUserId } = getAuth(req);
 
     if (clerkUserId) {
