@@ -1,66 +1,58 @@
 package com.baatcheet.app.ui.voice
 
-import android.media.MediaPlayer
-import android.media.MediaRecorder
-import android.os.Build
-import androidx.compose.animation.AnimatedVisibility
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.baatcheet.app.R
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.io.File
 
 // Color palette for voice chat
-private val VoiceDarkBg = Color(0xFF1A1A1A)
+private val VoiceDarkBg = Color(0xFF000000)
 private val VoiceAccent = Color(0xFF34C759)
 private val VoiceBlue = Color(0xFF007AFF)
 private val VoicePurple = Color(0xFF5856D6)
 private val VoiceOrange = Color(0xFFFF9500)
 private val VoicePink = Color(0xFFFF2D55)
 private val VoiceGray = Color(0xFF8E8E93)
-private val VoiceLightGray = Color(0xFF3A3A3C)
+private val VoiceLightGray = Color(0xFF2C2C2E)
+private val VoiceCardBg = Color(0xFF1C1C1E)
 
 /**
  * Voice Mode State
  */
 enum class VoiceModeStep {
-    INTRO,           // Initial welcome screen
-    VOICE_SELECT,    // Voice selection screen
-    ACTIVE_CALL      // Active voice call with AI
+    INTRO,
+    VOICE_SELECT,
+    ACTIVE_CALL
 }
 
 /**
@@ -76,8 +68,8 @@ data class AIVoice(
 )
 
 /**
- * Voice Chat Screen - Main entry point
- * Handles all three steps of voice chat flow
+ * Voice Chat Screen - FULL SCREEN DIALOG
+ * This ensures it covers the entire screen including status bar
  */
 @Composable
 fun VoiceChatScreen(
@@ -86,54 +78,63 @@ fun VoiceChatScreen(
     onConversationCreated: (String) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
-    val context = LocalContext.current
     
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(VoiceDarkBg)
+    // Use Dialog with full screen properties
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false
+        )
     ) {
-        when (state.currentStep) {
-            VoiceModeStep.INTRO -> {
-                VoiceIntroScreen(
-                    onContinue = { viewModel.moveToVoiceSelection() },
-                    onDismiss = onDismiss
-                )
-            }
-            VoiceModeStep.VOICE_SELECT -> {
-                VoiceSelectionScreen(
-                    voices = state.availableVoices,
-                    selectedVoice = state.selectedVoice,
-                    isLoadingVoices = state.isLoadingVoices,
-                    isPlayingPreview = state.isPlayingPreview,
-                    playingVoiceId = state.playingVoiceId,
-                    onVoiceSelect = { voice -> viewModel.selectVoice(voice) },
-                    onPlayPreview = { voice -> viewModel.playVoicePreview(voice) },
-                    onStartCall = { viewModel.startVoiceCall() },
-                    onBack = { viewModel.moveToIntro() },
-                    onDismiss = onDismiss
-                )
-            }
-            VoiceModeStep.ACTIVE_CALL -> {
-                ActiveVoiceCallScreen(
-                    isRecording = state.isRecording,
-                    isProcessing = state.isProcessing,
-                    isAISpeaking = state.isAISpeaking,
-                    currentTranscript = state.currentTranscript,
-                    aiResponse = state.aiResponse,
-                    selectedVoice = state.selectedVoice,
-                    callDuration = state.callDuration,
-                    audioLevel = state.audioLevel,
-                    onStartRecording = { viewModel.startRecording() },
-                    onStopRecording = { viewModel.stopRecordingAndSend() },
-                    onEndCall = { 
-                        viewModel.endCall()
-                        state.conversationId?.let { onConversationCreated(it) }
-                        onDismiss()
-                    },
-                    onMute = { viewModel.toggleMute() },
-                    isMuted = state.isMuted
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(VoiceDarkBg)
+        ) {
+            when (state.currentStep) {
+                VoiceModeStep.INTRO -> {
+                    VoiceIntroScreen(
+                        onContinue = { viewModel.moveToVoiceSelection() },
+                        onDismiss = onDismiss
+                    )
+                }
+                VoiceModeStep.VOICE_SELECT -> {
+                    VoiceSelectionScreen(
+                        voices = state.availableVoices,
+                        selectedVoice = state.selectedVoice,
+                        isLoadingVoices = state.isLoadingVoices,
+                        isPlayingPreview = state.isPlayingPreview,
+                        playingVoiceId = state.playingVoiceId,
+                        onVoiceSelect = { voice -> viewModel.selectVoice(voice) },
+                        onPlayPreview = { voice -> viewModel.playVoicePreview(voice) },
+                        onStartCall = { viewModel.startVoiceCall() },
+                        onBack = { viewModel.moveToIntro() },
+                        onDismiss = onDismiss
+                    )
+                }
+                VoiceModeStep.ACTIVE_CALL -> {
+                    ActiveVoiceCallScreen(
+                        isRecording = state.isRecording,
+                        isProcessing = state.isProcessing,
+                        isAISpeaking = state.isAISpeaking,
+                        currentTranscript = state.currentTranscript,
+                        aiResponse = state.aiResponse,
+                        selectedVoice = state.selectedVoice,
+                        callDuration = state.callDuration,
+                        audioLevel = state.audioLevel,
+                        onStartRecording = { viewModel.startRecording() },
+                        onStopRecording = { viewModel.stopRecordingAndSend() },
+                        onEndCall = { 
+                            viewModel.endCall()
+                            state.conversationId?.let { onConversationCreated(it) }
+                            onDismiss()
+                        },
+                        onMute = { viewModel.toggleMute() },
+                        isMuted = state.isMuted
+                    )
+                }
             }
         }
     }
@@ -147,44 +148,34 @@ private fun VoiceIntroScreen(
     onContinue: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Animated gradient background
     val infiniteTransition = rememberInfiniteTransition(label = "gradient")
-    val gradientOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
+            animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "gradient"
+        label = "pulse"
     )
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        VoiceDarkBg,
-                        Color(0xFF2C2C2E),
-                        VoiceDarkBg
-                    ),
-                    startY = gradientOffset * 500
-                )
-            )
+            .background(VoiceDarkBg)
+            .systemBarsPadding()
     ) {
         // Close button
         IconButton(
             onClick = onDismiss,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .statusBarsPadding()
+                .padding(8.dp)
         ) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = "Close",
-                tint = Color.White,
+                tint = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -192,48 +183,44 @@ private fun VoiceIntroScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Animated logo/icon
-            val scale by infiniteTransition.animateFloat(
-                initialValue = 1f,
-                targetValue = 1.1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1500, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "scale"
-            )
-            
+            // Animated pulsing orb
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .scale(scale)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                VoiceAccent.copy(alpha = 0.3f),
-                                VoiceAccent.copy(alpha = 0.1f),
-                                Color.Transparent
-                            )
-                        ),
-                        CircleShape
-                    ),
+                    .size(160.dp)
+                    .scale(pulseScale),
                 contentAlignment = Alignment.Center
             ) {
+                // Outer glow
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(160.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    VoiceAccent.copy(alpha = 0.3f),
+                                    VoiceAccent.copy(alpha = 0.1f),
+                                    Color.Transparent
+                                )
+                            ),
+                            CircleShape
+                        )
+                )
+                // Inner circle
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
                         .background(VoiceAccent, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Mic,
-                        contentDescription = "Voice",
+                        contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(48.dp)
                     )
                 }
             }
@@ -247,37 +234,26 @@ private fun VoiceIntroScreen(
                 color = Color.White
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "Have a natural conversation with AI using your voice. Just speak and listen.",
+                text = "Have a natural conversation\nwith AI using your voice",
                 fontSize = 16.sp,
                 color = VoiceGray,
                 textAlign = TextAlign.Center,
                 lineHeight = 24.sp
             )
             
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(56.dp))
             
-            // Features list
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                FeatureItem(
-                    icon = Icons.Outlined.RecordVoiceOver,
-                    text = "Natural voice conversation"
-                )
-                FeatureItem(
-                    icon = Icons.Outlined.Speed,
-                    text = "Real-time responses"
-                )
-                FeatureItem(
-                    icon = Icons.Outlined.Tune,
-                    text = "Choose your AI voice"
-                )
+            // Features
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                FeatureItem(icon = Icons.Outlined.RecordVoiceOver, text = "Natural voice conversation")
+                FeatureItem(icon = Icons.Outlined.Speed, text = "Real-time AI responses")
+                FeatureItem(icon = Icons.Outlined.Tune, text = "Choose your AI voice")
             }
             
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(56.dp))
             
             // Continue button
             Button(
@@ -285,24 +261,13 @@ private fun VoiceIntroScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VoiceAccent
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = VoiceAccent),
                 shape = RoundedCornerShape(28.dp)
             ) {
-                Text(
-                    text = "Choose Voice",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("Choose Voice", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    Icons.Default.ArrowForward,
-                    contentDescription = null
-                )
+                Icon(Icons.Default.ArrowForward, contentDescription = null)
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -312,22 +277,10 @@ private fun FeatureItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     text: String
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = VoiceAccent,
-            modifier = Modifier.size(24.dp)
-        )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = VoiceAccent, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            color = Color.White
-        )
+        Text(text = text, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f))
     }
 }
 
@@ -351,70 +304,41 @@ private fun VoiceSelectionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(VoiceDarkBg)
+            .systemBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
+                    Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
                 }
-                
-                Text(
-                    text = "Choose Voice",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                
+                Text("Choose Voice", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                 IconButton(onClick = onDismiss) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = Color.White
-                    )
+                    Icon(Icons.Default.Close, "Close", tint = Color.White.copy(alpha = 0.7f))
                 }
             }
             
-            // Subtitle
             Text(
-                text = "Select a voice for your AI assistant",
+                "Select a voice for your AI assistant",
                 fontSize = 14.sp,
                 color = VoiceGray,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
             if (isLoadingVoices) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = VoiceAccent)
                 }
             } else {
-                // Voice list
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(voices) { voice ->
@@ -430,35 +354,20 @@ private fun VoiceSelectionScreen(
             }
             
             // Start call button
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(16.dp),
-                color = VoiceDarkBg
-            ) {
+            Box(modifier = Modifier.padding(16.dp)) {
                 Button(
                     onClick = onStartCall,
                     enabled = selectedVoice != null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = VoiceAccent,
                         disabledContainerColor = VoiceLightGray
                     ),
                     shape = RoundedCornerShape(28.dp)
                 ) {
-                    Icon(
-                        Icons.Default.Call,
-                        contentDescription = null
-                    )
+                    Icon(Icons.Default.Call, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Start Voice Call",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("Start Voice Call", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -476,48 +385,30 @@ private fun VoiceCard(
     Surface(
         onClick = onSelect,
         shape = RoundedCornerShape(16.dp),
-        color = if (isSelected) voice.color.copy(alpha = 0.15f) else VoiceLightGray,
-        border = if (isSelected) 
-            androidx.compose.foundation.BorderStroke(2.dp, voice.color) 
-        else null,
+        color = if (isSelected) voice.color.copy(alpha = 0.12f) else VoiceCardBg,
+        border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, voice.color) else null,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Voice avatar
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(52.dp)
                     .background(voice.color.copy(alpha = 0.2f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = voice.icon,
-                    fontSize = 28.sp
-                )
+                Text(voice.icon, fontSize = 26.sp)
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = voice.name,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-                Text(
-                    text = voice.description,
-                    fontSize = 13.sp,
-                    color = VoiceGray
-                )
+                Text(voice.name, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(voice.description, fontSize = 13.sp, color = VoiceGray)
             }
             
-            // Play preview button
             IconButton(
                 onClick = onPlayPreview,
                 modifier = Modifier
@@ -528,18 +419,9 @@ private fun VoiceCard(
                     )
             ) {
                 if (isPlaying) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(Modifier.size(20.dp), Color.White, strokeWidth = 2.dp)
                 } else {
-                    Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = "Play preview",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(Icons.Default.PlayArrow, "Play", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
         }
@@ -547,9 +429,8 @@ private fun VoiceCard(
 }
 
 /**
- * Screen 3: Active Voice Call - Figma Design
- * Clean design with animated orb/cloud, no messages shown during call
- * Messages are saved to chat when call ends
+ * Screen 3: ACTIVE VOICE CALL - Full Screen with Animated Cloud/Orb
+ * Based on Figma design: https://www.figma.com/design/W2psS1UHgN7olY6N6t2Unt
  */
 @Composable
 private fun ActiveVoiceCallScreen(
@@ -567,59 +448,66 @@ private fun ActiveVoiceCallScreen(
     onMute: () -> Unit,
     isMuted: Boolean
 ) {
-    // Multiple animated transitions for the orb effect
-    val infiniteTransition = rememberInfiniteTransition(label = "orb")
+    val infiniteTransition = rememberInfiniteTransition(label = "cloudAnim")
     
-    // Slow pulse for outer glow
-    val outerPulse by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.3f,
+    // Dynamic animation speed based on state
+    val animationSpeed = when {
+        isAISpeaking -> 600
+        isRecording -> 800
+        isProcessing -> 1000
+        else -> 2000
+    }
+    
+    // Cloud pulse animation - Layer 1 (outermost)
+    val pulse1 by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = FastOutSlowInEasing),
+            animation = tween(animationSpeed, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "outerPulse"
+        label = "pulse1"
     )
     
-    // Medium pulse for middle ring
-    val middlePulse by infiniteTransition.animateFloat(
-        initialValue = 1f,
+    // Cloud pulse animation - Layer 2
+    val pulse2 by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween((animationSpeed * 0.8f).toInt(), easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse2"
+    )
+    
+    // Cloud pulse animation - Layer 3 (innermost)
+    val pulse3 by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
         targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween((animationSpeed * 0.6f).toInt(), easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "middlePulse"
+        label = "pulse3"
     )
     
-    // Fast flicker for inner orb
-    val innerFlicker by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1f,
+    // Glow intensity flicker
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
+            animation = tween((animationSpeed * 0.5f).toInt(), easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "innerFlicker"
+        label = "glow"
     )
     
-    // Rotation for shimmer effect
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-    
-    // Color transitions based on state
+    // Color based on state
     val orbColor = when {
         isAISpeaking -> VoiceAccent
+        isRecording -> Color(0xFF4CD964)
         isProcessing -> VoicePurple
-        isRecording -> VoiceBlue
-        else -> selectedVoice?.color ?: VoiceAccent
+        else -> VoiceAccent
     }
     
     // Format duration
@@ -635,38 +523,40 @@ private fun ActiveVoiceCallScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding(),
+                .systemBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(48.dp))
             
-            // Duration at top
+            // Duration timer at top
             Text(
                 text = durationText,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.8f)
+                color = Color.White.copy(alpha = 0.7f)
             )
             
-            Spacer(modifier = Modifier.weight(0.4f))
+            Spacer(modifier = Modifier.weight(0.3f))
             
-            // ========================================
-            // ANIMATED ORB/CLOUD - Main Visual
-            // ========================================
+            // =============================================
+            // ANIMATED CLOUD/ORB - Main Visual Element
+            // Multiple layered circles with different pulse speeds
+            // Creates a "breathing" cloud effect
+            // =============================================
             Box(
-                modifier = Modifier.size(280.dp),
+                modifier = Modifier.size(320.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Layer 1: Outer glow ring (slowest pulse)
+                // Layer 1: Outermost glow ring
                 Box(
                     modifier = Modifier
-                        .size(280.dp)
-                        .scale(outerPulse)
+                        .size(320.dp)
+                        .scale(pulse1)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    orbColor.copy(alpha = 0.15f),
-                                    orbColor.copy(alpha = 0.05f),
+                                    orbColor.copy(alpha = glowAlpha * 0.15f),
+                                    orbColor.copy(alpha = glowAlpha * 0.05f),
                                     Color.Transparent
                                 )
                             ),
@@ -674,16 +564,16 @@ private fun ActiveVoiceCallScreen(
                         )
                 )
                 
-                // Layer 2: Middle ring (medium pulse)
+                // Layer 2: Middle glow ring
                 Box(
                     modifier = Modifier
-                        .size(200.dp)
-                        .scale(middlePulse)
+                        .size(240.dp)
+                        .scale(pulse2)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    orbColor.copy(alpha = 0.25f),
-                                    orbColor.copy(alpha = 0.1f),
+                                    orbColor.copy(alpha = glowAlpha * 0.25f),
+                                    orbColor.copy(alpha = glowAlpha * 0.1f),
                                     Color.Transparent
                                 )
                             ),
@@ -691,48 +581,47 @@ private fun ActiveVoiceCallScreen(
                         )
                 )
                 
-                // Layer 3: Inner orb with flicker
+                // Layer 3: Inner bright core
                 Box(
                     modifier = Modifier
-                        .size(140.dp)
-                        .scale(innerFlicker)
+                        .size(160.dp)
+                        .scale(pulse3)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    orbColor.copy(alpha = 0.9f),
-                                    orbColor.copy(alpha = 0.6f),
-                                    orbColor.copy(alpha = 0.3f)
+                                    orbColor.copy(alpha = glowAlpha),
+                                    orbColor.copy(alpha = glowAlpha * 0.6f),
+                                    orbColor.copy(alpha = glowAlpha * 0.2f)
                                 )
                             ),
                             CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Processing indicator or voice icon
-                    if (isProcessing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(40.dp),
-                            color = Color.White.copy(alpha = 0.9f),
-                            strokeWidth = 3.dp
                         )
-                    }
+                )
+                
+                // Layer 4: Center bright spot with blur effect
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = glowAlpha * 0.9f),
+                                    orbColor.copy(alpha = 0.5f),
+                                    Color.Transparent
+                                )
+                            ),
+                            CircleShape
+                        )
+                )
+                
+                // Processing spinner overlay
+                if (isProcessing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = Color.White.copy(alpha = 0.9f),
+                        strokeWidth = 3.dp
+                    )
                 }
-                
-                // Layer 4: Center bright spot
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = innerFlicker * 0.8f),
-                                    Color.White.copy(alpha = 0.3f),
-                                    Color.Transparent
-                                )
-                            ),
-                            CircleShape
-                        )
-                )
             }
             
             Spacer(modifier = Modifier.height(48.dp))
@@ -740,7 +629,7 @@ private fun ActiveVoiceCallScreen(
             // Voice name
             Text(
                 text = selectedVoice?.name ?: "AI",
-                fontSize = 28.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -753,23 +642,22 @@ private fun ActiveVoiceCallScreen(
                     isAISpeaking -> "Speaking..."
                     isProcessing -> "Thinking..."
                     isRecording -> "Listening..."
-                    else -> "Tap mic to speak"
+                    else -> "Tap to speak"
                 },
-                fontSize = 16.sp,
-                color = Color.White.copy(alpha = 0.6f)
+                fontSize = 17.sp,
+                color = Color.White.copy(alpha = 0.5f)
             )
             
-            Spacer(modifier = Modifier.weight(0.5f))
+            Spacer(modifier = Modifier.weight(0.4f))
             
-            // ========================================
-            // CONTROL BUTTONS - Bottom area
-            // ========================================
+            // =============================================
+            // CONTROL BUTTONS - Bottom
+            // =============================================
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
-                    .navigationBarsPadding()
-                    .padding(bottom = 40.dp),
+                    .padding(horizontal = 40.dp)
+                    .padding(bottom = 48.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -777,44 +665,33 @@ private fun ActiveVoiceCallScreen(
                 Surface(
                     onClick = onMute,
                     shape = CircleShape,
-                    color = if (isMuted) VoicePink.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f),
+                    color = if (isMuted) VoicePink.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.1f),
                     modifier = Modifier.size(64.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(
                             if (isMuted) Icons.Default.MicOff else Icons.Default.Mic,
                             contentDescription = "Mute",
-                            tint = if (isMuted) VoicePink else Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(28.dp)
+                            tint = if (isMuted) VoicePink else Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
                 
-                // Main record button - Large and prominent
+                // Main record/stop button - Large green button
                 Surface(
-                    onClick = {
-                        if (isRecording) onStopRecording() else onStartRecording()
-                    },
+                    onClick = { if (isRecording) onStopRecording() else onStartRecording() },
                     shape = CircleShape,
-                    color = if (isRecording) VoicePink else VoiceAccent,
-                    modifier = Modifier.size(88.dp)
+                    color = VoiceAccent,
+                    modifier = Modifier.size(80.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        if (isRecording) {
-                            // Show stop icon when recording
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .background(Color.White, RoundedCornerShape(6.dp))
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Mic,
-                                contentDescription = "Record",
-                                tint = Color.White,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = "Record",
+                            tint = Color.White,
+                            modifier = Modifier.size(36.dp)
+                        )
                     }
                 }
                 
@@ -822,15 +699,15 @@ private fun ActiveVoiceCallScreen(
                 Surface(
                     onClick = onEndCall,
                     shape = CircleShape,
-                    color = VoicePink.copy(alpha = 0.3f),
+                    color = VoicePink.copy(alpha = 0.25f),
                     modifier = Modifier.size(64.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(
                             Icons.Default.CallEnd,
                             contentDescription = "End call",
                             tint = VoicePink,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
