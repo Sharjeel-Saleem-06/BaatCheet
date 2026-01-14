@@ -336,6 +336,7 @@ class WebSearchServiceClass {
 
   /**
    * Format search results for AI context injection
+   * Enhanced to ensure AI includes source URLs in response
    */
   public formatForAI(searchResults: WebSearchResponse): string {
     if (searchResults.results.length === 0) {
@@ -344,23 +345,41 @@ class WebSearchServiceClass {
     
     let context = '\n\n## 🔍 WEB SEARCH RESULTS\n\n';
     context += `**Query:** "${searchResults.query}"\n`;
-    context += `**Searched at:** ${searchResults.timestamp.toISOString()}\n`;
-    context += `**Source:** ${searchResults.provider}\n\n`;
+    context += `**Searched at:** ${new Date(searchResults.timestamp).toLocaleDateString('en-US', { 
+      year: 'numeric', month: 'long', day: 'numeric' 
+    })}\n\n`;
     
+    // Format each result with clear indexing
     searchResults.results.forEach((result, index) => {
       context += `### [${index + 1}] ${result.title}\n`;
-      context += `**Source:** ${result.source}\n`;
+      context += `📌 **Source:** ${result.source}\n`;
       if (result.publishedDate) {
-        context += `**Date:** ${result.publishedDate}\n`;
+        context += `📅 **Published:** ${result.publishedDate}\n`;
       }
-      context += `**URL:** ${result.url}\n`;
-      context += `${result.snippet}\n\n`;
+      context += `🔗 **URL:** ${result.url}\n`;
+      context += `\n${result.snippet}\n\n`;
     });
     
-    context += '---\n';
-    context += '**IMPORTANT:** Use this information to answer the user\'s question. ';
-    context += 'Cite sources using [1], [2], etc. when referencing specific information. ';
-    context += 'If the search results don\'t contain relevant information, say so.\n';
+    // Create source reference list for AI to include in response
+    context += '---\n\n';
+    context += '## SOURCE REFERENCE LIST (Include in your response)\n\n';
+    context += '📚 **Sources:**\n';
+    searchResults.results.forEach((result, index) => {
+      context += `[${index + 1}] ${result.title} - ${result.url}\n`;
+    });
+    
+    context += '\n🔗 **Further Reading:**\n';
+    searchResults.results.slice(0, 3).forEach((result) => {
+      context += `- [${result.title}](${result.url})\n`;
+    });
+    
+    context += '\n---\n\n';
+    context += '**CRITICAL INSTRUCTIONS:**\n';
+    context += '1. ALWAYS cite sources using [1], [2], etc. when referencing information\n';
+    context += '2. At the END of your response, include the "📚 Sources" section with full URLs\n';
+    context += '3. Include 2-3 "🔗 Further Reading" links that are most relevant\n';
+    context += '4. If information conflicts between sources, mention both perspectives\n';
+    context += '5. Be clear about the recency of information (dates matter!)\n';
     
     return context;
   }

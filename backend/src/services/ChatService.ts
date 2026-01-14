@@ -401,18 +401,56 @@ class ChatServiceClass {
       });
 
       // Step 3: Get AI response with mode-optimized parameters
-      // Select appropriate model based on mode
+      // Select appropriate model based on mode for best results
       let selectedModel = options.model || conversation.model;
       
-      // Use specialized models for specific modes
-      if (isCodeMode && !options.model) {
-        // DeepSeek Coder is better for code
-        selectedModel = 'deepseek-coder';
-        logger.info('Using DeepSeek Coder for code mode');
-      } else if (isResearchMode && !options.model) {
-        // For research, we want larger context - use Gemini or Llama
-        selectedModel = 'gemini-2.5-flash';
-        logger.info('Using Gemini 2.5 Flash for research mode');
+      // Advanced mode-to-model routing for optimal performance
+      if (!options.model) {
+        switch (modeResult.mode) {
+          case AIMode.CODE:
+          case AIMode.DEBUG:
+            // DeepSeek Coder is the best for code-related tasks
+            selectedModel = 'deepseek-coder';
+            logger.info('Using DeepSeek Coder for code/debug mode');
+            break;
+            
+          case AIMode.RESEARCH:
+          case AIMode.DATA_ANALYSIS:
+          case AIMode.BUSINESS:
+            // Gemini 2.5 Flash has large context for research and analysis
+            selectedModel = 'gemini-2.5-flash';
+            logger.info('Using Gemini 2.5 Flash for research/analysis mode');
+            break;
+            
+          case AIMode.VISION:
+            // Gemini is best for vision/image analysis
+            selectedModel = 'gemini-2.5-flash';
+            logger.info('Using Gemini 2.5 Flash for vision mode');
+            break;
+            
+          case AIMode.MATH:
+          case AIMode.TUTOR:
+          case AIMode.EXPLAIN:
+            // These benefit from strong reasoning - use Llama 70B
+            selectedModel = 'llama-3.3-70b-versatile';
+            logger.info('Using Llama 3.3 70B for reasoning-intensive mode');
+            break;
+            
+          case AIMode.CREATIVE:
+          case AIMode.TRANSLATE:
+            // Creative tasks need high-quality generation
+            selectedModel = 'llama-3.3-70b-versatile';
+            logger.info('Using Llama 3.3 70B for creative/translation mode');
+            break;
+            
+          case AIMode.WEB_SEARCH:
+          case AIMode.SUMMARIZE:
+          case AIMode.CHAT:
+          default:
+            // Default to fast, high-quality Groq models
+            selectedModel = 'llama-3.3-70b-versatile';
+            break;
+        }
       }
       
       const request: ChatRequest = {
