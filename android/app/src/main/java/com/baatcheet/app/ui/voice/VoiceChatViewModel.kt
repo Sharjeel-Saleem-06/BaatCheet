@@ -7,6 +7,8 @@ import android.os.Build
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.content.Intent
 import android.os.Bundle
 import androidx.compose.ui.graphics.Color
@@ -75,9 +77,45 @@ class VoiceChatViewModel @Inject constructor(
     private var speechRecognizer: SpeechRecognizer? = null
     private var callTimerJob: Job? = null
     
+    // Android native TTS as fallback (free, offline)
+    private var nativeTTS: TextToSpeech? = null
+    private var nativeTTSReady = false
+    
     init {
         loadAvailableVoices()
         setupSpeechRecognizer()
+        setupNativeTTS()
+    }
+    
+    /**
+     * Setup Android's native TextToSpeech as fallback
+     * This is FREE and works OFFLINE - no API costs!
+     */
+    private fun setupNativeTTS() {
+        nativeTTS = TextToSpeech(context) { status ->
+            nativeTTSReady = status == TextToSpeech.SUCCESS
+            if (nativeTTSReady) {
+                nativeTTS?.language = Locale.US
+                nativeTTS?.setSpeechRate(1.0f)
+                nativeTTS?.setPitch(1.0f)
+                
+                // Set up utterance listener
+                nativeTTS?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        _state.update { it.copy(isAISpeaking = true) }
+                    }
+                    
+                    override fun onDone(utteranceId: String?) {
+                        _state.update { it.copy(isAISpeaking = false) }
+                    }
+                    
+                    @Deprecated("Deprecated in Java")
+                    override fun onError(utteranceId: String?) {
+                        _state.update { it.copy(isAISpeaking = false) }
+                    }
+                })
+            }
+        }
     }
     
     /**
@@ -306,24 +344,14 @@ class VoiceChatViewModel @Inject constructor(
                         playAudio(result.data)
                     }
                     is com.baatcheet.app.data.repository.ApiResult.Error -> {
-                        _state.update { 
-                            it.copy(
-                                isPlayingPreview = false,
-                                playingVoiceId = null,
-                                error = "Failed to play preview"
-                            )
-                        }
+                        // Fallback to native TTS preview (FREE!)
+                        previewVoiceNative(voice)
                     }
                     is com.baatcheet.app.data.repository.ApiResult.Loading -> {}
                 }
             } catch (e: Exception) {
-                _state.update { 
-                    it.copy(
-                        isPlayingPreview = false,
-                        playingVoiceId = null,
-                        error = e.message
-                    )
-                }
+                // Fallback to native TTS preview
+                previewVoiceNative(voice)
             }
         }
     }
@@ -436,6 +464,7 @@ class VoiceChatViewModel @Inject constructor(
     
     /**
      * Convert AI response to speech and play
+     * Uses backend TTS if available, falls back to native Android TTS (FREE)
      */
     private fun speakResponse(text: String) {
         viewModelScope.launch {
@@ -452,14 +481,64 @@ class VoiceChatViewModel @Inject constructor(
                         }
                     }
                     is com.baatcheet.app.data.repository.ApiResult.Error -> {
-                        _state.update { it.copy(isAISpeaking = false) }
+                        // Fallback to native Android TTS (FREE, no API costs!)
+                        speakWithNativeTTS(text)
                     }
                     is com.baatcheet.app.data.repository.ApiResult.Loading -> {}
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(isAISpeaking = false) }
+                // Fallback to native Android TTS
+                speakWithNativeTTS(text)
             }
         }
+    }
+    
+    /**
+     * Speak using Android's native TTS (FREE fallback)
+     * Maps selected voice to native TTS pitch/speed settings
+     */
+    private fun speakWithNativeTTS(text: String) {
+        if (!nativeTTSReady || nativeTTS == null) {
+            _state.update { it.copy(isAISpeaking = false, error = "TTS not available") }
+            return
+        }
+        
+        // Map voice selection to pitch/speed for variety
+        val selectedVoice = _state.value.selectedVoice
+        when (selectedVoice?.id) {
+            "21m00Tcm4TlvDq8ikWAM" -> { // Rachel - female
+                nativeTTS?.setPitch(1.1f)
+                nativeTTS?.setSpeechRate(1.0f)
+            }
+            "TxGEqnHWrfWFTfGW9XjX" -> { // Josh - male
+                nativeTTS?.setPitch(0.9f)
+                nativeTTS?.setSpeechRate(1.0f)
+            }
+            "VR6AewLTigWG4xSOukaG" -> { // Arnold - deep male
+                nativeTTS?.setPitch(0.7f)
+                nativeTTS?.setSpeechRate(0.9f)
+            }
+            "pNInz6obpgDQGcFmaJgB" -> { // Adam - male
+                nativeTTS?.setPitch(0.85f)
+                nativeTTS?.setSpeechRate(1.0f)
+            }
+            "yoZ06aMxZJJ28mfd3POQ" -> { // Sam - male
+                nativeTTS?.setPitch(0.95f)
+                nativeTTS?.setSpeechRate(1.1f)
+            }
+            "MF3mGyEYCl7XYWbV9V6O" -> { // Elli - female
+                nativeTTS?.setPitch(1.2f)
+                nativeTTS?.setSpeechRate(1.0f)
+            }
+            else -> {
+                nativeTTS?.setPitch(1.0f)
+                nativeTTS?.setSpeechRate(1.0f)
+            }
+        }
+        
+        // Speak the text
+        val utteranceId = "voice_response_${System.currentTimeMillis()}"
+        nativeTTS?.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
     }
     
     /**
@@ -526,6 +605,55 @@ class VoiceChatViewModel @Inject constructor(
         mediaPlayer?.release()
         mediaRecorder?.release()
         speechRecognizer?.destroy()
+        nativeTTS?.stop()
+        nativeTTS?.shutdown()
         callTimerJob?.cancel()
+    }
+    
+    /**
+     * Preview voice using native TTS (for when backend TTS is unavailable)
+     */
+    fun previewVoiceNative(voice: AIVoice) {
+        if (!nativeTTSReady || nativeTTS == null) return
+        
+        // Stop any current preview
+        nativeTTS?.stop()
+        _state.update { it.copy(isPlayingPreview = true, playingVoiceId = voice.id) }
+        
+        // Map voice to pitch for variety
+        when (voice.id) {
+            "21m00Tcm4TlvDq8ikWAM" -> nativeTTS?.setPitch(1.1f) // Rachel
+            "TxGEqnHWrfWFTfGW9XjX" -> nativeTTS?.setPitch(0.9f) // Josh
+            "VR6AewLTigWG4xSOukaG" -> nativeTTS?.setPitch(0.7f) // Arnold
+            "pNInz6obpgDQGcFmaJgB" -> nativeTTS?.setPitch(0.85f) // Adam
+            "yoZ06aMxZJJ28mfd3POQ" -> nativeTTS?.setPitch(0.95f) // Sam
+            "MF3mGyEYCl7XYWbV9V6O" -> nativeTTS?.setPitch(1.2f) // Elli
+            else -> nativeTTS?.setPitch(1.0f)
+        }
+        
+        val previewText = "Hi! I'm ${voice.name}. Nice to meet you!"
+        val utteranceId = "preview_${voice.id}"
+        
+        nativeTTS?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(id: String?) {}
+            override fun onDone(id: String?) {
+                _state.update { it.copy(isPlayingPreview = false, playingVoiceId = null) }
+            }
+            @Deprecated("Deprecated in Java")
+            override fun onError(id: String?) {
+                _state.update { it.copy(isPlayingPreview = false, playingVoiceId = null) }
+            }
+        })
+        
+        nativeTTS?.speak(previewText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+    }
+    
+    /**
+     * Stop voice preview
+     */
+    fun stopPreview() {
+        nativeTTS?.stop()
+        mediaPlayer?.stop()
+        _state.update { it.copy(isPlayingPreview = false, playingVoiceId = null) }
     }
 }
