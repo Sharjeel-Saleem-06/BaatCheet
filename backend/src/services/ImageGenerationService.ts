@@ -108,6 +108,7 @@ interface ModelConfig {
 // Z-Image-Turbo Space Configuration (Primary - Fast & Public)
 // Using mrfakename's Z-Image-Turbo for ultra-fast FLUX Turbo generation
 // This is a public space with excellent availability!
+// URL: https://huggingface.co/spaces/mrfakename/Z-Image-Turbo
 // ============================================
 
 const Z_IMAGE_TURBO_SPACE = {
@@ -115,6 +116,18 @@ const Z_IMAGE_TURBO_SPACE = {
   apiEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/call/infer',
   runEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/run/predict',
   // This space uses FLUX.1-schnell turbo - generates in ~3 seconds!
+};
+
+// ============================================
+// ImagePro Space Configuration (Backup - kept for fallback)
+// ============================================
+
+const IMAGEPRO_SPACE = {
+  url: 'https://sharry121-imagepro.hf.space',
+  apiPrefix: '/gradio_api',
+  apiEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/call/inference',
+  runEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/run/predict',
+  legacyEndpoint: 'https://sharry121-imagepro.hf.space/api/predict',
 };
 
 const MODELS: Record<string, ModelConfig> = {
