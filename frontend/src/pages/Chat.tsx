@@ -203,9 +203,17 @@ export default function Chat() {
         items = data.items;
       } else if (data?.conversations && Array.isArray(data.conversations)) {
         items = data.conversations;
+      } else if (typeof data === 'object' && data !== null) {
+        // Try to extract an array from any object response
+        const values = Object.values(data);
+        const arrValue = values.find(v => Array.isArray(v));
+        if (arrValue) {
+          items = arrValue as Conversation[];
+        }
       }
       
-      setRecentConversations(items);
+      // Final safeguard - always ensure it's an array
+      setRecentConversations(Array.isArray(items) ? items : []);
     } catch (error) {
       console.error('Failed to load conversations:', error);
       setRecentConversations([]);
