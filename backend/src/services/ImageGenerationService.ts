@@ -111,9 +111,10 @@ interface ModelConfig {
 
 const IMAGEPRO_SPACE = {
   url: 'https://sharry121-imagepro.hf.space',
-  apiEndpoint: 'https://sharry121-imagepro.hf.space/api/predict',
-  gradioEndpoint: 'https://sharry121-imagepro.hf.space/call/predict',
-  runEndpoint: 'https://sharry121-imagepro.hf.space/run/predict',
+  apiPrefix: '/gradio_api',
+  apiEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/call/inference',
+  runEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/run/predict',
+  legacyEndpoint: 'https://sharry121-imagepro.hf.space/api/predict',
 };
 
 const MODELS: Record<string, ModelConfig> = {
@@ -790,50 +791,101 @@ Return ONLY a JSON array with exactly 3 objects:
 
     // Try multiple Gradio API formats for compatibility
     const apiMethods = [
-      // Method 1: Gradio 4.x /call endpoint
+      // Method 1: Gradio 4.x /gradio_api/call/inference endpoint (correct for this Space)
       async () => {
+        logger.info('Trying ImagePro Space: /gradio_api/call/inference');
         const callResponse = await axios.post(
-          `${IMAGEPRO_SPACE.url}/call/predict`,
-          { data: [prompt, negativePrompt || ''] },
+          IMAGEPRO_SPACE.apiEndpoint,
+          { data: [prompt] }, // ImagePro may only need the prompt
           { headers, timeout: 120000 }
         );
         
         if (callResponse.data?.event_id) {
-          // Poll for result
+          // Poll for result using SSE
           const eventId = callResponse.data.event_id;
-          for (let i = 0; i < 60; i++) {
+          logger.info(`Got event_id: ${eventId}, polling for result...`);
+          
+          for (let i = 0; i < 90; i++) { // Up to 3 minutes of polling
             await new Promise(r => setTimeout(r, 2000));
-            const resultResponse = await axios.get(
-              `${IMAGEPRO_SPACE.url}/call/predict/${eventId}`,
-              { headers, timeout: 30000 }
-            );
             
-            if (resultResponse.data?.includes('data:')) {
+            try {
+              const resultResponse = await axios.get(
+                `${IMAGEPRO_SPACE.apiEndpoint}/${eventId}`,
+                { headers, timeout: 30000, responseType: 'text' }
+              );
+              
+              const responseText = typeof resultResponse.data === 'string' 
+                ? resultResponse.data 
+                : JSON.stringify(resultResponse.data);
+              
               // Parse SSE format
-              const lines = resultResponse.data.split('\n');
+              const lines = responseText.split('\n');
               for (const line of lines) {
                 if (line.startsWith('data:')) {
-                  const jsonData = JSON.parse(line.substring(5));
-                  if (jsonData?.[0]?.url) {
-                    return { success: true, imageUrl: jsonData[0].url };
-                  }
-                  if (jsonData?.[0]?.data) {
-                    return { success: true, imageBase64: jsonData[0].data, imageUrl: `data:image/png;base64,${jsonData[0].data}` };
+                  try {
+                    const jsonStr = line.substring(5).trim();
+                    if (jsonStr) {
+                      const jsonData = JSON.parse(jsonStr);
+                      // Handle various response formats
+                      const imageData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+                      
+                      if (imageData?.url) {
+                        logger.info('Got image URL from ImagePro Space');
+                        // Download the image
+                        const imgResponse = await axios.get(imageData.url, { 
+                          responseType: 'arraybuffer',
+                          timeout: 30000 
+                        });
+                        const base64 = Buffer.from(imgResponse.data).toString('base64');
+                        return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+                      }
+                      if (imageData?.path) {
+                        // Handle file path format
+                        const fileUrl = `${IMAGEPRO_SPACE.url}/file=${imageData.path}`;
+                        const imgResponse = await axios.get(fileUrl, { 
+                          responseType: 'arraybuffer',
+                          timeout: 30000 
+                        });
+                        const base64 = Buffer.from(imgResponse.data).toString('base64');
+                        return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+                      }
+                      if (typeof imageData === 'string' && imageData.startsWith('data:')) {
+                        const base64 = imageData.split(',')[1];
+                        return { success: true, imageBase64: base64, imageUrl: imageData };
+                      }
+                    }
+                  } catch (parseError) {
+                    // Continue parsing other lines
                   }
                 }
+                
+                // Check for completion event
+                if (line.startsWith('event: complete')) {
+                  logger.info('Received completion event');
+                }
               }
+            } catch (pollError: any) {
+              if (pollError.response?.status === 404) {
+                // Event might have expired, continue polling
+                continue;
+              }
+              throw pollError;
             }
           }
-          throw new Error('Timeout waiting for image generation');
+          throw new Error('Timeout waiting for image generation (3 minutes)');
         }
-        throw new Error('No event_id returned');
+        throw new Error('No event_id returned from ImagePro Space');
       },
       
-      // Method 2: Gradio 3.x /run/predict endpoint
+      // Method 2: Gradio /run/predict endpoint
       async () => {
+        logger.info('Trying ImagePro Space: /gradio_api/run/predict');
         const response = await axios.post(
-          `${IMAGEPRO_SPACE.url}/run/predict`,
-          { data: [prompt, negativePrompt || ''] },
+          IMAGEPRO_SPACE.runEndpoint,
+          { 
+            data: [prompt],
+            fn_index: 4 // Index for 'inference' function based on config
+          },
           { headers, timeout: 180000 }
         );
         
@@ -844,13 +896,15 @@ Return ONLY a JSON array with exactly 3 objects:
             return { success: true, imageBase64: base64, imageUrl: result };
           }
           if (result?.url) {
-            // Download image from URL
             const imgResponse = await axios.get(result.url, { responseType: 'arraybuffer' });
             const base64 = Buffer.from(imgResponse.data).toString('base64');
             return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
           }
-          if (result?.data) {
-            return { success: true, imageBase64: result.data, imageUrl: `data:image/png;base64,${result.data}` };
+          if (result?.path) {
+            const fileUrl = `${IMAGEPRO_SPACE.url}/file=${result.path}`;
+            const imgResponse = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+            const base64 = Buffer.from(imgResponse.data).toString('base64');
+            return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
           }
         }
         throw new Error('Invalid response format from /run/predict');
@@ -858,9 +912,13 @@ Return ONLY a JSON array with exactly 3 objects:
       
       // Method 3: Legacy /api/predict endpoint
       async () => {
+        logger.info('Trying ImagePro Space: /api/predict (legacy)');
         const response = await axios.post(
-          `${IMAGEPRO_SPACE.url}/api/predict`,
-          { data: [prompt, negativePrompt || ''] },
+          IMAGEPRO_SPACE.legacyEndpoint,
+          { 
+            data: [prompt],
+            fn_index: 4
+          },
           { headers, timeout: 180000 }
         );
         
@@ -884,7 +942,6 @@ Return ONLY a JSON array with exactly 3 objects:
     // Try each method until one succeeds
     for (let i = 0; i < apiMethods.length; i++) {
       try {
-        logger.info(`Trying ImagePro Space API method ${i + 1}...`);
         const result = await apiMethods[i]();
         if (result.success) {
           logger.info(`ImagePro Space succeeded with method ${i + 1}`);
@@ -893,7 +950,7 @@ Return ONLY a JSON array with exactly 3 objects:
       } catch (error: any) {
         logger.warn(`ImagePro Space method ${i + 1} failed: ${error.message}`);
         if (i === apiMethods.length - 1) {
-          return { success: false, error: error.message };
+          return { success: false, error: `All ImagePro Space methods failed. Last error: ${error.message}` };
         }
       }
     }
