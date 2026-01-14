@@ -137,6 +137,55 @@ router.get(
   }
 );
 
+// ============================================
+// Static routes MUST come before dynamic /:id routes
+// ============================================
+
+/**
+ * GET /api/v1/projects/collaborations
+ * Get all projects where user is a collaborator (not owner)
+ */
+router.get(
+  '/collaborations',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+
+      const collaborations = await prisma.projectCollaborator.findMany({
+        where: { userId },
+        include: {
+          project: {
+            include: {
+              user: {
+                select: { id: true, username: true, firstName: true, avatar: true },
+              },
+              _count: { select: { conversations: true } },
+            },
+          },
+        },
+        orderBy: { addedAt: 'desc' },
+      });
+
+      const items = collaborations.map(c => ({
+        ...c.project,
+        conversationCount: c.project._count.conversations,
+        myRole: c.role,
+        owner: c.project.user,
+        _count: undefined,
+      }));
+
+      res.json({
+        success: true,
+        data: items,
+      });
+    } catch (error) {
+      logger.error('Get collaborations error:', error);
+      res.status(500).json({ success: false, error: 'Failed to get collaborations' });
+    }
+  }
+);
+
 /**
  * GET /api/v1/projects/:id
  * Get a single project
@@ -681,51 +730,6 @@ router.post(
     } catch (error) {
       logger.error('Respond to invitation error:', error);
       res.status(500).json({ success: false, error: 'Failed to respond to invitation' });
-    }
-  }
-);
-
-/**
- * GET /api/v1/projects/collaborations
- * Get all projects where user is a collaborator (not owner)
- */
-router.get(
-  '/collaborations',
-  clerkAuth,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const userId = req.user!.id;
-
-      const collaborations = await prisma.projectCollaborator.findMany({
-        where: { userId },
-        include: {
-          project: {
-            include: {
-              user: {
-                select: { id: true, username: true, firstName: true, avatar: true },
-              },
-              _count: { select: { conversations: true } },
-            },
-          },
-        },
-        orderBy: { addedAt: 'desc' },
-      });
-
-      const items = collaborations.map(c => ({
-        ...c.project,
-        conversationCount: c.project._count.conversations,
-        myRole: c.role,
-        owner: c.project.user,
-        _count: undefined,
-      }));
-
-      res.json({
-        success: true,
-        data: items,
-      });
-    } catch (error) {
-      logger.error('Get collaborations error:', error);
-      res.status(500).json({ success: false, error: 'Failed to get collaborations' });
     }
   }
 );

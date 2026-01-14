@@ -105,32 +105,33 @@ interface ModelConfig {
 // ============================================
 
 // ============================================
-// ImagePro Space Configuration (Primary)
-// Using user's own HuggingFace Space for reliable image generation
+// Z-Image-Turbo Space Configuration (Primary - Fast & Public)
+// Using mrfakename's Z-Image-Turbo for ultra-fast FLUX Turbo generation
+// This is a public space with excellent availability!
 // ============================================
 
-const IMAGEPRO_SPACE = {
-  url: 'https://sharry121-imagepro.hf.space',
-  apiPrefix: '/gradio_api',
-  apiEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/call/inference',
-  runEndpoint: 'https://sharry121-imagepro.hf.space/gradio_api/run/predict',
-  legacyEndpoint: 'https://sharry121-imagepro.hf.space/api/predict',
+const Z_IMAGE_TURBO_SPACE = {
+  url: 'https://mrfakename-z-image-turbo.hf.space',
+  apiEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/call/infer',
+  runEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/run/predict',
+  // This space uses FLUX.1-schnell turbo - generates in ~3 seconds!
 };
 
 const MODELS: Record<string, ModelConfig> = {
-  // Primary: Use ImagePro Space (most reliable)
-  'imagepro': {
-    id: 'sharry121/ImagePro',
-    name: 'ImagePro (Space)',
-    endpoint: IMAGEPRO_SPACE.apiEndpoint,
+  // Primary: Use Z-Image-Turbo Space (fastest, most reliable, public)
+  'z-image-turbo': {
+    id: 'mrfakename/Z-Image-Turbo',
+    name: 'Z-Image Turbo (FLUX)',
+    endpoint: Z_IMAGE_TURBO_SPACE.apiEndpoint,
     maxWidth: 1024,
     maxHeight: 1024,
-    defaultSteps: 25,
-    guidanceScale: 7.5,
+    defaultSteps: 4,
+    guidanceScale: 0,
     quality: 'excellent',
-    speed: 'medium',
+    speed: 'fast',
     dailyLimit: 1000,
   },
+  // Fallback: Direct FLUX Schnell API
   'flux-schnell': {
     id: 'black-forest-labs/FLUX.1-schnell',
     name: 'FLUX Schnell',
@@ -418,9 +419,9 @@ Return ONLY the enhanced prompt, nothing else:`;
       };
     }
 
-    // Select model - Use ImagePro Space as primary for reliability
-    const modelKey = options.model || 'imagepro';
-    const modelConfig = MODELS[modelKey] || MODELS['imagepro'];
+    // Select model - Use Z-Image-Turbo as primary (fastest, most reliable)
+    const modelKey = options.model || 'z-image-turbo';
+    const modelConfig = MODELS[modelKey] || MODELS['z-image-turbo'];
 
     // Enhance prompt if requested (default: true)
     let enhancedPrompt = options.prompt;
@@ -509,30 +510,57 @@ Return ONLY the enhanced prompt, nothing else:`;
         return { base64, url: `data:image/png;base64,${base64}` };
       };
 
-      // Try ImagePro Space first, then fallback to direct HuggingFace
-      if (modelKey === 'imagepro') {
+      // Try Z-Image-Turbo Space first (fast, public), then fallback to direct HuggingFace
+      if (modelKey === 'z-image-turbo') {
         try {
-          // Use ImagePro Space (Gradio API format) with shorter timeout
-          const spaceResult = await this.callImageProSpace(enhancedPrompt, negativePrompt, apiKey);
+          // Use Z-Image-Turbo Space (Gradio API format) - super fast!
+          const spaceResult = await this.callZImageTurboSpace(enhancedPrompt, apiKey);
           if (spaceResult.success && spaceResult.imageBase64) {
             imageBase64 = spaceResult.imageBase64;
             imageUrl = spaceResult.imageUrl!;
-            usedModel = 'ImagePro Space';
+            usedModel = 'Z-Image Turbo (FLUX)';
           } else {
-            throw new Error(spaceResult.error || 'ImagePro Space returned empty result');
+            throw new Error(spaceResult.error || 'Z-Image-Turbo Space returned empty result');
           }
         } catch (spaceError: any) {
-          // Fallback to direct HuggingFace FLUX model
-          logger.warn('ImagePro Space failed, falling back to FLUX:', spaceError.message);
+          logger.warn('Z-Image-Turbo Space failed, trying with next API key or fallback:', spaceError.message);
           
-          const fluxModel = MODELS['flux-schnell'];
-          if (fluxModel) {
-            const result = await callDirectHuggingFace(fluxModel);
-            imageBase64 = result.base64;
-            imageUrl = result.url;
-            usedModel = 'FLUX Schnell (Fallback)';
+          // Try with a different API key
+          const alternateKey = this.getNextApiKey();
+          if (alternateKey && alternateKey !== apiKey) {
+            try {
+              const retryResult = await this.callZImageTurboSpace(enhancedPrompt, alternateKey);
+              if (retryResult.success && retryResult.imageBase64) {
+                imageBase64 = retryResult.imageBase64;
+                imageUrl = retryResult.imageUrl!;
+                usedModel = 'Z-Image Turbo (FLUX) [Backup Key]';
+              } else {
+                throw new Error('Retry also failed');
+              }
+            } catch (retryError: any) {
+              // Final fallback to direct FLUX Schnell API
+              logger.warn('All Space attempts failed, falling back to direct FLUX:', retryError.message);
+              const fluxModel = MODELS['flux-schnell'];
+              if (fluxModel) {
+                const result = await callDirectHuggingFace(fluxModel);
+                imageBase64 = result.base64;
+                imageUrl = result.url;
+                usedModel = 'FLUX Schnell (Direct API Fallback)';
+              } else {
+                throw new Error('Image generation failed: No fallback model available');
+              }
+            }
           } else {
-            throw new Error('Image generation failed: No fallback model available');
+            // No alternate key, try direct FLUX
+            const fluxModel = MODELS['flux-schnell'];
+            if (fluxModel) {
+              const result = await callDirectHuggingFace(fluxModel);
+              imageBase64 = result.base64;
+              imageUrl = result.url;
+              usedModel = 'FLUX Schnell (Direct API Fallback)';
+            } else {
+              throw new Error('Image generation failed: No fallback model available');
+            }
           }
         }
       } else {
@@ -799,8 +827,129 @@ Return ONLY a JSON array with exactly 3 objects:
   }
 
   /**
+   * Call Z-Image-Turbo Space for image generation (Gradio API)
+   * This is a public, fast FLUX Turbo space that generates in ~3 seconds
+   * URL: https://huggingface.co/spaces/mrfakename/Z-Image-Turbo
+   */
+  private async callZImageTurboSpace(
+    prompt: string,
+    apiKey: string
+  ): Promise<{ success: boolean; imageUrl?: string; imageBase64?: string; error?: string }> {
+    const headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      logger.info('Calling Z-Image-Turbo Space for fast image generation');
+      
+      // Z-Image-Turbo uses Gradio API with /gradio_api/call/infer endpoint
+      // The space takes just the prompt string
+      const callResponse = await axios.post(
+        Z_IMAGE_TURBO_SPACE.apiEndpoint,
+        { data: [prompt, 0, true, 1024, 1024, 3.5] }, // prompt, seed, randomize, width, height, guidance
+        { headers, timeout: 30000 }
+      );
+      
+      if (callResponse.data?.event_id) {
+        const eventId = callResponse.data.event_id;
+        logger.info(`Z-Image-Turbo: Got event_id: ${eventId}, polling for result...`);
+        
+        // Z-Image-Turbo is fast, should complete in ~3-10 seconds
+        for (let i = 0; i < 15; i++) { // Up to 30 seconds of polling
+          await new Promise(r => setTimeout(r, 2000));
+          
+          try {
+            const resultResponse = await axios.get(
+              `${Z_IMAGE_TURBO_SPACE.apiEndpoint}/${eventId}`,
+              { headers, timeout: 30000, responseType: 'text' }
+            );
+            
+            const responseText = typeof resultResponse.data === 'string' 
+              ? resultResponse.data 
+              : JSON.stringify(resultResponse.data);
+            
+            // Parse SSE format
+            const lines = responseText.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                try {
+                  const jsonStr = line.substring(5).trim();
+                  if (jsonStr) {
+                    const jsonData = JSON.parse(jsonStr);
+                    // Handle various response formats
+                    const imageData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+                    
+                    if (imageData?.url) {
+                      logger.info('Z-Image-Turbo: Got image URL');
+                      // Download the image
+                      const imgResponse = await axios.get(imageData.url, { 
+                        responseType: 'arraybuffer',
+                        timeout: 30000 
+                      });
+                      const base64 = Buffer.from(imgResponse.data).toString('base64');
+                      return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+                    }
+                    if (imageData?.path) {
+                      // Handle file path format
+                      const fileUrl = `${Z_IMAGE_TURBO_SPACE.url}/file=${imageData.path}`;
+                      const imgResponse = await axios.get(fileUrl, { 
+                        responseType: 'arraybuffer',
+                        timeout: 30000 
+                      });
+                      const base64 = Buffer.from(imgResponse.data).toString('base64');
+                      return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+                    }
+                    if (typeof imageData === 'string' && imageData.startsWith('data:')) {
+                      const base64 = imageData.split(',')[1];
+                      return { success: true, imageBase64: base64, imageUrl: imageData };
+                    }
+                  }
+                } catch (parseError) {
+                  // Continue parsing other lines
+                }
+              }
+            }
+          } catch (pollError: any) {
+            if (pollError.response?.status === 404) {
+              // Event might have expired, continue polling
+              continue;
+            }
+            throw pollError;
+          }
+        }
+        throw new Error('Timeout waiting for Z-Image-Turbo (30 seconds)');
+      }
+      
+      // If no event_id, check if response contains image directly
+      if (callResponse.data?.data?.[0]) {
+        const imageData = callResponse.data.data[0];
+        if (imageData?.url) {
+          const imgResponse = await axios.get(imageData.url, { 
+            responseType: 'arraybuffer',
+            timeout: 30000 
+          });
+          const base64 = Buffer.from(imgResponse.data).toString('base64');
+          return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+        }
+        if (typeof imageData === 'string' && imageData.startsWith('data:')) {
+          const base64 = imageData.split(',')[1];
+          return { success: true, imageBase64: base64, imageUrl: imageData };
+        }
+      }
+      
+      throw new Error('No event_id or image returned from Z-Image-Turbo');
+      
+    } catch (error: any) {
+      logger.error('Z-Image-Turbo Space error:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Call ImagePro Space for image generation (Gradio API)
    * Supports multiple API formats for compatibility
+   * (Kept as backup method)
    */
   private async callImageProSpace(
     prompt: string,
