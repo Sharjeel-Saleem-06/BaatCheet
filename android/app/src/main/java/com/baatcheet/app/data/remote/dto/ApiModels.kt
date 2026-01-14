@@ -848,6 +848,111 @@ data class SharedConversationData(
 )
 
 // ============================================
+// Collaboration Models
+// ============================================
+
+data class ProjectContextResponse(
+    val success: Boolean,
+    val data: ProjectContextData?,
+    val error: String?
+)
+
+data class ProjectContextData(
+    val summary: String?,
+    val keyTopics: List<String>?,
+    val techStack: List<String>?,
+    val goals: List<String>?
+)
+
+data class InviteCollaboratorRequest(
+    val email: String,
+    val role: String = "viewer",  // owner, editor, viewer
+    val message: String? = null
+)
+
+data class InviteResponse(
+    val success: Boolean,
+    val data: InvitationDto?,
+    val message: String?,
+    val error: String?
+)
+
+data class InvitationDto(
+    val id: String,
+    val projectId: String,
+    val inviteeEmail: String,
+    val role: String,
+    val status: String,
+    val expiresAt: String?
+)
+
+data class PendingInvitationsResponse(
+    val success: Boolean,
+    val data: List<PendingInvitationDto>?
+)
+
+data class PendingInvitationDto(
+    val id: String,
+    val projectId: String,
+    val role: String,
+    val message: String?,
+    val expiresAt: String?,
+    val createdAt: String?,
+    val project: ProjectSummaryDto?,
+    val inviter: UserSummaryDto?
+)
+
+data class ProjectSummaryDto(
+    val id: String,
+    val name: String,
+    val description: String?
+)
+
+data class UserSummaryDto(
+    val id: String,
+    val username: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val email: String?
+)
+
+data class InvitationResponseRequest(
+    val accept: Boolean
+)
+
+data class CollaborationsResponse(
+    val success: Boolean,
+    val data: List<CollaborationProjectDto>?
+)
+
+data class CollaborationProjectDto(
+    val id: String,
+    val name: String,
+    val description: String?,
+    val myRole: String,
+    val conversationCount: Int?,
+    val owner: UserSummaryDto?
+)
+
+data class CollaboratorsResponse(
+    val success: Boolean,
+    val data: CollaboratorsData?
+)
+
+data class CollaboratorsData(
+    val owner: UserSummaryDto?,
+    val collaborators: List<CollaboratorDto>?
+)
+
+data class CollaboratorDto(
+    val id: String,
+    val userId: String,
+    val role: String,
+    val addedAt: String?,
+    val user: UserSummaryDto?
+)
+
+// ============================================
 // Analytics Models
 // ============================================
 

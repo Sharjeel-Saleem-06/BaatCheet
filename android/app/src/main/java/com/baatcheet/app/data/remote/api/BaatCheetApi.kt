@@ -195,6 +195,65 @@ interface BaatCheetApi {
         @Path("id") projectId: String
     ): Response<ConversationsResponse>
     
+    /**
+     * Refresh project context (AI analyzes project chats)
+     */
+    @POST("projects/{id}/context/refresh")
+    suspend fun refreshProjectContext(
+        @Path("id") projectId: String
+    ): Response<ProjectContextResponse>
+    
+    // ============================================
+    // Project Collaboration Endpoints
+    // ============================================
+    
+    /**
+     * Invite collaborator to project
+     */
+    @POST("projects/{id}/invite")
+    suspend fun inviteCollaborator(
+        @Path("id") projectId: String,
+        @Body request: InviteCollaboratorRequest
+    ): Response<InviteResponse>
+    
+    /**
+     * Get pending invitations for current user
+     */
+    @GET("projects/invitations/pending")
+    suspend fun getPendingInvitations(): Response<PendingInvitationsResponse>
+    
+    /**
+     * Respond to project invitation (accept/reject)
+     */
+    @POST("projects/invitations/{id}/respond")
+    suspend fun respondToInvitation(
+        @Path("id") invitationId: String,
+        @Body request: InvitationResponseRequest
+    ): Response<BaseResponse<Any>>
+    
+    /**
+     * Get projects where user is a collaborator
+     */
+    @GET("projects/collaborations")
+    suspend fun getCollaborations(): Response<CollaborationsResponse>
+    
+    /**
+     * Get collaborators for a project
+     */
+    @GET("projects/{id}/collaborators")
+    suspend fun getProjectCollaborators(
+        @Path("id") projectId: String
+    ): Response<CollaboratorsResponse>
+    
+    /**
+     * Remove collaborator from project
+     */
+    @DELETE("projects/{id}/collaborators/{userId}")
+    suspend fun removeCollaborator(
+        @Path("id") projectId: String,
+        @Path("userId") userId: String
+    ): Response<BaseResponse<Any>>
+    
     // ============================================
     // Profile Endpoints
     // ============================================

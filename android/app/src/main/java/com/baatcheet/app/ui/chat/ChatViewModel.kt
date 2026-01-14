@@ -99,6 +99,8 @@ data class ChatState(
     
     // Share
     val shareableText: String? = null,
+    val shareUrl: String? = null,
+    val isSharing: Boolean = false,
     
     // Templates
     val templates: List<Template> = emptyList(),
@@ -1210,34 +1212,47 @@ class ChatViewModel @Inject constructor(
     // ============================================
     
     /**
-     * Share the current chat - generates a shareable link
+     * Share the current chat - generates a shareable link via API
      */
     fun shareChat() {
         val conversationId = _state.value.currentConversationId ?: return
         
         viewModelScope.launch {
-            // For now, we just create a simple share text
-            // In a full implementation, we'd call an API to generate a share link
-            val messages = _state.value.messages
-            if (messages.isEmpty()) return@launch
+            _state.update { it.copy(isSharing = true, error = null) }
             
-            val chatSummary = buildString {
-                append("BaatCheet Conversation\n")
-                append("━━━━━━━━━━━━━━━━━━━━\n\n")
-                
-                messages.takeLast(10).forEach { message ->
-                    val role = if (message.role == MessageRole.USER) "You" else "AI"
-                    append("$role: ${message.content.take(200)}")
-                    if (message.content.length > 200) append("...")
-                    append("\n\n")
+            when (val result = chatRepository.createShareLink(conversationId)) {
+                is ApiResult.Success -> {
+                    val shareUrl = result.data.url
+                    val shareText = "Check out this BaatCheet conversation: $shareUrl"
+                    _state.update { it.copy(
+                        isSharing = false,
+                        shareableText = shareText,
+                        shareUrl = shareUrl
+                    ) }
                 }
-                
-                append("━━━━━━━━━━━━━━━━━━━━\n")
-                append("Shared via BaatCheet")
+                is ApiResult.Error -> {
+                    // Fallback to text-based sharing if API fails
+                    val messages = _state.value.messages
+                    val chatSummary = buildString {
+                        append("BaatCheet Conversation\n")
+                        append("━━━━━━━━━━━━━━━━━━━━\n\n")
+                        messages.takeLast(10).forEach { message ->
+                            val role = if (message.role == MessageRole.USER) "You" else "AI"
+                            append("$role: ${message.content.take(200)}")
+                            if (message.content.length > 200) append("...")
+                            append("\n\n")
+                        }
+                        append("━━━━━━━━━━━━━━━━━━━━\n")
+                        append("Shared via BaatCheet")
+                    }
+                    _state.update { it.copy(
+                        isSharing = false,
+                        shareableText = chatSummary,
+                        error = "Could not create share link: ${result.message}"
+                    ) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
             }
-            
-            // This will be handled by the context to share
-            _state.update { it.copy(shareableText = chatSummary) }
         }
     }
     
