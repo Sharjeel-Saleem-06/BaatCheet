@@ -187,10 +187,25 @@ export default function Chat() {
 
   const loadRecentConversations = async () => {
     try {
-      const { data } = await conversations.list({ limit: 10 });
-      // API returns data.data.items, handle both formats for safety
-      const items = data?.data?.items || data?.data || [];
-      setRecentConversations(Array.isArray(items) ? items : []);
+      const response = await conversations.list({ limit: 10 });
+      const data = response?.data;
+      
+      // Handle multiple API response formats defensively
+      let items: Conversation[] = [];
+      
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (data?.data?.items && Array.isArray(data.data.items)) {
+        items = data.data.items;
+      } else if (data?.data && Array.isArray(data.data)) {
+        items = data.data;
+      } else if (data?.items && Array.isArray(data.items)) {
+        items = data.items;
+      } else if (data?.conversations && Array.isArray(data.conversations)) {
+        items = data.conversations;
+      }
+      
+      setRecentConversations(items);
     } catch (error) {
       console.error('Failed to load conversations:', error);
       setRecentConversations([]);
@@ -957,7 +972,7 @@ export default function Chat() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {recentConversations.map((conv) => (
+          {(recentConversations || []).map((conv) => (
             <button
               key={conv.id}
               onClick={() => navigate(`/chat/${conv.id}`)}

@@ -498,7 +498,7 @@ private fun BlockquoteView(
 
 /**
  * Table View with HORIZONTAL SCROLL for mobile
- * Shows full table content without truncation
+ * ChatGPT-style clean table design
  */
 @Composable
 private fun TableView(table: MarkdownElement.Table) {
@@ -506,72 +506,114 @@ private fun TableView(table: MarkdownElement.Table) {
     
     val scrollState = rememberScrollState()
     
+    // Calculate minimum column width based on content
+    val columnWidths = remember(table) {
+        val maxCols = maxOf(table.headers.size, table.rows.maxOfOrNull { it.size } ?: 0)
+        List(maxCols) { colIndex ->
+            val headerLen = table.headers.getOrNull(colIndex)?.length ?: 0
+            val maxDataLen = table.rows.maxOfOrNull { row -> 
+                row.getOrNull(colIndex)?.length ?: 0 
+            } ?: 0
+            val maxLen = maxOf(headerLen, maxDataLen)
+            // Responsive width: min 90dp, max based on content
+            when {
+                maxLen <= 8 -> 90
+                maxLen <= 15 -> 120
+                maxLen <= 25 -> 160
+                else -> 200
+            }
+        }
+    }
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, MarkdownColors.TableBorder, RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, MarkdownColors.TableBorder, RoundedCornerShape(12.dp))
     ) {
         // Horizontal scroll container for the entire table
-        Row(
+        Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .horizontalScroll(scrollState)
         ) {
             Column {
-                // Header row
+                // Header row - bold styling with accent background
                 Row(
                     modifier = Modifier
-                        .background(MarkdownColors.TableHeaderBackground)
+                        .background(Color(0xFF34C759).copy(alpha = 0.1f))
                 ) {
                     table.headers.forEachIndexed { index, header ->
+                        val width = columnWidths.getOrElse(index) { 120 }
                         Box(
                             modifier = Modifier
-                                .widthIn(min = 100.dp, max = 200.dp)
-                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                                .width(width.dp)
+                                .padding(horizontal = 14.dp, vertical = 12.dp)
                         ) {
                             Text(
-                                text = header.trim(),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MarkdownColors.Text
+                                text = header.ifEmpty { "Column ${index + 1}" },
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1C1C1E),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         if (index < table.headers.lastIndex) {
                             Box(
                                 modifier = Modifier
                                     .width(1.dp)
-                                    .height(40.dp)
-                                    .background(MarkdownColors.TableBorder)
+                                    .height(44.dp)
+                                    .background(MarkdownColors.TableBorder.copy(alpha = 0.5f))
                             )
                         }
                     }
                 }
                 
-                // Data rows
-                table.rows.forEach { row ->
-                    HorizontalDivider(color = MarkdownColors.TableBorder, thickness = 1.dp)
+                // Header separator line
+                HorizontalDivider(
+                    color = Color(0xFF34C759).copy(alpha = 0.3f),
+                    thickness = 2.dp
+                )
+                
+                // Data rows with alternating colors
+                table.rows.forEachIndexed { rowIndex, row ->
+                    if (rowIndex > 0) {
+                        HorizontalDivider(
+                            color = MarkdownColors.TableBorder.copy(alpha = 0.5f),
+                            thickness = 1.dp
+                        )
+                    }
                     Row(
-                        modifier = Modifier.background(MarkdownColors.TableCellBackground)
+                        modifier = Modifier.background(
+                            if (rowIndex % 2 == 0) Color.White 
+                            else Color(0xFFF8F9FA)
+                        )
                     ) {
-                        row.forEachIndexed { cellIndex, cell ->
+                        // Pad row to match header columns
+                        val paddedRow = List(table.headers.size) { index -> 
+                            row.getOrElse(index) { "" }
+                        }
+                        paddedRow.forEachIndexed { cellIndex, cell ->
+                            val width = columnWidths.getOrElse(cellIndex) { 120 }
                             Box(
                                 modifier = Modifier
-                                    .widthIn(min = 100.dp, max = 200.dp)
-                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                                    .width(width.dp)
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
                             ) {
                                 Text(
-                                    text = cell.trim(),
+                                    text = cell,
                                     fontSize = 13.sp,
-                                    color = MarkdownColors.Text,
+                                    color = Color(0xFF3C3C43),
                                     lineHeight = 18.sp
                                 )
                             }
-                            if (cellIndex < row.lastIndex) {
+                            if (cellIndex < paddedRow.lastIndex) {
                                 Box(
                                     modifier = Modifier
                                         .width(1.dp)
-                                        .height(40.dp)
-                                        .background(MarkdownColors.TableBorder)
+                                        .height(44.dp)
+                                        .background(MarkdownColors.TableBorder.copy(alpha = 0.3f))
                                 )
                             }
                         }
@@ -580,19 +622,20 @@ private fun TableView(table: MarkdownElement.Table) {
             }
         }
         
-        // Scroll hint if table is wide
+        // Scroll hint if table is wide (more than 2 columns)
         if (table.headers.size > 2) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF5F5F5))
-                    .padding(4.dp),
+                    .background(Color(0xFFF5F5F7))
+                    .padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "← Swipe to see more →",
-                    fontSize = 10.sp,
-                    color = Color(0xFF8E8E93)
+                    fontSize = 11.sp,
+                    color = Color(0xFF8E8E93),
+                    fontStyle = FontStyle.Italic
                 )
             }
         }
@@ -736,17 +779,44 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
 private fun parseTable(lines: List<String>): MarkdownElement.Table {
     if (lines.size < 2) return MarkdownElement.Table(emptyList(), emptyList())
     
-    // Parse headers
-    val headers = lines[0]
+    // Clean and parse headers - remove leading/trailing pipes and clean cells
+    val headerLine = lines[0].trim()
+        .removePrefix("|")
+        .removeSuffix("|")
+    val headers = headerLine
         .split("|")
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
+        .map { cell -> 
+            cell.trim()
+                .replace(Regex("^\\*+|\\*+$"), "") // Remove asterisks
+                .replace(Regex("^_+|_+$"), "")     // Remove underscores
+                .trim()
+        }
+        .filter { it.isNotEmpty() && !it.matches(Regex("^[-:]+$")) }
     
-    // Skip separator line (line 1)
-    val rows = lines.drop(2).map { line ->
-        line.split("|")
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
+    // Find the separator line (contains ---)
+    val separatorIndex = lines.indexOfFirst { line ->
+        line.contains("---") || line.contains(":--") || line.contains("--:")
+    }
+    
+    // Skip separator line and parse data rows
+    val dataStartIndex = if (separatorIndex >= 0) separatorIndex + 1 else 2
+    val rows = lines.drop(dataStartIndex).mapNotNull { line ->
+        val cleanLine = line.trim()
+            .removePrefix("|")
+            .removeSuffix("|")
+        
+        if (cleanLine.contains("---") || cleanLine.isEmpty()) {
+            null // Skip separator and empty lines
+        } else {
+            cleanLine.split("|")
+                .map { cell ->
+                    cell.trim()
+                        .replace(Regex("^\\*+|\\*+$"), "")
+                        .replace(Regex("^_+|_+$"), "")
+                        .trim()
+                }
+                .filter { it.isNotEmpty() }
+        }
     }.filter { it.isNotEmpty() }
     
     return MarkdownElement.Table(headers, rows)

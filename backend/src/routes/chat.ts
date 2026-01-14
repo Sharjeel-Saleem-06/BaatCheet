@@ -919,12 +919,14 @@ router.post('/feedback', clerkAuth, async (req: Request, res: Response): Promise
 /**
  * POST /api/v1/chat/share
  * Create a shareable link for a conversation
+ * Stores the share link in the database for retrieval
  */
 router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const { conversationId } = req.body;
     const userId = req.user!.id;
     const { prisma } = await import('../config/database.js');
+    const crypto = await import('crypto');
 
     if (!conversationId) {
       res.status(400).json({
@@ -937,12 +939,6 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
     // Verify conversation belongs to user
     const conversation = await prisma.conversation.findFirst({
       where: { id: conversationId, userId },
-      include: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          take: 50, // Limit messages in shared view
-        },
-      },
     });
 
     if (!conversation) {
@@ -953,21 +949,54 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Generate share token (in production, use crypto)
-    const shareToken = Buffer.from(`${conversationId}-${Date.now()}`).toString('base64url');
+    // Check if share link already exists for this conversation
+    const existingShare = await prisma.shareLink.findFirst({
+      where: { conversationId, userId, isPublic: true },
+    });
 
-    // In production, you'd store this in a shares table
-    // For now, return a mock link
-    const shareLink = `https://baatcheet.app/share/${shareToken}`;
+    if (existingShare) {
+      // Return existing share link
+      const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet.app';
+      res.json({
+        success: true,
+        data: {
+          shareLink: `${baseUrl}/share/${existingShare.shareId}`,
+          shareId: existingShare.shareId,
+          expiresAt: existingShare.expiresAt?.toISOString() || null,
+          accessCount: existingShare.accessCount,
+        },
+      });
+      return;
+    }
 
-    logger.info('Chat shared', { userId, conversationId, shareToken });
+    // Generate unique share ID using crypto
+    const shareId = crypto.randomBytes(16).toString('base64url');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Store share link in database
+    const shareLink = await prisma.shareLink.create({
+      data: {
+        conversationId,
+        userId,
+        shareId,
+        expiresAt,
+        isPublic: true,
+        accessCount: 0,
+      },
+    });
+
+    const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet.app';
+    const fullShareLink = `${baseUrl}/share/${shareId}`;
+
+    logger.info('Chat shared', { userId, conversationId, shareId });
 
     res.json({
       success: true,
       data: {
-        shareLink,
-        shareToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        shareLink: fullShareLink,
+        shareId,
+        expiresAt: expiresAt.toISOString(),
+        accessCount: 0,
       },
     });
   } catch (error) {
@@ -975,6 +1004,138 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
     res.status(500).json({
       success: false,
       error: 'Failed to share conversation',
+    });
+  }
+});
+
+/**
+ * GET /api/v1/chat/share/:shareId
+ * Get a shared conversation (PUBLIC - no auth required)
+ */
+router.get('/share/:shareId', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+    const { prisma } = await import('../config/database.js');
+
+    // Find the share link
+    const share = await prisma.shareLink.findUnique({
+      where: { shareId },
+      include: {
+        conversation: {
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' },
+              take: 100, // Limit messages in shared view
+              select: {
+                id: true,
+                role: true,
+                content: true,
+                createdAt: true,
+              },
+            },
+            user: {
+              select: {
+                username: true,
+                firstName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!share) {
+      res.status(404).json({
+        success: false,
+        error: 'Shared conversation not found',
+      });
+      return;
+    }
+
+    // Check if share link is expired
+    if (share.expiresAt && new Date() > share.expiresAt) {
+      res.status(410).json({
+        success: false,
+        error: 'This share link has expired',
+      });
+      return;
+    }
+
+    // Check if public
+    if (!share.isPublic) {
+      res.status(403).json({
+        success: false,
+        error: 'This conversation is no longer shared',
+      });
+      return;
+    }
+
+    // Increment access count
+    await prisma.shareLink.update({
+      where: { shareId },
+      data: { accessCount: { increment: 1 } },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        title: share.conversation.title,
+        messages: share.conversation.messages,
+        sharedBy: share.conversation.user.username || share.conversation.user.firstName || 'Anonymous',
+        sharedByAvatar: share.conversation.user.avatar,
+        createdAt: share.createdAt.toISOString(),
+        messageCount: share.conversation.messages.length,
+      },
+    });
+  } catch (error) {
+    logger.error('Get shared conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve shared conversation',
+    });
+  }
+});
+
+/**
+ * DELETE /api/v1/chat/share/:shareId
+ * Revoke a share link (requires auth)
+ */
+router.delete('/share/:shareId', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+    const userId = req.user!.id;
+    const { prisma } = await import('../config/database.js');
+
+    // Find and verify ownership
+    const share = await prisma.shareLink.findFirst({
+      where: { shareId, userId },
+    });
+
+    if (!share) {
+      res.status(404).json({
+        success: false,
+        error: 'Share link not found or you do not have permission',
+      });
+      return;
+    }
+
+    // Delete the share link
+    await prisma.shareLink.delete({
+      where: { id: share.id },
+    });
+
+    logger.info('Share link revoked', { userId, shareId });
+
+    res.json({
+      success: true,
+      data: { message: 'Share link revoked successfully' },
+    });
+  } catch (error) {
+    logger.error('Revoke share link error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to revoke share link',
     });
   }
 });
