@@ -1008,6 +1008,92 @@ class ChatRepository @Inject constructor(
     }
     
     // ============================================
+    // Collaboration Operations
+    // ============================================
+    
+    /**
+     * Get projects where user is a collaborator
+     */
+    suspend fun getCollaborations(): ApiResult<List<Project>> {
+        return try {
+            val response = api.getCollaborations()
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val projects = response.body()?.data?.map { dto ->
+                    Project(
+                        id = dto.id,
+                        name = dto.name,
+                        description = dto.description,
+                        conversationCount = dto.conversationCount ?: 0,
+                        createdAt = null,
+                        updatedAt = null
+                    )
+                } ?: emptyList()
+                ApiResult.Success(projects)
+            } else {
+                ApiResult.Error("Failed to load collaborations", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Get pending invitations count
+     */
+    suspend fun getPendingInvitationsCount(): ApiResult<Int> {
+        return try {
+            val response = api.getPendingInvitations()
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val count = response.body()?.data?.size ?: 0
+                ApiResult.Success(count)
+            } else {
+                ApiResult.Success(0)
+            }
+        } catch (e: Exception) {
+            ApiResult.Success(0)
+        }
+    }
+    
+    /**
+     * Invite collaborator to project
+     */
+    suspend fun inviteCollaborator(projectId: String, email: String, role: String = "viewer"): ApiResult<Boolean> {
+        return try {
+            val request = InviteCollaboratorRequest(email = email, role = role)
+            val response = api.inviteCollaborator(projectId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                val error = response.body()?.error ?: "Failed to send invitation"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Respond to project invitation
+     */
+    suspend fun respondToInvitation(invitationId: String, accept: Boolean): ApiResult<Boolean> {
+        return try {
+            val request = InvitationResponseRequest(accept = accept)
+            val response = api.respondToInvitation(invitationId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                ApiResult.Error("Failed to respond to invitation", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    // ============================================
     // Analytics Operations
     // ============================================
     

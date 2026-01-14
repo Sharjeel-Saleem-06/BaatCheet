@@ -102,6 +102,13 @@ data class ChatState(
     val shareUrl: String? = null,
     val isSharing: Boolean = false,
     
+    // Current Project Context
+    val currentProjectId: String? = null,
+    
+    // Collaborations (shared projects)
+    val collaborations: List<Project> = emptyList(),
+    val pendingInvitationsCount: Int = 0,
+    
     // Templates
     val templates: List<Template> = emptyList(),
     val isLoadingTemplates: Boolean = false,
@@ -516,6 +523,40 @@ class ChatViewModel @Inject constructor(
                 
                 is ApiResult.Loading -> { /* Already handled */ }
             }
+            
+            // Also load collaborations and pending invitations
+            loadCollaborations()
+            loadPendingInvitationsCount()
+        }
+    }
+    
+    /**
+     * Load projects where user is a collaborator
+     */
+    private fun loadCollaborations() {
+        viewModelScope.launch {
+            when (val result = chatRepository.getCollaborations()) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(collaborations = result.data) }
+                }
+                is ApiResult.Error -> { /* Silently fail */ }
+                is ApiResult.Loading -> { }
+            }
+        }
+    }
+    
+    /**
+     * Load count of pending invitations
+     */
+    private fun loadPendingInvitationsCount() {
+        viewModelScope.launch {
+            when (val result = chatRepository.getPendingInvitationsCount()) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(pendingInvitationsCount = result.data) }
+                }
+                is ApiResult.Error -> { /* Silently fail */ }
+                is ApiResult.Loading -> { }
+            }
         }
     }
     
@@ -550,6 +591,36 @@ class ChatViewModel @Inject constructor(
                 
                 is ApiResult.Error -> {
                     _state.update { it.copy(error = result.message) }
+                }
+                
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Load conversations for a specific project
+     */
+    fun loadProjectConversations(projectId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(
+                isLoadingConversations = true,
+                currentProjectId = projectId
+            ) }
+            
+            when (val result = chatRepository.getProjectConversations(projectId)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(
+                        conversations = result.data,
+                        isLoadingConversations = false
+                    ) }
+                }
+                
+                is ApiResult.Error -> {
+                    _state.update { it.copy(
+                        error = result.message,
+                        isLoadingConversations = false
+                    ) }
                 }
                 
                 is ApiResult.Loading -> { /* Ignore */ }

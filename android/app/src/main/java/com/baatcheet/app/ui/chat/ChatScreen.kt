@@ -137,8 +137,11 @@ fun ChatScreen(
                     coroutineScope.launch { drawerState.close() }
                 },
                 onProjectClick = { projectId ->
-                    // TODO: Navigate to project view
+                    viewModel.loadProjectConversations(projectId)
                     coroutineScope.launch { drawerState.close() }
+                },
+                onCreateProject = { name, description ->
+                    viewModel.createProject(name, description)
                 },
                 onSearchChange = { query ->
                     viewModel.searchConversations(query)
@@ -337,11 +340,24 @@ private fun ChatDrawerContent(
     onNewChat: () -> Unit,
     onConversationClick: (String) -> Unit,
     onProjectClick: (String) -> Unit,
+    onCreateProject: (String, String?) -> Unit,
     onSearchChange: (String) -> Unit,
     onLogout: () -> Unit,
     onClose: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var showNewProjectDialog by remember { mutableStateOf(false) }
+    
+    // New Project Dialog
+    if (showNewProjectDialog) {
+        CreateProjectDialog(
+            onDismiss = { showNewProjectDialog = false },
+            onConfirm = { name, description ->
+                onCreateProject(name, description)
+                showNewProjectDialog = false
+            }
+        )
+    }
     
     ModalDrawerSheet(
         modifier = Modifier.width(300.dp),
@@ -417,7 +433,7 @@ private fun ChatDrawerContent(
             DrawerMenuItem(
                 icon = Icons.Outlined.AddBox,
                 text = "New project",
-                onClick = { }
+                onClick = { showNewProjectDialog = true }
             )
             
             // Real Projects section
@@ -449,6 +465,63 @@ private fun ChatDrawerContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Loading projects...", fontSize = 14.sp, color = GrayText)
+                }
+            }
+            
+            // Collaboration section (shared projects)
+            if (state.collaborations.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Collaborations",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = GrayText,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+                state.collaborations.take(3).forEach { collab ->
+                    DrawerMenuItem(
+                        icon = Icons.Outlined.Group,
+                        text = collab.name,
+                        onClick = { onProjectClick(collab.id) }
+                    )
+                }
+            }
+            
+            // Pending invitations badge
+            if (state.pendingInvitationsCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* Open invitations */ }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.Mail,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Text(
+                        text = "Pending Invitations",
+                        fontSize = 15.sp,
+                        color = DarkText,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(GreenAccent, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${state.pendingInvitationsCount}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
             
@@ -599,6 +672,109 @@ private fun DrawerMenuItem(
             color = DarkText
         )
     }
+}
+
+/**
+ * Dialog for creating a new project
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CreateProjectDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String?) -> Unit
+) {
+    var projectName by remember { mutableStateOf("") }
+    var projectDescription by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = WhiteBackground,
+        shape = RoundedCornerShape(16.dp),
+        title = {
+            Text(
+                text = "Create New Project",
+                fontWeight = FontWeight.SemiBold,
+                color = DarkText
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Projects help you organize related chats. The AI will understand context across all chats in a project.",
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    lineHeight = 20.sp
+                )
+                
+                OutlinedTextField(
+                    value = projectName,
+                    onValueChange = { 
+                        projectName = it
+                        isError = false
+                    },
+                    label = { Text("Project name") },
+                    placeholder = { Text("e.g., Mobile App Development") },
+                    isError = isError,
+                    supportingText = if (isError) {
+                        { Text("Project name is required", color = Color(0xFFDC3545)) }
+                    } else null,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder,
+                        cursorColor = GreenAccent
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+                
+                OutlinedTextField(
+                    value = projectDescription,
+                    onValueChange = { projectDescription = it },
+                    label = { Text("Description (optional)") },
+                    placeholder = { Text("What is this project about?") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder,
+                        cursorColor = GreenAccent
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    minLines = 2,
+                    maxLines = 4
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (projectName.isBlank()) {
+                        isError = true
+                    } else {
+                        onConfirm(
+                            projectName.trim(),
+                            projectDescription.ifBlank { null }
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenAccent
+                ),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Text("Create Project", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = GrayText)
+            }
+        }
+    )
 }
 
 @Composable
