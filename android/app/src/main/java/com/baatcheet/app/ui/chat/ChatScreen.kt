@@ -119,6 +119,15 @@ fun ChatScreen(
     // Selected mode from plus menu (to show indicator)
     var selectedPlusMode by remember { mutableStateOf<String?>(null) }
     
+    // Settings screen state
+    var showSettingsScreen by remember { mutableStateOf(false) }
+    
+    // Analytics screen state
+    var showAnalyticsScreen by remember { mutableStateOf(false) }
+    
+    // Collaborations bottom sheet state
+    var showCollaborationsSheet by remember { mutableStateOf(false) }
+    
     // Get clipboard manager for sharing
     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
     
@@ -173,7 +182,19 @@ fun ChatScreen(
                     viewModel.searchConversations(query)
                 },
                 onLogout = onLogout,
-                onClose = { coroutineScope.launch { drawerState.close() } }
+                onClose = { coroutineScope.launch { drawerState.close() } },
+                onSettingsClick = {
+                    showSettingsScreen = true
+                    coroutineScope.launch { drawerState.close() }
+                },
+                onAnalyticsClick = {
+                    showAnalyticsScreen = true
+                    coroutineScope.launch { drawerState.close() }
+                },
+                onCollaborationsClick = {
+                    showCollaborationsSheet = true
+                    coroutineScope.launch { drawerState.close() }
+                }
             )
         }
     ) {
@@ -368,6 +389,100 @@ fun ChatScreen(
                         }
                     )
                 }
+                
+                // Settings Screen
+                if (showSettingsScreen) {
+                    com.baatcheet.app.ui.settings.SettingsScreen(
+                        userSettings = com.baatcheet.app.ui.settings.UserSettings(
+                            displayName = state.userProfile?.displayName ?: "",
+                            email = state.userProfile?.email ?: "",
+                            tier = "free", // TODO: Get from user profile
+                            totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
+                            totalConversations = state.conversations.size,
+                            imageGenerationsToday = 0, // TODO: Get from backend
+                            imageGenerationsLimit = 2
+                        ),
+                        onBack = { showSettingsScreen = false },
+                        onLogout = {
+                            showSettingsScreen = false
+                            onLogout()
+                        },
+                        onDeleteAccount = { /* TODO: Implement */ },
+                        onThemeChange = { /* TODO: Implement */ },
+                        onLanguageChange = { /* TODO: Implement */ },
+                        onVoiceEnabledChange = { /* TODO: Implement */ },
+                        onAutoPlayVoiceChange = { /* TODO: Implement */ },
+                        onStreamingEnabledChange = { /* TODO: Implement */ },
+                        onHapticFeedbackChange = { /* TODO: Implement */ },
+                        onNotificationsChange = { /* TODO: Implement */ },
+                        onSaveHistoryChange = { /* TODO: Implement */ },
+                        onShareAnalyticsChange = { /* TODO: Implement */ },
+                        onClearHistory = { viewModel.clearAllConversations() },
+                        onExportData = { /* TODO: Implement */ },
+                        onPrivacyPolicy = { /* TODO: Open URL */ },
+                        onTermsOfService = { /* TODO: Open URL */ },
+                        onHelpCenter = { /* TODO: Open URL */ },
+                        onContactSupport = { /* TODO: Open email */ },
+                        onUpgrade = { /* TODO: Implement */ }
+                    )
+                }
+                
+                // Analytics Screen
+                if (showAnalyticsScreen) {
+                    com.baatcheet.app.ui.analytics.AnalyticsScreen(
+                        analyticsData = com.baatcheet.app.ui.analytics.AnalyticsData(
+                            totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
+                            totalConversations = state.conversations.size,
+                            totalProjects = state.projects.size,
+                            totalCollaborations = state.collaborations.size,
+                            imageGenerations = 0, // TODO: Get from backend
+                            voiceMinutes = 0, // TODO: Get from backend
+                            tokensUsed = state.usageInfo.tokensUsed.toLong(),
+                            tokensLimit = state.usageInfo.tokensLimit.toLong(),
+                            topModes = listOf(
+                                com.baatcheet.app.ui.analytics.ModeUsage("Chat", 45, 0.45f, GreenAccent),
+                                com.baatcheet.app.ui.analytics.ModeUsage("Code", 25, 0.25f, Color(0xFF007AFF)),
+                                com.baatcheet.app.ui.analytics.ModeUsage("Research", 15, 0.15f, Color(0xFF7C4DFF)),
+                                com.baatcheet.app.ui.analytics.ModeUsage("Image", 10, 0.10f, Color(0xFFFF2D55)),
+                                com.baatcheet.app.ui.analytics.ModeUsage("Other", 5, 0.05f, GrayText)
+                            ),
+                            weeklyActivity = listOf(
+                                com.baatcheet.app.ui.analytics.DayActivity("Mon", 12),
+                                com.baatcheet.app.ui.analytics.DayActivity("Tue", 8),
+                                com.baatcheet.app.ui.analytics.DayActivity("Wed", 15),
+                                com.baatcheet.app.ui.analytics.DayActivity("Thu", 20),
+                                com.baatcheet.app.ui.analytics.DayActivity("Fri", 18),
+                                com.baatcheet.app.ui.analytics.DayActivity("Sat", 5),
+                                com.baatcheet.app.ui.analytics.DayActivity("Sun", 3)
+                            ),
+                            topTopics = listOf(
+                                com.baatcheet.app.ui.analytics.TopicUsage("Android", 23),
+                                com.baatcheet.app.ui.analytics.TopicUsage("Kotlin", 18),
+                                com.baatcheet.app.ui.analytics.TopicUsage("API", 12),
+                                com.baatcheet.app.ui.analytics.TopicUsage("UI/UX", 8)
+                            ),
+                            streak = 7,
+                            lastActive = "Today"
+                        ),
+                        isLoading = false,
+                        onBack = { showAnalyticsScreen = false },
+                        onRefresh = { viewModel.loadAnalytics() }
+                    )
+                }
+                
+                // Collaborations Bottom Sheet
+                if (showCollaborationsSheet) {
+                    CollaborationsBottomSheet(
+                        collaborations = state.collaborations,
+                        pendingInvitations = state.pendingInvitationsCount,
+                        onDismiss = { showCollaborationsSheet = false },
+                        onProjectClick = { projectId ->
+                            viewModel.loadProjectConversations(projectId)
+                            showCollaborationsSheet = false
+                        },
+                        onViewInvitations = { /* TODO: Show invitations */ }
+                    )
+                }
             }
             
             // Show error snackbar if there's an error
@@ -391,7 +506,10 @@ private fun ChatDrawerContent(
     onCreateProject: (String, String?) -> Unit,
     onSearchChange: (String) -> Unit,
     onLogout: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onSettingsClick: () -> Unit = {},
+    onAnalyticsClick: () -> Unit = {},
+    onCollaborationsClick: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showNewProjectDialog by remember { mutableStateOf(false) }
@@ -462,16 +580,18 @@ private fun ChatDrawerContent(
                 onClick = onNewChat
             )
             
-            DrawerMenuItem(
-                icon = Icons.Outlined.Image,
-                text = "Images",
-                onClick = { }
+            // Collaborations Tab (replaces Images)
+            DrawerMenuItemWithBadge(
+                icon = Icons.Outlined.Group,
+                text = "Collaborations",
+                badge = state.collaborations.size + state.pendingInvitationsCount,
+                onClick = onCollaborationsClick
             )
             
             DrawerMenuItem(
-                icon = Icons.Default.Apps,
-                text = "Apps",
-                onClick = { }
+                icon = Icons.Outlined.Analytics,
+                text = "Analytics",
+                onClick = onAnalyticsClick
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -641,12 +761,12 @@ private fun ChatDrawerContent(
                 Spacer(modifier = Modifier.weight(1f))
             }
             
-            // Account section
+            // Account section - Click to open Settings
             HorizontalDivider(color = InputBorder)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onLogout)
+                    .clickable(onClick = onSettingsClick)
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -684,10 +804,238 @@ private fun ChatDrawerContent(
                     }
                 }
                 Icon(
-                    Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
+                    Icons.Outlined.Settings,
+                    contentDescription = "Settings",
                     tint = GrayText,
                     modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DrawerMenuItemWithBadge(
+    icon: ImageVector,
+    text: String,
+    badge: Int,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = DarkText,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = text,
+            fontSize = 15.sp,
+            color = DarkText,
+            modifier = Modifier.weight(1f)
+        )
+        if (badge > 0) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(GreenAccent, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (badge > 99) "99+" else "$badge",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Collaborations Bottom Sheet - Shows all collaborations and pending invitations
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CollaborationsBottomSheet(
+    collaborations: List<Project>,
+    pendingInvitations: Int,
+    onDismiss: () -> Unit,
+    onProjectClick: (String) -> Unit,
+    onViewInvitations: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = WhiteBackground,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Collaborations",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                
+                if (pendingInvitations > 0) {
+                    Surface(
+                        onClick = onViewInvitations,
+                        shape = RoundedCornerShape(20.dp),
+                        color = GreenAccent.copy(alpha = 0.1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Mail,
+                                contentDescription = null,
+                                tint = GreenAccent,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$pendingInvitations pending",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = GreenAccent
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (collaborations.isEmpty() && pendingInvitations == 0) {
+                // Empty state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Outlined.Group,
+                        contentDescription = null,
+                        tint = GrayText,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No Collaborations Yet",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = DarkText
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "When someone invites you to collaborate on a project, it will appear here.",
+                        fontSize = 14.sp,
+                        color = GrayText,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 24.dp)
+                    )
+                }
+            } else {
+                // Collaboration list
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(collaborations) { project ->
+                        CollaborationItem(
+                            project = project,
+                            onClick = { onProjectClick(project.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CollaborationItem(
+    project: Project,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = ChipBackground
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Project icon
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Folder,
+                    contentDescription = null,
+                    tint = GreenAccent,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = project.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = DarkText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!project.description.isNullOrEmpty()) {
+                    Text(
+                        text = project.description,
+                        fontSize = 12.sp,
+                        color = GrayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            
+            // More options
+            IconButton(
+                onClick = { /* TODO: Show options */ },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = "Options",
+                    tint = GrayText,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

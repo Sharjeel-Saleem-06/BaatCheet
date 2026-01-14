@@ -1,14 +1,17 @@
 package com.baatcheet.app.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,205 +19,106 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
 
-/**
- * Settings Screen - App preferences, API Keys, Webhooks, and Account
- */
+// Colors
+private val WhiteBackground = Color(0xFFFFFFFF)
+private val GreenAccent = Color(0xFF34C759)
+private val DarkText = Color(0xFF1C1C1E)
+private val GrayText = Color(0xFF8E8E93)
+private val LightGray = Color(0xFFF2F2F7)
+private val InputBorder = Color(0xFFE5E5EA)
+private val RedColor = Color(0xFFFF3B30)
+private val OrangeColor = Color(0xFFFF9500)
+private val BlueColor = Color(0xFF007AFF)
+private val PurpleColor = Color(0xFF7C4DFF)
+
+data class UserSettings(
+    val displayName: String = "",
+    val email: String = "",
+    val avatar: String? = null,
+    val tier: String = "free",
+    val theme: String = "system",
+    val language: String = "English",
+    val voiceEnabled: Boolean = true,
+    val autoPlayVoice: Boolean = false,
+    val streamingEnabled: Boolean = true,
+    val hapticFeedback: Boolean = true,
+    val notificationsEnabled: Boolean = true,
+    val saveHistory: Boolean = true,
+    val shareAnalytics: Boolean = false,
+    val defaultModel: String = "auto",
+    val maxTokens: Int = 4096,
+    val temperature: Float = 0.7f,
+    val imageGenerationsToday: Int = 0,
+    val imageGenerationsLimit: Int = 2,
+    val totalMessages: Int = 0,
+    val totalConversations: Int = 0,
+    val memberSince: String = ""
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel(),
+    userSettings: UserSettings,
     onBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit,
+    onThemeChange: (String) -> Unit,
+    onLanguageChange: (String) -> Unit,
+    onVoiceEnabledChange: (Boolean) -> Unit,
+    onAutoPlayVoiceChange: (Boolean) -> Unit,
+    onStreamingEnabledChange: (Boolean) -> Unit,
+    onHapticFeedbackChange: (Boolean) -> Unit,
+    onNotificationsChange: (Boolean) -> Unit,
+    onSaveHistoryChange: (Boolean) -> Unit,
+    onShareAnalyticsChange: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+    onExportData: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
+    onTermsOfService: () -> Unit,
+    onHelpCenter: () -> Unit,
+    onContactSupport: () -> Unit,
+    onUpgrade: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val clipboardManager = LocalClipboardManager.current
-    
-    var showApiKeyDialog by remember { mutableStateOf(false) }
-    var showWebhookDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    var showExportDataDialog by remember { mutableStateOf(false) }
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var expandedSection by remember { mutableStateOf<String?>(null) }
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
-                )
-            )
-        },
-        containerColor = Color(0xFFF9FAFB)
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Account Section
-            item {
-                SettingsSection(title = "Account") {
-                    SettingsItem(
-                        icon = Icons.Default.Person,
-                        title = "Profile",
-                        subtitle = uiState.userEmail ?: "Not signed in",
-                        onClick = { }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Logout,
-                        title = "Sign Out",
-                        onClick = onLogout,
-                        tintColor = Color(0xFFEF4444)
-                    )
-                }
-            }
-            
-            // API Keys Section
-            item {
-                SettingsSection(title = "Developer") {
-                    SettingsItem(
-                        icon = Icons.Default.Key,
-                        title = "API Keys",
-                        subtitle = "${uiState.apiKeys.size} keys",
-                        onClick = { showApiKeyDialog = true }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Webhook,
-                        title = "Webhooks",
-                        subtitle = "${uiState.webhooks.size} webhooks",
-                        onClick = { showWebhookDialog = true }
-                    )
-                }
-            }
-            
-            // Preferences Section
-            item {
-                SettingsSection(title = "Preferences") {
-                    SettingsToggleItem(
-                        icon = Icons.Default.DarkMode,
-                        title = "Dark Mode",
-                        isChecked = uiState.darkModeEnabled,
-                        onCheckedChange = { viewModel.toggleDarkMode() }
-                    )
-                    SettingsToggleItem(
-                        icon = Icons.Default.Notifications,
-                        title = "Notifications",
-                        isChecked = uiState.notificationsEnabled,
-                        onCheckedChange = { viewModel.toggleNotifications() }
-                    )
-                    SettingsToggleItem(
-                        icon = Icons.Default.VoiceChat,
-                        title = "Voice Input",
-                        isChecked = uiState.voiceInputEnabled,
-                        onCheckedChange = { viewModel.toggleVoiceInput() }
-                    )
-                }
-            }
-            
-            // Data & Privacy Section
-            item {
-                SettingsSection(title = "Data & Privacy") {
-                    SettingsItem(
-                        icon = Icons.Default.Download,
-                        title = "Export Data",
-                        subtitle = "Download all your data",
-                        onClick = { showExportDataDialog = true }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.DeleteForever,
-                        title = "Delete Account",
-                        subtitle = "Permanently delete your account",
-                        onClick = { showDeleteAccountDialog = true },
-                        tintColor = Color(0xFFEF4444)
-                    )
-                }
-            }
-            
-            // About Section
-            item {
-                SettingsSection(title = "About") {
-                    SettingsItem(
-                        icon = Icons.Default.Info,
-                        title = "Version",
-                        subtitle = "1.0.0"
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Policy,
-                        title = "Privacy Policy",
-                        onClick = { }
-                    )
-                    SettingsItem(
-                        icon = Icons.Default.Description,
-                        title = "Terms of Service",
-                        onClick = { }
-                    )
-                }
-            }
-        }
-    }
-    
-    // API Keys Dialog
-    if (showApiKeyDialog) {
-        ApiKeysDialog(
-            apiKeys = uiState.apiKeys,
-            isLoading = uiState.isLoadingApiKeys,
-            onDismiss = { showApiKeyDialog = false },
-            onCreate = { name -> viewModel.createApiKey(name) },
-            onDelete = { id -> viewModel.deleteApiKey(id) },
-            onCopy = { key -> clipboardManager.setText(AnnotatedString(key)) }
-        )
-    }
-    
-    // Webhooks Dialog
-    if (showWebhookDialog) {
-        WebhooksDialog(
-            webhooks = uiState.webhooks,
-            isLoading = uiState.isLoadingWebhooks,
-            onDismiss = { showWebhookDialog = false },
-            onCreate = { url, events -> viewModel.createWebhook(url, events) },
-            onDelete = { id -> viewModel.deleteWebhook(id) },
-            onTest = { id -> viewModel.testWebhook(id) }
-        )
-    }
-    
-    // Export Data Dialog
-    if (showExportDataDialog) {
+    // Logout Confirmation Dialog
+    if (showLogoutDialog) {
         AlertDialog(
-            onDismissRequest = { showExportDataDialog = false },
-            title = { Text("Export Data") },
-            text = { 
-                Text("This will generate a download of all your data including conversations, projects, and settings.")
+            onDismissRequest = { showLogoutDialog = false },
+            containerColor = WhiteBackground,
+            shape = RoundedCornerShape(16.dp),
+            icon = {
+                Icon(
+                    Icons.Default.Logout,
+                    contentDescription = null,
+                    tint = OrangeColor,
+                    modifier = Modifier.size(32.dp)
+                )
             },
+            title = { Text("Sign Out", fontWeight = FontWeight.SemiBold) },
+            text = { Text("Are you sure you want to sign out? You'll need to sign in again to access your chats.") },
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.exportData()
-                        showExportDataDialog = false
+                        showLogoutDialog = false
+                        onLogout()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeColor)
                 ) {
-                    Text("Export")
+                    Text("Sign Out")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showExportDataDialog = false }) {
-                    Text("Cancel")
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel", color = GrayText)
                 }
             }
         )
@@ -224,489 +128,781 @@ fun SettingsScreen(
     if (showDeleteAccountDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAccountDialog = false },
-            title = { Text("Delete Account", color = Color(0xFFEF4444)) },
-            text = { 
-                Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            containerColor = WhiteBackground,
+            shape = RoundedCornerShape(16.dp),
+            icon = {
+                Icon(
+                    Icons.Default.DeleteForever,
+                    contentDescription = null,
+                    tint = RedColor,
+                    modifier = Modifier.size(32.dp)
+                )
             },
+            title = { Text("Delete Account", fontWeight = FontWeight.SemiBold, color = RedColor) },
+            text = { Text("This action is permanent and cannot be undone. All your data, chats, and projects will be permanently deleted.") },
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteAccount()
                         showDeleteAccountDialog = false
+                        onDeleteAccount()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    colors = ButtonDefaults.buttonColors(containerColor = RedColor)
                 ) {
-                    Text("Delete")
+                    Text("Delete Account")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAccountDialog = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = GrayText)
                 }
             }
         )
     }
-}
-
-@Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column {
-        Text(
-            title,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.Gray,
-            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+    
+    // Clear History Dialog
+    if (showClearHistoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryDialog = false },
+            containerColor = WhiteBackground,
+            shape = RoundedCornerShape(16.dp),
+            icon = {
+                Icon(
+                    Icons.Default.History,
+                    contentDescription = null,
+                    tint = OrangeColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = { Text("Clear Chat History", fontWeight = FontWeight.SemiBold) },
+            text = { Text("This will delete all your conversations. This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showClearHistoryDialog = false
+                        onClearHistory()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeColor)
+                ) {
+                    Text("Clear History")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryDialog = false }) {
+                    Text("Cancel", color = GrayText)
+                }
+            }
         )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings", fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = WhiteBackground,
+                    titleContentColor = DarkText
+                )
+            )
+        },
+        containerColor = LightGray
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(content = content)
+            // Profile Section
+            item {
+                SettingsCard {
+                    ProfileSection(
+                        displayName = userSettings.displayName,
+                        email = userSettings.email,
+                        tier = userSettings.tier,
+                        memberSince = userSettings.memberSince,
+                        onUpgrade = onUpgrade
+                    )
+                }
+            }
+            
+            // Usage Stats
+            item {
+                SettingsCard {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Usage",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = GrayText,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            UsageStatItem(
+                                value = "${userSettings.totalMessages}",
+                                label = "Messages"
+                            )
+                            UsageStatItem(
+                                value = "${userSettings.totalConversations}",
+                                label = "Chats"
+                            )
+                            UsageStatItem(
+                                value = "${userSettings.imageGenerationsToday}/${userSettings.imageGenerationsLimit}",
+                                label = "Images/Day"
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // General Settings
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsSectionHeader(
+                            icon = Icons.Outlined.Settings,
+                            title = "General",
+                            isExpanded = expandedSection == "general",
+                            onClick = { expandedSection = if (expandedSection == "general") null else "general" }
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = expandedSection == "general",
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                HorizontalDivider(color = InputBorder)
+                                
+                                SettingsDropdownItem(
+                                    icon = Icons.Outlined.Palette,
+                                    title = "Theme",
+                                    value = userSettings.theme.replaceFirstChar { it.uppercase() },
+                                    options = listOf("System", "Light", "Dark"),
+                                    onSelect = { onThemeChange(it.lowercase()) }
+                                )
+                                
+                                SettingsDropdownItem(
+                                    icon = Icons.Outlined.Language,
+                                    title = "Language",
+                                    value = userSettings.language,
+                                    options = listOf("English", "Urdu", "Roman Urdu", "Hindi"),
+                                    onSelect = onLanguageChange
+                                )
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.Vibration,
+                                    title = "Haptic Feedback",
+                                    subtitle = "Vibrate on interactions",
+                                    checked = userSettings.hapticFeedback,
+                                    onCheckedChange = onHapticFeedbackChange
+                                )
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.Notifications,
+                                    title = "Notifications",
+                                    subtitle = "Receive push notifications",
+                                    checked = userSettings.notificationsEnabled,
+                                    onCheckedChange = onNotificationsChange
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Chat Settings
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsSectionHeader(
+                            icon = Icons.Outlined.Chat,
+                            title = "Chat",
+                            isExpanded = expandedSection == "chat",
+                            onClick = { expandedSection = if (expandedSection == "chat") null else "chat" }
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = expandedSection == "chat",
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                HorizontalDivider(color = InputBorder)
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.Stream,
+                                    title = "Streaming Responses",
+                                    subtitle = "Show responses as they're generated",
+                                    checked = userSettings.streamingEnabled,
+                                    onCheckedChange = onStreamingEnabledChange
+                                )
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.History,
+                                    title = "Save Chat History",
+                                    subtitle = "Keep your conversations",
+                                    checked = userSettings.saveHistory,
+                                    onCheckedChange = onSaveHistoryChange
+                                )
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.DeleteSweep,
+                                    title = "Clear Chat History",
+                                    subtitle = "Delete all conversations",
+                                    onClick = { showClearHistoryDialog = true },
+                                    textColor = OrangeColor
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Voice Settings
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsSectionHeader(
+                            icon = Icons.Outlined.RecordVoiceOver,
+                            title = "Voice",
+                            isExpanded = expandedSection == "voice",
+                            onClick = { expandedSection = if (expandedSection == "voice") null else "voice" }
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = expandedSection == "voice",
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                HorizontalDivider(color = InputBorder)
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.Mic,
+                                    title = "Voice Input",
+                                    subtitle = "Enable voice commands",
+                                    checked = userSettings.voiceEnabled,
+                                    onCheckedChange = onVoiceEnabledChange
+                                )
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.VolumeUp,
+                                    title = "Auto-Play Responses",
+                                    subtitle = "Read AI responses aloud",
+                                    checked = userSettings.autoPlayVoice,
+                                    onCheckedChange = onAutoPlayVoiceChange
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Privacy & Data
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsSectionHeader(
+                            icon = Icons.Outlined.Security,
+                            title = "Privacy & Data",
+                            isExpanded = expandedSection == "privacy",
+                            onClick = { expandedSection = if (expandedSection == "privacy") null else "privacy" }
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = expandedSection == "privacy",
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                HorizontalDivider(color = InputBorder)
+                                
+                                SettingsSwitchItem(
+                                    icon = Icons.Outlined.Analytics,
+                                    title = "Share Analytics",
+                                    subtitle = "Help improve BaatCheet",
+                                    checked = userSettings.shareAnalytics,
+                                    onCheckedChange = onShareAnalyticsChange
+                                )
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.FileDownload,
+                                    title = "Export Data",
+                                    subtitle = "Download your data",
+                                    onClick = onExportData
+                                )
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.Policy,
+                                    title = "Privacy Policy",
+                                    onClick = onPrivacyPolicy
+                                )
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.Description,
+                                    title = "Terms of Service",
+                                    onClick = onTermsOfService
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Help & Support
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsSectionHeader(
+                            icon = Icons.Outlined.Help,
+                            title = "Help & Support",
+                            isExpanded = expandedSection == "help",
+                            onClick = { expandedSection = if (expandedSection == "help") null else "help" }
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = expandedSection == "help",
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                HorizontalDivider(color = InputBorder)
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.MenuBook,
+                                    title = "Help Center",
+                                    subtitle = "FAQs and guides",
+                                    onClick = onHelpCenter
+                                )
+                                
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.Mail,
+                                    title = "Contact Support",
+                                    subtitle = "Get help from our team",
+                                    onClick = onContactSupport
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Account Actions
+            item {
+                SettingsCard {
+                    Column {
+                        SettingsClickableItem(
+                            icon = Icons.Outlined.Logout,
+                            title = "Sign Out",
+                            onClick = { showLogoutDialog = true },
+                            textColor = OrangeColor
+                        )
+                        
+                        HorizontalDivider(color = InputBorder)
+                        
+                        SettingsClickableItem(
+                            icon = Icons.Outlined.DeleteForever,
+                            title = "Delete Account",
+                            subtitle = "Permanently delete your account",
+                            onClick = { showDeleteAccountDialog = true },
+                            textColor = RedColor
+                        )
+                    }
+                }
+            }
+            
+            // App Info
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "BaatCheet",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GrayText
+                    )
+                    Text(
+                        text = "Version 1.0.0",
+                        fontSize = 12.sp,
+                        color = GrayText.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Made with ❤️ in Pakistan",
+                        fontSize = 12.sp,
+                        color = GrayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun SettingsItem(
+private fun SettingsCard(
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = WhiteBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun ProfileSection(
+    displayName: String,
+    email: String,
+    tier: String,
+    memberSince: String,
+    onUpgrade: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(PurpleColor, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = displayName.take(2).uppercase(),
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = displayName.ifEmpty { "User" },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkText
+                )
+                Text(
+                    text = email,
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (memberSince.isNotEmpty()) {
+                    Text(
+                        text = "Member since $memberSince",
+                        fontSize = 12.sp,
+                        color = GrayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Tier Badge
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .background(
+                        when (tier.lowercase()) {
+                            "pro" -> GreenAccent.copy(alpha = 0.1f)
+                            "enterprise" -> PurpleColor.copy(alpha = 0.1f)
+                            else -> LightGray
+                        },
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    when (tier.lowercase()) {
+                        "pro" -> Icons.Default.Star
+                        "enterprise" -> Icons.Default.Diamond
+                        else -> Icons.Default.Person
+                    },
+                    contentDescription = null,
+                    tint = when (tier.lowercase()) {
+                        "pro" -> GreenAccent
+                        "enterprise" -> PurpleColor
+                        else -> GrayText
+                    },
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = tier.replaceFirstChar { it.uppercase() },
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = when (tier.lowercase()) {
+                        "pro" -> GreenAccent
+                        "enterprise" -> PurpleColor
+                        else -> GrayText
+                    }
+                )
+            }
+            
+            if (tier.lowercase() == "free") {
+                TextButton(onClick = onUpgrade) {
+                    Text(
+                        text = "Upgrade to Pro",
+                        color = GreenAccent,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UsageStatItem(
+    value: String,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = DarkText
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = GrayText
+        )
+    }
+}
+
+@Composable
+private fun SettingsSectionHeader(
     icon: ImageVector,
     title: String,
-    subtitle: String? = null,
-    onClick: (() -> Unit)? = null,
-    tintColor: Color = Color(0xFF22C55E)
+    isExpanded: Boolean,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onClick() }
-                } else Modifier
-            )
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             icon,
             contentDescription = null,
-            tint = tintColor,
+            tint = DarkText,
             modifier = Modifier.size(24.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                title,
-                fontSize = 15.sp,
-                color = Color.Black
-            )
-            subtitle?.let {
-                Text(
-                    it,
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
-            }
-        }
-        if (onClick != null) {
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color.Gray,
-                modifier = Modifier.size(20.dp)
-            )
-        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = DarkText,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = null,
+            tint = GrayText,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
 @Composable
-private fun SettingsToggleItem(
+private fun SettingsSwitchItem(
     icon: ImageVector,
     title: String,
-    isChecked: Boolean,
+    subtitle: String? = null,
+    checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             icon,
             contentDescription = null,
-            tint = Color(0xFF22C55E),
-            modifier = Modifier.size(24.dp)
+            tint = GrayText,
+            modifier = Modifier.size(22.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            title,
-            fontSize = 15.sp,
-            color = Color.Black,
-            modifier = Modifier.weight(1f)
-        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                color = DarkText
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = GrayText
+                )
+            }
+        }
         Switch(
-            checked = isChecked,
+            checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFF22C55E),
+                checkedTrackColor = GreenAccent,
                 uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                uncheckedTrackColor = InputBorder
             )
         )
     }
 }
 
 @Composable
-private fun ApiKeysDialog(
-    apiKeys: List<ApiKeyItem>,
-    isLoading: Boolean,
-    onDismiss: () -> Unit,
-    onCreate: (String) -> Unit,
-    onDelete: (String) -> Unit,
-    onCopy: (String) -> Unit
-) {
-    var newKeyName by remember { mutableStateOf("") }
-    var showCreateForm by remember { mutableStateOf(false) }
-    
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 500.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("API Keys", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, "Close")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF22C55E))
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(apiKeys) { key ->
-                            ApiKeyListItem(
-                                key = key,
-                                onDelete = { onDelete(key.id) },
-                                onCopy = { key.keyPreview?.let { onCopy(it) } }
-                            )
-                        }
-                        
-                        if (apiKeys.isEmpty()) {
-                            item {
-                                Text(
-                                    "No API keys yet",
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(vertical = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (showCreateForm) {
-                    OutlinedTextField(
-                        value = newKeyName,
-                        onValueChange = { newKeyName = it },
-                        placeholder = { Text("API Key Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { showCreateForm = false },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Cancel")
-                        }
-                        Button(
-                            onClick = {
-                                if (newKeyName.isNotBlank()) {
-                                    onCreate(newKeyName)
-                                    newKeyName = ""
-                                    showCreateForm = false
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
-                        ) {
-                            Text("Create")
-                        }
-                    }
-                } else {
-                    Button(
-                        onClick = { showCreateForm = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
-                    ) {
-                        Icon(Icons.Default.Add, null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Create API Key")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ApiKeyListItem(
-    key: ApiKeyItem,
-    onDelete: () -> Unit,
-    onCopy: () -> Unit
+private fun SettingsClickableItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+    textColor: Color = DarkText
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFF9FAFB))
-            .padding(12.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = textColor,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(key.name ?: "Unnamed", fontWeight = FontWeight.Medium)
-            key.keyPreview?.let {
-                Text("...${it}", fontSize = 12.sp, color = Color.Gray)
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                color = textColor
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = GrayText
+                )
             }
         }
-        IconButton(onClick = onCopy, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.ContentCopy, "Copy", modifier = Modifier.size(18.dp))
-        }
-        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Delete, "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
-        }
+        Icon(
+            Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = GrayText,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WebhooksDialog(
-    webhooks: List<WebhookItem>,
-    isLoading: Boolean,
-    onDismiss: () -> Unit,
-    onCreate: (String, List<String>) -> Unit,
-    onDelete: (String) -> Unit,
-    onTest: (String) -> Unit
+private fun SettingsDropdownItem(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    options: List<String>,
+    onSelect: (String) -> Unit
 ) {
-    var newWebhookUrl by remember { mutableStateOf("") }
-    var showCreateForm by remember { mutableStateOf(false) }
-    val selectedEvents = remember { mutableStateListOf<String>() }
+    var expanded by remember { mutableStateOf(false) }
     
-    val availableEvents = listOf(
-        "message.created",
-        "message.completed",
-        "conversation.created",
-        "conversation.archived"
-    )
-    
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 500.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Webhooks", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, "Close")
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF22C55E))
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(webhooks) { webhook ->
-                            WebhookListItem(
-                                webhook = webhook,
-                                onDelete = { onDelete(webhook.id) },
-                                onTest = { onTest(webhook.id) }
-                            )
-                        }
-                        
-                        if (webhooks.isEmpty()) {
-                            item {
-                                Text(
-                                    "No webhooks yet",
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(vertical = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (showCreateForm) {
-                    OutlinedTextField(
-                        value = newWebhookUrl,
-                        onValueChange = { newWebhookUrl = it },
-                        placeholder = { Text("Webhook URL (https://...)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Events:", fontSize = 12.sp, color = Color.Gray)
-                    availableEvents.forEach { event ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (event in selectedEvents) {
-                                        selectedEvents.remove(event)
-                                    } else {
-                                        selectedEvents.add(event)
-                                    }
-                                }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = event in selectedEvents,
-                                onCheckedChange = {
-                                    if (it) selectedEvents.add(event) else selectedEvents.remove(event)
-                                }
-                            )
-                            Text(event, fontSize = 13.sp)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { showCreateForm = false },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Cancel")
-                        }
-                        Button(
-                            onClick = {
-                                if (newWebhookUrl.isNotBlank() && selectedEvents.isNotEmpty()) {
-                                    onCreate(newWebhookUrl, selectedEvents.toList())
-                                    newWebhookUrl = ""
-                                    selectedEvents.clear()
-                                    showCreateForm = false
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = newWebhookUrl.isNotBlank() && selectedEvents.isNotEmpty(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
-                        ) {
-                            Text("Create")
-                        }
-                    }
-                } else {
-                    Button(
-                        onClick = { showCreateForm = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E))
-                    ) {
-                        Icon(Icons.Default.Add, null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Create Webhook")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun WebhookListItem(
-    webhook: WebhookItem,
-    onDelete: () -> Unit,
-    onTest: () -> Unit
-) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFF9FAFB))
-            .padding(12.dp),
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                webhook.url ?: "Unknown URL",
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                "${webhook.events?.size ?: 0} events",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
-        IconButton(onClick = onTest, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.PlayArrow, "Test", tint = Color(0xFF22C55E), modifier = Modifier.size(18.dp))
-        }
-        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Delete, "Delete", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = GrayText,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = title,
+            fontSize = 15.sp,
+            color = DarkText,
+            modifier = Modifier.weight(1f)
+        )
+        
+        Box {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = value,
+                    fontSize = 14.sp,
+                    color = GrayText
+                )
+                Icon(
+                    Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    tint = GrayText,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            onSelect(option)
+                            expanded = false
+                        },
+                        trailingIcon = if (option == value) {
+                            { Icon(Icons.Default.Check, null, tint = GreenAccent) }
+                        } else null
+                    )
+                }
+            }
         }
     }
 }
-
-// Data classes
-data class ApiKeyItem(
-    val id: String,
-    val name: String?,
-    val keyPreview: String?,
-    val isActive: Boolean
-)
-
-data class WebhookItem(
-    val id: String,
-    val url: String?,
-    val events: List<String>?,
-    val isActive: Boolean
-)
