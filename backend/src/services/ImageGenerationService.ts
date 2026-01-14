@@ -113,8 +113,9 @@ interface ModelConfig {
 
 const Z_IMAGE_TURBO_SPACE = {
   url: 'https://mrfakename-z-image-turbo.hf.space',
-  apiEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/call/infer',
-  runEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/run/predict',
+  // The correct endpoint based on /gradio_api/info
+  apiEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/call/generate_image',
+  runEndpoint: 'https://mrfakename-z-image-turbo.hf.space/gradio_api/run/generate_image',
   // This space uses FLUX.1-schnell turbo - generates in ~3 seconds!
 };
 
@@ -856,11 +857,11 @@ Return ONLY a JSON array with exactly 3 objects:
     try {
       logger.info('Calling Z-Image-Turbo Space for fast image generation');
       
-      // Z-Image-Turbo uses Gradio API with /gradio_api/call/infer endpoint
-      // The space takes just the prompt string
+      // Z-Image-Turbo uses Gradio API with /gradio_api/call/generate_image endpoint
+      // Parameters based on /gradio_api/info: prompt, height, width, num_inference_steps, seed, randomize_seed
       const callResponse = await axios.post(
         Z_IMAGE_TURBO_SPACE.apiEndpoint,
-        { data: [prompt, 0, true, 1024, 1024, 3.5] }, // prompt, seed, randomize, width, height, guidance
+        { data: [prompt, 1024, 1024, 9, 42, true] }, // prompt, height, width, steps, seed, randomize
         { headers, timeout: 30000 }
       );
       
