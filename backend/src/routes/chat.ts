@@ -555,4 +555,291 @@ router.post('/test', clerkAuth, async (req: Request, res: Response): Promise<voi
   }
 });
 
+/**
+ * POST /api/v1/chat/analyze
+ * Analyze a prompt before sending to get mode, intent, format suggestions
+ */
+router.post('/analyze', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { message, attachments } = req.body;
+
+    if (!message) {
+      res.status(400).json({
+        success: false,
+        error: 'Message is required',
+      });
+      return;
+    }
+
+    // Import services dynamically
+    const { promptAnalyzer } = await import('../services/PromptAnalyzer.js');
+    const { modeDetector, MODE_CONFIGS } = await import('../services/ModeDetectorService.js');
+
+    // Detect AI mode
+    const modeResult = modeDetector.detectMode(message, attachments);
+
+    // Analyze prompt
+    const promptAnalysis = await promptAnalyzer.analyze(message);
+
+    // Get mode configuration
+    const modeConfig = modeDetector.getModeConfig(modeResult.mode);
+
+    res.json({
+      success: true,
+      data: {
+        mode: {
+          detected: modeResult.mode,
+          confidence: modeResult.confidence,
+          keywords: modeResult.detectedKeywords,
+          alternatives: modeResult.suggestedModes,
+          config: {
+            displayName: modeConfig.displayName,
+            icon: modeConfig.icon,
+            description: modeConfig.description,
+            requiresSpecialAPI: modeConfig.requiresSpecialAPI,
+          },
+        },
+        intent: promptAnalysis.intent,
+        format: promptAnalysis.formatRequested,
+        complexity: promptAnalysis.complexity,
+        language: promptAnalysis.language,
+        specialInstructions: promptAnalysis.specialInstructions,
+        suggestedSettings: {
+          temperature: promptAnalysis.suggestedTemperature,
+          maxTokens: promptAnalysis.suggestedMaxTokens,
+        },
+        formattingHints: promptAnalyzer.generateFormattingHints(promptAnalysis),
+      },
+    });
+  } catch (error) {
+    logger.error('Prompt analyze error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Prompt analysis failed',
+    });
+  }
+});
+
+/**
+ * GET /api/v1/chat/modes
+ * Get all available AI modes with their configurations
+ */
+router.get('/modes', (_req: Request, res: Response): void => {
+  try {
+    const { modeDetector, AIMode, MODE_CONFIGS } = require('../services/ModeDetectorService.js');
+    
+    const modes = modeDetector.getAllModes();
+
+    res.json({
+      success: true,
+      data: {
+        modes: modes.map((mode: any) => ({
+          id: mode.mode,
+          displayName: mode.displayName,
+          icon: mode.icon,
+          description: mode.description,
+          capabilities: mode.capabilities,
+          requiresSpecialAPI: mode.requiresSpecialAPI,
+          dailyLimits: mode.dailyLimits,
+        })),
+        total: modes.length,
+      },
+    });
+  } catch (error) {
+    logger.error('Get modes error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get modes',
+    });
+  }
+});
+
+/**
+ * GET /api/v1/chat/usage
+ * Get user's current usage and remaining quotas
+ */
+router.get('/usage', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const { prisma } = await import('../config/database.js');
+
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Count today's messages
+    const messagesCount = await prisma.message.count({
+      where: {
+        conversation: { userId },
+        role: 'user',
+        createdAt: { gte: today, lt: tomorrow },
+      },
+    });
+
+    // Count today's image generations (approximation from attachments)
+    const imagesCount = await prisma.attachment.count({
+      where: {
+        userId,
+        type: 'generated',
+        createdAt: { gte: today, lt: tomorrow },
+      },
+    });
+
+    // Get user tier (default to free)
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+    const tier = user?.plan || 'free';
+
+    // Define limits based on tier
+    const limits = {
+      free: { messages: 50, images: 1, voice: 10, search: 5 },
+      pro: { messages: 500, images: 50, voice: 100, search: 100 },
+      enterprise: { messages: 10000, images: 500, voice: 1000, search: 1000 },
+    }[tier as 'free' | 'pro' | 'enterprise'] || { messages: 50, images: 1, voice: 10, search: 5 };
+
+    // Calculate reset time (midnight)
+    const resetTime = tomorrow.toISOString();
+
+    res.json({
+      success: true,
+      data: {
+        tier,
+        usage: {
+          messages: {
+            used: messagesCount,
+            limit: limits.messages,
+            remaining: Math.max(0, limits.messages - messagesCount),
+            percentage: Math.round((messagesCount / limits.messages) * 100),
+          },
+          images: {
+            used: imagesCount,
+            limit: limits.images,
+            remaining: Math.max(0, limits.images - imagesCount),
+            percentage: Math.round((imagesCount / limits.images) * 100),
+          },
+        },
+        resetAt: resetTime,
+        limits,
+      },
+    });
+  } catch (error) {
+    logger.error('Get usage error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get usage',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/chat/suggest
+ * Get follow-up question suggestions based on conversation
+ */
+router.post('/suggest', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { conversationId, lastResponse } = req.body;
+    const userId = req.user!.id;
+    const { prisma } = await import('../config/database.js');
+
+    // Get conversation context
+    let context = lastResponse || '';
+    
+    if (conversationId && !lastResponse) {
+      const messages = await prisma.message.findMany({
+        where: { conversationId, conversation: { userId } },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+        select: { content: true, role: true },
+      });
+      
+      context = messages.reverse().map(m => `${m.role}: ${m.content}`).join('\n');
+    }
+
+    if (!context) {
+      res.json({
+        success: true,
+        data: {
+          suggestions: [
+            "Tell me more about this",
+            "Can you explain in simpler terms?",
+            "What are some examples?",
+            "What are the alternatives?",
+          ],
+        },
+      });
+      return;
+    }
+
+    // Generate suggestions using AI
+    const response = await aiRouter.chat({
+      messages: [
+        {
+          role: 'system',
+          content: `Based on the conversation context, suggest 4 brief follow-up questions the user might want to ask. Return ONLY a JSON array of strings, no explanation.`,
+        },
+        {
+          role: 'user',
+          content: `Context:\n${context.substring(0, 1000)}\n\nSuggest 4 follow-up questions:`,
+        },
+      ],
+      maxTokens: 200,
+      temperature: 0.7,
+    });
+
+    if (response.success && response.content) {
+      try {
+        // Try to parse as JSON
+        const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          const suggestions = JSON.parse(jsonMatch[0]);
+          res.json({
+            success: true,
+            data: { suggestions: suggestions.slice(0, 4) },
+          });
+          return;
+        }
+      } catch {
+        // If JSON parse fails, split by newlines
+        const suggestions = response.content
+          .split('\n')
+          .filter((line: string) => line.trim() && !line.startsWith('[') && !line.startsWith(']'))
+          .map((line: string) => line.replace(/^[\d.\-*"]+\s*/, '').replace(/["',]+$/, ''))
+          .filter((line: string) => line.length > 5 && line.length < 100)
+          .slice(0, 4);
+        
+        if (suggestions.length > 0) {
+          res.json({
+            success: true,
+            data: { suggestions },
+          });
+          return;
+        }
+      }
+    }
+
+    // Fallback suggestions
+    res.json({
+      success: true,
+      data: {
+        suggestions: [
+          "Can you elaborate on that?",
+          "What are the key points?",
+          "How does this work in practice?",
+          "Can you give me an example?",
+        ],
+      },
+    });
+  } catch (error) {
+    logger.error('Get suggestions error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get suggestions',
+    });
+  }
+});
+
 export default router;

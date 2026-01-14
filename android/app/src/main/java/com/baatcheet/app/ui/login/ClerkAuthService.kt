@@ -18,10 +18,8 @@ import javax.inject.Inject
 
 // MARK: - API Configuration
 object APIConfig {
-    // Backend API URL - adjust for your environment
-    // Use your computer's local IP for physical device testing
-    // For Android emulator, use 10.0.2.2 to access host localhost
-    const val BASE_URL = "http://192.168.18.110:5001/api/v1"
+    // Backend API URL - HuggingFace Spaces deployment
+    const val BASE_URL = "https://sharry121-baatcheet.hf.space/api/v1"
     const val MOBILE_AUTH_URL = "$BASE_URL/mobile/auth"
 }
 

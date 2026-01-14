@@ -3,8 +3,11 @@ package com.baatcheet.app.ui.login
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -79,6 +82,8 @@ fun EmailAuthScreen(
 
     val isFormValid = isEmailValid && isPasswordValid
 
+    val scrollState = rememberScrollState()
+    
     if (showVerificationScreen) {
         EmailVerificationScreen(
             email = email,
@@ -96,11 +101,17 @@ fun EmailAuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
-                .clickable(enabled = true, onClick = { focusManager.clearFocus() })
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { focusManager.clearFocus() }
+                )
+                .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -375,7 +386,7 @@ fun EmailAuthScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 // Terms and Privacy
                 Row(
@@ -388,7 +399,10 @@ fun EmailAuthScreen(
                         fontSize = 13.sp,
                         color = Color.Gray,
                         textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { uriHandler.openUri("https://baatcheet.app/terms") }
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { uriHandler.openUri("https://baatcheet.app/terms") }
                     )
                     Text(
                         text = " · ",
@@ -400,7 +414,10 @@ fun EmailAuthScreen(
                         fontSize = 13.sp,
                         color = Color.Gray,
                         textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { uriHandler.openUri("https://baatcheet.app/privacy") }
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { uriHandler.openUri("https://baatcheet.app/privacy") }
                     )
                 }
             }
@@ -458,14 +475,18 @@ fun EmailVerificationScreen(
         }
     }
 
+    val scrollState = rememberScrollState()
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .imePadding()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -671,7 +692,7 @@ fun EmailVerificationScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
