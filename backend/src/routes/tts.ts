@@ -59,9 +59,13 @@ router.post('/generate', async (req: Request, res: Response) => {
     
     res.send(result.audioBuffer);
     
-  } catch (error) {
+  } catch (error: any) {
     logger.error('TTS generation failed:', error);
-    res.status(500).json({ error: 'Failed to generate speech' });
+    const errorMessage = error?.message || 'Failed to generate speech';
+    res.status(500).json({ 
+      error: 'Failed to generate speech',
+      details: process.env.NODE_ENV !== 'production' ? errorMessage : undefined
+    });
   }
 });
 

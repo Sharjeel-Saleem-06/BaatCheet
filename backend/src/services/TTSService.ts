@@ -97,6 +97,7 @@ class TTSServiceClass {
       const key = process.env[`ELEVENLABS_API_KEY_${i}`];
       if (key && key.startsWith('sk_')) {
         this.ELEVENLABS_KEYS.push(key);
+        logger.info(`ElevenLabs key ${i} loaded (${key.substring(0, 10)}...)`);
       }
     }
     
@@ -107,6 +108,11 @@ class TTSServiceClass {
     }
     
     logger.info(`ElevenLabs TTS initialized with ${this.ELEVENLABS_KEYS.length} API keys`);
+    
+    // If no keys loaded, log environment variable check (for debugging)
+    if (this.ELEVENLABS_KEYS.length === 0) {
+      logger.warn('No ElevenLabs API keys found. Check that ELEVENLABS_API_KEY_1 etc. are set correctly.');
+    }
   }
 
   /**
@@ -390,7 +396,7 @@ class TTSServiceClass {
       // Track failed usage
       this.trackElevenLabsUsage(index, textLength, false);
       
-      // If quota exceeded, mark key and try next
+      // If quota exceeded or unauthorized, mark key and try next
       if (error.response?.status === 401 || error.response?.status === 429) {
         logger.warn(`ElevenLabs key ${index + 1} quota exceeded or invalid, trying next key`);
         
@@ -400,8 +406,13 @@ class TTSServiceClass {
         }
       }
       
-      logger.error('ElevenLabs TTS failed:', error.response?.data || error.message);
-      throw new Error('ElevenLabs TTS failed');
+      // Log the actual error for debugging
+      const errorData = error.response?.data;
+      const errorMsg = typeof errorData === 'string' ? errorData : 
+        errorData?.detail?.message || errorData?.detail?.status || JSON.stringify(errorData) || error.message;
+      
+      logger.error('ElevenLabs TTS failed:', { status: error.response?.status, error: errorMsg });
+      throw new Error(`ElevenLabs TTS failed: ${errorMsg}`);
     }
   }
 
@@ -496,6 +507,14 @@ class TTSServiceClass {
   }
 
   /**
+   * Reset all key usage (useful for debugging or manual reset)
+   */
+  public resetAllKeyUsage(): void {
+    this.initializeKeyUsage();
+    logger.info('All ElevenLabs key usage has been reset');
+  }
+
+  /**
    * Get provider info with detailed status
    */
   public getProviderInfo(): { 
@@ -506,15 +525,20 @@ class TTSServiceClass {
   } {
     // Check ElevenLabs first (preferred for free tier)
     if (this.ELEVENLABS_KEYS.length > 0) {
+      // If keyUsage is empty, reinitialize it
+      if (this.keyUsage.size === 0) {
+        this.initializeKeyUsage();
+      }
+      
       const availableKeys = Array.from(this.keyUsage.values())
         .filter(u => !u.isExhausted && u.charactersUsed < this.ELEVENLABS_MONTHLY_LIMIT)
         .length;
       
       return { 
         provider: 'elevenlabs', 
-        available: availableKeys > 0,
+        available: availableKeys > 0 || this.keyUsage.size === 0, // If empty, assume available
         elevenLabsKeys: this.ELEVENLABS_KEYS.length,
-        elevenLabsAvailable: availableKeys,
+        elevenLabsAvailable: availableKeys || this.ELEVENLABS_KEYS.length,
       };
     }
     if (this.GOOGLE_CLOUD_KEY) {
