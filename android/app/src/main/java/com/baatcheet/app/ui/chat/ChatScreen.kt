@@ -35,6 +35,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -249,6 +251,11 @@ fun ChatScreen(
                             )
                         }
                     }
+                }
+                
+                // Image Generation Progress Placeholder (ChatGPT-style)
+                if (state.isGeneratingImage) {
+                    ImageGenerationPlaceholder()
                 }
                 
                 // Follow-up suggestions
@@ -2803,6 +2810,117 @@ private fun VoiceChatOverlay(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+// ============================================
+// Image Generation Placeholder (ChatGPT-style)
+// ============================================
+
+/**
+ * A loading placeholder shown while an image is being generated.
+ * Displays a gradient animated box with "Creating image..." text.
+ */
+@Composable
+private fun ImageGenerationPlaceholder() {
+    val infiniteTransition = rememberInfiniteTransition(label = "image_gen_animation")
+    
+    // Shimmer animation
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer"
+    )
+    
+    // Progress dots animation
+    val dotsOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dots"
+    )
+    
+    val dots = when (dotsOffset.toInt()) {
+        0 -> "."
+        1 -> ".."
+        else -> "..."
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        // Image placeholder with gradient
+        Box(
+            modifier = Modifier
+                .size(256.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFFF8E8FF), // Light purple
+                            Color(0xFFFFE8F0), // Light pink
+                            Color(0xFFFFF0E8), // Light orange
+                            Color(0xFFE8F4FF), // Light blue
+                        ),
+                        start = Offset(shimmerOffset * 500f, shimmerOffset * 500f),
+                        end = Offset((shimmerOffset + 0.5f) * 500f, (shimmerOffset + 0.5f) * 500f)
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Image icon
+                Icon(
+                    imageVector = Icons.Outlined.Image,
+                    contentDescription = null,
+                    tint = Color(0xFF9B59B6).copy(alpha = 0.6f),
+                    modifier = Modifier.size(48.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Creating image text
+                Text(
+                    text = "Creating image$dots",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF9B59B6)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Progress indicator
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = GreenAccent,
+                    trackColor = Color.White.copy(alpha = 0.5f)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Helpful text
+                Text(
+                    text = "This may take 30-60 seconds",
+                    fontSize = 12.sp,
+                    color = Color(0xFF9B59B6).copy(alpha = 0.7f)
+                )
             }
         }
     }

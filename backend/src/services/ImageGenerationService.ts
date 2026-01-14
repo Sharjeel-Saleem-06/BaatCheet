@@ -472,37 +472,28 @@ Return ONLY the enhanced prompt, nothing else:`;
 
       let imageBase64: string;
       let imageUrl: string;
+      let usedModel = modelConfig.name;
 
-      // Use different API call based on model type
-      if (modelKey === 'imagepro') {
-        // Use ImagePro Space (Gradio API format)
-        const spaceResult = await this.callImageProSpace(enhancedPrompt, negativePrompt, apiKey);
-        if (!spaceResult.success) {
-          throw new Error(spaceResult.error || 'ImagePro Space failed');
-        }
-        imageBase64 = spaceResult.imageBase64!;
-        imageUrl = spaceResult.imageUrl!;
-      } else {
-        // Use direct HuggingFace Inference API
+      // Helper function to call direct HuggingFace Inference API
+      const callDirectHuggingFace = async (model: ModelConfig): Promise<{ base64: string; url: string }> => {
         const requestBody: any = {
           inputs: enhancedPrompt,
         };
 
         // Add parameters for non-FLUX models
-        if (!modelKey.includes('flux')) {
+        if (!model.id.includes('flux')) {
           requestBody.parameters = {
             negative_prompt: negativePrompt,
             width,
             height,
-            num_inference_steps: options.steps || modelConfig.defaultSteps,
-            guidance_scale: options.guidanceScale || modelConfig.guidanceScale,
+            num_inference_steps: options.steps || model.defaultSteps,
+            guidance_scale: options.guidanceScale || model.guidanceScale,
             seed,
           };
         }
 
-        // Call HuggingFace API
         const response = await axios.post(
-          modelConfig.endpoint,
+          model.endpoint,
           requestBody,
           {
             headers: {
@@ -510,13 +501,45 @@ Return ONLY the enhanced prompt, nothing else:`;
               'Content-Type': 'application/json',
             },
             responseType: 'arraybuffer',
-            timeout: 180000, // 3 minutes timeout
+            timeout: 60000, // 60 seconds timeout
           }
         );
 
-        // Convert to base64
-        imageBase64 = Buffer.from(response.data).toString('base64');
-        imageUrl = `data:image/png;base64,${imageBase64}`;
+        const base64 = Buffer.from(response.data).toString('base64');
+        return { base64, url: `data:image/png;base64,${base64}` };
+      };
+
+      // Try ImagePro Space first, then fallback to direct HuggingFace
+      if (modelKey === 'imagepro') {
+        try {
+          // Use ImagePro Space (Gradio API format) with shorter timeout
+          const spaceResult = await this.callImageProSpace(enhancedPrompt, negativePrompt, apiKey);
+          if (spaceResult.success && spaceResult.imageBase64) {
+            imageBase64 = spaceResult.imageBase64;
+            imageUrl = spaceResult.imageUrl!;
+            usedModel = 'ImagePro Space';
+          } else {
+            throw new Error(spaceResult.error || 'ImagePro Space returned empty result');
+          }
+        } catch (spaceError: any) {
+          // Fallback to direct HuggingFace FLUX model
+          logger.warn('ImagePro Space failed, falling back to FLUX:', spaceError.message);
+          
+          const fluxModel = MODELS['flux-schnell'];
+          if (fluxModel) {
+            const result = await callDirectHuggingFace(fluxModel);
+            imageBase64 = result.base64;
+            imageUrl = result.url;
+            usedModel = 'FLUX Schnell (Fallback)';
+          } else {
+            throw new Error('Image generation failed: No fallback model available');
+          }
+        }
+      } else {
+        // Use direct HuggingFace Inference API
+        const result = await callDirectHuggingFace(modelConfig);
+        imageBase64 = result.base64;
+        imageUrl = result.url;
       }
 
       const generationTime = Date.now() - startTime;
@@ -537,7 +560,7 @@ Return ONLY the enhanced prompt, nothing else:`;
 
       logger.info('Image generation completed', {
         userId,
-        model: modelConfig.name,
+        model: usedModel,
         generationTime,
         seed,
       });
@@ -546,7 +569,7 @@ Return ONLY the enhanced prompt, nothing else:`;
         success: true,
         imageUrl,
         imageBase64,
-        model: modelConfig.name,
+        model: usedModel,
         originalPrompt: options.prompt,
         enhancedPrompt,
         seed,
@@ -797,7 +820,7 @@ Return ONLY a JSON array with exactly 3 objects:
         const callResponse = await axios.post(
           IMAGEPRO_SPACE.apiEndpoint,
           { data: [prompt] }, // ImagePro may only need the prompt
-          { headers, timeout: 120000 }
+          { headers, timeout: 30000 } // 30 second timeout - fallback faster
         );
         
         if (callResponse.data?.event_id) {
@@ -805,7 +828,7 @@ Return ONLY a JSON array with exactly 3 objects:
           const eventId = callResponse.data.event_id;
           logger.info(`Got event_id: ${eventId}, polling for result...`);
           
-          for (let i = 0; i < 90; i++) { // Up to 3 minutes of polling
+          for (let i = 0; i < 30; i++) { // Up to 60 seconds of polling (faster fallback)
             await new Promise(r => setTimeout(r, 2000));
             
             try {
@@ -872,7 +895,7 @@ Return ONLY a JSON array with exactly 3 objects:
               throw pollError;
             }
           }
-          throw new Error('Timeout waiting for image generation (3 minutes)');
+          throw new Error('Timeout waiting for ImagePro Space (60 seconds)');
         }
         throw new Error('No event_id returned from ImagePro Space');
       },
