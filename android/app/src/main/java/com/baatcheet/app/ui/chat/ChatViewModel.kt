@@ -697,6 +697,16 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Select AI mode by ID string
+     */
+    fun selectAIMode(modeId: String) {
+        val mode = _state.value.aiModes.find { it.id == modeId }
+        if (mode != null) {
+            selectAIMode(mode)
+        }
+    }
+    
+    /**
      * Toggle mode selector visibility
      */
     fun toggleModeSelector() {

@@ -36,10 +36,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.baatcheet.app.R
 import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.MessageRole
@@ -96,6 +100,9 @@ fun ChatScreen(
         }
     )
     
+    // Voice chat overlay state
+    var showVoiceChat by remember { mutableStateOf(false) }
+    
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
@@ -147,10 +154,13 @@ fun ChatScreen(
                 
                 // Content
                 if (state.messages.isEmpty()) {
-                    // Empty state
+                    // Empty state - ChatGPT style
                     EmptyStateContent(
                         onSuggestionClick = { suggestion ->
                             viewModel.sendMessage(suggestion)
+                        },
+                        onModeSelect = { mode ->
+                            viewModel.selectAIMode(mode)
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -241,8 +251,7 @@ fun ChatScreen(
                         }
                     },
                     onHeadphoneClick = {
-                        // TODO: Open voice chat mode
-                        android.widget.Toast.makeText(context, "Voice chat coming soon!", android.widget.Toast.LENGTH_SHORT).show()
+                        showVoiceChat = true
                     },
                     currentMode = state.currentAIMode,
                     promptAnalysis = state.promptAnalysis,
@@ -258,6 +267,27 @@ fun ChatScreen(
                             viewModel.selectAIMode(mode)
                         },
                         onDismiss = { viewModel.hideModeSelector() }
+                    )
+                }
+                
+                // Voice Chat Overlay
+                if (showVoiceChat) {
+                    VoiceChatOverlay(
+                        isListening = voiceState.isListening,
+                        audioLevel = voiceState.audioLevel,
+                        transcribedText = voiceState.transcribedText,
+                        onStartListening = voiceActions.startListening,
+                        onStopListening = voiceActions.stopListening,
+                        onSendMessage = { text ->
+                            if (text.isNotBlank()) {
+                                viewModel.sendMessage(text)
+                                showVoiceChat = false
+                            }
+                        },
+                        onDismiss = {
+                            voiceActions.stopListening()
+                            showVoiceChat = false
+                        }
                     )
                 }
             }
@@ -638,6 +668,7 @@ private fun ChatHeader(
 @Composable
 private fun EmptyStateContent(
     onSuggestionClick: (String) -> Unit,
+    onModeSelect: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -649,24 +680,140 @@ private fun EmptyStateContent(
     ) {
         Spacer(modifier = Modifier.weight(1f))
         
-        // App Logo
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "BaatCheet",
-            modifier = Modifier.size(48.dp)
+        // "What can I help with?" title - ChatGPT style
+        Text(
+            text = "What can I help with?",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = DarkText,
+            textAlign = TextAlign.Center
         )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Mode suggestion chips - First row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HomeModeChip(
+                icon = "🎨",
+                label = "Create image",
+                onClick = { onModeSelect("image-generation") }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            HomeModeChip(
+                icon = "💡",
+                label = "Make a plan",
+                onClick = { onSuggestionClick("Help me make a plan for ") }
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Mode suggestion chips - Second row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HomeModeChip(
+                icon = "📊",
+                label = "Analyze data",
+                onClick = { onModeSelect("data-analysis") }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            HomeModeChip(
+                icon = "💻",
+                label = "Code",
+                onClick = { onModeSelect("code") }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            HomeModeChip(
+                icon = "⋯",
+                label = "More",
+                onClick = { /* Show more options */ }
+            )
+        }
         
         Spacer(modifier = Modifier.weight(1f))
-        
-        // Suggestion chip - Single recommendation style
-        SuggestionChip(
-            title = "Design a database schema",
-            subtitle = "for an online merch store",
-            onClick = { onSuggestionClick("Design a database schema for an online merch store") }
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun HomeModeChip(
+    icon: String,
+    label: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        color = ChipBackground,
+        shape = RoundedCornerShape(20.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, ChipBorder)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = icon,
+                fontSize = 16.sp
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                color = DarkText,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+/**
+ * User message text that renders @tags in bold
+ */
+@Composable
+private fun UserMessageText(text: String) {
+    // Regex to find @tags (words starting with @)
+    val tagPattern = Regex("@\\w+")
+    
+    val annotatedString = buildAnnotatedString {
+        var lastIndex = 0
+        tagPattern.findAll(text).forEach { matchResult ->
+            // Append text before the tag
+            append(text.substring(lastIndex, matchResult.range.first))
+            
+            // Append the tag in bold with accent color
+            withStyle(SpanStyle(
+                fontWeight = FontWeight.Bold,
+                color = GreenAccent
+            )) {
+                append(matchResult.value)
+            }
+            
+            lastIndex = matchResult.range.last + 1
+        }
+        // Append remaining text
+        if (lastIndex < text.length) {
+            append(text.substring(lastIndex))
+        }
+    }
+    
+    Text(
+        text = annotatedString,
+        fontSize = 15.sp,
+        color = DarkText,
+        lineHeight = 22.sp
+    )
 }
 
 @Composable
@@ -777,11 +924,9 @@ private fun MessageBubble(
                                 lineHeight = 22f
                             )
                         } else {
-                            Text(
-                                text = message.content,
-                                fontSize = 15.sp,
-                                color = DarkText,
-                                lineHeight = 22.sp
+                            // User message with bold tags
+                            UserMessageText(
+                                text = message.content
                             )
                         }
                     }
@@ -1149,6 +1294,8 @@ private fun ChatInputBar(
     promptAnalysis: com.baatcheet.app.domain.model.PromptAnalysisResult? = null,
     onModeClick: () -> Unit = {}
 ) {
+    var showPlusMenu by remember { mutableStateOf(false) }
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = WhiteBackground,
@@ -1163,167 +1310,470 @@ private fun ChatInputBar(
                 }
             )
             
-            // File previews
-            FilePreviewRow(
+            // Image preview row with thumbnails
+            ImagePreviewRow(
                 files = uploadedFiles,
                 onRemove = onRemoveFile
             )
             
-            // Mode indicator chip (shows detected/selected mode)
-            if (currentMode != null || promptAnalysis != null) {
-                ModeIndicatorChip(
-                    currentMode = currentMode,
-                    promptAnalysis = promptAnalysis,
-                    onClick = onModeClick
-                )
-            }
-            
+            // Main input row - ChatGPT style
             Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // Left icons - Camera, Image, Folder
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onCameraClick,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_camera),
-                        contentDescription = "Camera",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(
-                    onClick = onImageClick,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_image),
-                        contentDescription = "Image",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(
-                    onClick = onFolderClick,
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_folder),
-                        contentDescription = "Folder",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            
-            // Text input - smaller
-            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(36.dp)
-                    .border(
-                        width = 1.dp,
-                        color = InputBorder,
-                        shape = RoundedCornerShape(18.dp)
-                    )
-                    .background(WhiteBackground, RoundedCornerShape(18.dp))
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = "Message",
-                        color = LightGrayText,
-                        fontSize = 14.sp
-                    )
-                }
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(
-                        color = DarkText,
-                        fontSize = 14.sp
-                    ),
-                    cursorBrush = SolidColor(GreenAccent),
-                    maxLines = 1,
-                    singleLine = true
-                )
-            }
-            
-            // Mic button - shows listening state
-            IconButton(
-                onClick = onMicClick,
-                modifier = Modifier.size(28.dp)
-            ) {
-                if (isListening) {
-                    // Animated listening indicator
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(
-                                color = GreenAccent.copy(alpha = 0.2f + audioLevel * 0.8f),
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp + (audioLevel * 8).dp)
-                                .background(GreenAccent, CircleShape)
-                        )
-                    }
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_mic),
-                        contentDescription = "Mic",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            
-            // Send / Headphones button
-            IconButton(
-                onClick = {
-                    if (value.isNotBlank()) {
-                        onSend()
-                    } else {
-                        onHeadphoneClick()
-                    }
-                },
-                enabled = !isLoading,
-                modifier = Modifier.size(32.dp)
-            ) {
-                if (value.isNotBlank()) {
+                // Plus button - opens action sheet
+                IconButton(
+                    onClick = { showPlusMenu = true },
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
-                            .background(GreenAccent, CircleShape),
+                            .background(ChipBackground, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "↑",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "More options",
+                            tint = DarkText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.headphones),
-                        contentDescription = "Voice Chat",
-                        modifier = Modifier.size(24.dp)
+                }
+                
+                // Text input - rounded pill style
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(40.dp)
+                        .border(
+                            width = 1.dp,
+                            color = InputBorder,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .background(WhiteBackground, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = "Ask BaatCheet",
+                            color = LightGrayText,
+                            fontSize = 15.sp
+                        )
+                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(
+                            color = DarkText,
+                            fontSize = 15.sp
+                        ),
+                        cursorBrush = SolidColor(GreenAccent),
+                        maxLines = 1,
+                        singleLine = true
                     )
+                }
+                
+                // Mic button
+                IconButton(
+                    onClick = onMicClick,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (isListening) {
+                        // Animated listening indicator with waveform
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    color = GreenAccent.copy(alpha = 0.2f + audioLevel * 0.8f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Waveform bars animation
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                repeat(3) { i ->
+                                    Box(
+                                        modifier = Modifier
+                                            .width(3.dp)
+                                            .height((8.dp + (audioLevel * 12 * (i + 1) / 3).dp))
+                                            .background(GreenAccent, RoundedCornerShape(1.5.dp))
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.Mic,
+                            contentDescription = "Voice input",
+                            tint = GrayText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                // Send or Voice chat button
+                if (value.isNotBlank()) {
+                    IconButton(
+                        onClick = onSend,
+                        enabled = !isLoading,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    if (isLoading) GrayText else GreenAccent,
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = "Send",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Voice chat button with waveform icon
+                    IconButton(
+                        onClick = onHeadphoneClick,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(DarkText, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Waveform icon
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                listOf(6, 12, 8, 14, 6).forEach { height ->
+                                    Box(
+                                        modifier = Modifier
+                                            .width(2.dp)
+                                            .height(height.dp)
+                                            .background(Color.White, RoundedCornerShape(1.dp))
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+    
+    // ChatGPT-style Plus menu bottom sheet
+    if (showPlusMenu) {
+        PlusMenuBottomSheet(
+            onDismiss = { showPlusMenu = false },
+            onCameraClick = {
+                showPlusMenu = false
+                onCameraClick()
+            },
+            onPhotosClick = {
+                showPlusMenu = false
+                onImageClick()
+            },
+            onFilesClick = {
+                showPlusMenu = false
+                onFolderClick()
+            },
+            onModeSelect = { mode ->
+                showPlusMenu = false
+                // Handle mode selection
+            }
+        )
+    }
+}
+
+/**
+ * ChatGPT-style Plus menu bottom sheet
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PlusMenuBottomSheet(
+    onDismiss: () -> Unit,
+    onCameraClick: () -> Unit,
+    onPhotosClick: () -> Unit,
+    onFilesClick: () -> Unit,
+    onModeSelect: (String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = WhiteBackground
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            // Media options - Camera, Photos, Files
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                MediaOptionButton(
+                    icon = Icons.Outlined.CameraAlt,
+                    label = "Camera",
+                    onClick = onCameraClick
+                )
+                MediaOptionButton(
+                    icon = Icons.Outlined.Image,
+                    label = "Photos",
+                    onClick = onPhotosClick
+                )
+                MediaOptionButton(
+                    icon = Icons.Outlined.AttachFile,
+                    label = "Files",
+                    onClick = onFilesClick
+                )
+            }
+            
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = ChipBorder
+            )
+            
+            // AI Mode options
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                ModeMenuItem(
+                    icon = "🎨",
+                    title = "Create image",
+                    subtitle = "Visualize anything",
+                    onClick = { onModeSelect("image-generation") }
+                )
+                ModeMenuItem(
+                    icon = "💡",
+                    title = "Thinking",
+                    subtitle = "Think longer for better answers",
+                    onClick = { onModeSelect("research") }
+                )
+                ModeMenuItem(
+                    icon = "🔍",
+                    title = "Deep research",
+                    subtitle = "Get a detailed report",
+                    onClick = { onModeSelect("research") }
+                )
+                ModeMenuItem(
+                    icon = "🌐",
+                    title = "Web search",
+                    subtitle = "Find real-time news and info",
+                    onClick = { onModeSelect("web-search") }
+                )
+                ModeMenuItem(
+                    icon = "📚",
+                    title = "Study and learn",
+                    subtitle = "Learn a new concept",
+                    onClick = { onModeSelect("tutor") }
+                )
+                ModeMenuItem(
+                    icon = "📎",
+                    title = "Add files",
+                    subtitle = "Analyze or summarize",
+                    onClick = onFilesClick
+                )
+                ModeMenuItem(
+                    icon = "💻",
+                    title = "Code",
+                    subtitle = "Write and debug code",
+                    onClick = { onModeSelect("code") }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaOptionButton(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .background(ChipBackground, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = DarkText,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = DarkText
+        )
+    }
+}
+
+@Composable
+private fun ModeMenuItem(
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = icon,
+            fontSize = 24.sp,
+            modifier = Modifier.padding(end = 16.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = DarkText
+            )
+            Text(
+                text = subtitle,
+                fontSize = 13.sp,
+                color = GrayText
+            )
+        }
+    }
+}
+
+/**
+ * Image preview row with actual thumbnails
+ */
+@Composable
+private fun ImagePreviewRow(
+    files: List<UploadedFileState>,
+    onRemove: (String) -> Unit
+) {
+    if (files.isEmpty()) return
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        files.forEach { file ->
+            Box(
+                modifier = Modifier.size(72.dp)
+            ) {
+                // Image thumbnail
+                if (file.mimeType.startsWith("image/")) {
+                    androidx.compose.foundation.Image(
+                        painter = rememberAsyncImagePainter(file.uri),
+                        contentDescription = file.filename,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ChipBackground),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    // File icon for non-images
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ChipBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = file.filename,
+                            tint = GrayText,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+                
+                // Processing indicator
+                if (file.status == FileUploadStatus.UPLOADING || file.status == FileUploadStatus.PROCESSING) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+                
+                // Remove button
+                IconButton(
+                    onClick = { onRemove(file.id) },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(24.dp)
+                        .offset(x = 4.dp, y = (-4).dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove",
+                            tint = Color.White,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -1561,3 +2011,191 @@ private fun ModeSelector(
     }
 }
 
+/**
+ * Voice Chat Overlay - Full screen voice input like ChatGPT
+ */
+@Composable
+private fun VoiceChatOverlay(
+    isListening: Boolean,
+    audioLevel: Float,
+    transcribedText: String,
+    onStartListening: () -> Unit,
+    onStopListening: () -> Unit,
+    onSendMessage: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Auto-start listening when overlay opens
+    LaunchedEffect(Unit) {
+        onStartListening()
+    }
+    
+    // Animated waveform
+    val infiniteTransition = rememberInfiniteTransition(label = "waveform")
+    val waveHeights = List(7) { index ->
+        infiniteTransition.animateFloat(
+            initialValue = 0.3f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 400 + (index * 100),
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Reverse,
+                initialStartOffset = StartOffset(index * 50)
+            ),
+            label = "wave\$index"
+        )
+    }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.95f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* Prevent clicks from passing through */ }
+    ) {
+        // Close button
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .statusBarsPadding()
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Close",
+                tint = Color.White,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Waveform animation
+            Row(
+                modifier = Modifier.height(80.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                waveHeights.forEachIndexed { index, heightAnim ->
+                    val height = if (isListening) {
+                        (20 + (audioLevel * 60 * heightAnim.value)).dp
+                    } else {
+                        20.dp
+                    }
+                    Box(
+                        modifier = Modifier
+                            .width(6.dp)
+                            .height(height)
+                            .background(
+                                color = if (isListening) GreenAccent else GrayText,
+                                shape = RoundedCornerShape(3.dp)
+                            )
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Status text
+            Text(
+                text = if (isListening) "Listening..." else "Tap to speak",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Transcribed text
+            if (transcribedText.isNotEmpty()) {
+                Text(
+                    text = transcribedText,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // Action buttons
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(32.dp)
+            ) {
+                // Cancel button
+                Surface(
+                    onClick = onDismiss,
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.1f),
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+                
+                // Mic button
+                Surface(
+                    onClick = {
+                        if (isListening) {
+                            onStopListening()
+                        } else {
+                            onStartListening()
+                        }
+                    },
+                    shape = CircleShape,
+                    color = if (isListening) GreenAccent else Color.White,
+                    modifier = Modifier.size(80.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            if (isListening) Icons.Filled.Stop else Icons.Filled.Mic,
+                            contentDescription = if (isListening) "Stop" else "Speak",
+                            tint = if (isListening) Color.White else DarkText,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
+                
+                // Send button
+                Surface(
+                    onClick = { onSendMessage(transcribedText) },
+                    shape = CircleShape,
+                    color = if (transcribedText.isNotEmpty()) GreenAccent else Color.White.copy(alpha = 0.1f),
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Send,
+                            contentDescription = "Send",
+                            tint = if (transcribedText.isNotEmpty()) Color.White else GrayText,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
