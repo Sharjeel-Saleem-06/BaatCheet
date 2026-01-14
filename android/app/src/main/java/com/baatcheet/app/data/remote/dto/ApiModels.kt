@@ -28,7 +28,9 @@ data class ChatRequest(
     val model: String? = null,
     val systemPrompt: String? = null,
     val stream: Boolean = false,
-    val imageIds: List<String>? = null
+    val imageIds: List<String>? = null,
+    val maxTokens: Int? = null, // Limit response length (useful for voice chat)
+    val temperature: Float? = null
 )
 
 data class ChatResponse(

@@ -268,8 +268,11 @@ class VoiceChatViewModel @Inject constructor(
         _state.update { it.copy(selectedVoice = voice) }
     }
     
+    // Cache for voice previews to avoid regenerating TTS
+    private val voicePreviewCache = mutableMapOf<String, ByteArray>()
+    
     /**
-     * Play voice preview
+     * Play voice preview - Uses cached audio when available to save API calls
      */
     fun playVoicePreview(voice: AIVoice) {
         viewModelScope.launch {
@@ -285,12 +288,21 @@ class VoiceChatViewModel @Inject constructor(
             _state.update { it.copy(isPlayingPreview = true, playingVoiceId = voice.id) }
             
             try {
-                // Generate sample speech
-                val sampleText = "Hello! I'm ${voice.name}. How can I help you today?"
+                // Check cache first to avoid unnecessary API calls
+                val cachedAudio = voicePreviewCache[voice.id]
+                if (cachedAudio != null) {
+                    playAudio(cachedAudio)
+                    return@launch
+                }
+                
+                // Generate sample speech - keep it SHORT to minimize tokens/costs
+                val sampleText = "Hi, I'm ${voice.name}!"
                 val result = chatRepository.generateSpeech(sampleText, voice.id)
                 
                 when (result) {
                     is com.baatcheet.app.data.repository.ApiResult.Success -> {
+                        // Cache the audio for future plays
+                        voicePreviewCache[voice.id] = result.data
                         playAudio(result.data)
                     }
                     is com.baatcheet.app.data.repository.ApiResult.Error -> {
@@ -365,16 +377,24 @@ class VoiceChatViewModel @Inject constructor(
     
     /**
      * Send voice message to AI and get response
+     * Uses optimized settings for voice chat:
+     * - Shorter max tokens (voice responses should be concise)
+     * - Voice-specific system prompt
      */
     private fun sendVoiceMessage(text: String) {
         viewModelScope.launch {
             _state.update { it.copy(isProcessing = true) }
             
             try {
-                // Send message to chat API
-                val result = chatRepository.sendMessage(
+                // Send message with voice-optimized settings
+                // Voice responses should be SHORT and CONVERSATIONAL to:
+                // 1. Reduce token usage
+                // 2. Make TTS faster
+                // 3. Feel more natural in conversation
+                val result = chatRepository.sendVoiceMessage(
                     message = text,
-                    conversationId = _state.value.conversationId
+                    conversationId = _state.value.conversationId,
+                    maxTokens = 150 // Limit response to ~100-150 words for natural conversation
                 )
                 
                 when (result) {

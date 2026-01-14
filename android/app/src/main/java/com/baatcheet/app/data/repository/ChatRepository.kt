@@ -76,6 +76,51 @@ class ChatRepository @Inject constructor(
     }
     
     /**
+     * Send voice message with optimized settings for voice chat
+     * - Shorter maxTokens for concise responses (saves tokens & TTS costs)
+     * - Voice-optimized system prompt for natural conversation
+     */
+    suspend fun sendVoiceMessage(
+        message: String,
+        conversationId: String? = null,
+        maxTokens: Int = 150 // Voice responses should be short & conversational
+    ): ApiResult<ChatMessage> {
+        return try {
+            val request = ChatRequest(
+                message = message,
+                conversationId = conversationId,
+                model = null, // Use default model
+                stream = false,
+                maxTokens = maxTokens,
+                // Add voice-specific system prompt instruction
+                systemPrompt = "You are in a voice conversation. Keep responses SHORT, NATURAL, and CONVERSATIONAL. Limit to 1-2 sentences when possible. Avoid lists, code, and long explanations - this is a spoken chat."
+            )
+            
+            val response = api.sendMessage(request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null && data.message?.content != null) {
+                    ApiResult.Success(
+                        ChatMessage(
+                            id = System.currentTimeMillis().toString(),
+                            content = data.message.content,
+                            role = MessageRole.ASSISTANT,
+                            conversationId = data.conversationId
+                        )
+                    )
+                } else {
+                    ApiResult.Error("No response data")
+                }
+            } else {
+                ApiResult.Error(response.body()?.error ?: "Failed to send message", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
      * Regenerate last AI response
      */
     suspend fun regenerateResponse(conversationId: String): ApiResult<ChatMessage> {
