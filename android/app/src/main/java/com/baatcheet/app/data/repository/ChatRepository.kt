@@ -1024,9 +1024,7 @@ class ChatRepository @Inject constructor(
                         id = dto.id,
                         name = dto.name,
                         description = dto.description,
-                        conversationCount = dto.conversationCount ?: 0,
-                        createdAt = null,
-                        updatedAt = null
+                        conversationCount = dto.conversationCount ?: 0
                     )
                 } ?: emptyList()
                 ApiResult.Success(projects)
