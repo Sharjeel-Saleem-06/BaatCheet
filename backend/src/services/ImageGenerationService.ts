@@ -104,7 +104,32 @@ interface ModelConfig {
 // Model Configurations
 // ============================================
 
+// ============================================
+// ImagePro Space Configuration (Primary)
+// Using user's own HuggingFace Space for reliable image generation
+// ============================================
+
+const IMAGEPRO_SPACE = {
+  url: 'https://sharry121-imagepro.hf.space',
+  apiEndpoint: 'https://sharry121-imagepro.hf.space/api/predict',
+  gradioEndpoint: 'https://sharry121-imagepro.hf.space/call/predict',
+  runEndpoint: 'https://sharry121-imagepro.hf.space/run/predict',
+};
+
 const MODELS: Record<string, ModelConfig> = {
+  // Primary: Use ImagePro Space (most reliable)
+  'imagepro': {
+    id: 'sharry121/ImagePro',
+    name: 'ImagePro (Space)',
+    endpoint: IMAGEPRO_SPACE.apiEndpoint,
+    maxWidth: 1024,
+    maxHeight: 1024,
+    defaultSteps: 25,
+    guidanceScale: 7.5,
+    quality: 'excellent',
+    speed: 'medium',
+    dailyLimit: 1000,
+  },
   'flux-schnell': {
     id: 'black-forest-labs/FLUX.1-schnell',
     name: 'FLUX Schnell',
@@ -392,9 +417,9 @@ Return ONLY the enhanced prompt, nothing else:`;
       };
     }
 
-    // Select model
-    const modelKey = options.model || 'stable-diffusion-xl';
-    const modelConfig = MODELS[modelKey] || MODELS['stable-diffusion-xl'];
+    // Select model - Use ImagePro Space as primary for reliability
+    const modelKey = options.model || 'imagepro';
+    const modelConfig = MODELS[modelKey] || MODELS['imagepro'];
 
     // Enhance prompt if requested (default: true)
     let enhancedPrompt = options.prompt;
@@ -441,42 +466,57 @@ Return ONLY the enhanced prompt, nothing else:`;
         model: modelConfig.name,
         promptLength: enhancedPrompt.length,
         dimensions: `${width}x${height}`,
+        isSpaceMode: modelKey === 'imagepro',
       });
 
-      // Prepare request parameters based on model
-      const requestBody: any = {
-        inputs: enhancedPrompt,
-      };
+      let imageBase64: string;
+      let imageUrl: string;
 
-      // Add parameters for non-FLUX models
-      if (!modelKey.includes('flux')) {
-        requestBody.parameters = {
-          negative_prompt: negativePrompt,
-          width,
-          height,
-          num_inference_steps: options.steps || modelConfig.defaultSteps,
-          guidance_scale: options.guidanceScale || modelConfig.guidanceScale,
-          seed,
-        };
-      }
-
-      // Call HuggingFace API
-      const response = await axios.post(
-        modelConfig.endpoint,
-        requestBody,
-        {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          responseType: 'arraybuffer',
-          timeout: 180000, // 3 minutes timeout
+      // Use different API call based on model type
+      if (modelKey === 'imagepro') {
+        // Use ImagePro Space (Gradio API format)
+        const spaceResult = await this.callImageProSpace(enhancedPrompt, negativePrompt, apiKey);
+        if (!spaceResult.success) {
+          throw new Error(spaceResult.error || 'ImagePro Space failed');
         }
-      );
+        imageBase64 = spaceResult.imageBase64!;
+        imageUrl = spaceResult.imageUrl!;
+      } else {
+        // Use direct HuggingFace Inference API
+        const requestBody: any = {
+          inputs: enhancedPrompt,
+        };
 
-      // Convert to base64
-      const imageBase64 = Buffer.from(response.data).toString('base64');
-      const imageUrl = `data:image/png;base64,${imageBase64}`;
+        // Add parameters for non-FLUX models
+        if (!modelKey.includes('flux')) {
+          requestBody.parameters = {
+            negative_prompt: negativePrompt,
+            width,
+            height,
+            num_inference_steps: options.steps || modelConfig.defaultSteps,
+            guidance_scale: options.guidanceScale || modelConfig.guidanceScale,
+            seed,
+          };
+        }
+
+        // Call HuggingFace API
+        const response = await axios.post(
+          modelConfig.endpoint,
+          requestBody,
+          {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            responseType: 'arraybuffer',
+            timeout: 180000, // 3 minutes timeout
+          }
+        );
+
+        // Convert to base64
+        imageBase64 = Buffer.from(response.data).toString('base64');
+        imageUrl = `data:image/png;base64,${imageBase64}`;
+      }
 
       const generationTime = Date.now() - startTime;
 
@@ -732,6 +772,133 @@ Return ONLY a JSON array with exactly 3 objects:
         },
       ];
     }
+  }
+
+  /**
+   * Call ImagePro Space for image generation (Gradio API)
+   * Supports multiple API formats for compatibility
+   */
+  private async callImageProSpace(
+    prompt: string,
+    negativePrompt: string,
+    apiKey: string
+  ): Promise<{ success: boolean; imageUrl?: string; imageBase64?: string; error?: string }> {
+    const headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    };
+
+    // Try multiple Gradio API formats for compatibility
+    const apiMethods = [
+      // Method 1: Gradio 4.x /call endpoint
+      async () => {
+        const callResponse = await axios.post(
+          `${IMAGEPRO_SPACE.url}/call/predict`,
+          { data: [prompt, negativePrompt || ''] },
+          { headers, timeout: 120000 }
+        );
+        
+        if (callResponse.data?.event_id) {
+          // Poll for result
+          const eventId = callResponse.data.event_id;
+          for (let i = 0; i < 60; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            const resultResponse = await axios.get(
+              `${IMAGEPRO_SPACE.url}/call/predict/${eventId}`,
+              { headers, timeout: 30000 }
+            );
+            
+            if (resultResponse.data?.includes('data:')) {
+              // Parse SSE format
+              const lines = resultResponse.data.split('\n');
+              for (const line of lines) {
+                if (line.startsWith('data:')) {
+                  const jsonData = JSON.parse(line.substring(5));
+                  if (jsonData?.[0]?.url) {
+                    return { success: true, imageUrl: jsonData[0].url };
+                  }
+                  if (jsonData?.[0]?.data) {
+                    return { success: true, imageBase64: jsonData[0].data, imageUrl: `data:image/png;base64,${jsonData[0].data}` };
+                  }
+                }
+              }
+            }
+          }
+          throw new Error('Timeout waiting for image generation');
+        }
+        throw new Error('No event_id returned');
+      },
+      
+      // Method 2: Gradio 3.x /run/predict endpoint
+      async () => {
+        const response = await axios.post(
+          `${IMAGEPRO_SPACE.url}/run/predict`,
+          { data: [prompt, negativePrompt || ''] },
+          { headers, timeout: 180000 }
+        );
+        
+        if (response.data?.data?.[0]) {
+          const result = response.data.data[0];
+          if (typeof result === 'string' && result.startsWith('data:')) {
+            const base64 = result.split(',')[1];
+            return { success: true, imageBase64: base64, imageUrl: result };
+          }
+          if (result?.url) {
+            // Download image from URL
+            const imgResponse = await axios.get(result.url, { responseType: 'arraybuffer' });
+            const base64 = Buffer.from(imgResponse.data).toString('base64');
+            return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+          }
+          if (result?.data) {
+            return { success: true, imageBase64: result.data, imageUrl: `data:image/png;base64,${result.data}` };
+          }
+        }
+        throw new Error('Invalid response format from /run/predict');
+      },
+      
+      // Method 3: Legacy /api/predict endpoint
+      async () => {
+        const response = await axios.post(
+          `${IMAGEPRO_SPACE.url}/api/predict`,
+          { data: [prompt, negativePrompt || ''] },
+          { headers, timeout: 180000 }
+        );
+        
+        if (response.data?.data?.[0]) {
+          const result = response.data.data[0];
+          if (typeof result === 'string') {
+            if (result.startsWith('data:')) {
+              const base64 = result.split(',')[1];
+              return { success: true, imageBase64: base64, imageUrl: result };
+            }
+            // URL format
+            const imgResponse = await axios.get(result, { responseType: 'arraybuffer' });
+            const base64 = Buffer.from(imgResponse.data).toString('base64');
+            return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+          }
+        }
+        throw new Error('Invalid response format from /api/predict');
+      },
+    ];
+
+    // Try each method until one succeeds
+    for (let i = 0; i < apiMethods.length; i++) {
+      try {
+        logger.info(`Trying ImagePro Space API method ${i + 1}...`);
+        const result = await apiMethods[i]();
+        if (result.success) {
+          logger.info(`ImagePro Space succeeded with method ${i + 1}`);
+          return result;
+        }
+      } catch (error: any) {
+        logger.warn(`ImagePro Space method ${i + 1} failed: ${error.message}`);
+        if (i === apiMethods.length - 1) {
+          return { success: false, error: error.message };
+        }
+      }
+    }
+
+    return { success: false, error: 'All ImagePro Space API methods failed' };
   }
 
   /**
