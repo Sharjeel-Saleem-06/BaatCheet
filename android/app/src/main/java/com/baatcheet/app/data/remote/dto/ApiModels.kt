@@ -67,6 +67,16 @@ data class RegenerateRequest(
     val temperature: Double? = null
 )
 
+/**
+ * Feedback request for like/dislike
+ */
+data class FeedbackRequest(
+    val conversationId: String,
+    val messageId: String,
+    val isPositive: Boolean,
+    val feedbackType: String // "like" or "dislike"
+)
+
 data class ModelsResponse(
     val success: Boolean,
     val data: ModelsData?

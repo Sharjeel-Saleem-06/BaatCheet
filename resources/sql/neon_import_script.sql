@@ -1,0 +1,34 @@
+-- ============================================
+-- BaatCheet Neon Database Import Script
+-- ============================================
+-- Connection: postgresql://neondb_owner:npg_MK4Jr9XSwAvo@ep-gentle-glade-a8imtmfh.eastus2.azure.neon.tech/neondb?sslmode=require
+-- 
+-- USAGE:
+-- 1. First run Prisma to create schema:
+--    cd backend && DATABASE_URL='postgresql://...' npx prisma db push
+--
+-- 2. Then run this script:
+--    psql 'postgresql://neondb_owner:npg_MK4Jr9XSwAvo@ep-gentle-glade-a8imtmfh.eastus2.azure.neon.tech/neondb?sslmode=require' -f neon_import_script.sql
+-- ============================================
+
+-- Users
+INSERT INTO users (id, clerk_id, email, username, first_name, last_name, avatar, role, preferences, tier, is_active, is_banned, ban_reason, last_login_at, login_count, created_at, updated_at) VALUES 
+('2821af5c-90ab-458c-9d94-85eed55e90c3', 'user_386Ce3GTsToYkZzGm71VBw6LVP0', 'onseason10@gmail.com', 'sharry121', 'Muhammad', 'Sharjeel', 'https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18zODRLTFhSMHMwWlczYW9XVEdYSU1lWDhJaG0iLCJyaWQiOiJ1c2VyXzM4NkNlM0dUc1RvWWtaekdtNzFWQnc2TFZQMCIsImluaXRpYWxzIjoiTVMifQ', 'user', '{"theme": "dark", "language": "en", "defaultModel": "llama-3.3-70b-versatile"}', 'free', true, false, NULL, '2026-01-13 07:54:57.103', 636, '2026-01-11 05:52:09.913', '2026-01-13 07:54:57.104')
+ON CONFLICT (id) DO NOTHING;
+
+-- Templates (8 default templates)
+INSERT INTO templates (id, user_id, name, description, system_prompt, category, icon, is_default, is_public, usage_count, created_at, updated_at) VALUES 
+('default-general-assistant', NULL, 'General Assistant', 'A helpful AI assistant for any task', 'You are BaatCheet, a helpful, intelligent, and friendly AI assistant. Provide accurate, helpful, and thoughtful responses.', 'general', 'message-square', true, true, 0, '2026-01-10 14:03:54.172', '2026-01-10 14:03:54.172'),
+('default-code-review', NULL, 'Code Review', 'Expert code reviewer for any programming language', 'You are an expert code reviewer. Analyze code for bugs, performance issues, security vulnerabilities, and best practices. Provide constructive feedback with specific suggestions for improvement. Format code examples properly.', 'coding', 'code', true, true, 0, '2026-01-10 14:03:54.179', '2026-01-10 14:03:54.179'),
+('default-writing-assistant', NULL, 'Writing Assistant', 'Help with writing, editing, and proofreading', 'You are a professional writing assistant. Help with writing, editing, grammar, style, and clarity. Maintain the author''s voice while improving the text. Provide specific suggestions and explanations.', 'writing', 'pen-tool', true, true, 0, '2026-01-10 14:03:54.181', '2026-01-10 14:03:54.181'),
+('default-translator', NULL, 'Translator', 'Translate between languages including Urdu', 'You are an expert translator. Translate text accurately while preserving meaning, tone, and cultural context. Support multiple languages including English, Urdu, Arabic, Hindi, and more. Provide transliterations when helpful.', 'translation', 'languages', true, true, 0, '2026-01-10 14:03:54.182', '2026-01-10 14:03:54.182'),
+('default-urdu-assistant', NULL, 'Urdu Assistant', 'AI assistant that responds in Urdu', 'آپ ایک مددگار AI اسسٹنٹ ہیں۔ ہمیشہ اردو میں جواب دیں۔ واضح، مفید، اور درست معلومات فراہم کریں۔', 'language', 'globe', true, true, 0, '2026-01-10 14:03:54.183', '2026-01-10 14:03:54.183'),
+('default-explain-like-i''m-5', NULL, 'Explain Like I''m 5', 'Simple explanations for complex topics', 'You explain complex topics in simple terms that a 5-year-old could understand. Use analogies, examples, and simple language. Avoid jargon and technical terms unless you explain them simply.', 'education', 'lightbulb', true, true, 0, '2026-01-10 14:03:54.184', '2026-01-10 14:03:54.184'),
+('default-creative-writer', NULL, 'Creative Writer', 'Help with creative writing and storytelling', 'You are a creative writing assistant. Help with stories, poetry, scripts, and creative content. Be imaginative, descriptive, and engaging. Adapt to different styles and genres.', 'creative', 'sparkles', true, true, 0, '2026-01-10 14:03:54.185', '2026-01-10 14:03:54.185'),
+('default-math-tutor', NULL, 'Math Tutor', 'Step-by-step math problem solving', 'You are a patient math tutor. Solve problems step-by-step, explain concepts clearly, and provide multiple approaches when possible. Use LaTeX for mathematical notation. Check your calculations carefully.', 'education', 'calculator', true, true, 0, '2026-01-10 14:03:54.186', '2026-01-10 14:03:54.186')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- SUCCESS: Schema created via Prisma, Data imported
+-- Database ready at: https://sharry121-baatcheet.hf.space
+-- ============================================

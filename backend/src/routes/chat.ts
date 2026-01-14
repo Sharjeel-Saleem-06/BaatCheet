@@ -841,4 +841,142 @@ router.post('/suggest', clerkAuth, async (req: Request, res: Response): Promise<
   }
 });
 
+// ============================================
+// Feedback for Auto-Learning
+// ============================================
+
+/**
+ * POST /api/v1/chat/feedback
+ * Submit feedback for a message (like/dislike) to improve AI responses
+ */
+router.post('/feedback', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { conversationId, messageId, isPositive, feedbackType } = req.body;
+    const userId = req.user!.id;
+    const { prisma } = await import('../config/database.js');
+
+    if (!conversationId || !messageId) {
+      res.status(400).json({
+        success: false,
+        error: 'Missing required fields: conversationId and messageId',
+      });
+      return;
+    }
+
+    // Verify conversation belongs to user
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, userId },
+    });
+
+    if (!conversation) {
+      res.status(404).json({
+        success: false,
+        error: 'Conversation not found',
+      });
+      return;
+    }
+
+    // Store feedback for future learning
+    // This data can be used to:
+    // 1. Fine-tune model selection
+    // 2. Adjust response formatting preferences
+    // 3. Improve prompt templates
+    logger.info('Feedback received', {
+      userId,
+      conversationId,
+      messageId,
+      isPositive,
+      feedbackType,
+    });
+
+    // In a production system, you would store this in a feedback table
+    // For now, we just log it
+    // await prisma.messageFeedback.create({
+    //   data: {
+    //     messageId,
+    //     conversationId,
+    //     userId,
+    //     isPositive,
+    //     feedbackType,
+    //   },
+    // });
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Feedback received. Thank you for helping us improve!',
+      },
+    });
+  } catch (error) {
+    logger.error('Feedback submission error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to submit feedback',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/chat/share
+ * Create a shareable link for a conversation
+ */
+router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { conversationId } = req.body;
+    const userId = req.user!.id;
+    const { prisma } = await import('../config/database.js');
+
+    if (!conversationId) {
+      res.status(400).json({
+        success: false,
+        error: 'Missing conversationId',
+      });
+      return;
+    }
+
+    // Verify conversation belongs to user
+    const conversation = await prisma.conversation.findFirst({
+      where: { id: conversationId, userId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          take: 50, // Limit messages in shared view
+        },
+      },
+    });
+
+    if (!conversation) {
+      res.status(404).json({
+        success: false,
+        error: 'Conversation not found',
+      });
+      return;
+    }
+
+    // Generate share token (in production, use crypto)
+    const shareToken = Buffer.from(`${conversationId}-${Date.now()}`).toString('base64url');
+
+    // In production, you'd store this in a shares table
+    // For now, return a mock link
+    const shareLink = `https://baatcheet.app/share/${shareToken}`;
+
+    logger.info('Chat shared', { userId, conversationId, shareToken });
+
+    res.json({
+      success: true,
+      data: {
+        shareLink,
+        shareToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      },
+    });
+  } catch (error) {
+    logger.error('Share conversation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to share conversation',
+    });
+  }
+});
+
 export default router;

@@ -92,12 +92,32 @@ class TTSServiceClass {
    * Load ElevenLabs API keys from environment
    */
   private loadElevenLabsKeys(): void {
-    // Support numbered keys: ELEVENLABS_API_KEY_1, ELEVENLABS_API_KEY_2, etc.
+    // Support multiple naming conventions for flexibility
+    const keyPatterns = [
+      'ELEVENLABS_API_KEY_',    // Standard: ELEVENLABS_API_KEY_1
+      'ElevenLabs_API_',        // Alt: ElevenLabs_API_1
+      'ELEVENLABS_API_',        // Alt: ELEVENLABS_API_1
+      'ELEVEN_LABS_KEY_',       // Alt: ELEVEN_LABS_KEY_1
+    ];
+    
+    // Debug: Log all environment variables that might contain API keys
+    const allEnvKeys = Object.keys(process.env).filter(k => 
+      k.toLowerCase().includes('eleven') || k.toLowerCase().includes('api')
+    );
+    logger.info(`Found ${allEnvKeys.length} potential API env vars: ${allEnvKeys.join(', ')}`);
+    
     for (let i = 1; i <= 10; i++) {
-      const key = process.env[`ELEVENLABS_API_KEY_${i}`];
-      if (key && key.startsWith('sk_')) {
-        this.ELEVENLABS_KEYS.push(key);
-        logger.info(`ElevenLabs key ${i} loaded (${key.substring(0, 10)}...)`);
+      for (const pattern of keyPatterns) {
+        const envKey = `${pattern}${i}`;
+        const key = process.env[envKey];
+        if (key) {
+          logger.info(`Found env ${envKey}: ${key.substring(0, 5)}...${key.substring(key.length - 3)}`);
+        }
+        if (key && key.startsWith('sk_') && !this.ELEVENLABS_KEYS.includes(key)) {
+          this.ELEVENLABS_KEYS.push(key);
+          logger.info(`ElevenLabs key ${i} loaded from ${envKey} (${key.substring(0, 10)}...)`);
+          break; // Found key for this index, move to next
+        }
       }
     }
     
@@ -111,7 +131,10 @@ class TTSServiceClass {
     
     // If no keys loaded, log environment variable check (for debugging)
     if (this.ELEVENLABS_KEYS.length === 0) {
-      logger.warn('No ElevenLabs API keys found. Check that ELEVENLABS_API_KEY_1 etc. are set correctly.');
+      logger.warn('No ElevenLabs API keys found. Supported patterns: ELEVENLABS_API_KEY_1, ElevenLabs_API_1, etc.');
+      // Log a sample of all env vars for debugging
+      const sampleEnv = Object.keys(process.env).slice(0, 20).join(', ');
+      logger.warn(`Sample env vars: ${sampleEnv}`);
     }
   }
 

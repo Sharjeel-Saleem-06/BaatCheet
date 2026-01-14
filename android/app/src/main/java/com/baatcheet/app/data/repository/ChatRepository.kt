@@ -151,6 +151,38 @@ class ChatRepository @Inject constructor(
     }
     
     // ============================================
+    // Feedback & Learning
+    // ============================================
+    
+    /**
+     * Submit feedback for a message (like/dislike)
+     * Used for auto-learning to improve AI responses
+     */
+    suspend fun submitFeedback(
+        conversationId: String,
+        messageId: String,
+        isPositive: Boolean
+    ): ApiResult<Boolean> {
+        return try {
+            val request = FeedbackRequest(
+                conversationId = conversationId,
+                messageId = messageId,
+                isPositive = isPositive,
+                feedbackType = if (isPositive) "like" else "dislike"
+            )
+            val response = api.submitFeedback(request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                ApiResult.Error(response.body()?.error ?: "Failed to submit feedback", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    // ============================================
     // Conversation Operations
     // ============================================
     

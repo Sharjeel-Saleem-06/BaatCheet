@@ -38,7 +38,7 @@ struct RootCoordinator: View {
                         }
                     
                 case .mainApp:
-                    EmptyView()
+                    ChatScreen()
                 }
             }
             .onChange(of: rootViewModel.isAppStartCompleted) { _ in

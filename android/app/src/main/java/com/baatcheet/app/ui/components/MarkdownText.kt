@@ -3,6 +3,7 @@ package com.baatcheet.app.ui.components
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -59,13 +60,15 @@ private object MarkdownColors {
     val CodeBlockText = Color(0xFFD4D4D4)
     val TableBorder = Color(0xFFE5E7EB)
     val TableHeaderBackground = Color(0xFFF9FAFB)
-    val BlockquoteBorder = Color(0xFF007AFF)
-    val BlockquoteBackground = Color(0xFFF0F7FF)
+    val TableCellBackground = Color(0xFFFFFFFF)
+    val BlockquoteBorder = Color(0xFF34C759)
+    val BlockquoteBackground = Color(0xFFF0FFF4)
     val KeywordColor = Color(0xFFC586C0)
     val StringColor = Color(0xFFCE9178)
     val CommentColor = Color(0xFF6A9955)
     val NumberColor = Color(0xFFB5CEA8)
     val FunctionColor = Color(0xFFDCDCAA)
+    val GreenAccent = Color(0xFF34C759)
 }
 
 // ============================================
@@ -108,6 +111,9 @@ private val LANGUAGE_NAMES = mapOf(
     "txt" to "Text"
 )
 
+// Characters to clean from display (raw markdown artifacts)
+private val CLEAN_PATTERN = Regex("[#*_~`]+")
+
 // ============================================
 // Markdown Elements
 // ============================================
@@ -132,7 +138,9 @@ private sealed class MarkdownElement {
 /**
  * Advanced Markdown text renderer for chat messages
  * Supports: Headers, Bold, Italic, Code blocks with syntax highlighting,
- * Tables, Lists, Blockquotes, Links, and more
+ * Tables with horizontal scroll, Lists, Blockquotes, Links, and more
+ * 
+ * CLEANED: Removes special characters (#*_~`) from display unless needed
  */
 @Composable
 fun MarkdownText(
@@ -177,9 +185,9 @@ fun MarkdownText(
 @Composable
 private fun HeadingView(heading: MarkdownElement.Heading, color: Color) {
     val fontSize = when (heading.level) {
-        1 -> 24.sp
-        2 -> 20.sp
-        3 -> 18.sp
+        1 -> 22.sp
+        2 -> 19.sp
+        3 -> 17.sp
         4 -> 16.sp
         else -> 15.sp
     }
@@ -192,10 +200,10 @@ private fun HeadingView(heading: MarkdownElement.Heading, color: Color) {
             fontSize = fontSize,
             fontWeight = fontWeight,
             color = color,
-            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
         )
         
-        if (heading.level == 1) {
+        if (heading.level <= 2) {
             HorizontalDivider(
                 color = MarkdownColors.TableBorder,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -326,7 +334,7 @@ private fun CodeBlockView(codeBlock: MarkdownElement.CodeBlock) {
             }
         }
         
-        // Code content
+        // Code content with horizontal scroll
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -358,8 +366,7 @@ private fun CodeBlockView(codeBlock: MarkdownElement.CodeBlock) {
                 
                 // Code content with syntax highlighting
                 Column {
-                    val highlightedCode = highlightCode(codeBlock.code, codeBlock.language)
-                    codeBlock.code.lines().take(if (collapsed && isLong) 5 else Int.MAX_VALUE).forEachIndexed { index, line ->
+                    codeBlock.code.lines().take(if (collapsed && isLong) 5 else Int.MAX_VALUE).forEach { line ->
                         Text(
                             text = highlightLine(line, codeBlock.language),
                             fontSize = 12.sp,
@@ -398,8 +405,8 @@ private fun BulletListView(
     lineHeight: Float
 ) {
     Column(
-        modifier = Modifier.padding(start = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier.padding(start = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         list.items.forEach { item ->
             Row(
@@ -408,9 +415,10 @@ private fun BulletListView(
             ) {
                 Text(
                     text = "•",
-                    fontSize = fontSize.sp,
-                    color = Color(0xFF34C759),
-                    modifier = Modifier.padding(end = 8.dp)
+                    fontSize = (fontSize + 2).sp,
+                    color = MarkdownColors.GreenAccent,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(end = 10.dp)
                 )
                 Text(
                     text = item,
@@ -430,8 +438,8 @@ private fun NumberedListView(
     lineHeight: Float
 ) {
     Column(
-        modifier = Modifier.padding(start = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier.padding(start = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         list.items.forEachIndexed { index, item ->
             Row(
@@ -441,9 +449,11 @@ private fun NumberedListView(
                 Text(
                     text = "${index + 1}.",
                     fontSize = fontSize.sp,
-                    color = Color(0xFF34C759),
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(end = 8.dp)
+                    color = MarkdownColors.GreenAccent,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .width(24.dp)
+                        .padding(end = 8.dp)
                 )
                 Text(
                     text = item,
@@ -465,13 +475,14 @@ private fun BlockquoteView(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MarkdownColors.BlockquoteBackground, RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(4.dp))
+            .background(MarkdownColors.BlockquoteBackground)
             .padding(12.dp)
     ) {
         Box(
             modifier = Modifier
                 .width(3.dp)
-                .fillMaxHeight()
+                .height(IntrinsicSize.Min)
                 .background(MarkdownColors.BlockquoteBorder)
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -485,69 +496,104 @@ private fun BlockquoteView(
     }
 }
 
+/**
+ * Table View with HORIZONTAL SCROLL for mobile
+ * Shows full table content without truncation
+ */
 @Composable
 private fun TableView(table: MarkdownElement.Table) {
+    if (table.headers.isEmpty()) return
+    
+    val scrollState = rememberScrollState()
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .border(1.dp, MarkdownColors.TableBorder, RoundedCornerShape(8.dp))
     ) {
-        // Header row
+        // Horizontal scroll container for the entire table
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(MarkdownColors.TableHeaderBackground)
-                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .horizontalScroll(scrollState)
         ) {
-            table.headers.forEachIndexed { index, header ->
-                Text(
-                    text = header,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MarkdownColors.Text,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (index < table.headers.lastIndex) {
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(24.dp)
-                            .background(MarkdownColors.TableBorder)
-                    )
+            Column {
+                // Header row
+                Row(
+                    modifier = Modifier
+                        .background(MarkdownColors.TableHeaderBackground)
+                ) {
+                    table.headers.forEachIndexed { index, header ->
+                        Box(
+                            modifier = Modifier
+                                .widthIn(min = 100.dp, max = 200.dp)
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Text(
+                                text = header.trim(),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MarkdownColors.Text
+                            )
+                        }
+                        if (index < table.headers.lastIndex) {
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .height(40.dp)
+                                    .background(MarkdownColors.TableBorder)
+                            )
+                        }
+                    }
+                }
+                
+                // Data rows
+                table.rows.forEach { row ->
+                    HorizontalDivider(color = MarkdownColors.TableBorder, thickness = 1.dp)
+                    Row(
+                        modifier = Modifier.background(MarkdownColors.TableCellBackground)
+                    ) {
+                        row.forEachIndexed { cellIndex, cell ->
+                            Box(
+                                modifier = Modifier
+                                    .widthIn(min = 100.dp, max = 200.dp)
+                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                            ) {
+                                Text(
+                                    text = cell.trim(),
+                                    fontSize = 13.sp,
+                                    color = MarkdownColors.Text,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                            if (cellIndex < row.lastIndex) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(1.dp)
+                                        .height(40.dp)
+                                        .background(MarkdownColors.TableBorder)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
         
-        // Data rows
-        table.rows.forEachIndexed { rowIndex, row ->
-            HorizontalDivider(color = MarkdownColors.TableBorder)
+        // Scroll hint if table is wide
+        if (table.headers.size > 2) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .background(Color(0xFFF5F5F5))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                row.forEachIndexed { cellIndex, cell ->
-                    Text(
-                        text = cell,
-                        fontSize = 13.sp,
-                        color = MarkdownColors.Text,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (cellIndex < row.lastIndex) {
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(24.dp)
-                                .background(MarkdownColors.TableBorder)
-                        )
-                    }
-                }
+                Text(
+                    text = "← Swipe to see more →",
+                    fontSize = 10.sp,
+                    color = Color(0xFF8E8E93)
+                )
             }
         }
     }
@@ -561,7 +607,7 @@ private fun parseMarkdown(text: String, textColor: Color): List<MarkdownElement>
     val elements = mutableListOf<MarkdownElement>()
     
     // Split by code blocks first
-    val codeBlockPattern = Regex("```(\\w*)?\\n([\\s\\S]*?)```")
+    val codeBlockPattern = Regex("```(\\w*)?\\n?([\\s\\S]*?)```")
     var lastEnd = 0
     
     codeBlockPattern.findAll(text).forEach { match ->
@@ -598,7 +644,6 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
         
         when {
             line.isEmpty() -> {
-                // Skip empty lines
                 i++
             }
             
@@ -723,8 +768,8 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                         }
                         i = endIndex + 2
                     } else {
-                        append(chars[i])
-                        i++
+                        // Don't show the asterisks, just skip them
+                        i += 2
                     }
                 }
                 
@@ -737,12 +782,11 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                         }
                         i = endIndex + 2
                     } else {
-                        append(chars[i])
-                        i++
+                        i += 2
                     }
                 }
                 
-                // Italic: *text*
+                // Italic: *text* (only if not preceded by another *)
                 chars[i] == '*' && (i == 0 || chars[i - 1] != '*') -> {
                     val endIndex = text.indexOf('*', i + 1)
                     if (endIndex != -1 && (endIndex + 1 >= chars.size || chars[endIndex + 1] != '*')) {
@@ -751,7 +795,7 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                         }
                         i = endIndex + 1
                     } else {
-                        append(chars[i])
+                        // Skip the asterisk
                         i++
                     }
                 }
@@ -771,7 +815,6 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                         }
                         i = endIndex + 1
                     } else {
-                        append(chars[i])
                         i++
                     }
                 }
@@ -791,9 +834,16 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                         }
                         i = linkMatch.range.last + 1
                     } else {
-                        append(chars[i])
+                        withStyle(SpanStyle(color = textColor)) {
+                            append(chars[i])
+                        }
                         i++
                     }
+                }
+                
+                // Skip hash symbols at start of lines (already handled as headings)
+                chars[i] == '#' && (i == 0 || chars[i - 1] == '\n' || chars[i - 1] == ' ') -> {
+                    i++
                 }
                 
                 // Regular character
@@ -812,20 +862,11 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
 // Syntax Highlighting
 // ============================================
 
-private fun highlightCode(code: String, language: String?): AnnotatedString {
-    return buildAnnotatedString {
-        withStyle(SpanStyle(color = MarkdownColors.CodeBlockText, fontFamily = FontFamily.Monospace)) {
-            append(code)
-        }
-    }
-}
-
 private fun highlightLine(line: String, language: String?): AnnotatedString {
     val keywords = getKeywordsForLanguage(language)
     
     return buildAnnotatedString {
         var remaining = line
-        var key = 0
         
         while (remaining.isNotEmpty()) {
             var matched = false
@@ -951,4 +992,14 @@ private fun copyToClipboard(context: Context, text: String) {
     val clip = ClipData.newPlainText("Code", text)
     clipboard.setPrimaryClip(clip)
     Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+}
+
+fun shareText(context: Context, text: String) {
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, text)
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, "Share via")
+    context.startActivity(shareIntent)
 }

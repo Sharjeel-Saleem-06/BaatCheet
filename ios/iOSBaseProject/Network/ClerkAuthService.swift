@@ -9,14 +9,8 @@ import Foundation
 
 // MARK: - API Configuration
 struct APIConfig {
-    // Backend API URL - adjust for your environment
-    // Use your computer's local IP for physical device testing
-    #if DEBUG
-    static let baseURL = "http://192.168.18.110:5001/api/v1"
-    #else
-    static let baseURL = "https://api.baatcheet.com/api/v1"
-    #endif
-    
+    // Backend API URL - HuggingFace Spaces deployment
+    static let baseURL = "https://sharry121-baatcheet.hf.space/api/v1"
     static let mobileAuthURL = "\(baseURL)/mobile/auth"
 }
 

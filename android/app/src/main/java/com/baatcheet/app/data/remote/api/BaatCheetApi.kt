@@ -39,6 +39,14 @@ interface BaatCheetApi {
     ): Response<ChatResponse>
     
     /**
+     * Submit feedback for a message (like/dislike)
+     */
+    @POST("chat/feedback")
+    suspend fun submitFeedback(
+        @Body request: FeedbackRequest
+    ): Response<ApiResponse<Any>>
+    
+    /**
      * Get available models
      */
     @GET("chat/models")

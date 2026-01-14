@@ -97,6 +97,9 @@ data class ChatState(
     val detectedLanguage: String = "english",
     val isRomanUrdu: Boolean = false,
     
+    // Share
+    val shareableText: String? = null,
+    
     // Templates
     val templates: List<Template> = emptyList(),
     val isLoadingTemplates: Boolean = false,
@@ -1198,6 +1201,72 @@ class ChatViewModel @Inject constructor(
                     }
                 }
                 is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    // ============================================
+    // Share & Feedback
+    // ============================================
+    
+    /**
+     * Share the current chat - generates a shareable link
+     */
+    fun shareChat() {
+        val conversationId = _state.value.currentConversationId ?: return
+        
+        viewModelScope.launch {
+            // For now, we just create a simple share text
+            // In a full implementation, we'd call an API to generate a share link
+            val messages = _state.value.messages
+            if (messages.isEmpty()) return@launch
+            
+            val chatSummary = buildString {
+                append("BaatCheet Conversation\n")
+                append("━━━━━━━━━━━━━━━━━━━━\n\n")
+                
+                messages.takeLast(10).forEach { message ->
+                    val role = if (message.role == MessageRole.USER) "You" else "AI"
+                    append("$role: ${message.content.take(200)}")
+                    if (message.content.length > 200) append("...")
+                    append("\n\n")
+                }
+                
+                append("━━━━━━━━━━━━━━━━━━━━\n")
+                append("Shared via BaatCheet")
+            }
+            
+            // This will be handled by the context to share
+            _state.update { it.copy(shareableText = chatSummary) }
+        }
+    }
+    
+    /**
+     * Submit feedback for a message (like/dislike)
+     * Used for auto-learning to improve responses
+     */
+    fun submitFeedback(messageId: String, isPositive: Boolean) {
+        viewModelScope.launch {
+            val conversationId = _state.value.currentConversationId ?: return@launch
+            
+            try {
+                // Call feedback API (we'll create this endpoint)
+                when (val result = chatRepository.submitFeedback(
+                    conversationId = conversationId,
+                    messageId = messageId,
+                    isPositive = isPositive
+                )) {
+                    is ApiResult.Success -> {
+                        // Feedback submitted successfully
+                        // Could show a subtle animation or toast
+                    }
+                    is ApiResult.Error -> {
+                        // Silently fail - don't interrupt user
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+            } catch (e: Exception) {
+                // Silently fail
             }
         }
     }

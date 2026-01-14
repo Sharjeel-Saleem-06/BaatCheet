@@ -1,5 +1,7 @@
 package com.baatcheet.app.ui.chat
 
+import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
@@ -7,6 +9,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -46,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.baatcheet.app.R
 import com.baatcheet.app.ui.voice.VoiceChatScreen
+import com.baatcheet.app.ui.components.shareText
 import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.MessageRole
 import kotlinx.coroutines.launch
@@ -150,10 +157,12 @@ fun ChatScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header
+                // Header with share option
                 ChatHeader(
                     onMenuClick = { coroutineScope.launch { drawerState.open() } },
-                    onNewChat = { viewModel.startNewChat() }
+                    onNewChat = { viewModel.startNewChat() },
+                    onShareChat = { viewModel.shareChat() },
+                    hasMessages = state.messages.isNotEmpty()
                 )
                 
                 // Content
@@ -194,6 +203,9 @@ fun ChatScreen(
                                 } else null,
                                 onSpeak = { text ->
                                     viewModel.speakText(text)
+                                },
+                                onLike = { messageId, isLike ->
+                                    viewModel.submitFeedback(messageId, isLike)
                                 }
                             )
                         }
@@ -627,8 +639,12 @@ private fun ChatHistoryItem(
 @Composable
 private fun ChatHeader(
     onMenuClick: () -> Unit,
-    onNewChat: () -> Unit
+    onNewChat: () -> Unit,
+    onShareChat: () -> Unit = {},
+    hasMessages: Boolean = false
 ) {
+    var showShareMenu by remember { mutableStateOf(false) }
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = WhiteBackground,
@@ -665,6 +681,21 @@ private fun ChatHeader(
             
             Spacer(modifier = Modifier.weight(1f))
             
+            // Share chat button (only when there are messages) - like ChatGPT
+            if (hasMessages) {
+                IconButton(
+                    onClick = { showShareMenu = true },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PersonAdd,
+                        contentDescription = "Share Chat",
+                        tint = DarkText,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            
             // New chat button
             IconButton(
                 onClick = onNewChat,
@@ -677,6 +708,18 @@ private fun ChatHeader(
                 )
             }
         }
+    }
+    
+    // Share menu dropdown
+    if (showShareMenu) {
+        ShareChatBottomSheet(
+            onDismiss = { showShareMenu = false },
+            onShareLink = { onShareChat() },
+            onCopyLink = { 
+                // Copy link action
+                showShareMenu = false
+            }
+        )
     }
 }
 
@@ -868,14 +911,23 @@ private fun SuggestionChip(
     }
 }
 
+/**
+ * ChatGPT-style message bubble with all action buttons:
+ * - Copy: Copy message to clipboard
+ * - Rewrite: Regenerate the response
+ * - Share: Share the message via system share sheet
+ * - Like/Dislike: Feedback for auto-learning
+ */
 @Composable
 private fun MessageBubble(
     message: ChatMessage,
     onCopy: (String) -> Unit = {},
     onRegenerate: (() -> Unit)? = null,
-    onSpeak: ((String) -> Unit)? = null
+    onSpeak: ((String) -> Unit)? = null,
+    onLike: ((String, Boolean) -> Unit)? = null
 ) {
     var showActions by remember { mutableStateOf(false) }
+    var feedbackState by remember { mutableStateOf<Boolean?>(null) } // null=none, true=liked, false=disliked
     val context = androidx.compose.ui.platform.LocalContext.current
     
     Column(
@@ -894,10 +946,10 @@ private fun MessageBubble(
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = "AI",
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(6.dp))
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(8.dp))
             }
             
             Surface(
@@ -905,20 +957,22 @@ private fun MessageBubble(
                 shape = RoundedCornerShape(16.dp),
                 shadowElevation = if (message.role == MessageRole.ASSISTANT) 1.dp else 0.dp,
                 modifier = Modifier
-                    .widthIn(max = 320.dp) // Increased max width for better table/code display
+                    .widthIn(max = 340.dp) // Wide enough for tables
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { showActions = !showActions }
+                    ) { 
+                        if (message.role == MessageRole.ASSISTANT && !message.isStreaming) {
+                            showActions = !showActions 
+                        }
+                    }
             ) {
                 Column(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     if (message.isStreaming && message.content.isEmpty()) {
-                        // Animated typing indicator
                         TypingIndicator()
                     } else if (message.isStreaming) {
-                        // Show content with streaming cursor
                         Column {
                             com.baatcheet.app.ui.components.MarkdownText(
                                 text = message.content,
@@ -926,11 +980,9 @@ private fun MessageBubble(
                                 fontSize = 15f,
                                 lineHeight = 22f
                             )
-                            // Blinking cursor
                             StreamingCursor()
                         }
                     } else {
-                        // Use MarkdownText for assistant messages
                         if (message.role == MessageRole.ASSISTANT) {
                             com.baatcheet.app.ui.components.MarkdownText(
                                 text = message.content,
@@ -939,10 +991,7 @@ private fun MessageBubble(
                                 lineHeight = 22f
                             )
                         } else {
-                            // User message with bold tags
-                            UserMessageText(
-                                text = message.content
-                            )
+                            UserMessageText(text = message.content)
                         }
                     }
                 }
@@ -953,60 +1002,115 @@ private fun MessageBubble(
             }
         }
         
-        // Action buttons for assistant messages
-        if (showActions && message.role == MessageRole.ASSISTANT && !message.isStreaming) {
-            Row(
-                modifier = Modifier
-                    .padding(start = 42.dp, top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+        // ChatGPT-style action buttons for assistant messages (always visible, small icons)
+        if (message.role == MessageRole.ASSISTANT && !message.isStreaming) {
+            AnimatedVisibility(
+                visible = true, // Always show for assistant messages
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                // Copy button
-                IconButton(
-                    onClick = {
-                        onCopy(message.content)
-                        android.widget.Toast.makeText(context, "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.size(32.dp)
+                Row(
+                    modifier = Modifier
+                        .padding(start = 36.dp, top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        Icons.Outlined.ContentCopy,
+                    // Copy button
+                    SmallActionButton(
+                        icon = Icons.Outlined.ContentCopy,
                         contentDescription = "Copy",
-                        tint = GrayText,
-                        modifier = Modifier.size(18.dp)
+                        onClick = {
+                            onCopy(message.content)
+                            android.widget.Toast.makeText(context, "Copied!", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     )
-                }
-                
-                // Speak button
-                onSpeak?.let { speak ->
-                    IconButton(
-                        onClick = { speak(message.content) },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Outlined.VolumeUp,
+                    
+                    // Rewrite/Regenerate button
+                    onRegenerate?.let { regenerate ->
+                        SmallActionButton(
+                            icon = Icons.Outlined.Refresh,
+                            contentDescription = "Rewrite",
+                            onClick = regenerate
+                        )
+                    }
+                    
+                    // Speak button
+                    onSpeak?.let { speak ->
+                        SmallActionButton(
+                            icon = Icons.Outlined.VolumeUp,
                             contentDescription = "Speak",
-                            tint = GrayText,
-                            modifier = Modifier.size(18.dp)
+                            onClick = { speak(message.content) }
                         )
                     }
-                }
-                
-                // Regenerate button
-                onRegenerate?.let { regenerate ->
-                    IconButton(
-                        onClick = regenerate,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Outlined.Refresh,
-                            contentDescription = "Regenerate",
-                            tint = GrayText,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    
+                    // Share button - opens system share sheet
+                    SmallActionButton(
+                        icon = Icons.Outlined.Share,
+                        contentDescription = "Share",
+                        onClick = {
+                            shareText(context, message.content)
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Divider
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(16.dp)
+                            .background(ChipBorder)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Like button
+                    SmallActionButton(
+                        icon = if (feedbackState == true) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
+                        contentDescription = "Good response",
+                        tint = if (feedbackState == true) GreenAccent else GrayText,
+                        onClick = {
+                            feedbackState = if (feedbackState == true) null else true
+                            onLike?.invoke(message.id, true)
+                        }
+                    )
+                    
+                    // Dislike button
+                    SmallActionButton(
+                        icon = if (feedbackState == false) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
+                        contentDescription = "Bad response",
+                        tint = if (feedbackState == false) Color(0xFFE53935) else GrayText,
+                        onClick = {
+                            feedbackState = if (feedbackState == false) null else false
+                            onLike?.invoke(message.id, false)
+                        }
+                    )
                 }
             }
         }
+    }
+}
+
+/**
+ * Small action button for message actions (ChatGPT style)
+ */
+@Composable
+private fun SmallActionButton(
+    icon: ImageVector,
+    contentDescription: String,
+    tint: Color = GrayText,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(28.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 
@@ -2019,6 +2123,163 @@ private fun ModeSelector(
                     // Fill empty space if odd number
                     if (rowModes.size == 1) {
                         Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Share Chat Bottom Sheet - ChatGPT style
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ShareChatBottomSheet(
+    onDismiss: () -> Unit,
+    onShareLink: () -> Unit,
+    onCopyLink: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = WhiteBackground
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Share Chat",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = GrayText
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Description
+            Text(
+                text = "Anyone with the link can view this chat. Messages you send after sharing won't be visible.",
+                fontSize = 14.sp,
+                color = GrayText,
+                lineHeight = 20.sp
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Share Link Button
+            Button(
+                onClick = {
+                    onShareLink()
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenAccent),
+                shape = RoundedCornerShape(24.dp)
+            ) {
+                Icon(
+                    Icons.Outlined.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Share Link", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Copy Link Button
+            OutlinedButton(
+                onClick = {
+                    android.widget.Toast.makeText(context, "Link copied to clipboard!", android.widget.Toast.LENGTH_SHORT).show()
+                    onCopyLink()
+                    onDismiss()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DarkText),
+                shape = RoundedCornerShape(24.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, ChipBorder)
+            ) {
+                Icon(
+                    Icons.Outlined.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Copy Link", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // Add people option (coming soon)
+            Surface(
+                onClick = { 
+                    android.widget.Toast.makeText(context, "Coming soon!", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                shape = RoundedCornerShape(12.dp),
+                color = ChipBackground
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.PersonAdd,
+                        contentDescription = "Add people",
+                        tint = GrayText,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Add people",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = DarkText
+                        )
+                        Text(
+                            text = "Collaborate on this chat",
+                            fontSize = 13.sp,
+                            color = GrayText
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .background(ChipBackground, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Soon",
+                            fontSize = 10.sp,
+                            color = GrayText,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
