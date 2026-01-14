@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.baatcheet.app.R
+import com.baatcheet.app.ui.voice.VoiceChatScreen
 import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.MessageRole
 import kotlinx.coroutines.launch
@@ -102,6 +103,9 @@ fun ChatScreen(
     
     // Voice chat overlay state
     var showVoiceChat by remember { mutableStateOf(false) }
+    
+    // Full voice mode screen state
+    var showVoiceModeScreen by remember { mutableStateOf(false) }
     
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(state.messages.size) {
@@ -251,7 +255,7 @@ fun ChatScreen(
                         }
                     },
                     onHeadphoneClick = {
-                        showVoiceChat = true
+                        showVoiceModeScreen = true
                     },
                     currentMode = state.currentAIMode,
                     promptAnalysis = state.promptAnalysis,
@@ -270,7 +274,7 @@ fun ChatScreen(
                     )
                 }
                 
-                // Voice Chat Overlay
+                // Voice Chat Overlay (simple)
                 if (showVoiceChat) {
                     VoiceChatOverlay(
                         isListening = voiceState.isListening,
@@ -287,6 +291,17 @@ fun ChatScreen(
                         onDismiss = {
                             voiceActions.stopListening()
                             showVoiceChat = false
+                        }
+                    )
+                }
+                
+                // Full Voice Mode Screen (ChatGPT-style)
+                if (showVoiceModeScreen) {
+                    VoiceChatScreen(
+                        onDismiss = { showVoiceModeScreen = false },
+                        onConversationCreated = { conversationId ->
+                            // Load the new conversation
+                            viewModel.loadConversation(conversationId)
                         }
                     )
                 }
@@ -2043,7 +2058,7 @@ private fun VoiceChatOverlay(
                 repeatMode = RepeatMode.Reverse,
                 initialStartOffset = StartOffset(index * 50)
             ),
-            label = "wave\$index"
+            label = "wave$index"
         )
     }
     

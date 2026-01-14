@@ -1288,8 +1288,10 @@ data class VoiceChatResult(
 data class Voice(
     val id: String,
     val name: String,
-    val provider: String?,
-    val gender: String?
+    val provider: String? = null,
+    val gender: String? = null,
+    val description: String? = null,
+    val previewUrl: String? = null
 )
 
 // ============================================
