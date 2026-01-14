@@ -46,7 +46,65 @@ data class Project(
     val description: String? = null,
     val color: String? = null,
     val icon: String? = null,
-    val conversationCount: Int = 0
+    val conversationCount: Int = 0,
+    // Collaboration fields
+    val myRole: String? = null, // "owner", "editor", "viewer" - null means user is owner
+    val owner: UserSummary? = null // Only set for collaborations
+)
+
+/**
+ * User summary for displaying collaborators
+ */
+data class UserSummary(
+    val id: String,
+    val username: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val email: String? = null
+) {
+    val displayName: String
+        get() = when {
+            firstName != null && lastName != null -> "$firstName $lastName"
+            firstName != null -> firstName
+            username != null -> username
+            email != null -> email.substringBefore("@")
+            else -> "Unknown"
+        }
+    
+    val initials: String
+        get() = when {
+            firstName != null && lastName != null -> "${firstName.first()}${lastName.first()}"
+            firstName != null -> firstName.take(2)
+            username != null -> username.take(2)
+            else -> "??"
+        }.uppercase()
+}
+
+/**
+ * Represents a pending invitation to collaborate on a project
+ */
+data class PendingInvitation(
+    val id: String,
+    val projectId: String,
+    val projectName: String,
+    val projectDescription: String? = null,
+    val role: String, // "editor" or "viewer"
+    val inviterName: String,
+    val inviterEmail: String? = null,
+    val message: String? = null,
+    val expiresAt: String? = null,
+    val createdAt: String? = null
+)
+
+/**
+ * Represents a collaborator on a project
+ */
+data class Collaborator(
+    val id: String,
+    val userId: String,
+    val role: String, // "owner", "editor", "viewer"
+    val user: UserSummary,
+    val addedAt: String? = null
 )
 
 /**

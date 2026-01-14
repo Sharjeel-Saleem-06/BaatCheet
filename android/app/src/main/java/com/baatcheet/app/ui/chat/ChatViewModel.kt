@@ -108,6 +108,10 @@ data class ChatState(
     // Collaborations (shared projects)
     val collaborations: List<Project> = emptyList(),
     val pendingInvitationsCount: Int = 0,
+    val pendingInvitations: List<com.baatcheet.app.domain.model.PendingInvitation> = emptyList(),
+    val isLoadingInvitations: Boolean = false,
+    val projectCollaborators: com.baatcheet.app.data.repository.ProjectCollaborators? = null,
+    val isLoadingCollaborators: Boolean = false,
     
     // Templates
     val templates: List<Template> = emptyList(),
@@ -563,6 +567,101 @@ class ChatViewModel @Inject constructor(
                 is ApiResult.Loading -> { }
             }
         }
+    }
+    
+    /**
+     * Load pending invitations list
+     */
+    fun loadPendingInvitations() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingInvitations = true) }
+            
+            when (val result = chatRepository.getPendingInvitations()) {
+                is ApiResult.Success -> {
+                    _state.update { 
+                        it.copy(
+                            pendingInvitations = result.data,
+                            pendingInvitationsCount = result.data.size,
+                            isLoadingInvitations = false
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(isLoadingInvitations = false) }
+                }
+                is ApiResult.Loading -> { }
+            }
+        }
+    }
+    
+    /**
+     * Accept or reject a project invitation
+     */
+    fun respondToInvitation(invitationId: String, accept: Boolean, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            when (val result = chatRepository.respondToInvitation(invitationId, accept)) {
+                is ApiResult.Success -> {
+                    // Refresh invitations and collaborations
+                    loadPendingInvitations()
+                    loadCollaborations()
+                    loadProjects()
+                    onResult(true, if (accept) "You are now a collaborator!" else "Invitation declined")
+                }
+                is ApiResult.Error -> {
+                    onResult(false, result.message)
+                }
+                is ApiResult.Loading -> { }
+            }
+        }
+    }
+    
+    /**
+     * Load collaborators for a project
+     */
+    fun loadProjectCollaborators(projectId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingCollaborators = true) }
+            
+            when (val result = chatRepository.getProjectCollaborators(projectId)) {
+                is ApiResult.Success -> {
+                    _state.update { 
+                        it.copy(
+                            projectCollaborators = result.data,
+                            isLoadingCollaborators = false
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(isLoadingCollaborators = false) }
+                }
+                is ApiResult.Loading -> { }
+            }
+        }
+    }
+    
+    /**
+     * Remove a collaborator from a project
+     */
+    fun removeCollaborator(projectId: String, userId: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            when (val result = chatRepository.removeCollaborator(projectId, userId)) {
+                is ApiResult.Success -> {
+                    loadProjectCollaborators(projectId)
+                    onResult(true, "Collaborator removed")
+                }
+                is ApiResult.Error -> {
+                    onResult(false, result.message)
+                }
+                is ApiResult.Loading -> { }
+            }
+        }
+    }
+    
+    /**
+     * Clear project collaborators state
+     */
+    fun clearProjectCollaborators() {
+        _state.update { it.copy(projectCollaborators = null) }
     }
     
     /**
@@ -1407,5 +1506,21 @@ class ChatViewModel @Inject constructor(
         loadTags()
         loadModes()
         loadImageGenStatus()
+    }
+    
+    /**
+     * Clear all conversations (for Settings)
+     */
+    fun clearAllConversations() {
+        viewModelScope.launch {
+            // Delete all conversations one by one
+            _state.value.conversations.forEach { conversation ->
+                chatRepository.deleteConversation(conversation.id)
+            }
+            // Refresh the list
+            loadConversations()
+            // Clear current chat
+            startNewChat()
+        }
     }
 }

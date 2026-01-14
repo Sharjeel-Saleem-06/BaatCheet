@@ -55,8 +55,10 @@ import coil.compose.rememberAsyncImagePainter
 import com.baatcheet.app.R
 import com.baatcheet.app.ui.voice.VoiceChatScreen
 import com.baatcheet.app.ui.components.shareText
+import com.baatcheet.app.ui.collaborations.CollaborationsScreen
 import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.MessageRole
+import com.baatcheet.app.domain.model.Project
 import kotlinx.coroutines.launch
 
 // Light mode color palette - Pure white background
@@ -125,8 +127,8 @@ fun ChatScreen(
     // Analytics screen state
     var showAnalyticsScreen by remember { mutableStateOf(false) }
     
-    // Collaborations bottom sheet state
-    var showCollaborationsSheet by remember { mutableStateOf(false) }
+    // Collaborations screen state
+    var showCollaborationsScreen by remember { mutableStateOf(false) }
     
     // Get clipboard manager for sharing
     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -192,7 +194,8 @@ fun ChatScreen(
                     coroutineScope.launch { drawerState.close() }
                 },
                 onCollaborationsClick = {
-                    showCollaborationsSheet = true
+                    showCollaborationsScreen = true
+                    viewModel.loadPendingInvitations()
                     coroutineScope.launch { drawerState.close() }
                 }
             )
@@ -470,17 +473,40 @@ fun ChatScreen(
                     )
                 }
                 
-                // Collaborations Bottom Sheet
-                if (showCollaborationsSheet) {
-                    CollaborationsBottomSheet(
+                // Collaborations Screen (Full screen like ChatGPT Teams)
+                if (showCollaborationsScreen) {
+                    CollaborationsScreen(
                         collaborations = state.collaborations,
-                        pendingInvitations = state.pendingInvitationsCount,
-                        onDismiss = { showCollaborationsSheet = false },
+                        pendingInvitations = state.pendingInvitations,
+                        isLoading = state.isLoadingProjects,
+                        isLoadingInvitations = state.isLoadingInvitations,
+                        onBack = { showCollaborationsScreen = false },
                         onProjectClick = { projectId ->
                             viewModel.loadProjectConversations(projectId)
-                            showCollaborationsSheet = false
+                            showCollaborationsScreen = false
                         },
-                        onViewInvitations = { /* TODO: Show invitations */ }
+                        onAcceptInvitation = { invitationId ->
+                            viewModel.respondToInvitation(invitationId, true) { success, message ->
+                                if (success) {
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        onDeclineInvitation = { invitationId ->
+                            viewModel.respondToInvitation(invitationId, false) { success, message ->
+                                if (success) {
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        onRefresh = {
+                            viewModel.loadProjects()
+                            viewModel.loadPendingInvitations()
+                        }
                     )
                 }
             }
@@ -636,60 +662,126 @@ private fun ChatDrawerContent(
                 }
             }
             
-            // Collaboration section (shared projects)
-            if (state.collaborations.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Collaborations",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = GrayText,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-                state.collaborations.take(3).forEach { collab ->
-                    DrawerMenuItem(
-                        icon = Icons.Outlined.Group,
-                        text = collab.name,
-                        onClick = { onProjectClick(collab.id) }
-                    )
-                }
-            }
+            // Collaborations section - More prominent like ChatGPT Teams
+            Spacer(modifier = Modifier.height(8.dp))
             
-            // Pending invitations badge
+            // Collaborations header with badge
+            DrawerMenuItemWithBadge(
+                icon = Icons.Outlined.Group,
+                text = "Collaborations",
+                badge = state.collaborations.size + state.pendingInvitationsCount,
+                onClick = onCollaborationsClick
+            )
+            
+            // Show pending invitations alert if any
             if (state.pendingInvitationsCount > 0) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { /* Open invitations */ }
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .clickable(onClick = onCollaborationsClick)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         Icons.Outlined.Mail,
                         contentDescription = null,
                         tint = GreenAccent,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = "Pending Invitations",
-                        fontSize = 15.sp,
-                        color = DarkText,
+                        text = "${state.pendingInvitationsCount} pending invitation${if (state.pendingInvitationsCount > 1) "s" else ""}",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GreenAccent,
                         modifier = Modifier.weight(1f)
                     )
-                    Box(
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            
+            // Quick access to recent collaborations
+            if (state.collaborations.isNotEmpty()) {
+                state.collaborations.take(2).forEach { collab ->
+                    Row(
                         modifier = Modifier
-                            .size(24.dp)
-                            .background(GreenAccent, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .clickable { onProjectClick(collab.id) }
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "${state.pendingInvitationsCount}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(ChipBackground, RoundedCornerShape(6.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Outlined.Folder,
+                                contentDescription = null,
+                                tint = GrayText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = collab.name,
+                                fontSize = 14.sp,
+                                color = DarkText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (collab.owner != null) {
+                                Text(
+                                    text = "by ${collab.owner.displayName}",
+                                    fontSize = 11.sp,
+                                    color = GrayText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        // Role badge
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = when (collab.myRole?.lowercase()) {
+                                "editor" -> Color(0xFF007AFF).copy(alpha = 0.1f)
+                                else -> GrayText.copy(alpha = 0.1f)
+                            }
+                        ) {
+                            Text(
+                                text = (collab.myRole ?: "viewer").replaceFirstChar { it.uppercase() },
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = when (collab.myRole?.lowercase()) {
+                                    "editor" -> Color(0xFF007AFF)
+                                    else -> GrayText
+                                },
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
+                }
+                
+                if (state.collaborations.size > 2) {
+                    Text(
+                        text = "View all ${state.collaborations.size} collaborations",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GreenAccent,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onCollaborationsClick)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
             }
             

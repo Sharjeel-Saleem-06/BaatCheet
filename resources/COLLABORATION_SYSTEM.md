@@ -14,7 +14,7 @@ The BaatCheet Collaboration System allows multiple users to work together on pro
 4. [Backend Implementation](#backend-implementation)
 5. [Frontend (Android) Implementation](#frontend-android-implementation)
 6. [API Endpoints](#api-endpoints)
-7. [User Roles & Permissions](#user-roles--permissions)
+7. [User Roles &amp; Permissions](#user-roles--permissions)
 8. [Limitations](#limitations)
 9. [Usage Examples](#usage-examples)
 10. [Security Considerations](#security-considerations)
@@ -108,6 +108,7 @@ PostgreSQL Database (Neon)
 ### Tables
 
 #### 1. **Project**
+
 ```prisma
 model Project {
   id                String   @id @default(cuid())
@@ -136,6 +137,7 @@ model Project {
 ```
 
 #### 2. **ProjectCollaborator**
+
 ```prisma
 model ProjectCollaborator {
   id        String   @id @default(cuid())
@@ -156,6 +158,7 @@ model ProjectCollaborator {
 ```
 
 #### 3. **ProjectInvitation**
+
 ```prisma
 model ProjectInvitation {
   id        String   @id @default(cuid())
@@ -183,6 +186,7 @@ model ProjectInvitation {
 ```
 
 #### 4. **User** (Extended)
+
 ```prisma
 model User {
   // ... existing fields ...
@@ -216,11 +220,13 @@ backend/src/
 ### Key Routes (`routes/projects.ts`)
 
 #### 1. **Invite Collaborator**
+
 ```typescript
 POST /api/v1/projects/:id/invite
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "collaborator@example.com",
@@ -230,6 +236,7 @@ POST /api/v1/projects/:id/invite
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -245,6 +252,7 @@ POST /api/v1/projects/:id/invite
 ```
 
 **Logic:**
+
 - Check if user is project owner
 - Check if email is already a collaborator
 - Create invitation in database
@@ -252,11 +260,13 @@ POST /api/v1/projects/:id/invite
 - Return invitation details
 
 #### 2. **Get Pending Invitations**
+
 ```typescript
 GET /api/v1/projects/invitations/pending
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -282,11 +292,13 @@ GET /api/v1/projects/invitations/pending
 ```
 
 #### 3. **Respond to Invitation**
+
 ```typescript
 POST /api/v1/projects/invitations/:id/respond
 ```
 
 **Request Body:**
+
 ```json
 {
   "action": "accept" // or "reject"
@@ -294,6 +306,7 @@ POST /api/v1/projects/invitations/:id/respond
 ```
 
 **Response (Accept):**
+
 ```json
 {
   "success": true,
@@ -306,6 +319,7 @@ POST /api/v1/projects/invitations/:id/respond
 ```
 
 **Logic (Accept):**
+
 - Verify invitation exists and is pending
 - Create ProjectCollaborator record
 - Update invitation status to "accepted"
@@ -313,15 +327,18 @@ POST /api/v1/projects/invitations/:id/respond
 - Return project details
 
 **Logic (Reject):**
+
 - Update invitation status to "rejected"
 - Do not create collaborator record
 
 #### 4. **Get Collaborations**
+
 ```typescript
 GET /api/v1/projects/collaborations
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -344,16 +361,19 @@ GET /api/v1/projects/collaborations
 ```
 
 **Logic:**
+
 - Fetch all projects where user is a collaborator (not owner)
 - Include project details, owner info, and role
 - Sort by most recently updated
 
 #### 5. **Get Project Collaborators**
+
 ```typescript
 GET /api/v1/projects/:id/collaborators
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -385,11 +405,13 @@ GET /api/v1/projects/:id/collaborators
 ```
 
 #### 6. **Remove Collaborator**
+
 ```typescript
 DELETE /api/v1/projects/:id/collaborators/:userId
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -398,17 +420,20 @@ DELETE /api/v1/projects/:id/collaborators/:userId
 ```
 
 **Logic:**
+
 - Verify requester is project owner
 - Cannot remove the owner
 - Delete ProjectCollaborator record
 - Return success
 
 #### 7. **Get Pending Invitations Count**
+
 ```typescript
 GET /api/v1/projects/invitations/pending/count
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -450,6 +475,7 @@ android/app/src/main/java/com/baatcheet/app/
 **Location:** `ui/chat/ChatScreen.kt`
 
 **Features:**
+
 - **Collaborations Tab**: Replaces "Images" tab
 - **Badge**: Shows total collaborations + pending invitations
 - **Click Action**: Opens `CollaborationsBottomSheet`
@@ -468,6 +494,7 @@ DrawerMenuItemWithBadge(
 **Location:** `ui/chat/ChatScreen.kt`
 
 **Features:**
+
 - Lists all projects user is collaborating on
 - Shows owner info for each project
 - Empty state when no collaborations
@@ -490,6 +517,7 @@ private fun CollaborationsBottomSheet(
 **Location:** `ui/chat/ChatViewModel.kt`
 
 **State:**
+
 ```kotlin
 data class ChatState(
     // ... other fields ...
@@ -499,6 +527,7 @@ data class ChatState(
 ```
 
 **Functions:**
+
 ```kotlin
 // Load collaborations
 fun loadCollaborations()
@@ -521,6 +550,7 @@ fun removeCollaborator(projectId: String, userId: String)
 **Location:** `data/repository/ChatRepository.kt`
 
 **Functions:**
+
 ```kotlin
 suspend fun inviteCollaborator(
     projectId: String,
@@ -587,21 +617,21 @@ suspend fun removeCollaborator(
 
 ### Complete List
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/projects` | Create project | ✅ |
-| GET | `/api/v1/projects` | List user's projects | ✅ |
-| GET | `/api/v1/projects/:id` | Get project details | ✅ |
-| PUT | `/api/v1/projects/:id` | Update project | ✅ (Owner) |
-| DELETE | `/api/v1/projects/:id` | Delete project | ✅ (Owner) |
-| POST | `/api/v1/projects/:id/invite` | Invite collaborator | ✅ (Owner) |
-| GET | `/api/v1/projects/invitations/pending` | Get pending invitations | ✅ |
-| GET | `/api/v1/projects/invitations/pending/count` | Get pending count | ✅ |
-| POST | `/api/v1/projects/invitations/:id/respond` | Accept/reject invitation | ✅ |
-| GET | `/api/v1/projects/collaborations` | Get user's collaborations | ✅ |
-| GET | `/api/v1/projects/:id/collaborators` | List project collaborators | ✅ |
-| DELETE | `/api/v1/projects/:id/collaborators/:userId` | Remove collaborator | ✅ (Owner) |
-| POST | `/api/v1/projects/:id/context/refresh` | Refresh AI context | ✅ |
+| Method | Endpoint                                       | Description                | Auth Required |
+| ------ | ---------------------------------------------- | -------------------------- | ------------- |
+| POST   | `/api/v1/projects`                           | Create project             | ✅            |
+| GET    | `/api/v1/projects`                           | List user's projects       | ✅            |
+| GET    | `/api/v1/projects/:id`                       | Get project details        | ✅            |
+| PUT    | `/api/v1/projects/:id`                       | Update project             | ✅ (Owner)    |
+| DELETE | `/api/v1/projects/:id`                       | Delete project             | ✅ (Owner)    |
+| POST   | `/api/v1/projects/:id/invite`                | Invite collaborator        | ✅ (Owner)    |
+| GET    | `/api/v1/projects/invitations/pending`       | Get pending invitations    | ✅            |
+| GET    | `/api/v1/projects/invitations/pending/count` | Get pending count          | ✅            |
+| POST   | `/api/v1/projects/invitations/:id/respond`   | Accept/reject invitation   | ✅            |
+| GET    | `/api/v1/projects/collaborations`            | Get user's collaborations  | ✅            |
+| GET    | `/api/v1/projects/:id/collaborators`         | List project collaborators | ✅            |
+| DELETE | `/api/v1/projects/:id/collaborators/:userId` | Remove collaborator        | ✅ (Owner)    |
+| POST   | `/api/v1/projects/:id/context/refresh`       | Refresh AI context         | ✅            |
 
 ---
 
@@ -615,25 +645,26 @@ Owner > Editor > Viewer
 
 ### Permission Matrix
 
-| Action | Owner | Editor | Viewer |
-|--------|-------|--------|--------|
-| View project | ✅ | ✅ | ✅ |
-| View conversations | ✅ | ✅ | ✅ |
-| View messages | ✅ | ✅ | ✅ |
-| Create conversation | ✅ | ✅ | ❌ |
-| Send messages | ✅ | ✅ | ❌ |
-| Edit project details | ✅ | ❌ | ❌ |
-| Invite collaborators | ✅ | ❌ | ❌ |
-| Remove collaborators | ✅ | ❌ | ❌ |
-| Change roles | ✅ | ❌ | ❌ |
-| Delete project | ✅ | ❌ | ❌ |
-| Delete conversations | ✅ | ✅ | ❌ |
-| Delete messages | ✅ | ✅ | ❌ |
-| Export data | ✅ | ✅ | ❌ |
+| Action               | Owner | Editor | Viewer |
+| -------------------- | ----- | ------ | ------ |
+| View project         | ✅    | ✅     | ✅     |
+| View conversations   | ✅    | ✅     | ✅     |
+| View messages        | ✅    | ✅     | ✅     |
+| Create conversation  | ✅    | ✅     | ❌     |
+| Send messages        | ✅    | ✅     | ❌     |
+| Edit project details | ✅    | ❌     | ❌     |
+| Invite collaborators | ✅    | ❌     | ❌     |
+| Remove collaborators | ✅    | ❌     | ❌     |
+| Change roles         | ✅    | ❌     | ❌     |
+| Delete project       | ✅    | ❌     | ❌     |
+| Delete conversations | ✅    | ✅     | ❌     |
+| Delete messages      | ✅    | ✅     | ❌     |
+| Export data          | ✅    | ✅     | ❌     |
 
 ### Role Descriptions
 
 #### **Owner**
+
 - Created the project
 - Full control over project
 - Can invite/remove collaborators
@@ -642,6 +673,7 @@ Owner > Editor > Viewer
 - Only one owner per project
 
 #### **Editor**
+
 - Can create and edit content
 - Can create new conversations
 - Can send messages
@@ -650,6 +682,7 @@ Owner > Editor > Viewer
 - Cannot change project settings
 
 #### **Viewer**
+
 - Read-only access
 - Can view all conversations
 - Can view all messages
@@ -663,59 +696,69 @@ Owner > Editor > Viewer
 ### Current Limitations
 
 #### 1. **Project-Level Only**
+
 - ❌ Cannot share individual chats (only entire projects)
 - ❌ Cannot selectively share conversations within a project
 - **Workaround**: Create separate projects for different collaboration needs
 
 #### 2. **Email-Based Invitations**
+
 - ❌ Can only invite users by email
 - ❌ Must have valid email in system
 - ❌ No username-based invitations
 - **Workaround**: Ensure users register with known emails
 
 #### 3. **No Real-time Presence**
+
 - ❌ Cannot see who's currently online
 - ❌ Cannot see who's viewing/editing
 - ❌ No typing indicators for collaborators
 - **Future**: Implement WebSocket for real-time updates
 
 #### 4. **Limited Notification System**
+
 - ❌ No push notifications for invitations
 - ❌ No email notifications (yet)
 - ❌ Only in-app badge indicators
 - **Workaround**: Check "Collaborations" tab regularly
 
 #### 5. **No Activity History**
+
 - ❌ Cannot see what collaborators changed
 - ❌ No version history for projects
 - ❌ No audit log
 - **Future**: Implement activity tracking
 
 #### 6. **No Granular Permissions**
+
 - ❌ Only 3 roles (Owner, Editor, Viewer)
 - ❌ Cannot customize permissions per user
 - ❌ Cannot restrict specific features
 - **Future**: Custom permission builder
 
 #### 7. **No Team Spaces**
+
 - ❌ Cannot organize projects into teams
 - ❌ Cannot have team-level settings
 - ❌ No team-wide resources
 - **Future**: Team management system
 
 #### 8. **No Collaboration Analytics**
+
 - ❌ Cannot see collaboration statistics
 - ❌ No contribution tracking
 - ❌ No engagement metrics
 - **Future**: Collaboration analytics dashboard
 
 #### 9. **Single Owner**
+
 - ❌ Only one owner per project
 - ❌ Cannot transfer ownership
 - ❌ Owner deletion removes project
 - **Future**: Multiple owners, ownership transfer
 
 #### 10. **No Offline Sync**
+
 - ❌ Requires internet connection
 - ❌ No offline editing
 - ❌ Changes not synced when offline
@@ -724,16 +767,19 @@ Owner > Editor > Viewer
 ### Technical Limitations
 
 #### Database
+
 - **Max Collaborators**: No hard limit, but recommend < 100 per project
 - **Invitation Expiry**: No automatic expiry (planned)
 - **Email Validation**: Basic validation only
 
 #### API Rate Limits
+
 - **Invitation Rate**: 10 invitations per minute per user
 - **Response Rate**: No limit on accepting/rejecting
 - **Fetch Rate**: Standard API rate limits apply
 
 #### UI Constraints
+
 - **Collaboration List**: Shows all (no pagination yet)
 - **Badge Count**: Shows up to "99+" for pending invitations
 - **Search**: No search in collaborations list
@@ -810,11 +856,13 @@ viewModel.removeCollaborator(
 ### Authentication & Authorization
 
 #### 1. **JWT Token Validation**
+
 - All endpoints require valid JWT token
 - Token contains user ID and email
 - Tokens expire after 7 days
 
 #### 2. **Ownership Verification**
+
 ```typescript
 // Backend checks before allowing actions
 const project = await prisma.project.findFirst({
@@ -830,6 +878,7 @@ if (!project) {
 ```
 
 #### 3. **Role-Based Access Control**
+
 ```typescript
 const collaborator = await prisma.projectCollaborator.findFirst({
   where: { projectId, userId: req.user.id }
@@ -846,21 +895,25 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Data Protection
 
 #### 1. **Email Validation**
+
 - Validates email format before sending invitations
 - Checks if email exists in user database
 - Prevents spam invitations
 
 #### 2. **Invitation Expiry** (Planned)
+
 - Invitations expire after 7 days
 - Expired invitations cannot be accepted
 - Database cleanup for old invitations
 
 #### 3. **SQL Injection Prevention**
+
 - Uses Prisma ORM with parameterized queries
 - No raw SQL queries
 - Input sanitization
 
 #### 4. **XSS Prevention**
+
 - Frontend sanitizes user input
 - Backend validates and escapes strings
 - No eval() or dangerous functions
@@ -868,16 +921,19 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Privacy
 
 #### 1. **Data Visibility**
+
 - Collaborators only see projects they're invited to
 - Cannot access other users' projects
 - Owner can see all collaborators
 
 #### 2. **Email Privacy**
+
 - Email only shown to project owner
 - Collaborators see usernames, not emails
 - No email harvesting possible
 
 #### 3. **Deletion Cascade**
+
 - Deleting user removes all their collaborations
 - Deleting project removes all invitations
 - No orphaned data
@@ -889,21 +945,25 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Phase 1: Core Improvements (Q1 2026)
 
 #### 1. **Chat-Level Collaboration**
+
 - Share individual chats (not just projects)
 - Granular sharing controls
 - Chat-specific permissions
 
 #### 2. **Email Notifications**
+
 - Email when invited to project
 - Email when invitation accepted/rejected
 - Configurable notification preferences
 
 #### 3. **Invitation Management**
+
 - Resend invitations
 - Cancel pending invitations
 - Set custom expiry dates
 
 #### 4. **Search & Filters**
+
 - Search collaborations by name
 - Filter by role (Owner, Editor, Viewer)
 - Sort by last updated, name, etc.
@@ -911,21 +971,25 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Phase 2: Advanced Features (Q2 2026)
 
 #### 5. **Real-time Presence**
+
 - See who's online
 - See who's viewing current chat
 - Typing indicators for collaborators
 
 #### 6. **Activity Feed**
+
 - See what collaborators are doing
 - Timeline of project activity
 - Filter by user, action type, date
 
 #### 7. **Comments & Annotations**
+
 - Add comments to specific messages
 - @mention collaborators
 - Thread replies
 
 #### 8. **Version History**
+
 - Track all changes to conversations
 - Revert to previous versions
 - Compare changes
@@ -933,21 +997,25 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Phase 3: Enterprise Features (Q3 2026)
 
 #### 9. **Team Spaces**
+
 - Create teams with multiple projects
 - Team-level settings and resources
 - Shared team knowledge base
 
 #### 10. **Custom Permissions**
+
 - Define custom roles
 - Fine-grained permission control
 - Permission templates
 
 #### 11. **Collaboration Analytics**
+
 - Track contributions per user
 - Engagement metrics
 - Activity reports
 
 #### 12. **Ownership Transfer**
+
 - Transfer project ownership
 - Multiple owners support
 - Co-owner permissions
@@ -955,16 +1023,19 @@ if (collaborator.role === 'viewer' && action === 'edit') {
 ### Phase 4: Scale & Performance (Q4 2026)
 
 #### 13. **Offline Collaboration**
+
 - Offline editing support
 - Automatic sync when online
 - Conflict resolution
 
 #### 14. **Large-Scale Collaboration**
+
 - Support 1000+ collaborators
 - Hierarchical permissions
 - Sub-project management
 
 #### 15. **Integration APIs**
+
 - Slack integration
 - Microsoft Teams integration
 - Webhook notifications
@@ -1000,22 +1071,27 @@ SELECT * FROM "ProjectInvitation" LIMIT 1;
 ### Common Issues
 
 #### 1. **Invitation Not Received**
+
 - **Cause**: Email not registered in system
 - **Solution**: Ask invitee to create account with that email first
 
 #### 2. **Cannot See Collaboration**
+
 - **Cause**: Invitation not accepted yet
 - **Solution**: Check pending invitations and accept
 
 #### 3. **Permission Denied**
+
 - **Cause**: User role doesn't allow action
 - **Solution**: Ask owner to upgrade role (Viewer → Editor)
 
 #### 4. **Collaborator Not Removed**
+
 - **Cause**: Only owner can remove collaborators
 - **Solution**: Contact project owner
 
 #### 5. **Badge Count Not Updating**
+
 - **Cause**: App needs refresh
 - **Solution**: Pull down to refresh or restart app
 
@@ -1064,6 +1140,7 @@ For issues, questions, or feature requests:
 ## Changelog
 
 ### v1.0.0 (January 2026)
+
 - ✅ Initial collaboration system implementation
 - ✅ Project-level collaboration
 - ✅ Invitation system (email-based)
@@ -1073,6 +1150,7 @@ For issues, questions, or feature requests:
 - ✅ Badge notifications
 
 ### Upcoming (v1.1.0)
+
 - 🚧 Email notifications
 - 🚧 Chat-level collaboration
 - 🚧 Real-time presence

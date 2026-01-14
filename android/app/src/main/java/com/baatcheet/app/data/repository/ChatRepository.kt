@@ -3,12 +3,15 @@ package com.baatcheet.app.data.repository
 import com.baatcheet.app.data.remote.api.BaatCheetApi
 import com.baatcheet.app.data.remote.dto.*
 import com.baatcheet.app.domain.model.ChatMessage
+import com.baatcheet.app.domain.model.Collaborator
 import com.baatcheet.app.domain.model.Conversation
 import com.baatcheet.app.domain.model.MessageRole
+import com.baatcheet.app.domain.model.PendingInvitation
 import com.baatcheet.app.domain.model.Project
 import com.baatcheet.app.domain.model.PromptAnalysisResult
 import com.baatcheet.app.domain.model.AIMode
 import com.baatcheet.app.domain.model.UsageInfo
+import com.baatcheet.app.domain.model.UserSummary
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import javax.inject.Inject
@@ -1027,7 +1030,17 @@ class ChatRepository @Inject constructor(
                         id = dto.id,
                         name = dto.name,
                         description = dto.description,
-                        conversationCount = dto.conversationCount ?: 0
+                        conversationCount = dto.conversationCount ?: 0,
+                        myRole = dto.myRole,
+                        owner = dto.owner?.let { owner ->
+                            UserSummary(
+                                id = owner.id,
+                                username = owner.username,
+                                firstName = owner.firstName,
+                                lastName = owner.lastName,
+                                email = owner.email
+                            )
+                        }
                     )
                 } ?: emptyList()
                 ApiResult.Success(projects)
@@ -1054,6 +1067,106 @@ class ChatRepository @Inject constructor(
             }
         } catch (e: Exception) {
             ApiResult.Success(0)
+        }
+    }
+    
+    /**
+     * Get pending invitations list
+     */
+    suspend fun getPendingInvitations(): ApiResult<List<PendingInvitation>> {
+        return try {
+            val response = api.getPendingInvitations()
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val invitations = response.body()?.data?.map { dto ->
+                    PendingInvitation(
+                        id = dto.id,
+                        projectId = dto.projectId,
+                        projectName = dto.project?.name ?: "Unknown Project",
+                        projectDescription = dto.project?.description,
+                        role = dto.role,
+                        inviterName = dto.inviter?.let { 
+                            when {
+                                it.firstName != null && it.lastName != null -> "${it.firstName} ${it.lastName}"
+                                it.firstName != null -> it.firstName
+                                it.username != null -> it.username
+                                else -> it.email ?: "Unknown"
+                            }
+                        } ?: "Unknown",
+                        inviterEmail = dto.inviter?.email,
+                        message = dto.message,
+                        expiresAt = dto.expiresAt,
+                        createdAt = dto.createdAt
+                    )
+                } ?: emptyList()
+                ApiResult.Success(invitations)
+            } else {
+                ApiResult.Success(emptyList())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Get project collaborators
+     */
+    suspend fun getProjectCollaborators(projectId: String): ApiResult<ProjectCollaborators> {
+        return try {
+            val response = api.getProjectCollaborators(projectId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                val owner = data?.owner?.let { 
+                    UserSummary(
+                        id = it.id,
+                        username = it.username,
+                        firstName = it.firstName,
+                        lastName = it.lastName,
+                        email = it.email
+                    )
+                }
+                val collaborators = data?.collaborators?.map { dto ->
+                    Collaborator(
+                        id = dto.id,
+                        userId = dto.userId,
+                        role = dto.role,
+                        user = dto.user?.let { 
+                            UserSummary(
+                                id = it.id,
+                                username = it.username,
+                                firstName = it.firstName,
+                                lastName = it.lastName,
+                                email = it.email
+                            )
+                        } ?: UserSummary(id = dto.userId),
+                        addedAt = dto.addedAt
+                    )
+                } ?: emptyList()
+                
+                ApiResult.Success(ProjectCollaborators(owner = owner, collaborators = collaborators))
+            } else {
+                ApiResult.Error("Failed to get collaborators", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Remove collaborator from project
+     */
+    suspend fun removeCollaborator(projectId: String, userId: String): ApiResult<Boolean> {
+        return try {
+            val response = api.removeCollaborator(projectId, userId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                ApiResult.Error("Failed to remove collaborator", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
         }
     }
     
@@ -1444,6 +1557,12 @@ data class AnalyticsDashboard(
     val totalConversations: Int,
     val totalProjects: Int,
     val modelUsage: Map<String, Int>
+)
+
+// Collaboration Models
+data class ProjectCollaborators(
+    val owner: UserSummary?,
+    val collaborators: List<Collaborator>
 )
 
 // Translation Models
