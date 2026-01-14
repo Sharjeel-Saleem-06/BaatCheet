@@ -814,36 +814,37 @@ data class ExportPreviewData(
 )
 
 data class CreateShareRequest(
+    val conversationId: String,
     val expiresInDays: Int? = null
 )
 
 data class ShareLinkResponse(
     val success: Boolean,
     val data: ShareLinkData?,
-    val message: String?
+    val message: String?,
+    val error: String?
 )
 
 data class ShareLinkData(
+    val shareLink: String?,      // Full URL to share
     val shareId: String?,
-    val url: String?,
     val expiresAt: String?,
-    val viewCount: Int?
-)
-
-data class ShareLinksResponse(
-    val success: Boolean,
-    val data: List<ShareLinkData>?
+    val accessCount: Int?
 )
 
 data class SharedConversationResponse(
     val success: Boolean,
-    val data: SharedConversationData?
+    val data: SharedConversationData?,
+    val error: String?
 )
 
 data class SharedConversationData(
-    val conversation: ConversationDetailDto?,
+    val title: String?,
+    val messages: List<MessageDto>?,
     val sharedBy: String?,
-    val createdAt: String?
+    val sharedByAvatar: String?,
+    val createdAt: String?,
+    val messageCount: Int?
 )
 
 // ============================================

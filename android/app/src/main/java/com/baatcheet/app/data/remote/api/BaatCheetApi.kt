@@ -557,24 +557,17 @@ interface BaatCheetApi {
     ): Response<ExportPreviewResponse>
     
     /**
-     * Create share link
+     * Create share link for a conversation
      */
-    @POST("share/{conversationId}")
+    @POST("chat/share")
     suspend fun createShareLink(
-        @Path("conversationId") conversationId: String,
         @Body request: CreateShareRequest
     ): Response<ShareLinkResponse>
     
     /**
-     * Get user's share links
+     * Get shared conversation (PUBLIC - no auth required)
      */
-    @GET("share")
-    suspend fun getShareLinks(): Response<ShareLinksResponse>
-    
-    /**
-     * Get shared conversation (public)
-     */
-    @GET("share/{shareId}")
+    @GET("chat/share/{shareId}")
     suspend fun getSharedConversation(
         @Path("shareId") shareId: String
     ): Response<SharedConversationResponse>
@@ -582,7 +575,7 @@ interface BaatCheetApi {
     /**
      * Revoke share link
      */
-    @DELETE("share/{shareId}")
+    @DELETE("chat/share/{shareId}")
     suspend fun revokeShareLink(
         @Path("shareId") shareId: String
     ): Response<DeleteResponse>

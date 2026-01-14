@@ -929,18 +929,22 @@ class ChatRepository @Inject constructor(
      */
     suspend fun createShareLink(conversationId: String, expiresInDays: Int? = null): ApiResult<ShareLink> {
         return try {
-            val request = CreateShareRequest(expiresInDays = expiresInDays)
-            val response = api.createShareLink(conversationId, request)
+            val request = CreateShareRequest(
+                conversationId = conversationId,
+                expiresInDays = expiresInDays
+            )
+            val response = api.createShareLink(request)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()?.data
-                if (data?.shareId != null && data.url != null) {
+                val shareUrl = data?.shareLink ?: "https://baatcheet.app/share/${data?.shareId}"
+                if (data?.shareId != null) {
                     ApiResult.Success(
                         ShareLink(
                             shareId = data.shareId,
-                            url = data.url,
+                            url = shareUrl,
                             expiresAt = data.expiresAt,
-                            viewCount = data.viewCount ?: 0
+                            viewCount = data.accessCount ?: 0
                         )
                     )
                 } else {
@@ -955,26 +959,31 @@ class ChatRepository @Inject constructor(
     }
     
     /**
-     * Get user's share links
+     * Get shared conversation (public access)
      */
-    suspend fun getShareLinks(): ApiResult<List<ShareLink>> {
+    suspend fun getSharedConversation(shareId: String): ApiResult<SharedConversation> {
         return try {
-            val response = api.getShareLinks()
+            val response = api.getSharedConversation(shareId)
             
             if (response.isSuccessful && response.body()?.success == true) {
-                val links = response.body()?.data?.mapNotNull { 
-                    if (it.shareId != null && it.url != null) {
-                        ShareLink(
-                            shareId = it.shareId,
-                            url = it.url,
-                            expiresAt = it.expiresAt,
-                            viewCount = it.viewCount ?: 0
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(
+                        SharedConversation(
+                            title = data.title ?: "Shared Chat",
+                            messages = data.messages ?: emptyList(),
+                            sharedBy = data.sharedBy ?: "Anonymous",
+                            sharedByAvatar = data.sharedByAvatar,
+                            createdAt = data.createdAt,
+                            messageCount = data.messageCount ?: 0
                         )
-                    } else null
-                } ?: emptyList()
-                ApiResult.Success(links)
+                    )
+                } else {
+                    ApiResult.Error("Shared conversation not found")
+                }
             } else {
-                ApiResult.Error("Failed to get share links", response.code())
+                val error = response.body()?.error ?: "Failed to get shared conversation"
+                ApiResult.Error(error, response.code())
             }
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Network error")
@@ -1330,6 +1339,15 @@ data class ShareLink(
     val url: String,
     val expiresAt: String?,
     val viewCount: Int
+)
+
+data class SharedConversation(
+    val title: String,
+    val messages: List<MessageDto>,
+    val sharedBy: String,
+    val sharedByAvatar: String?,
+    val createdAt: String?,
+    val messageCount: Int
 )
 
 // Analytics Models
