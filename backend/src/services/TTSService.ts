@@ -353,7 +353,7 @@ class TTSServiceClass {
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
         {
           text,
-          model_id: 'eleven_monolingual_v1', // Free tier model
+          model_id: 'eleven_turbo_v2_5', // New free tier model (v1 is deprecated)
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
