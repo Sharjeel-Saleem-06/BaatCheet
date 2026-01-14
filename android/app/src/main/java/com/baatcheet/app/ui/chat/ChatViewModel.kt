@@ -1369,6 +1369,31 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Clear share URL after sharing is complete
+     */
+    fun clearShareUrl() {
+        _state.update { it.copy(shareUrl = null, shareableText = null) }
+    }
+    
+    /**
+     * Invite a collaborator to a project
+     */
+    fun inviteCollaborator(projectId: String, email: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.inviteCollaborator(projectId, email)) {
+                is ApiResult.Success -> {
+                    // Invitation sent successfully
+                    _state.update { it.copy(error = null) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = "Failed to invite: ${result.message}") }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
      * Refresh all data
      */
     fun refreshAll() {

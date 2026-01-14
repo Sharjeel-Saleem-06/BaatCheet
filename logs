@@ -1,323 +1,159 @@
-failed
-Download info
-The option setting 'android.defaults.buildfeatures.buildconfig=true' is deprecated.
-SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
-:app:compileDebugKotlin
-ChatRepository.kt
-Cannot find a parameter with this name: createdAt
-Cannot find a parameter with this name: updatedAt
-
-0 problems were found storing the configuration cache.
-
-See the complete report at file:///Users/muhammadsharjeel/Documents/BaatCheet/android/build/reports/configuration-cache/5vr48mh8osbstxgpsidbb309q/4mtrfpkmqhmbo6cninuq1ac8/configuration-cache-report.html
-Incompatible Gradle JVMExecuting tasks: [:app:assembleDebug] in project /Users/muhammadsharjeel/Documents/BaatCheet/android
-
-Calculating task graph as no configuration cache is available for tasks: :app:assembleDebug
-
-> Configure project :app
-AGPBI: {"kind":"warning","text":"The option setting 'android.defaults.buildfeatures.buildconfig=true' is deprecated.\nThe current default is 'false'.\nIt will be removed in version 9.0 of the Android Gradle plugin.\nYou can resolve this warning in Android Studio via `Refactor` > `Migrate BuildConfig to Gradle Build Files`","sources":[{}]}
-Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
-
-> Task :app:preBuild UP-TO-DATE
-> Task :app:preDebugBuild UP-TO-DATE
-> Task :app:checkKotlinGradlePluginConfigurationErrors
-> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:desugarDebugFileDependencies
-> Task :app:generateDebugResValues
-> Task :app:createDebugCompatibleScreenManifests
-> Task :app:generateDebugBuildConfig
-> Task :app:generateDebugResources
-> Task :app:createDebugVariantModel
-> Task :app:packageDebugResources
-> Task :app:mergeDebugJniLibFolders
-> Task :app:extractDeepLinksDebug
-> Task :app:mergeDebugShaders
-> Task :app:compileDebugShaders NO-SOURCE
-> Task :app:generateDebugAssets UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths
-> Task :app:checkDebugAarMetadata
-> Task :app:mergeDebugNativeLibs NO-SOURCE
-> Task :app:stripDebugDebugSymbols NO-SOURCE
-> Task :app:writeDebugAppMetadata
-> Task :app:javaPreCompileDebug
-> Task :app:validateSigningDebug
-> Task :app:writeDebugSigningConfigVersions
-> Task :app:mergeDebugAssets
-> Task :app:compressDebugAssets
-> Task :app:checkDebugDuplicateClasses
-> Task :app:parseDebugLocalResources
-> Task :app:processDebugMainManifest
-> Task :app:processDebugManifest
-> Task :app:processDebugManifestForPackage
-> Task :app:mergeLibDexDebug
-> Task :app:mergeDebugResources
-> Task :app:processDebugResources
-> Task :app:mergeExtDexDebug
-> Task :app:kspDebugKotlin
-
-> Task :app:compileDebugKotlin FAILED
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/data/repository/ChatRepository.kt:1028:25 Cannot find a parameter with this name: createdAt
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/data/repository/ChatRepository.kt:1029:25 Cannot find a parameter with this name: updatedAt
-
-0 problems were found storing the configuration cache.
-
-See the complete report at file:///Users/muhammadsharjeel/Documents/BaatCheet/android/build/reports/configuration-cache/5vr48mh8osbstxgpsidbb309q/4mtrfpkmqhmbo6cninuq1ac8/configuration-cache-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':app:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
-
-* Try:
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-
-* Exception is:
-org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:149)
-	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:282)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:147)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:337)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:324)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:317)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:116)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:264)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:255)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:249)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:109)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:200)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:283)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:321)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:304)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:309)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
-	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:256)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.run(DefaultBuildOperationExecutor.java:68)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:233)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:216)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:199)
-	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:166)
-	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
-	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
-	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
-	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
-	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
-	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:41)
-	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:74)
-	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
-	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:50)
-	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:28)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.executeDelegateBroadcastingChanges(CaptureStateAfterExecutionStep.java:100)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:72)
-	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:50)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
-	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
-	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:179)
-	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:70)
-	at org.gradle.internal.Either$Right.fold(Either.java:175)
-	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:59)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:68)
-	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:46)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:25)
-	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:36)
-	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:22)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:91)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:55)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:55)
-	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:37)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
-	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
-	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:77)
-	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:38)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:94)
-	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:49)
-	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:71)
-	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:45)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.executeWithNonEmptySources(SkipEmptyWorkStep.java:177)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:86)
-	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:53)
-	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:32)
-	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:21)
-	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
-	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
-	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:75)
-	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:41)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.lambda$execute$0(AssignWorkspaceStep.java:32)
-	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:293)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:30)
-	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:21)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:37)
-	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:27)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:47)
-	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:34)
-	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:64)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:146)
-	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
-	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
-	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
-	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
-	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
-	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
-	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:337)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:324)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:317)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
-	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
-	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:116)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
-	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
-	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
-	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:264)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
-	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:255)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:249)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:109)
-	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
-	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
-	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:200)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
-Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
-	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:20)
-	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.run(GradleKotlinCompilerWork.kt:141)
-	at org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction.execute(GradleCompilerRunnerWithWorkers.kt:73)
-	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
-	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
-	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
-	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
-	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
-	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
-	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:170)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:187)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:120)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:162)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:249)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:109)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:114)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:157)
-	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:126)
-	... 2 more
-
-
-BUILD FAILED in 1m 25s
-29 actionable tasks: 29 executed
-Configuration cache entry stored.
+2026-01-14 13:20:03.839 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
+2026-01-14 13:20:03.839 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
+2026-01-14 13:20:03.848 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc0f80
+2026-01-14 13:20:03.848 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
+2026-01-14 13:20:03.848 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
+2026-01-14 13:20:03.854 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2026-01-14 13:20:03.922 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000004,api:0,p:-1,c:23645) connect: controlledByApp=false
+2026-01-14 13:20:03.924 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
+2026-01-14 13:20:03.948 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#4](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494518770012705(auto) mPendingTransactions.size=0 graphicBufferId=101554501713954 transform=0
+2026-01-14 13:20:05.045 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/share
+2026-01-14 13:20:05.045 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 57
+2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58"}
+2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (57-byte body)
+2026-01-14 13:20:05.119 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@dfe2df9
+2026-01-14 13:20:05.121 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5ea8660 (UnprojectedRipple) with handle 0xb400007025dc0da0
+2026-01-14 13:20:05.121 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{1f94ad5 V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741827}
+2026-01-14 13:20:05.133 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc0f80
+2026-01-14 13:20:05.141 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#4](f:0,a:4) destructor()
+2026-01-14 13:20:05.141 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#4(BLAST Consumer)4](id:5c5d00000004,api:0,p:-1,c:23645) disconnect
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/share (429ms)
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:20:06 GMT
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 180
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: hkOpSU, hkOpSU
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 95
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 571
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 91ms
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"b4-3FVoVBCo5pJfG7y9u5r45OAFoRo"
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/share
+2026-01-14 13:20:05.479 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:20:05.480 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"shareLink":"https://baatcheet.app/share/46LiBOyYazP2fLtWgXS-Iw","shareId":"46LiBOyYazP2fLtWgXS-Iw","expiresAt":"2026-01-21T08:19:56.274Z","accessCount":0}}
+2026-01-14 13:20:05.480 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (180-byte body)
+2026-01-14 13:20:07.754 23645-23645 Compose Focus           com.baatcheet.app                    D  Owner FocusChanged(true)
+2026-01-14 13:20:07.786 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:20:07.788 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:20:07.792 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:ae11383b: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:20:07.792 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
+2026-01-14 13:20:07.793 23645-23645 InputMethodManager      com.baatcheet.app                    D  showSoftInput() view=androidx.compose.ui.platform.AndroidComposeView{fe43bb3 VFED..... .F....ID 0,0-1080,2436 aid=1073741828} flags=0 reason=SHOW_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:20:08.096 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:20:08.417 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:ae11383b: onShown
+2026-01-14 13:20:09.362 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
+2026-01-14 13:20:09.362 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
+2026-01-14 13:20:09.369 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc4ca0
+2026-01-14 13:20:09.369 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
+2026-01-14 13:20:09.369 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
+2026-01-14 13:20:09.375 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2026-01-14 13:20:09.443 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000005,api:0,p:-1,c:23645) connect: controlledByApp=false
+2026-01-14 13:20:09.444 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
+2026-01-14 13:20:09.472 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#5](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494524293653552(auto) mPendingTransactions.size=0 graphicBufferId=101554501713961 transform=0
+2026-01-14 13:20:09.513 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@8393016
+2026-01-14 13:20:09.548 23645-23645 RemoteInpu...ectionImpl com.baatcheet.app                    W  requestCursorAnchorInfo on inactive InputConnection
+2026-01-14 13:20:09.564 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@8393016
+2026-01-14 13:20:09.586 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:f8b9021f: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
+2026-01-14 13:20:09.588 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:acbb049e: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:20:09.588 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:acbb049e: onFailed at PHASE_CLIENT_VIEW_SERVED
+2026-01-14 13:20:10.382 23645-23645 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 147798919; UID 10639; state: ENABLED
+2026-01-14 13:20:10.412 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@2b1fc80
+2026-01-14 13:20:10.416 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5ec2f40 (UnprojectedRipple) with handle 0xb400007025dc0ef0
+2026-01-14 13:20:10.416 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{1a1eddd V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741829}
+2026-01-14 13:20:10.428 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc4ca0
+2026-01-14 13:20:10.460 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#5](f:0,a:4) destructor()
+2026-01-14 13:20:10.460 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#5(BLAST Consumer)5](id:5c5d00000005,api:0,p:-1,c:23645) disconnect
+2026-01-14 13:20:10.475 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:20:10.569 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:20:10.885 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:a0d272ad: onShown
+2026-01-14 13:20:16.119 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
+2026-01-14 13:20:16.119 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
+2026-01-14 13:20:16.126 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc7b80
+2026-01-14 13:20:16.126 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
+2026-01-14 13:20:16.126 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
+2026-01-14 13:20:16.132 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2026-01-14 13:20:16.199 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000006,api:0,p:-1,c:23645) connect: controlledByApp=false
+2026-01-14 13:20:16.200 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
+2026-01-14 13:20:16.225 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#6](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494531045957014(auto) mPendingTransactions.size=0 graphicBufferId=101554501713964 transform=0
+2026-01-14 13:20:16.266 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@b388738
+2026-01-14 13:20:16.296 23645-23645 RemoteInpu...ectionImpl com.baatcheet.app                    W  requestCursorAnchorInfo on inactive InputConnection
+2026-01-14 13:20:16.298 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@b388738
+2026-01-14 13:20:16.317 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:a1ee8a57: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
+2026-01-14 13:20:16.318 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:39496b81: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:20:16.319 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:39496b81: onFailed at PHASE_CLIENT_VIEW_SERVED
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/share
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 57
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58"}
+2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (57-byte body)
+2026-01-14 13:20:18.670 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@8c61c12
+2026-01-14 13:20:18.672 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5eca320 (UnprojectedRipple) with handle 0xb400007025dca340
+2026-01-14 13:20:18.673 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{4b52df1 V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741830}
+2026-01-14 13:20:18.693 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc7b80
+2026-01-14 13:20:18.701 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#6](f:0,a:4) destructor()
+2026-01-14 13:20:18.701 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#6(BLAST Consumer)6](id:5c5d00000006,api:0,p:-1,c:23645) disconnect
+2026-01-14 13:20:18.743 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:20:18.813 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/share (411ms)
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:20:19 GMT
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 180
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: IN2oge, IN2oge
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 91
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 556
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 93ms
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"b4-3FVoVBCo5pJfG7y9u5r45OAFoRo"
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/share
+2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:20:19.028 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"shareLink":"https://baatcheet.app/share/46LiBOyYazP2fLtWgXS-Iw","shareId":"46LiBOyYazP2fLtWgXS-Iw","expiresAt":"2026-01-21T08:19:56.274Z","accessCount":0}}
+2026-01-14 13:20:19.028 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (180-byte body)
+2026-01-14 13:20:19.154 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:6cadf5c: onShown

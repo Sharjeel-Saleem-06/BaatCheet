@@ -114,6 +114,30 @@ fun ChatScreen(
     // Full voice mode screen state
     var showVoiceModeScreen by remember { mutableStateOf(false) }
     
+    // Selected mode from plus menu (to show indicator)
+    var selectedPlusMode by remember { mutableStateOf<String?>(null) }
+    
+    // Get clipboard manager for sharing
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    
+    // Handle share link when created
+    LaunchedEffect(state.shareUrl) {
+        state.shareUrl?.let { url ->
+            // Copy to clipboard
+            clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(url))
+            
+            // Show share intent
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, "Check out this BaatCheet conversation: $url")
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Share conversation"))
+            
+            // Clear the share URL after sharing
+            viewModel.clearShareUrl()
+        }
+    }
+    
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
@@ -165,6 +189,18 @@ fun ChatScreen(
                     onMenuClick = { coroutineScope.launch { drawerState.open() } },
                     onNewChat = { viewModel.startNewChat() },
                     onShareChat = { viewModel.shareChat() },
+                    onAddPeople = { email ->
+                        state.currentProjectId?.let { projectId ->
+                            viewModel.inviteCollaborator(projectId, email)
+                        } ?: run {
+                            // No project selected, show toast
+                            android.widget.Toast.makeText(
+                                context, 
+                                "Create or select a project first to invite collaborators", 
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
                     hasMessages = state.messages.isNotEmpty()
                 )
                 
@@ -274,7 +310,11 @@ fun ChatScreen(
                     },
                     currentMode = state.currentAIMode,
                     promptAnalysis = state.promptAnalysis,
-                    onModeClick = { viewModel.toggleModeSelector() }
+                    onModeClick = { viewModel.toggleModeSelector() },
+                    selectedPlusMode = selectedPlusMode,
+                    onPlusModeSelect = { mode ->
+                        selectedPlusMode = if (mode.isEmpty()) null else mode
+                    }
                 )
                 
                 // Mode Selector Bottom Sheet
@@ -817,6 +857,7 @@ private fun ChatHeader(
     onMenuClick: () -> Unit,
     onNewChat: () -> Unit,
     onShareChat: () -> Unit = {},
+    onAddPeople: (String) -> Unit = {},
     hasMessages: Boolean = false
 ) {
     var showShareMenu by remember { mutableStateOf(false) }
@@ -892,8 +933,12 @@ private fun ChatHeader(
             onDismiss = { showShareMenu = false },
             onShareLink = { onShareChat() },
             onCopyLink = { 
-                // Copy link action
+                // Copy link action handled in LaunchedEffect
+                onShareChat()
                 showShareMenu = false
+            },
+            onAddPeople = { email ->
+                onAddPeople(email)
             }
         )
     }
@@ -1587,7 +1632,9 @@ private fun ChatInputBar(
     onHeadphoneClick: () -> Unit = {},
     currentMode: com.baatcheet.app.domain.model.AIMode? = null,
     promptAnalysis: com.baatcheet.app.domain.model.PromptAnalysisResult? = null,
-    onModeClick: () -> Unit = {}
+    onModeClick: () -> Unit = {},
+    selectedPlusMode: String? = null,
+    onPlusModeSelect: (String) -> Unit = {}
 ) {
     var showPlusMenu by remember { mutableStateOf(false) }
     
@@ -1610,6 +1657,51 @@ private fun ChatInputBar(
                 files = uploadedFiles,
                 onRemove = onRemoveFile
             )
+            
+            // Selected mode indicator chip
+            if (selectedPlusMode != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val (icon, label) = when (selectedPlusMode) {
+                        "image-generation" -> "🎨" to "Create image"
+                        "research" -> "💡" to "Deep research"
+                        "web-search" -> "🌐" to "Web search"
+                        "tutor" -> "📚" to "Study & learn"
+                        "code" -> "💻" to "Code"
+                        else -> "✨" to selectedPlusMode
+                    }
+                    
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = GreenAccent.copy(alpha = 0.15f),
+                        modifier = Modifier.clickable { onPlusModeSelect("") }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = icon, fontSize = 14.sp)
+                            Text(
+                                text = label,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GreenAccent
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove mode",
+                                tint = GreenAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
             
             // Main input row - ChatGPT style
             Row(
@@ -1799,7 +1891,7 @@ private fun ChatInputBar(
             },
             onModeSelect = { mode ->
                 showPlusMenu = false
-                // Handle mode selection
+                onPlusModeSelect(mode)
             }
         )
     }
@@ -2314,10 +2406,13 @@ private fun ModeSelector(
 private fun ShareChatBottomSheet(
     onDismiss: () -> Unit,
     onShareLink: () -> Unit,
-    onCopyLink: () -> Unit
+    onCopyLink: () -> Unit,
+    onAddPeople: (String) -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    var showAddPeopleDialog by remember { mutableStateOf(false) }
+    var inviteEmail by remember { mutableStateOf("") }
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2411,11 +2506,9 @@ private fun ShareChatBottomSheet(
             
             Spacer(modifier = Modifier.height(20.dp))
             
-            // Add people option (coming soon)
+            // Add people option
             Surface(
-                onClick = { 
-                    android.widget.Toast.makeText(context, "Coming soon!", android.widget.Toast.LENGTH_SHORT).show()
-                },
+                onClick = { showAddPeopleDialog = true },
                 shape = RoundedCornerShape(12.dp),
                 color = ChipBackground
             ) {
@@ -2428,7 +2521,7 @@ private fun ShareChatBottomSheet(
                     Icon(
                         Icons.Outlined.PersonAdd,
                         contentDescription = "Add people",
-                        tint = GrayText,
+                        tint = GreenAccent,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -2440,26 +2533,88 @@ private fun ShareChatBottomSheet(
                             color = DarkText
                         )
                         Text(
-                            text = "Collaborate on this chat",
+                            text = "Invite by email to collaborate",
                             fontSize = 13.sp,
                             color = GrayText
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .background(ChipBackground, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "Soon",
-                            fontSize = 10.sp,
-                            color = GrayText,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = GrayText,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
+    }
+    
+    // Add People Dialog
+    if (showAddPeopleDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddPeopleDialog = false },
+            title = { 
+                Text(
+                    "Invite Collaborator",
+                    fontWeight = FontWeight.Bold
+                ) 
+            },
+            text = {
+                Column {
+                    Text(
+                        "Enter the email address of the person you want to invite:",
+                        fontSize = 14.sp,
+                        color = GrayText
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = inviteEmail,
+                        onValueChange = { inviteEmail = it },
+                        label = { Text("Email address") },
+                        placeholder = { Text("example@email.com") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenAccent,
+                            focusedLabelColor = GreenAccent,
+                            cursorColor = GreenAccent
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inviteEmail.isNotBlank() && inviteEmail.contains("@")) {
+                            onAddPeople(inviteEmail)
+                            android.widget.Toast.makeText(
+                                context, 
+                                "Invitation sent to $inviteEmail", 
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                            inviteEmail = ""
+                            showAddPeopleDialog = false
+                            onDismiss()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context, 
+                                "Please enter a valid email", 
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenAccent)
+                ) {
+                    Text("Send Invite")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddPeopleDialog = false }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = WhiteBackground
+        )
     }
 }
 
