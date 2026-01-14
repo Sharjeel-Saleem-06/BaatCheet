@@ -37,18 +37,21 @@ class ChatRepository @Inject constructor(
     
     /**
      * Send a message and get AI response
+     * @param mode Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
      */
     suspend fun sendMessage(
         message: String,
         conversationId: String? = null,
-        model: String? = null
+        model: String? = null,
+        mode: String? = null
     ): ApiResult<ChatMessage> {
         return try {
             val request = ChatRequest(
                 message = message,
                 conversationId = conversationId,
                 model = model,
-                stream = false
+                stream = false,
+                mode = mode
             )
             
             val response = api.sendMessage(request)

@@ -189,10 +189,14 @@ class ChatViewModel @Inject constructor(
     // ============================================
     
     /**
-     * Send a message
+     * Send a message with optional explicit mode
+     * @param selectedMode Explicit mode like "image-generation", "code", "web-search", "research"
      */
-    fun sendMessage(content: String) {
+    fun sendMessage(content: String, selectedMode: String? = null) {
         if (content.isBlank()) return
+        
+        // Store the selected mode for the API call
+        val modeToSend = selectedMode
         
         // Add user message immediately
         val userMessage = ChatMessage(
@@ -224,7 +228,8 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = chatRepository.sendMessage(
                 message = content,
-                conversationId = _state.value.currentConversationId
+                conversationId = _state.value.currentConversationId,
+                mode = modeToSend
             )) {
                 is ApiResult.Success -> {
                     val response = result.data

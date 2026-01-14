@@ -41,6 +41,7 @@ export interface ChatOptions {
   stream?: boolean;
   originalMessage?: string; // Original message without image context
   imageIds?: string[]; // Attached image IDs
+  explicitMode?: string; // Explicit mode selection from frontend (e.g., "image-generation", "code", "web-search")
 }
 
 export interface ChatResult {
@@ -91,20 +92,51 @@ class ChatServiceClass {
     options: ChatOptions
   ): Promise<ChatResult> {
     try {
-      // Step 0: Detect AI mode using intelligent mode detector
+      // Step 0: Detect AI mode - use explicit mode if provided, otherwise detect
       const attachments = options.imageIds?.map(id => ({ type: 'image' as const, id }));
-      const modeResult = modeDetector.detectMode(userMessage, attachments);
+      const explicitModeValue = options.explicitMode as AIMode | undefined;
+      const modeResult = modeDetector.detectMode(userMessage, attachments, explicitModeValue);
       
       logger.info('Mode detected', {
         mode: modeResult.mode,
         confidence: modeResult.confidence,
         keywords: modeResult.detectedKeywords,
+        explicitMode: options.explicitMode,
         userId: options.userId,
       });
 
       // Step 0.5: Handle IMAGE_GEN mode specially
-      if (modeResult.mode === AIMode.IMAGE_GEN && modeResult.confidence > 0.5) {
+      const isImageGenMode = modeResult.mode === AIMode.IMAGE_GEN && 
+        (options.explicitMode === AIMode.IMAGE_GEN || modeResult.confidence > 0.5);
+      
+      if (isImageGenMode) {
         try {
+          // Check user limit first for better UX
+          const limitStatus = await imageGeneration.checkUserLimit(options.userId);
+          
+          if (!limitStatus.canGenerate) {
+            // Return friendly limit reached message
+            const nextAvailable = limitStatus.nextAvailableAt 
+              ? new Date(limitStatus.nextAvailableAt).toLocaleString('en-US', { 
+                  hour: 'numeric', 
+                  minute: 'numeric', 
+                  hour12: true,
+                  month: 'short',
+                  day: 'numeric'
+                })
+              : 'tomorrow';
+            
+            return {
+              success: true,
+              message: {
+                role: 'assistant',
+                content: `⏳ **Image Generation Limit Reached**\n\nYou've used your daily image generation quota (${limitStatus.dailyLimit} image${limitStatus.dailyLimit > 1 ? 's' : ''}/day for ${limitStatus.tier} tier).\n\n🕐 **Next Available:** ${nextAvailable}\n\n💡 **Tip:** Upgrade to Pro for 50 images/day, or check back later!\n\n---\n*Meanwhile, I can help you craft the perfect prompt for when your limit resets. What image would you like to create?*`,
+              },
+              conversationId: options.conversationId,
+              modeDetected: AIMode.IMAGE_GEN,
+            };
+          }
+          
           // Extract image prompt from message
           const imagePrompt = this.extractImagePrompt(userMessage);
           
@@ -119,7 +151,7 @@ class ChatServiceClass {
               success: true,
               message: {
                 role: 'assistant',
-                content: `✅ **Image Generated Successfully!**\n\n**Your Prompt:** ${imageResult.originalPrompt}\n\n**Enhanced Prompt:** ${imageResult.enhancedPrompt}\n\n**Model:** ${imageResult.model}\n**Generation Time:** ${(imageResult.generationTime / 1000).toFixed(1)}s\n**Seed:** ${imageResult.seed}`,
+                content: `✅ **Image Generated Successfully!**\n\n**Your Prompt:** ${imageResult.originalPrompt}\n\n**Enhanced Prompt:** ${imageResult.enhancedPrompt}\n\n**Model:** ${imageResult.model}\n**Generation Time:** ${(imageResult.generationTime / 1000).toFixed(1)}s\n**Seed:** ${imageResult.seed}\n\n🎨 *Remaining today: ${limitStatus.remainingGenerations - 1}*`,
               },
               conversationId: options.conversationId,
               imageResult: {
@@ -136,14 +168,42 @@ class ChatServiceClass {
               modeDetected: AIMode.IMAGE_GEN,
             };
           } else {
-            // Image generation failed, continue with chat to explain
-            logger.warn('Image generation failed, continuing with chat', { error: imageResult.error });
+            // Image generation failed - return error message
+            return {
+              success: true,
+              message: {
+                role: 'assistant',
+                content: `❌ **Image Generation Failed**\n\n${imageResult.error}\n\n💡 *Try rephrasing your prompt or try again in a few moments.*`,
+              },
+              conversationId: options.conversationId,
+              modeDetected: AIMode.IMAGE_GEN,
+            };
           }
         } catch (error: any) {
           logger.error('Image generation error:', error);
-          // Continue with chat to explain the error
+          return {
+            success: true,
+            message: {
+              role: 'assistant',
+              content: `❌ **Image Generation Error**\n\nSomething went wrong while generating your image. Please try again.\n\n*Error: ${error.message || 'Unknown error'}*`,
+            },
+            conversationId: options.conversationId,
+            modeDetected: AIMode.IMAGE_GEN,
+          };
         }
       }
+      
+      // Step 0.6: Handle WEB_SEARCH mode with explicit selection
+      const isWebSearchMode = modeResult.mode === AIMode.WEB_SEARCH && 
+        (options.explicitMode === AIMode.WEB_SEARCH || modeResult.confidence > 0.5);
+      
+      // Step 0.7: Handle CODE mode - use DeepSeek Coder for better results
+      const isCodeMode = modeResult.mode === AIMode.CODE && 
+        (options.explicitMode === AIMode.CODE || modeResult.confidence > 0.5);
+      
+      // Step 0.8: Handle RESEARCH mode - deep research with multiple sources
+      const isResearchMode = modeResult.mode === AIMode.RESEARCH && 
+        (options.explicitMode === AIMode.RESEARCH || modeResult.confidence > 0.5);
 
       // Step 1: Detect and process any chat tags (legacy support)
       const detectedTag = chatTags.detectTags(userMessage);
@@ -236,22 +296,28 @@ class ChatServiceClass {
         }
       }).catch(err => logger.error('Background fact extraction failed:', err));
 
-      // Step 3: Check if query needs web search (or if browse tag was used)
+      // Step 3: Check if query needs web search (or if browse tag was used, or explicit mode)
       let webSearchContext = '';
-      const shouldSearch = tagResult?.tag.type === 'browse' || webSearch.needsWebSearch(messageForProcessing);
+      const shouldSearch = isWebSearchMode || isResearchMode || tagResult?.tag.type === 'browse' || webSearch.needsWebSearch(messageForProcessing);
       
       if (shouldSearch) {
         // Use tag search results if available, otherwise perform new search
         if (tagResult?.searchResults) {
           webSearchContext = tagResult.additionalContext || '';
         } else {
-          logger.info('Web search triggered', { query: messageForProcessing.substring(0, 100) });
+          const numResults = isResearchMode ? 10 : 5; // More results for research mode
+          logger.info('Web search triggered', { query: messageForProcessing.substring(0, 100), mode: modeResult.mode, numResults });
           try {
             const searchResults = await webSearch.search(messageForProcessing, {
-              numResults: 5,
-              dateFilter: 'month',
+              numResults,
+              dateFilter: isResearchMode ? 'year' : 'month', // Longer timeframe for research
             });
             webSearchContext = webSearch.formatForAI(searchResults);
+            
+            // Add research mode instructions if applicable
+            if (isResearchMode) {
+              webSearchContext += '\n\n**RESEARCH MODE ACTIVE:** Provide a comprehensive analysis with citations. Synthesize information from multiple sources. Highlight conflicting viewpoints if any exist.';
+            }
           } catch (err) {
             logger.error('Web search failed:', err);
           }
@@ -335,9 +401,23 @@ class ChatServiceClass {
       });
 
       // Step 3: Get AI response with mode-optimized parameters
+      // Select appropriate model based on mode
+      let selectedModel = options.model || conversation.model;
+      
+      // Use specialized models for specific modes
+      if (isCodeMode && !options.model) {
+        // DeepSeek Coder is better for code
+        selectedModel = 'deepseek-coder';
+        logger.info('Using DeepSeek Coder for code mode');
+      } else if (isResearchMode && !options.model) {
+        // For research, we want larger context - use Gemini or Llama
+        selectedModel = 'gemini-2.5-flash';
+        logger.info('Using Gemini 2.5 Flash for research mode');
+      }
+      
       const request: ChatRequest = {
         messages,
-        model: options.model || conversation.model,
+        model: selectedModel,
         maxTokens: effectiveMaxTokens || promptAnalysis.suggestedMaxTokens,
         temperature: effectiveTemperature ?? promptAnalysis.suggestedTemperature,
       };

@@ -283,8 +283,9 @@ fun ChatScreen(
                     },
                     onSend = {
                         if (messageText.isNotBlank()) {
-                            viewModel.sendMessage(messageText)
+                            viewModel.sendMessage(messageText, selectedPlusMode)
                             messageText = ""
+                            selectedPlusMode = null // Clear the selected mode after sending
                             viewModel.clearUploadedFiles()
                         }
                     },

@@ -33,7 +33,7 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const { message, conversationId, model, systemPrompt, stream = true, imageIds } = req.body;
+      const { message, conversationId, model, systemPrompt, stream = true, imageIds, mode: explicitMode } = req.body;
 
       // Build enhanced message with image context (hidden from user)
       let enhancedMessage = message;
@@ -83,6 +83,7 @@ router.post(
           systemPrompt,
           originalMessage: message, // Store original without image context
           imageIds,
+          explicitMode, // Pass explicit mode selection from frontend
         });
       } else {
         const result = await chatService.processMessage(enhancedMessage, {
@@ -92,6 +93,7 @@ router.post(
           systemPrompt,
           originalMessage: message,
           imageIds,
+          explicitMode, // Pass explicit mode selection from frontend
         });
 
         res.json({

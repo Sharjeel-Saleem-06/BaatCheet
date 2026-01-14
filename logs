@@ -1,159 +1,353 @@
-2026-01-14 13:20:03.839 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-14 13:20:03.839 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
-2026-01-14 13:20:03.848 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc0f80
-2026-01-14 13:20:03.848 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-14 13:20:03.848 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-14 13:20:03.854 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-14 13:20:03.922 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000004,api:0,p:-1,c:23645) connect: controlledByApp=false
-2026-01-14 13:20:03.924 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-14 13:20:03.948 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#4](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494518770012705(auto) mPendingTransactions.size=0 graphicBufferId=101554501713954 transform=0
-2026-01-14 13:20:05.045 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/share
-2026-01-14 13:20:05.045 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 57
-2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
-2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58"}
-2026-01-14 13:20:05.046 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (57-byte body)
-2026-01-14 13:20:05.119 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@dfe2df9
-2026-01-14 13:20:05.121 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5ea8660 (UnprojectedRipple) with handle 0xb400007025dc0da0
-2026-01-14 13:20:05.121 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{1f94ad5 V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741827}
-2026-01-14 13:20:05.133 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc0f80
-2026-01-14 13:20:05.141 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#4](f:0,a:4) destructor()
-2026-01-14 13:20:05.141 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#4(BLAST Consumer)4](id:5c5d00000004,api:0,p:-1,c:23645) disconnect
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/share (429ms)
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:20:06 GMT
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 180
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: hkOpSU, hkOpSU
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
-2026-01-14 13:20:05.476 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
-2026-01-14 13:20:05.477 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 95
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 571
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 91ms
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"b4-3FVoVBCo5pJfG7y9u5r45OAFoRo"
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
-2026-01-14 13:20:05.478 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/share
-2026-01-14 13:20:05.479 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-14 13:20:05.480 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"shareLink":"https://baatcheet.app/share/46LiBOyYazP2fLtWgXS-Iw","shareId":"46LiBOyYazP2fLtWgXS-Iw","expiresAt":"2026-01-21T08:19:56.274Z","accessCount":0}}
-2026-01-14 13:20:05.480 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (180-byte body)
-2026-01-14 13:20:07.754 23645-23645 Compose Focus           com.baatcheet.app                    D  Owner FocusChanged(true)
-2026-01-14 13:20:07.786 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-14 13:20:07.788 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-14 13:20:07.792 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:ae11383b: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-14 13:20:07.792 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-14 13:20:07.793 23645-23645 InputMethodManager      com.baatcheet.app                    D  showSoftInput() view=androidx.compose.ui.platform.AndroidComposeView{fe43bb3 VFED..... .F....ID 0,0-1080,2436 aid=1073741828} flags=0 reason=SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-14 13:20:08.096 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-14 13:20:08.417 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:ae11383b: onShown
-2026-01-14 13:20:09.362 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-14 13:20:09.362 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
-2026-01-14 13:20:09.369 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc4ca0
-2026-01-14 13:20:09.369 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-14 13:20:09.369 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-14 13:20:09.375 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-14 13:20:09.443 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000005,api:0,p:-1,c:23645) connect: controlledByApp=false
-2026-01-14 13:20:09.444 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-14 13:20:09.472 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#5](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494524293653552(auto) mPendingTransactions.size=0 graphicBufferId=101554501713961 transform=0
-2026-01-14 13:20:09.513 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@8393016
-2026-01-14 13:20:09.548 23645-23645 RemoteInpu...ectionImpl com.baatcheet.app                    W  requestCursorAnchorInfo on inactive InputConnection
-2026-01-14 13:20:09.564 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@8393016
-2026-01-14 13:20:09.586 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:f8b9021f: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
-2026-01-14 13:20:09.588 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:acbb049e: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
-2026-01-14 13:20:09.588 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:acbb049e: onFailed at PHASE_CLIENT_VIEW_SERVED
-2026-01-14 13:20:10.382 23645-23645 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 147798919; UID 10639; state: ENABLED
-2026-01-14 13:20:10.412 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@2b1fc80
-2026-01-14 13:20:10.416 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5ec2f40 (UnprojectedRipple) with handle 0xb400007025dc0ef0
-2026-01-14 13:20:10.416 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{1a1eddd V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741829}
-2026-01-14 13:20:10.428 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc4ca0
-2026-01-14 13:20:10.460 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#5](f:0,a:4) destructor()
-2026-01-14 13:20:10.460 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#5(BLAST Consumer)5](id:5c5d00000005,api:0,p:-1,c:23645) disconnect
-2026-01-14 13:20:10.475 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-14 13:20:10.569 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-14 13:20:10.885 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:a0d272ad: onShown
-2026-01-14 13:20:16.119 23645-23645 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-14 13:20:16.119 23645-23645 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
-2026-01-14 13:20:16.126 23645-23645 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb400007025dc7b80
-2026-01-14 13:20:16.126 23645-23645 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-14 13:20:16.126 23645-23645 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-14 13:20:16.132 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-14 13:20:16.199 23645-23645 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c5d00000006,api:0,p:-1,c:23645) connect: controlledByApp=false
-2026-01-14 13:20:16.200 23645-31879 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-14 13:20:16.225 23645-31879 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#6](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=494531045957014(auto) mPendingTransactions.size=0 graphicBufferId=101554501713964 transform=0
-2026-01-14 13:20:16.266 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@b388738
-2026-01-14 13:20:16.296 23645-23645 RemoteInpu...ectionImpl com.baatcheet.app                    W  requestCursorAnchorInfo on inactive InputConnection
-2026-01-14 13:20:16.298 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@b388738
-2026-01-14 13:20:16.317 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:a1ee8a57: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
-2026-01-14 13:20:16.318 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:39496b81: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
-2026-01-14 13:20:16.319 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:39496b81: onFailed at PHASE_CLIENT_VIEW_SERVED
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/share
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 57
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58"}
-2026-01-14 13:20:18.613 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (57-byte body)
-2026-01-14 13:20:18.670 23645-23645 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@8c61c12
-2026-01-14 13:20:18.672 23645-31879 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb400006fa5eca320 (UnprojectedRipple) with handle 0xb400007025dca340
-2026-01-14 13:20:18.673 23645-23645 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{4b52df1 V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741830}
-2026-01-14 13:20:18.693 23645-23645 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb400007025dc7b80
-2026-01-14 13:20:18.701 23645-31867 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#6](f:0,a:4) destructor()
-2026-01-14 13:20:18.701 23645-31867 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#6(BLAST Consumer)6](id:5c5d00000006,api:0,p:-1,c:23645) disconnect
-2026-01-14 13:20:18.743 23645-23645 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-14 13:20:18.813 23645-23645 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/share (411ms)
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:20:19 GMT
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 180
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: IN2oge, IN2oge
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
-2026-01-14 13:20:19.025 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 91
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 556
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 93ms
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"b4-3FVoVBCo5pJfG7y9u5r45OAFoRo"
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/share
-2026-01-14 13:20:19.026 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-14 13:20:19.028 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"shareLink":"https://baatcheet.app/share/46LiBOyYazP2fLtWgXS-Iw","shareId":"46LiBOyYazP2fLtWgXS-Iw","expiresAt":"2026-01-21T08:19:56.274Z","accessCount":0}}
-2026-01-14 13:20:19.028 23645-32045 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (180-byte body)
-2026-01-14 13:20:19.154 23645-23645 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:6cadf5c: onShown
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/completions
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 108
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","message":"create image of the cat","stream":false}
+2026-01-14 13:33:59.212  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (108-byte body)
+2026-01-14 13:33:59.228  3611-3611  InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:33:59.380  3611-3611  InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:33:59.380  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:5d3a166: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/completions (3698ms)
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:03 GMT
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 1597
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: d-UV-0, d-UV-0
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:02.911  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 30;w=60
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 30
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 29
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 60
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 2235ms
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"63d-2TwDR3OfT8q/pDveD4eTEhb3/pA"
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/completions
+2026-01-14 13:34:02.912  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:02.913  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"message":{"role":"assistant","content":"🐈\n\nTo create an image of a cat, I'll need to craft a detailed prompt for the image generation system. Here's a possible prompt:\n\n\"Generate a high-resolution image of a cute, fluffy cat with bright green eyes and a pink nose. The cat should be sitting on a soft, white cushion, with its paws tucked under its body. The background should be a warm, cozy room with wooden furniture and a large window with a view of a sunny garden. The lighting should be soft and natural, with a warm glow on the cat's fur. The style should be realistic, with detailed textures and shading.\"\n\n### Prompt Details\n\n*Subject: Cat\n*Style: Realistic\n*Mood: Cute, cozy\n*Lighting: Soft, natural\n*Colors: Warm, earthy tones (browns, tans, greens)\n*Background: Warm, cozy room with wooden furniture and a sunny garden view\n\n\n### Variations\n\nIf you'd like to try some variations, here are a few options: Anime-style cat: Replace the realistic style with an anime-inspired look, with bold lines, bright colors, and exaggerated features.\n*Black and white cat: Change the cat's fur color to black and white, with a sleek, glossy coat.\n*Outdoor setting: Replace the cozy room with an outdoor setting, such as a garden or a park, with the cat sitting on a rock or a tree stump.\n- Let me know if you'd like to try any of these variations or if you have any other ideas! 😊"},"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","model":"llama-3.3-70b-versatile","provider":"groq","tokens":{"prompt":2978,"completion":328,"total":3306}}}
+2026-01-14 13:34:02.913  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (1597-byte body)
+2026-01-14 13:34:02.920  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0
+2026-01-14 13:34:02.920  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:02.920  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:02.920  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-14 13:34:02.928  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/usage
+2026-01-14 13:34:02.928  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:02.928  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:02.928  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/suggest
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 1440
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","lastResponse":"🐈\n\nTo create an image of a cat, I'll need to craft a detailed prompt for the image generation system. Here's a possible prompt:\n\n\"Generate a high-resolution image of a cute, fluffy cat with bright green eyes and a pink nose. The cat should be sitting on a soft, white cushion, with its paws tucked under its body. The background should be a warm, cozy room with wooden furniture and a large window with a view of a sunny garden. The lighting should be soft and natural, with a warm glow on the cat's fur. The style should be realistic, with detailed textures and shading.\"\n\n### Prompt Details\n\n*Subject: Cat\n*Style: Realistic\n*Mood: Cute, cozy\n*Lighting: Soft, natural\n*Colors: Warm, earthy tones (browns, tans, greens)\n*Background: Warm, cozy room with wooden furniture and a sunny garden view\n\n\n### Variations\n\nIf you'd like to try some variations, here are a few options: Anime-style cat: Replace the realistic style with an anime-inspired look, with bold lines, bright colors, and exaggerated features.\n*Black and white cat: Change the cat's fur color to black and white, with a sleek, glossy coat.\n*Outdoor setting: Replace the cozy room with an outdoor setting, such as a garden or a park, with the cat sitting on a rock or a tree stump.\n- Let me know if you'd like to try any of these variations or if you have any other ideas! 😊"}
+2026-01-14 13:34:02.933  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (1440-byte body)
+2026-01-14 13:34:03.000  3611-3611  Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 247079863; UID 10639; state: ENABLED
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/usage (539ms)
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:04 GMT
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 270
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: NP1axR, NP1axR
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:03.468  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 94
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 847
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 109ms
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"10e-5hF1rYmal97QSZ86KSsTXrxwHH0"
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/usage
+2026-01-14 13:34:03.469  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:03.470  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"tier":"free","usage":{"messages":{"used":15,"limit":50,"remaining":35,"percentage":30},"images":{"used":1,"limit":1,"remaining":0,"percentage":100}},"resetAt":"2026-01-15T00:00:00.000Z","limits":{"messages":50,"images":1,"voice":10,"search":5}}}
+2026-01-14 13:34:03.470  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (270-byte body)
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0 (556ms)
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:04 GMT
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 5141
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: iSgM6v, iSgM6v
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:03.477  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 94
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 847
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 145ms
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"1415-s7zYovb/lOiDA7enaSLsGqGizkk"
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/conversations?limit=50&offset=0
+2026-01-14 13:34:03.478  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:03.479  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"items":[{"id":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","title":"asalmulakim kaisa ho ap?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":6767,"createdAt":"2026-01-14T06:39:00.333Z","updatedAt":"2026-01-14T08:34:03.656Z","messageCount":6},{"id":"ba46a42c-ab67-4ee4-8b78-9bf953e47867","title":"hello hello","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":280,"createdAt":"2026-01-14T07:27:27.408Z","updatedAt":"2026-01-14T07:27:47.828Z","messageCount":4},{"id":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58","title":"hii can you please make a difference between...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1427,"createdAt":"2026-01-14T07:26:51.845Z","updatedAt":"2026-01-14T07:26:53.045Z","messageCount":2},{"id":"8f47648f-dd93-4f35-96c8-79527c92f1a9","title":"create a difference of healthy vs un healthy food...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":3478,"createdAt":"2026-01-14T07:16:26.427Z","updatedAt":"2026-01-14T07:16:42.962Z","messageCount":3},{"id":"2553b2ea-729f-4dad-b645-7f91fcac899c","title":"create a table on difference between ltv vs htv","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1732,"createdAt":"2026-01-14T06:28:10.937Z","updatedAt":"2026-01-14T06:28:12.339Z","messageCount":2},{"id":"0c34030c-cb6b-4ae2-81a7-7f2014d4a7f4","title":"hello how are you hello hello","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":364,"createdAt":"2026-01-14T06:18:05.469Z","updatedAt":"2026-01-14T06:18:20.804Z","messageCount":4},{"id":"374beb45-a1f1-4cb0-8207-cc0cf4ee6286","title":"hello hello how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":327,"createdAt":"2026-01-14T03:21:02.435Z","updatedAt":"2026-01-14T03:21:39.426Z","messageCount":4},{"id":"a9d53c89-bf07-4975-b6ce-88fd8f5e5e99","title":"how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1119,"createdAt":"2026-01-14T02:59:09.082Z","updatedAt":"2026-01-14T02:59:09.625Z","messageCount":2},{"id":"1d9dd43a-8d29-48c1-8c78-5324b4831696","title":"Hello, how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1010,"createdAt":"2026-01-14T02:42:54.011Z","updatedAt":"2026-01-14T02:42:54.600Z","messageCount":2},{"id":"0bbe3728-8db1-4ea6-a38d-f541f5fddfaf","title":"how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":9465,"createdAt":"2026-01-13T17:55:12.327Z","updatedAt":"2026-01-13T18:00:45.810Z","messageCount":10},{"id":"b41b4778-6f44-423e-a133-4856557a5ef7","title":"Design a database schema for an online merch store","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1864,"createdAt":"2026-01-13T17:09:04.927Z","updatedAt":"2026-01-13T17:09:06.166Z","messageCount":2},{"id":"7cd4f044-174f-4707-a679-19fb3ff82fad","title":"Design a database schema for an online merch store","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1864,"createdAt":"2026-01-13T17:08:32.323Z","updatedAt":"2026-01-13T17:08:33.685Z","messageCount":2},{"id":"edcd3db7-03a8-4b01-ac6d-f1ce82f14ed1","title":"analzye the pdf and tell em hte summary in easy...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":7395,"createdAt":"2026-01-12T05:59:56.896Z","updatedAt":"2026-01-13T17:08:27.074Z","messageCount":14},{"id":"41915edc-a2af-46b8-a323-42adb43a31b1","title":"how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":2125,"createdAt":"2026-01-13T17:04:44.552Z","updatedAt":"2026-01-13T17:06:28.103Z","messageCount":4},{"id":"63bef6e8-a
+2026-01-14 13:34:03.479  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  0e6-47a6-ab26-9db6b4a8bce5","title":"why?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":2647,"createdAt":"2026-01-13T17:04:49.861Z","updatedAt":"2026-01-13T17:06:11.322Z","messageCount":4},{"id":"9590fadb-3433-43a7-b566-9d0503ae53ac","title":"how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1018,"createdAt":"2026-01-13T17:05:42.942Z","updatedAt":"2026-01-13T17:05:43.474Z","messageCount":2},{"id":"444b406b-e23d-4c0f-96ad-0ff2189b0d69","title":"whats this logo for [Image Context - DO NOT...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":132,"createdAt":"2026-01-11T06:40:12.748Z","updatedAt":"2026-01-11T06:40:13.277Z","messageCount":2},{"id":"a35acfa8-6e39-4a15-b2c2-d08f1b24aebd","title":"what happening in this logo","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1139,"createdAt":"2026-01-11T06:32:00.360Z","updatedAt":"2026-01-11T06:36:28.763Z","messageCount":14}],"pagination":{"total":18,"limit":50,"offset":0,"hasMore":false}}}
+2026-01-14 13:34:03.479  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (5141-byte body)
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/suggest (1213ms)
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:04 GMT
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 350
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: lxr_0S, lxr_0S
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:04.147  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 93
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 847
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 445ms
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"15e-ERxZd5wQ9ssBFCN6pBVqS8+m2iM"
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/suggest
+2026-01-14 13:34:04.148  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:04.149  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"suggestions":["What are the key elements to include in a prompt for generating an image of a cat?","How can I modify the prompt to create different styles of cat images?","What role does lighting play in creating a realistic image of a cat?","Can I use this prompt as a starting point to generate images of other animals?"]}}
+2026-01-14 13:34:04.149  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (350-byte body)
+2026-01-14 13:34:04.278  3611-3611  WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@df22cbd
+2026-01-14 13:34:04.554  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:508db17b: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:34:04.556  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:2ca13bd6: onHidden
+2026-01-14 13:34:05.423  3611-8178  m.baatcheet.app         com.baatcheet.app                    W  Cleared Reference was only reachable from finalizer (only reported once)
+2026-01-14 13:34:05.456  3611-8180  System                  com.baatcheet.app                    W  A resource failed to call release. 
+2026-01-14 13:34:06.306  3611-3611  ScrollIdentify          com.baatcheet.app                    I  on fling
+2026-01-14 13:34:06.663  3611-3611  ScrollIdentify          com.baatcheet.app                    I  on fling
+2026-01-14 13:34:11.737  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:aebc7d10: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:34:11.737  3611-3611  InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
+2026-01-14 13:34:11.738  3611-3611  InputMethodManager      com.baatcheet.app                    D  showSoftInput() view=androidx.compose.ui.platform.AndroidComposeView{fe43bb3 VFED..... .F....ID 0,0-1080,2436 aid=1073741826} flags=0 reason=SHOW_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:34:11.807  3611-3611  InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:34:12.118  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:aebc7d10: onShown
+2026-01-14 13:34:15.685  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/completions
+2026-01-14 13:34:15.685  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 99
+2026-01-14 13:34:15.685  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:15.685  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:15.686  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","message":"just create it","stream":false}
+2026-01-14 13:34:15.686  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (99-byte body)
+2026-01-14 13:34:15.696  3611-3611  InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
+2026-01-14 13:34:15.836  3611-3611  InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
+2026-01-14 13:34:15.836  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:bfe7a910: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+2026-01-14 13:34:16.779  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/completions (1093ms)
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:17 GMT
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 440
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: xROqLd, xROqLd
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:16.781  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 30;w=60
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 30
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 29
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 60
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 791ms
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"1b8-Od6kvAPRKY+7c+VZgcgmrDmYpEE"
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/completions
+2026-01-14 13:34:16.782  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:16.783  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"message":{"role":"assistant","content":"I'm a large language model, I don't have the capability to directly create images. But I can try to create a simple ASCII art of a cat for you:\n\n\n /_/\\\n( o.o )\n > ^ <\n\n\nI hope you find this cute! 😸"},"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","model":"llama-3.3-70b-versatile","provider":"groq","tokens":{"prompt":3088,"completion":55,"total":3143}}}
+2026-01-14 13:34:16.783  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (440-byte body)
+2026-01-14 13:34:16.791  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0
+2026-01-14 13:34:16.791  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:16.791  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:16.791  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-14 13:34:16.793  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/usage
+2026-01-14 13:34:16.793  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:16.793  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:16.793  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-14 13:34:16.793  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/suggest
+2026-01-14 13:34:16.793  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 284
+2026-01-14 13:34:16.793  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4MzIzOTM3LCJleHAiOjE3Njg5Mjg3Mzd9.XxFcz-xvKG556gxX1Oe31bK804zPkTzgXjfSLHfqMQw
+2026-01-14 13:34:16.793  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-14 13:34:16.794  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","lastResponse":"I'm a large language model, I don't have the capability to directly create images. But I can try to create a simple ASCII art of a cat for you:\n\n\n /_/\\\n( o.o )\n > ^ <\n\n\nI hope you find this cute! 😸"}
+2026-01-14 13:34:16.794  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (284-byte body)
+2026-01-14 13:34:16.920  3611-3611  WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@37524990 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@39ba98
+2026-01-14 13:34:17.157  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/usage (364ms)
+2026-01-14 13:34:17.157  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:17 GMT
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 270
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: Ki2izR, Ki2izR
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:17.158  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 93
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 833
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 113ms
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"10e-fY1Qrugx1IWRyly5gOPIf9eXdD8"
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/usage
+2026-01-14 13:34:17.159  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:17.161  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"tier":"free","usage":{"messages":{"used":16,"limit":50,"remaining":34,"percentage":32},"images":{"used":1,"limit":1,"remaining":0,"percentage":100}},"resetAt":"2026-01-15T00:00:00.000Z","limits":{"messages":50,"images":1,"voice":10,"search":5}}}
+2026-01-14 13:34:17.161  3611-8244  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (270-byte body)
+2026-01-14 13:34:17.253  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:b27cdce: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
+2026-01-14 13:34:17.255  3611-3611  ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:adaea52b: onHidden
+2026-01-14 13:34:17.513  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0 (722ms)
+2026-01-14 13:34:17.514  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:18 GMT
+2026-01-14 13:34:17.514  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:17.515  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 5141
+2026-01-14 13:34:17.515  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: Ug970p, Ug970p
+2026-01-14 13:34:17.515  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:17.515  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:17.516  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:17.517  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 92
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 833
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 68ms
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"1415-k11ekyogB2r92/sXFTQFAxUO2Cs"
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:17.518  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/conversations?limit=50&offset=0
+2026-01-14 13:34:17.519  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:17.520  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"items":[{"id":"6e99e1fc-b55f-4afa-ac94-af022ecc6183","title":"asalmulakim kaisa ho ap?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":9910,"createdAt":"2026-01-14T06:39:00.333Z","updatedAt":"2026-01-14T08:34:17.501Z","messageCount":8},{"id":"ba46a42c-ab67-4ee4-8b78-9bf953e47867","title":"hello hello","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":280,"createdAt":"2026-01-14T07:27:27.408Z","updatedAt":"2026-01-14T07:27:47.828Z","messageCount":4},{"id":"3a9b32c4-7d1d-45b7-8dba-5490608c8c58","title":"hii can you please make a difference between...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1427,"createdAt":"2026-01-14T07:26:51.845Z","updatedAt":"2026-01-14T07:26:53.045Z","messageCount":2},{"id":"8f47648f-dd93-4f35-96c8-79527c92f1a9","title":"create a difference of healthy vs un healthy food...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":3478,"createdAt":"2026-01-14T07:16:26.427Z","updatedAt":"2026-01-14T07:16:42.962Z","messageCount":3},{"id":"2553b2ea-729f-4dad-b645-7f91fcac899c","title":"create a table on difference between ltv vs htv","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1732,"createdAt":"2026-01-14T06:28:10.937Z","updatedAt":"2026-01-14T06:28:12.339Z","messageCount":2},{"id":"0c34030c-cb6b-4ae2-81a7-7f2014d4a7f4","title":"hello how are you hello hello","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":364,"createdAt":"2026-01-14T06:18:05.469Z","updatedAt":"2026-01-14T06:18:20.804Z","messageCount":4},{"id":"374beb45-a1f1-4cb0-8207-cc0cf4ee6286","title":"hello hello how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":327,"createdAt":"2026-01-14T03:21:02.435Z","updatedAt":"2026-01-14T03:21:39.426Z","messageCount":4},{"id":"a9d53c89-bf07-4975-b6ce-88fd8f5e5e99","title":"how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1119,"createdAt":"2026-01-14T02:59:09.082Z","updatedAt":"2026-01-14T02:59:09.625Z","messageCount":2},{"id":"1d9dd43a-8d29-48c1-8c78-5324b4831696","title":"Hello, how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1010,"createdAt":"2026-01-14T02:42:54.011Z","updatedAt":"2026-01-14T02:42:54.600Z","messageCount":2},{"id":"0bbe3728-8db1-4ea6-a38d-f541f5fddfaf","title":"how are you?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":9465,"createdAt":"2026-01-13T17:55:12.327Z","updatedAt":"2026-01-13T18:00:45.810Z","messageCount":10},{"id":"b41b4778-6f44-423e-a133-4856557a5ef7","title":"Design a database schema for an online merch store","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1864,"createdAt":"2026-01-13T17:09:04.927Z","updatedAt":"2026-01-13T17:09:06.166Z","messageCount":2},{"id":"7cd4f044-174f-4707-a679-19fb3ff82fad","title":"Design a database schema for an online merch store","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1864,"createdAt":"2026-01-13T17:08:32.323Z","updatedAt":"2026-01-13T17:08:33.685Z","messageCount":2},{"id":"edcd3db7-03a8-4b01-ac6d-f1ce82f14ed1","title":"analzye the pdf and tell em hte summary in easy...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":7395,"createdAt":"2026-01-12T05:59:56.896Z","updatedAt":"2026-01-13T17:08:27.074Z","messageCount":14},{"id":"41915edc-a2af-46b8-a323-42adb43a31b1","title":"how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":2125,"createdAt":"2026-01-13T17:04:44.552Z","updatedAt":"2026-01-13T17:06:28.103Z","messageCount":4},{"id":"63bef6e8-a
+2026-01-14 13:34:17.520  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  0e6-47a6-ab26-9db6b4a8bce5","title":"why?","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":2647,"createdAt":"2026-01-13T17:04:49.861Z","updatedAt":"2026-01-13T17:06:11.322Z","messageCount":4},{"id":"9590fadb-3433-43a7-b566-9d0503ae53ac","title":"how are you","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1018,"createdAt":"2026-01-13T17:05:42.942Z","updatedAt":"2026-01-13T17:05:43.474Z","messageCount":2},{"id":"444b406b-e23d-4c0f-96ad-0ff2189b0d69","title":"whats this logo for [Image Context - DO NOT...","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":132,"createdAt":"2026-01-11T06:40:12.748Z","updatedAt":"2026-01-11T06:40:13.277Z","messageCount":2},{"id":"a35acfa8-6e39-4a15-b2c2-d08f1b24aebd","title":"what happening in this logo","model":"llama-3.3-70b-versatile","tags":[],"isPinned":false,"isArchived":false,"totalTokens":1139,"createdAt":"2026-01-11T06:32:00.360Z","updatedAt":"2026-01-11T06:36:28.763Z","messageCount":14}],"pagination":{"total":18,"limit":50,"offset":0,"hasMore":false}}}
+2026-01-14 13:34:17.520  3611-8247  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (5141-byte body)
+2026-01-14 13:34:17.767  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/suggest (973ms)
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  date: Wed, 14 Jan 2026 08:34:18 GMT
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 245
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: Zw5iaL, Zw5iaL
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-14 13:34:17.768  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 91
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 833
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 310ms
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"f5-d0klH5fAerRPh5BufxLsZQiKTNw"
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.129.119
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 6rf9yre1-p5sln
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/suggest
+2026-01-14 13:34:17.769  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-14 13:34:17.770  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"suggestions":["Can you create more complex ASCII art?","How do you come up with ASCII art designs?","Can you make an ASCII art of a different animal?","Are there any limitations to what you can create with ASCII art?"]}}
+2026-01-14 13:34:17.770  3611-8245  okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (245-byte body)
+2026-01-14 13:34:23.398  3611-3611  ScrollIdentify          com.baatcheet.app                    I  on fling

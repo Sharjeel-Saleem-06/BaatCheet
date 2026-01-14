@@ -30,7 +30,8 @@ data class ChatRequest(
     val stream: Boolean = false,
     val imageIds: List<String>? = null,
     val maxTokens: Int? = null, // Limit response length (useful for voice chat)
-    val temperature: Float? = null
+    val temperature: Float? = null,
+    val mode: String? = null // Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
 )
 
 data class ChatResponse(
