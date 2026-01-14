@@ -678,11 +678,10 @@ router.get('/usage', clerkAuth, async (req: Request, res: Response): Promise<voi
       },
     });
 
-    // Count today's image generations (approximation from attachments)
-    const imagesCount = await prisma.attachment.count({
+    // Count today's image generations from ImageGeneration table
+    const imagesCount = await prisma.imageGeneration.count({
       where: {
         userId,
-        type: 'generated',
         createdAt: { gte: today, lt: tomorrow },
       },
     });
@@ -690,9 +689,9 @@ router.get('/usage', clerkAuth, async (req: Request, res: Response): Promise<voi
     // Get user tier (default to free)
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true },
+      select: { tier: true },
     });
-    const tier = user?.plan || 'free';
+    const tier = user?.tier || 'free';
 
     // Define limits based on tier
     const limits = {
