@@ -95,7 +95,7 @@ model AuditLog {
 }
 
 // ============================================
-// Project Model
+// Project Model (Enhanced with Context)
 // ============================================
 model Project {
   id          String   @id @default(uuid())
@@ -106,14 +106,96 @@ model Project {
   icon        String   @default("folder")
   isDefault   Boolean  @default(false) @map("is_default")
   
+  // Project context - AI learns what this project is about
+  context       String?  @db.Text  // AI-generated summary of project scope
+  keyTopics     String[] @default([]) @map("key_topics")  // Main topics discussed
+  techStack     String[] @default([]) @map("tech_stack")  // Technologies mentioned
+  goals         String[] @default([])  // Project goals extracted from conversations
+  lastContextUpdate DateTime? @map("last_context_update")
+  
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversations Conversation[]
+  collaborators ProjectCollaborator[]
+  invitations   ProjectInvitation[]
   
   @@index([userId])
   @@map("projects")
+}
+
+// ============================================
+// Project Collaboration Model
+// ============================================
+model ProjectCollaborator {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  role      String   @default("viewer")  // owner, editor, viewer
+  addedAt   DateTime @default(now()) @map("added_at")
+  addedBy   String   @map("added_by")  // User ID who added this collaborator
+  
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
+  @@map("project_collaborators")
+}
+
+// ============================================
+// Project Invitation Model
+// ============================================
+model ProjectInvitation {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  inviterId   String   @map("inviter_id")  // User who sent invitation
+  inviteeEmail String  @map("invitee_email")
+  inviteeId   String?  @map("invitee_id")  // If user exists in system
+  role        String   @default("viewer")  // Role to assign on acceptance
+  status      String   @default("pending")  // pending, accepted, rejected, expired
+  message     String?  // Optional message from inviter
+  
+  expiresAt   DateTime @map("expires_at")
+  respondedAt DateTime? @map("responded_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@index([inviteeEmail])
+  @@index([inviteeId])
+  @@index([projectId])
+  @@index([status])
+  @@map("project_invitations")
+}
+
+// ============================================
+// Message Feedback Model (Like/Dislike Learning)
+// ============================================
+model MessageFeedback {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  conversationId String  @map("conversation_id")
+  messageId     String   @map("message_id")
+  
+  feedbackType  String   // like, dislike, rewrite_request
+  reason        String?  // Optional reason for dislike
+  originalContent String? @map("original_content") @db.Text  // Original AI response
+  improvedContent String? @map("improved_content") @db.Text  // User's improved version (if rewrite)
+  
+  // Context for learning
+  userQuery     String?  @map("user_query") @db.Text  // The user's original question
+  model         String?  // Model that generated the response
+  intent        String?  // Detected intent
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  @@index([userId])
+  @@index([feedbackType])
+  @@index([model])
+  @@index([createdAt])
+  @@map("message_feedback")
 }
 
 // ============================================

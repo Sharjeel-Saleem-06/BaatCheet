@@ -866,6 +866,12 @@ router.post('/feedback', clerkAuth, async (req: Request, res: Response): Promise
     // Verify conversation belongs to user
     const conversation = await prisma.conversation.findFirst({
       where: { id: conversationId, userId },
+      include: {
+        messages: {
+          where: { id: messageId },
+          take: 1,
+        },
+      },
     });
 
     if (!conversation) {
@@ -876,12 +882,43 @@ router.post('/feedback', clerkAuth, async (req: Request, res: Response): Promise
       return;
     }
 
-    // Store feedback for future learning
-    // This data can be used to:
-    // 1. Fine-tune model selection
-    // 2. Adjust response formatting preferences
-    // 3. Improve prompt templates
-    logger.info('Feedback received', {
+    const targetMessage = conversation.messages[0];
+    
+    // Get the user query (previous message)
+    let userQuery = '';
+    if (targetMessage) {
+      const previousMessage = await prisma.message.findFirst({
+        where: {
+          conversationId,
+          createdAt: { lt: targetMessage.createdAt },
+          role: 'user',
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      userQuery = previousMessage?.content || '';
+    }
+
+    // Store feedback for learning - this helps improve responses
+    try {
+      await prisma.messageFeedback.create({
+        data: {
+          userId,
+          conversationId,
+          messageId,
+          feedbackType: isPositive ? 'like' : (feedbackType || 'dislike'),
+          reason: req.body.reason || null,
+          originalContent: targetMessage?.content || null,
+          userQuery,
+          model: targetMessage?.model || null,
+          intent: req.body.intent || null,
+        },
+      });
+    } catch (feedbackError) {
+      // Non-critical, just log
+      logger.warn('Failed to store feedback in DB:', feedbackError);
+    }
+
+    logger.info('Feedback received and stored', {
       userId,
       conversationId,
       messageId,
@@ -889,22 +926,11 @@ router.post('/feedback', clerkAuth, async (req: Request, res: Response): Promise
       feedbackType,
     });
 
-    // In a production system, you would store this in a feedback table
-    // For now, we just log it
-    // await prisma.messageFeedback.create({
-    //   data: {
-    //     messageId,
-    //     conversationId,
-    //     userId,
-    //     isPositive,
-    //     feedbackType,
-    //   },
-    // });
-
     res.json({
       success: true,
       data: {
         message: 'Feedback received. Thank you for helping us improve!',
+        learned: true,
       },
     });
   } catch (error) {
