@@ -114,6 +114,18 @@ private val LANGUAGE_NAMES = mapOf(
 // Characters to clean from display (raw markdown artifacts)
 private val CLEAN_PATTERN = Regex("[#*_~`]+")
 
+// Pre-compiled regex patterns for parseTextContent - CRITICAL: Never create regex inside loops!
+private val HEADING_PATTERN = Regex("^(#{1,6})\\s+(.+)$")
+private val HORIZONTAL_RULE_PATTERN = Regex("^[-*_]{3,}$")
+private val BULLET_LIST_PATTERN = Regex("^[-*+]\\s+.+")
+private val NUMBERED_LIST_PATTERN = Regex("^\\d+\\.\\s+.+")
+private val BULLET_PREFIX_PATTERN = Regex("^[-*+]\\s+")
+private val NUMBER_PREFIX_PATTERN = Regex("^\\d+\\.\\s+")
+private val ASTERISK_PATTERN = Regex("^\\*+|\\*+$")
+private val UNDERSCORE_PATTERN = Regex("^_+|_+$")
+private val SEPARATOR_PATTERN = Regex("^[-:]+$")
+private val WORD_ONLY_PATTERN = Regex("^\\w+$")
+
 // ============================================
 // Markdown Elements
 // ============================================
@@ -727,7 +739,7 @@ private fun parseMarkdownSafe(text: String, textColor: Color): List<MarkdownElem
         if (firstNewline != -1 && firstNewline < 20) {
             // Language is on the first line
             val langCandidate = codeSection.substring(0, firstNewline).trim()
-            language = if (langCandidate.matches(Regex("^\\w+$"))) langCandidate else null
+            language = if (langCandidate.matches(WORD_ONLY_PATTERN)) langCandidate else null
             code = if (language != null) codeSection.substring(firstNewline + 1).trimEnd() else codeSection.trimEnd()
         } else {
             language = null
@@ -762,7 +774,7 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
             
             // Headings
             line.startsWith("#") -> {
-                val headerMatch = Regex("^(#{1,6})\\s+(.+)$").find(line)
+                val headerMatch = HEADING_PATTERN.find(line)
                 if (headerMatch != null) {
                     val level = headerMatch.groupValues[1].length
                     val headerText = headerMatch.groupValues[2]
@@ -782,16 +794,16 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
             }
             
             // Horizontal rule
-            line.matches(Regex("^[-*_]{3,}$")) -> {
+            line.matches(HORIZONTAL_RULE_PATTERN) -> {
                 elements.add(MarkdownElement.HorizontalRule())
                 i++
             }
             
             // Bullet list
-            line.matches(Regex("^[-*+]\\s+.+")) -> {
+            line.matches(BULLET_LIST_PATTERN) -> {
                 val listItems = mutableListOf<AnnotatedString>()
-                while (i < lines.size && lines[i].trim().matches(Regex("^[-*+]\\s+.+"))) {
-                    val itemText = lines[i].trim().replaceFirst(Regex("^[-*+]\\s+"), "")
+                while (i < lines.size && lines[i].trim().matches(BULLET_LIST_PATTERN)) {
+                    val itemText = lines[i].trim().replaceFirst(BULLET_PREFIX_PATTERN, "")
                     listItems.add(parseInlineMarkdown(itemText, textColor))
                     i++
                 }
@@ -799,10 +811,10 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
             }
             
             // Numbered list
-            line.matches(Regex("^\\d+\\.\\s+.+")) -> {
+            line.matches(NUMBERED_LIST_PATTERN) -> {
                 val listItems = mutableListOf<AnnotatedString>()
-                while (i < lines.size && lines[i].trim().matches(Regex("^\\d+\\.\\s+.+"))) {
-                    val itemText = lines[i].trim().replaceFirst(Regex("^\\d+\\.\\s+"), "")
+                while (i < lines.size && lines[i].trim().matches(NUMBERED_LIST_PATTERN)) {
+                    val itemText = lines[i].trim().replaceFirst(NUMBER_PREFIX_PATTERN, "")
                     listItems.add(parseInlineMarkdown(itemText, textColor))
                     i++
                 }
@@ -826,8 +838,8 @@ private fun parseTextContent(text: String, textColor: Color): List<MarkdownEleme
                 while (i < lines.size && 
                     lines[i].trim().isNotEmpty() && 
                     !lines[i].trim().startsWith("#") &&
-                    !lines[i].trim().matches(Regex("^[-*+]\\s+.+")) &&
-                    !lines[i].trim().matches(Regex("^\\d+\\.\\s+.+")) &&
+                    !lines[i].trim().matches(BULLET_LIST_PATTERN) &&
+                    !lines[i].trim().matches(NUMBERED_LIST_PATTERN) &&
                     !lines[i].trim().startsWith(">") &&
                     !lines[i].contains("|")
                 ) {
@@ -857,11 +869,11 @@ private fun parseTable(lines: List<String>): MarkdownElement.Table {
         .split("|")
         .map { cell -> 
             cell.trim()
-                .replace(Regex("^\\*+|\\*+$"), "") // Remove asterisks
-                .replace(Regex("^_+|_+$"), "")     // Remove underscores
+                .replace(ASTERISK_PATTERN, "") // Remove asterisks
+                .replace(UNDERSCORE_PATTERN, "")     // Remove underscores
                 .trim()
         }
-        .filter { it.isNotEmpty() && !it.matches(Regex("^[-:]+$")) }
+        .filter { it.isNotEmpty() && !it.matches(SEPARATOR_PATTERN) }
     
     // Find the separator line (contains ---)
     val separatorIndex = lines.indexOfFirst { line ->
@@ -881,8 +893,8 @@ private fun parseTable(lines: List<String>): MarkdownElement.Table {
             cleanLine.split("|")
                 .map { cell ->
                     cell.trim()
-                        .replace(Regex("^\\*+|\\*+$"), "")
-                        .replace(Regex("^_+|_+$"), "")
+                        .replace(ASTERISK_PATTERN, "")
+                        .replace(UNDERSCORE_PATTERN, "")
                         .trim()
                 }
                 .filter { it.isNotEmpty() }
@@ -892,31 +904,44 @@ private fun parseTable(lines: List<String>): MarkdownElement.Table {
     return MarkdownElement.Table(headers, rows)
 }
 
+// Pre-compiled regex for link matching - IMPORTANT: Don't create regex in loops!
+private val LINK_REGEX = Regex("\\[([^\\]]+)\\]\\(([^)]+)\\)")
+
+/**
+ * Parse inline markdown with optimized performance
+ * OPTIMIZED: No regex creation inside loops
+ */
 private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString {
+    // Safety limit for very long text
+    if (text.length > 5000) {
+        return AnnotatedString(text.take(5000) + "...")
+    }
+    
     return buildAnnotatedString {
         var i = 0
-        val chars = text.toCharArray()
+        val len = text.length
         
-        while (i < chars.size) {
+        while (i < len) {
+            val char = text[i]
+            
             when {
-                // Bold: **text** or __text__
-                i + 1 < chars.size && chars[i] == '*' && chars[i + 1] == '*' -> {
+                // Bold: **text**
+                char == '*' && i + 1 < len && text[i + 1] == '*' -> {
                     val endIndex = text.indexOf("**", i + 2)
-                    if (endIndex != -1) {
+                    if (endIndex != -1 && endIndex > i + 2) {
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = textColor)) {
                             append(text.substring(i + 2, endIndex))
                         }
                         i = endIndex + 2
                     } else {
-                        // Don't show the asterisks, just skip them
                         i += 2
                     }
                 }
                 
                 // Strikethrough: ~~text~~
-                i + 1 < chars.size && chars[i] == '~' && chars[i + 1] == '~' -> {
+                char == '~' && i + 1 < len && text[i + 1] == '~' -> {
                     val endIndex = text.indexOf("~~", i + 2)
-                    if (endIndex != -1) {
+                    if (endIndex != -1 && endIndex > i + 2) {
                         withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough, color = textColor)) {
                             append(text.substring(i + 2, endIndex))
                         }
@@ -926,24 +951,23 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                     }
                 }
                 
-                // Italic: *text* (only if not preceded by another *)
-                chars[i] == '*' && (i == 0 || chars[i - 1] != '*') -> {
+                // Italic: *text* (not preceded by *)
+                char == '*' && (i == 0 || text[i - 1] != '*') -> {
                     val endIndex = text.indexOf('*', i + 1)
-                    if (endIndex != -1 && (endIndex + 1 >= chars.size || chars[endIndex + 1] != '*')) {
+                    if (endIndex != -1 && endIndex > i + 1 && (endIndex + 1 >= len || text[endIndex + 1] != '*')) {
                         withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = textColor)) {
                             append(text.substring(i + 1, endIndex))
                         }
                         i = endIndex + 1
                     } else {
-                        // Skip the asterisk
                         i++
                     }
                 }
                 
                 // Inline code: `code`
-                chars[i] == '`' && (i == 0 || chars[i - 1] != '`') -> {
+                char == '`' && (i == 0 || text[i - 1] != '`') -> {
                     val endIndex = text.indexOf('`', i + 1)
-                    if (endIndex != -1) {
+                    if (endIndex != -1 && endIndex > i + 1) {
                         withStyle(
                             SpanStyle(
                                 fontFamily = FontFamily.Monospace,
@@ -959,38 +983,40 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                     }
                 }
                 
-                // Link: [text](url)
-                chars[i] == '[' -> {
-                    val linkMatch = Regex("\\[([^\\]]+)\\]\\(([^)]+)\\)").find(text, i)
-                    if (linkMatch != null && linkMatch.range.first == i) {
-                        val linkText = linkMatch.groupValues[1]
-                        withStyle(
-                            SpanStyle(
-                                color = MarkdownColors.Link,
-                                textDecoration = TextDecoration.Underline
-                            )
-                        ) {
-                            append(linkText)
+                // Link: [text](url) - Use manual parsing instead of regex for performance
+                char == '[' -> {
+                    val closeBracket = text.indexOf(']', i + 1)
+                    if (closeBracket != -1 && closeBracket + 1 < len && text[closeBracket + 1] == '(') {
+                        val closeParen = text.indexOf(')', closeBracket + 2)
+                        if (closeParen != -1) {
+                            val linkText = text.substring(i + 1, closeBracket)
+                            withStyle(
+                                SpanStyle(
+                                    color = MarkdownColors.Link,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ) {
+                                append(linkText)
+                            }
+                            i = closeParen + 1
+                        } else {
+                            withStyle(SpanStyle(color = textColor)) { append(char) }
+                            i++
                         }
-                        i = linkMatch.range.last + 1
                     } else {
-                        withStyle(SpanStyle(color = textColor)) {
-                            append(chars[i])
-                        }
+                        withStyle(SpanStyle(color = textColor)) { append(char) }
                         i++
                     }
                 }
                 
-                // Skip hash symbols at start of lines (already handled as headings)
-                chars[i] == '#' && (i == 0 || chars[i - 1] == '\n' || chars[i - 1] == ' ') -> {
+                // Skip hash at line start
+                char == '#' && (i == 0 || text[i - 1] == '\n' || text[i - 1] == ' ') -> {
                     i++
                 }
                 
                 // Regular character
                 else -> {
-                    withStyle(SpanStyle(color = textColor)) {
-                        append(chars[i])
-                    }
+                    withStyle(SpanStyle(color = textColor)) { append(char) }
                     i++
                 }
             }
@@ -1002,17 +1028,41 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
 // Syntax Highlighting
 // ============================================
 
+// Pre-compiled regex for syntax highlighting - CRITICAL: Never create regex inside loops!
+private val DOUBLE_QUOTE_STRING_PATTERN = Regex("^\"(?:[^\"\\\\]|\\\\.)*\"")
+private val SINGLE_QUOTE_STRING_PATTERN = Regex("^'(?:[^'\\\\]|\\\\.)*'")
+private val COMMENT_PATTERN = Regex("^(//.*|#.*|--.*|/\\*.*\\*/)")
+private val NUMBER_PATTERN = Regex("^\\b\\d+\\.?\\d*\\b")
+private val FUNCTION_CALL_PATTERN = Regex("^(\\w+)\\s*\\(")
+
+// Cache for keyword regex patterns to avoid recreating them
+private val keywordPatternCache = mutableMapOf<String, Regex>()
+
+private fun getKeywordRegex(keyword: String): Regex {
+    return keywordPatternCache.getOrPut(keyword) {
+        Regex("^\\b$keyword\\b", RegexOption.IGNORE_CASE)
+    }
+}
+
 private fun highlightLine(line: String, language: String?): AnnotatedString {
+    // For very long lines, skip highlighting to prevent performance issues
+    if (line.length > 500) {
+        return AnnotatedString(line)
+    }
+    
     val keywords = getKeywordsForLanguage(language)
     
     return buildAnnotatedString {
         var remaining = line
+        var safetyCounter = 0
+        val maxIterations = line.length + 10 // Safety limit
         
-        while (remaining.isNotEmpty()) {
+        while (remaining.isNotEmpty() && safetyCounter < maxIterations) {
+            safetyCounter++
             var matched = false
             
             // String literals (double quotes)
-            val stringMatch = Regex("^\"(?:[^\"\\\\]|\\\\.)*\"").find(remaining)
+            val stringMatch = DOUBLE_QUOTE_STRING_PATTERN.find(remaining)
             if (stringMatch != null) {
                 withStyle(SpanStyle(color = MarkdownColors.StringColor)) {
                     append(stringMatch.value)
@@ -1023,7 +1073,7 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
             }
             
             // String literals (single quotes)
-            val singleStringMatch = Regex("^'(?:[^'\\\\]|\\\\.)*'").find(remaining)
+            val singleStringMatch = SINGLE_QUOTE_STRING_PATTERN.find(remaining)
             if (singleStringMatch != null) {
                 withStyle(SpanStyle(color = MarkdownColors.StringColor)) {
                     append(singleStringMatch.value)
@@ -1034,7 +1084,7 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
             }
             
             // Comments
-            val commentMatch = Regex("^(//.*|#.*|--.*|/\\*.*\\*/)").find(remaining)
+            val commentMatch = COMMENT_PATTERN.find(remaining)
             if (commentMatch != null) {
                 withStyle(SpanStyle(color = MarkdownColors.CommentColor, fontStyle = FontStyle.Italic)) {
                     append(commentMatch.value)
@@ -1045,7 +1095,7 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
             }
             
             // Numbers
-            val numberMatch = Regex("^\\b\\d+\\.?\\d*\\b").find(remaining)
+            val numberMatch = NUMBER_PATTERN.find(remaining)
             if (numberMatch != null) {
                 withStyle(SpanStyle(color = MarkdownColors.NumberColor)) {
                     append(numberMatch.value)
@@ -1055,9 +1105,9 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
                 continue
             }
             
-            // Keywords
+            // Keywords - using cached regex
             for (keyword in keywords) {
-                val keywordMatch = Regex("^\\b$keyword\\b", RegexOption.IGNORE_CASE).find(remaining)
+                val keywordMatch = getKeywordRegex(keyword).find(remaining)
                 if (keywordMatch != null) {
                     withStyle(SpanStyle(color = MarkdownColors.KeywordColor, fontWeight = FontWeight.Medium)) {
                         append(keywordMatch.value)
@@ -1070,7 +1120,7 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
             
             if (!matched) {
                 // Function calls
-                val funcMatch = Regex("^(\\w+)\\s*\\(").find(remaining)
+                val funcMatch = FUNCTION_CALL_PATTERN.find(remaining)
                 if (funcMatch != null) {
                     withStyle(SpanStyle(color = MarkdownColors.FunctionColor)) {
                         append(funcMatch.groupValues[1])
@@ -1083,6 +1133,13 @@ private fun highlightLine(line: String, language: String?): AnnotatedString {
                     }
                     remaining = remaining.substring(1)
                 }
+            }
+        }
+        
+        // If we hit the safety limit, append remaining text as-is
+        if (remaining.isNotEmpty()) {
+            withStyle(SpanStyle(color = MarkdownColors.CodeBlockText)) {
+                append(remaining)
             }
         }
     }
