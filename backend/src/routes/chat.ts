@@ -52,6 +52,8 @@ router.post(
             id: true,
             extractedText: true,
             analysisResult: true,
+            mimeType: true,
+            originalName: true,
           },
         });
 

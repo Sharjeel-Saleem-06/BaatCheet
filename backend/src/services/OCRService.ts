@@ -1,8 +1,8 @@
 /**
  * OCR Service
  * Handles text extraction from images and documents using multiple providers:
- * 1. Gemini Vision (Primary) - AI-powered OCR with many API keys
- * 2. OCR.space (Secondary) - Fast, 60+ languages
+ * 1. OCR.space (Primary) - Fast, 60+ languages, reliable
+ * 2. Gemini Vision (Secondary) - AI-powered OCR with many API keys
  * 3. MinerU HuggingFace Space (Tertiary) - Advanced document parsing
  * 
  * Includes safe rate limiting with random delays to prevent bot detection.
@@ -95,7 +95,7 @@ class OCRServiceClass {
 
   /**
    * Extract text from image using best available provider
-   * Priority: Gemini (primary with many keys) → OCR.space → MinerU
+   * Priority: OCR.space (primary, fast & reliable) → Gemini (secondary) → MinerU
    * Uses safe rate limiting to prevent bot detection
    */
   public async extractText(
@@ -108,20 +108,20 @@ class OCRServiceClass {
     // Add safe delay before processing
     await this.safeDelay();
     
-    // For documents, try all providers in order
+    // For documents, try all providers in order: OCR.space first (fast), then Gemini, then MinerU
     if (options.isDocument) {
-      const providers = ['gemini', 'ocrspace', 'mineru'] as const;
+      const providers = ['ocrspace', 'gemini', 'mineru'] as const;
       
       for (const provider of providers) {
         try {
           let result: OCRResult;
           
-          if (provider === 'gemini') {
-            if (!providerManager.hasCapacity('gemini')) continue;
-            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
-          } else if (provider === 'ocrspace') {
+          if (provider === 'ocrspace') {
             if (!providerManager.hasCapacity('ocrspace')) continue;
             result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
+          } else if (provider === 'gemini') {
+            if (!providerManager.hasCapacity('gemini')) continue;
+            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
           } else {
             result = await this.mineruExtract(imageBase64, mimeType, options);
           }
@@ -137,8 +137,8 @@ class OCRServiceClass {
         }
       }
     } else {
-      // For images, prioritize Gemini (we have many keys)
-      const providers = ['gemini', 'ocrspace'] as const;
+      // For images, use OCR.space first (fast), then Gemini as fallback
+      const providers = ['ocrspace', 'gemini'] as const;
 
       for (const provider of providers) {
         if (!providerManager.hasCapacity(provider)) {
@@ -149,10 +149,10 @@ class OCRServiceClass {
         try {
           let result: OCRResult;
 
-          if (provider === 'gemini') {
-            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
-          } else {
+          if (provider === 'ocrspace') {
             result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
+          } else {
+            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
           }
 
           if (result.success && result.text && result.text.length > 5) {
