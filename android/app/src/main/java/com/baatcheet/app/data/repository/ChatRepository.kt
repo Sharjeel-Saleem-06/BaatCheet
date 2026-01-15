@@ -498,7 +498,8 @@ class ChatRepository @Inject constructor(
             val response = api.getProjectConversations(projectId)
             
             if (response.isSuccessful && response.body()?.success == true) {
-                val items = response.body()?.data?.items?.map { it.toConversation() } ?: emptyList()
+                // Project conversations returns data as direct array, not wrapped in items
+                val items = response.body()?.data?.map { it.toConversation() } ?: emptyList()
                 ApiResult.Success(items)
             } else {
                 ApiResult.Error("Failed to load project conversations", response.code())

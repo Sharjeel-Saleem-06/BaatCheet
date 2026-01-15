@@ -193,7 +193,7 @@ interface BaatCheetApi {
     @GET("projects/{id}/conversations")
     suspend fun getProjectConversations(
         @Path("id") projectId: String
-    ): Response<ConversationsResponse>
+    ): Response<ProjectConversationsResponse>
     
     /**
      * Refresh project context (AI analyzes project chats)

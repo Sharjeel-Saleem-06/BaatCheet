@@ -157,6 +157,12 @@ data class SearchConversationsResponse(
     val data: List<ConversationDto>?
 )
 
+// Project conversations response - data is a direct array, not wrapped in items
+data class ProjectConversationsResponse(
+    val success: Boolean,
+    val data: List<ConversationDto>?
+)
+
 data class ConversationDetailResponse(
     val success: Boolean,
     val data: ConversationDetailDto?
