@@ -348,6 +348,7 @@ class ImageGenerationServiceClass {
 
   /**
    * Enhance user prompt using AI for better results
+   * Uses a 10-second timeout to prevent blocking image generation
    */
   public async enhancePrompt(
     userPrompt: string, 
@@ -369,11 +370,23 @@ Rules:
 
 Return ONLY the enhanced prompt, nothing else:`;
 
-      const response = await aiRouter.chat({
-        messages: [{ role: 'user', content: enhancementPrompt }],
-        temperature: 0.7,
-        maxTokens: 300,
-      });
+      // Add 10-second timeout for prompt enhancement to not block image generation
+      const enhanceWithTimeout = Promise.race([
+        aiRouter.chat({
+          messages: [{ role: 'user', content: enhancementPrompt }],
+          temperature: 0.7,
+          maxTokens: 300,
+        }),
+        new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Prompt enhancement timeout')), 10000)
+        )
+      ]);
+
+      const response = await enhanceWithTimeout;
+      
+      if (!response) {
+        throw new Error('No response from AI');
+      }
 
       let enhanced = response.content?.trim() || userPrompt;
       
@@ -389,9 +402,13 @@ Return ONLY the enhanced prompt, nothing else:`;
 
       return enhanced;
     } catch (error) {
-      logger.error('Prompt enhancement failed:', error);
-      // Return original with basic enhancements
-      return `${userPrompt}, high quality, detailed, sharp focus`;
+      logger.error('Prompt enhancement failed or timed out:', error);
+      // Return original with basic enhancements - don't block image generation
+      let fallback = `${userPrompt}, high quality, detailed, sharp focus, professional photography`;
+      if (style && IMAGE_STYLE_PRESETS[style]) {
+        fallback += ', ' + IMAGE_STYLE_PRESETS[style].prompt;
+      }
+      return fallback;
     }
   }
 

@@ -2349,64 +2349,73 @@ private fun ChatInputBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Plus button - opens action sheet
+                // Plus button - opens action sheet (disabled when loading)
                 IconButton(
-                    onClick = { showPlusMenu = true },
+                    onClick = { if (!isLoading) showPlusMenu = true },
+                    enabled = !isLoading,
                     modifier = Modifier.size(36.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .size(32.dp)
-                            .background(ChipBackground, CircleShape),
+                            .background(
+                                if (isLoading) ChipBackground.copy(alpha = 0.5f) else ChipBackground,
+                                CircleShape
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "More options",
-                            tint = DarkText,
+                            tint = if (isLoading) GrayText else DarkText,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
                 
-                // Text input - rounded pill style
+                // Text input - rounded pill style (disabled when loading)
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(40.dp)
                         .border(
                             width = 1.dp,
-                            color = InputBorder,
+                            color = if (isLoading) InputBorder.copy(alpha = 0.5f) else InputBorder,
                             shape = RoundedCornerShape(20.dp)
                         )
-                        .background(WhiteBackground, RoundedCornerShape(20.dp))
+                        .background(
+                            if (isLoading) ChipBackground.copy(alpha = 0.5f) else WhiteBackground,
+                            RoundedCornerShape(20.dp)
+                        )
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     if (value.isEmpty()) {
                         Text(
-                            text = "Ask BaatCheet",
+                            text = if (isLoading) "Waiting for response..." else "Ask BaatCheet",
                             color = LightGrayText,
                             fontSize = 15.sp
                         )
                     }
                     BasicTextField(
                         value = value,
-                        onValueChange = onValueChange,
+                        onValueChange = { if (!isLoading) onValueChange(it) },
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(
-                            color = DarkText,
+                            color = if (isLoading) GrayText else DarkText,
                             fontSize = 15.sp
                         ),
                         cursorBrush = SolidColor(GreenAccent),
                         maxLines = 1,
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading
                     )
                 }
                 
-                // Mic button
+                // Mic button (disabled when loading)
                 IconButton(
-                    onClick = onMicClick,
+                    onClick = { if (!isLoading) onMicClick() },
+                    enabled = !isLoading,
                     modifier = Modifier.size(36.dp)
                 ) {
                     if (isListening) {
