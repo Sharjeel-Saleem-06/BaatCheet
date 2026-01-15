@@ -152,11 +152,19 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
 
     // Create user in Clerk using Backend API
     try {
+      // Generate a username from email (before @) + random suffix
+      const emailPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+      const randomSuffix = Math.random().toString(36).substring(2, 6);
+      const username = `${emailPrefix}${randomSuffix}`.toLowerCase();
+      
+      logger.info(`Creating Clerk user with email: ${email}, firstName: ${firstName}, lastName: ${lastName}, username: ${username}`);
+      
       const clerkUser = await clerkClient.users.createUser({
         emailAddress: [email.toLowerCase()],
         password,
         firstName: firstName || undefined,
         lastName: lastName || undefined,
+        username: username, // Add username - often required by Clerk
         skipPasswordChecks: false,
         skipPasswordRequirement: false,
       });
@@ -166,6 +174,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
         data: {
           clerkId: clerkUser.id,
           email: email.toLowerCase(),
+          username: username,
           firstName: firstName || clerkUser.firstName,
           lastName: lastName || clerkUser.lastName,
           avatar: clerkUser.imageUrl,
@@ -183,6 +192,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
           user: {
             id: user.id,
             email: user.email,
+            username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
             avatar: user.avatar,
@@ -192,18 +202,38 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
         },
       });
     } catch (clerkCreateError: any) {
-      logger.error('Clerk user creation failed:', clerkCreateError);
+      // Log the full error for debugging
+      logger.error('Clerk user creation failed:', JSON.stringify(clerkCreateError, null, 2));
+      logger.error('Clerk error details:', {
+        errors: clerkCreateError?.errors,
+        message: clerkCreateError?.message,
+        code: clerkCreateError?.status,
+        clerkTraceId: clerkCreateError?.clerkTraceId,
+      });
       
-      // Check for specific Clerk errors
-      const errorMessage = clerkCreateError?.errors?.[0]?.message || 
-                          clerkCreateError?.errors?.[0]?.longMessage ||
+      // Check for specific Clerk errors - get all error messages
+      const errors = clerkCreateError?.errors || [];
+      const allMessages = errors.map((e: any) => e.message || e.longMessage).filter(Boolean);
+      const errorMessage = allMessages.join('. ') || 
                           clerkCreateError?.message || 
                           'Failed to create account';
+      
+      // Check for missing fields error
+      if (errorMessage.toLowerCase().includes('missing') || 
+          errorMessage.toLowerCase().includes('required')) {
+        res.status(400).json({
+          success: false,
+          error: `Missing required fields: ${errorMessage}`,
+          details: errors,
+        });
+        return;
+      }
       
       // Handle duplicate email error
       if (errorMessage.toLowerCase().includes('already exists') || 
           errorMessage.toLowerCase().includes('taken') ||
-          errorMessage.toLowerCase().includes('unique')) {
+          errorMessage.toLowerCase().includes('unique') ||
+          errorMessage.toLowerCase().includes('duplicate')) {
         res.status(409).json({
           success: false,
           error: 'An account with this email already exists. Please sign in instead.',
@@ -223,6 +253,7 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
       res.status(500).json({
         success: false,
         error: errorMessage,
+        details: errors,
       });
     }
   } catch (error) {

@@ -95,6 +95,9 @@ class ClerkAuthService @Inject constructor(
             val response = okHttpClient.newCall(request).execute()
             val responseBody = response.body?.string()
             
+            android.util.Log.d("ClerkAuth", "Signup response code: ${response.code}")
+            android.util.Log.d("ClerkAuth", "Signup response body: $responseBody")
+            
             if (responseBody != null) {
                 val authResponse = gson.fromJson(responseBody, AuthResponse::class.java)
                 
@@ -131,7 +134,8 @@ class ClerkAuthService @Inject constructor(
                     }
                 }
                 
-                // Error response
+                // Error response - log full response for debugging
+                android.util.Log.e("ClerkAuth", "Signup failed: ${authResponse.error}")
                 val errorMessage = authResponse.error ?: "Sign up failed"
                 return@withContext ClerkAuthResult.Failure(Exception(errorMessage))
             }
