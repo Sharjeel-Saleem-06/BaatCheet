@@ -883,52 +883,73 @@ Return ONLY a JSON array with exactly 3 objects:
               ? resultResponse.data 
               : JSON.stringify(resultResponse.data);
             
-            // Parse SSE format
-            const lines = responseText.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data:')) {
-                try {
-                  const jsonStr = line.substring(5).trim();
-                  if (jsonStr) {
-                    const jsonData = JSON.parse(jsonStr);
-                    // Handle various response formats
-                    const imageData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
-                    
-                    if (imageData?.url) {
-                      logger.info('Z-Image-Turbo: Got image URL');
-                      // Download the image
-                      const imgResponse = await axios.get(imageData.url, { 
-                        responseType: 'arraybuffer',
-                        timeout: 30000 
-                      });
-                      const base64 = Buffer.from(imgResponse.data).toString('base64');
-                      return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+            logger.debug('Z-Image-Turbo poll response:', responseText.substring(0, 500));
+            
+            // Check for completion event
+            if (responseText.includes('event: complete') || responseText.includes('"path"') || responseText.includes('"url"')) {
+              // Parse SSE format - find the data line
+              const lines = responseText.split('\n');
+              for (const line of lines) {
+                const trimmedLine = line.trim();
+                
+                // Handle "data: [...]" format
+                if (trimmedLine.startsWith('data:')) {
+                  try {
+                    const jsonStr = trimmedLine.substring(5).trim();
+                    if (jsonStr) {
+                      const jsonData = JSON.parse(jsonStr);
+                      // Handle various response formats - array format [imageData, seed]
+                      const imageData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+                      
+                      if (imageData?.url) {
+                        logger.info('Z-Image-Turbo: Got image URL:', imageData.url);
+                        // Download the image
+                        const imgResponse = await axios.get(imageData.url, { 
+                          responseType: 'arraybuffer',
+                          timeout: 45000,
+                          headers: { 'Accept': 'image/*' }
+                        });
+                        const base64 = Buffer.from(imgResponse.data).toString('base64');
+                        const mimeType = imageData.mime_type || 'image/webp';
+                        return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                      }
+                      if (imageData?.path) {
+                        // Handle file path format - new Gradio API format
+                        const fileUrl = `${Z_IMAGE_TURBO_SPACE.url}/gradio_api/file=${imageData.path}`;
+                        logger.info('Z-Image-Turbo: Downloading from path:', fileUrl);
+                        const imgResponse = await axios.get(fileUrl, { 
+                          responseType: 'arraybuffer',
+                          timeout: 45000,
+                          headers: { 'Accept': 'image/*' }
+                        });
+                        const base64 = Buffer.from(imgResponse.data).toString('base64');
+                        const mimeType = imageData.mime_type || 'image/webp';
+                        return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                      }
+                      if (typeof imageData === 'string' && imageData.startsWith('data:')) {
+                        const base64 = imageData.split(',')[1];
+                        return { success: true, imageBase64: base64, imageUrl: imageData };
+                      }
                     }
-                    if (imageData?.path) {
-                      // Handle file path format
-                      const fileUrl = `${Z_IMAGE_TURBO_SPACE.url}/file=${imageData.path}`;
-                      const imgResponse = await axios.get(fileUrl, { 
-                        responseType: 'arraybuffer',
-                        timeout: 30000 
-                      });
-                      const base64 = Buffer.from(imgResponse.data).toString('base64');
-                      return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
-                    }
-                    if (typeof imageData === 'string' && imageData.startsWith('data:')) {
-                      const base64 = imageData.split(',')[1];
-                      return { success: true, imageBase64: base64, imageUrl: imageData };
-                    }
+                  } catch (parseError: any) {
+                    logger.warn('Z-Image-Turbo: Parse error on line:', parseError.message);
+                    // Continue parsing other lines
                   }
-                } catch (parseError) {
-                  // Continue parsing other lines
                 }
               }
+            }
+            
+            // Check for error events
+            if (responseText.includes('event: error')) {
+              throw new Error('Z-Image-Turbo returned an error event');
             }
           } catch (pollError: any) {
             if (pollError.response?.status === 404) {
               // Event might have expired, continue polling
+              logger.debug('Z-Image-Turbo: 404 on poll, continuing...');
               continue;
             }
+            logger.error('Z-Image-Turbo poll error:', pollError.message);
             throw pollError;
           }
         }
@@ -938,13 +959,28 @@ Return ONLY a JSON array with exactly 3 objects:
       // If no event_id, check if response contains image directly
       if (callResponse.data?.data?.[0]) {
         const imageData = callResponse.data.data[0];
+        logger.info('Z-Image-Turbo: Direct response received');
+        
         if (imageData?.url) {
           const imgResponse = await axios.get(imageData.url, { 
             responseType: 'arraybuffer',
-            timeout: 30000 
+            timeout: 45000,
+            headers: { 'Accept': 'image/*' }
           });
           const base64 = Buffer.from(imgResponse.data).toString('base64');
-          return { success: true, imageBase64: base64, imageUrl: `data:image/png;base64,${base64}` };
+          const mimeType = imageData.mime_type || 'image/webp';
+          return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+        }
+        if (imageData?.path) {
+          const fileUrl = `${Z_IMAGE_TURBO_SPACE.url}/gradio_api/file=${imageData.path}`;
+          const imgResponse = await axios.get(fileUrl, { 
+            responseType: 'arraybuffer',
+            timeout: 45000,
+            headers: { 'Accept': 'image/*' }
+          });
+          const base64 = Buffer.from(imgResponse.data).toString('base64');
+          const mimeType = imageData.mime_type || 'image/webp';
+          return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
         }
         if (typeof imageData === 'string' && imageData.startsWith('data:')) {
           const base64 = imageData.split(',')[1];
@@ -952,6 +988,7 @@ Return ONLY a JSON array with exactly 3 objects:
         }
       }
       
+      logger.error('Z-Image-Turbo: No event_id or image in response:', JSON.stringify(callResponse.data).substring(0, 500));
       throw new Error('No event_id or image returned from Z-Image-Turbo');
       
     } catch (error: any) {
