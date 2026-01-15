@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -3713,47 +3714,31 @@ private fun ImageGenerationPlaceholder() {
 /**
  * Mode-specific loading indicator (Thinking, Research, Web Search, Code)
  * Shows animated progress with mode-specific emoji and text like ChatGPT
+ * OPTIMIZED: Uses simple animations to prevent excessive recomposition and ANR
  */
 @Composable
 private fun ModeLoadingIndicator(mode: String) {
-    val infiniteTransition = rememberInfiniteTransition(label = "mode_loading_animation")
+    // Use a simple state-based dots animation instead of infinite transition
+    var dotsCount by remember { mutableIntStateOf(1) }
     
-    // Pulse animation for emoji
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-    
-    // Progress dots animation
-    val dotsOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "dots"
-    )
-    
-    val dots = when (dotsOffset.toInt()) {
-        0 -> "."
-        1 -> ".."
-        else -> "..."
+    // Simple timer-based dots animation - lightweight
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(400)
+            dotsCount = (dotsCount % 3) + 1
+        }
     }
     
-    // Mode-specific configuration
-    val (emoji, text, color, helpText) = remember(mode) {
+    val dots = ".".repeat(dotsCount)
+    
+    // Mode-specific configuration - computed once
+    val modeConfig = remember(mode) {
         when (mode) {
-            "thinking" -> listOf("🧠", "Thinking", Color(0xFF9B59B6), "Analyzing your request deeply")
-            "research" -> listOf("🔬", "Researching", Color(0xFF3498DB), "Gathering comprehensive information")
-            "web-search" -> listOf("🌐", "Searching the web", Color(0xFF27AE60), "Finding real-time information")
-            "code" -> listOf("💻", "Writing code", Color(0xFFE67E22), "Crafting your solution")
-            else -> listOf("✨", "Processing", Color(0xFF34C759), "Working on your request")
+            "thinking" -> ModeConfig("🧠", "Thinking", Color(0xFF9B59B6), "Analyzing your request deeply")
+            "research" -> ModeConfig("🔬", "Researching", Color(0xFF3498DB), "Gathering comprehensive information")
+            "web-search" -> ModeConfig("🌐", "Searching the web", Color(0xFF27AE60), "Finding real-time information")
+            "code" -> ModeConfig("💻", "Writing code", Color(0xFFE67E22), "Crafting your solution")
+            else -> ModeConfig("✨", "Processing", Color(0xFF34C759), "Working on your request")
         }
     }
     
@@ -3762,33 +3747,33 @@ private fun ModeLoadingIndicator(mode: String) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .background(
-                color = (color as Color).copy(alpha = 0.1f),
+                color = modeConfig.color.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Animated emoji
+        // Static emoji (no animation to reduce recomposition)
         Text(
-            text = emoji as String,
-            fontSize = (24 * pulseScale).sp,
+            text = modeConfig.emoji,
+            fontSize = 24.sp,
             modifier = Modifier.padding(end = 12.dp)
         )
         
         Column(modifier = Modifier.weight(1f)) {
             // Main status text with dots
             Text(
-                text = "$text$dots",
+                text = "${modeConfig.text}$dots",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = color as Color
+                color = modeConfig.color
             )
             
             Spacer(modifier = Modifier.height(4.dp))
             
             // Help text
             Text(
-                text = helpText as String,
+                text = modeConfig.helpText,
                 fontSize = 12.sp,
                 color = GrayText
             )
@@ -3802,13 +3787,21 @@ private fun ModeLoadingIndicator(mode: String) {
                         .fillMaxWidth()
                         .height(3.dp)
                         .clip(RoundedCornerShape(2.dp)),
-                    color = color,
-                    trackColor = color.copy(alpha = 0.2f)
+                    color = modeConfig.color,
+                    trackColor = modeConfig.color.copy(alpha = 0.2f)
                 )
             }
         }
     }
 }
+
+// Data class for mode configuration to avoid List casting
+private data class ModeConfig(
+    val emoji: String,
+    val text: String,
+    val color: Color,
+    val helpText: String
+)
 
 /**
  * Helper function to get filename from URI

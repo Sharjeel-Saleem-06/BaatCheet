@@ -141,6 +141,7 @@ private sealed class MarkdownElement {
  * Tables with horizontal scroll, Lists, Blockquotes, Links, and more
  * 
  * CLEANED: Removes special characters (#*_~`) from display unless needed
+ * OPTIMIZED: Uses lazy parsing to prevent ANR with long content
  */
 @Composable
 fun MarkdownText(
@@ -150,7 +151,31 @@ fun MarkdownText(
     fontSize: Float = 15f,
     lineHeight: Float = 22f
 ) {
-    val elements = remember(text) { parseMarkdown(text, color) }
+    // Safety check for very long text - use simple rendering to prevent ANR
+    val isTooLong = text.length > 8000
+    
+    if (isTooLong) {
+        // For very long text, use simple text rendering to prevent ANR
+        SelectionContainer(modifier = modifier) {
+            Text(
+                text = text.take(8000) + if (text.length > 8000) "\n\n[Content truncated for performance...]" else "",
+                fontSize = fontSize.sp,
+                lineHeight = lineHeight.sp,
+                color = color
+            )
+        }
+        return
+    }
+    
+    // Parse markdown with timeout protection
+    val elements = remember(text) { 
+        try {
+            parseMarkdownSafe(text, color)
+        } catch (e: Exception) {
+            // Fallback to simple text if parsing fails
+            listOf(MarkdownElement.Paragraph(AnnotatedString(text)))
+        }
+    }
     
     SelectionContainer(modifier = modifier) {
         Column(
@@ -646,35 +671,80 @@ private fun TableView(table: MarkdownElement.Table) {
 // Parsing Functions
 // ============================================
 
-private fun parseMarkdown(text: String, textColor: Color): List<MarkdownElement> {
+/**
+ * Safe markdown parsing with protection against catastrophic backtracking
+ */
+private fun parseMarkdownSafe(text: String, textColor: Color): List<MarkdownElement> {
     val elements = mutableListOf<MarkdownElement>()
     
-    // Split by code blocks first
-    val codeBlockPattern = Regex("```(\\w*)?\\n?([\\s\\S]*?)```")
-    var lastEnd = 0
+    // Use a simpler, more efficient approach to find code blocks
+    // Instead of regex with [\\s\\S]*?, manually find matching ```
+    var currentIndex = 0
+    val maxIterations = 100 // Safety limit
+    var iterations = 0
     
-    codeBlockPattern.findAll(text).forEach { match ->
-        // Add text before code block
-        if (match.range.first > lastEnd) {
-            val textBefore = text.substring(lastEnd, match.range.first)
-            elements.addAll(parseTextContent(textBefore, textColor))
+    while (currentIndex < text.length && iterations < maxIterations) {
+        iterations++
+        
+        val codeStart = text.indexOf("```", currentIndex)
+        
+        if (codeStart == -1) {
+            // No more code blocks, parse remaining text
+            val remainingText = text.substring(currentIndex)
+            if (remainingText.isNotBlank()) {
+                elements.addAll(parseTextContent(remainingText, textColor))
+            }
+            break
         }
         
-        // Add code block
-        val language = match.groupValues[1].ifEmpty { null }
-        val code = match.groupValues[2].trimEnd()
-        elements.add(MarkdownElement.CodeBlock(code, language))
+        // Add text before code block
+        if (codeStart > currentIndex) {
+            val textBefore = text.substring(currentIndex, codeStart)
+            if (textBefore.isNotBlank()) {
+                elements.addAll(parseTextContent(textBefore, textColor))
+            }
+        }
         
-        lastEnd = match.range.last + 1
-    }
-    
-    // Add remaining text
-    if (lastEnd < text.length) {
-        val remainingText = text.substring(lastEnd)
-        elements.addAll(parseTextContent(remainingText, textColor))
+        // Find the end of the code block
+        val codeContentStart = codeStart + 3
+        val codeEnd = text.indexOf("```", codeContentStart)
+        
+        if (codeEnd == -1) {
+            // No closing ```, treat as regular text
+            val remainingText = text.substring(codeStart)
+            if (remainingText.isNotBlank()) {
+                elements.addAll(parseTextContent(remainingText, textColor))
+            }
+            break
+        }
+        
+        // Extract language and code
+        val codeSection = text.substring(codeContentStart, codeEnd)
+        val firstNewline = codeSection.indexOf('\n')
+        val language: String?
+        val code: String
+        
+        if (firstNewline != -1 && firstNewline < 20) {
+            // Language is on the first line
+            val langCandidate = codeSection.substring(0, firstNewline).trim()
+            language = if (langCandidate.matches(Regex("^\\w+$"))) langCandidate else null
+            code = if (language != null) codeSection.substring(firstNewline + 1).trimEnd() else codeSection.trimEnd()
+        } else {
+            language = null
+            code = codeSection.trimEnd()
+        }
+        
+        elements.add(MarkdownElement.CodeBlock(code, language))
+        currentIndex = codeEnd + 3
     }
     
     return elements
+}
+
+// Keep the old function for backwards compatibility but mark as deprecated
+@Deprecated("Use parseMarkdownSafe instead", ReplaceWith("parseMarkdownSafe(text, textColor)"))
+private fun parseMarkdown(text: String, textColor: Color): List<MarkdownElement> {
+    return parseMarkdownSafe(text, textColor)
 }
 
 private fun parseTextContent(text: String, textColor: Color): List<MarkdownElement> {

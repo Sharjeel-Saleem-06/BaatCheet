@@ -293,8 +293,16 @@ class ChatViewModel @Inject constructor(
         // Get uploaded file IDs for context
         val uploadedFileIds = getUploadedFileIds()
         
-        // Send to API with proper error handling
+        // Send to API with proper error handling and timeout protection
         viewModelScope.launch {
+            // Start a timeout job to clear loading state if API takes too long
+            val timeoutJob = launch {
+                kotlinx.coroutines.delay(60_000) // 60 second timeout
+                if (_state.value.isLoading || _state.value.currentLoadingMode != null) {
+                    handleApiError("Request timed out. Please try again.")
+                }
+            }
+            
             try {
                 when (val result = chatRepository.sendMessage(
                     message = content,
@@ -303,6 +311,7 @@ class ChatViewModel @Inject constructor(
                     imageIds = uploadedFileIds.ifEmpty { null }
                 )) {
                     is ApiResult.Success -> {
+                        timeoutJob.cancel() // Cancel timeout since we got a response
                         val response = result.data
                         
                         _state.update { state ->
@@ -334,12 +343,14 @@ class ChatViewModel @Inject constructor(
                     }
                     
                     is ApiResult.Error -> {
+                        timeoutJob.cancel()
                         handleApiError(result.message)
                     }
                     
                     is ApiResult.Loading -> { /* Already handled */ }
                 }
             } catch (e: Exception) {
+                timeoutJob.cancel()
                 // Catch any unexpected errors and clear loading state
                 handleApiError(e.message ?: "An unexpected error occurred")
             }
