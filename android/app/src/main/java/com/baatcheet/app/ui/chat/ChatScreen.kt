@@ -303,6 +303,9 @@ fun ChatScreen(
                 onAllChatsClick = {
                     showAllChatsScreen = true
                     coroutineScope.launch { drawerState.close() }
+                },
+                onDeleteConversation = { conversationId ->
+                    viewModel.deleteConversation(conversationId)
                 }
             )
         }
@@ -474,6 +477,9 @@ fun ChatScreen(
                         onMenuClick = { coroutineScope.launch { drawerState.open() } },
                         onSendMessage = { message ->
                             viewModel.sendMessage(message) // Project ID is automatically included from state
+                        },
+                        onDeleteConversation = { conversationId ->
+                            viewModel.deleteConversation(conversationId)
                         }
                     )
                 }
@@ -783,7 +789,8 @@ private fun ChatDrawerContent(
     onSettingsClick: () -> Unit = {},
     onAnalyticsClick: () -> Unit = {},
     onCollaborationsClick: () -> Unit = {},
-    onAllChatsClick: () -> Unit = {}
+    onAllChatsClick: () -> Unit = {},
+    onDeleteConversation: (String) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showNewProjectDialog by remember { mutableStateOf(false) }
@@ -1089,7 +1096,8 @@ private fun ChatDrawerContent(
                             text = conversation.title,
                             isPinned = conversation.isPinned,
                             isSelected = conversation.id == state.currentConversationId,
-                            onClick = { onConversationClick(conversation.id) }
+                            onClick = { onConversationClick(conversation.id) },
+                            onDelete = { onDeleteConversation(conversation.id) }
                         )
                     }
                     
@@ -1582,33 +1590,105 @@ private fun ChatHistoryItem(
     text: String,
     isPinned: Boolean = false,
     isSelected: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onDelete: (() -> Unit)? = null
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(if (isSelected) ChipBackground else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (isPinned) {
-            Icon(
-                Icons.Default.PushPin,
-                contentDescription = "Pinned",
-                tint = GreenAccent,
-                modifier = Modifier.size(14.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-        }
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = DarkText,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showOptionsMenu by remember { mutableStateOf(false) }
+    
+    // Delete confirmation dialog
+    if (showDeleteDialog && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(
+                    text = "Delete Chat",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF3B30)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this conversation? This action cannot be undone.",
+                    fontSize = 14.sp,
+                    color = DarkText
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = WhiteBackground
         )
+    }
+    
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(if (isSelected) ChipBackground else Color.Transparent)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { if (onDelete != null) showOptionsMenu = true }
+                )
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isPinned) {
+                Icon(
+                    Icons.Default.PushPin,
+                    contentDescription = "Pinned",
+                    tint = GreenAccent,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            Text(
+                text = text,
+                fontSize = 14.sp,
+                color = DarkText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        
+        // Options dropdown menu
+        DropdownMenu(
+            expanded = showOptionsMenu,
+            onDismissRequest = { showOptionsMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { 
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = Color(0xFFFF3B30)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Delete", color = Color(0xFFFF3B30))
+                    }
+                },
+                onClick = {
+                    showOptionsMenu = false
+                    showDeleteDialog = true
+                }
+            )
+        }
     }
 }
 
@@ -4201,7 +4281,8 @@ private fun ProjectChatScreen(
     onConversationClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
     onMenuClick: () -> Unit,
-    onSendMessage: (String) -> Unit
+    onSendMessage: (String) -> Unit,
+    onDeleteConversation: (String) -> Unit = {}
 ) {
     var messageText by remember { mutableStateOf("") }
     
@@ -4402,7 +4483,9 @@ private fun ProjectChatScreen(
                     items(conversations, key = { it.id }) { conversation ->
                         ProjectConversationItem(
                             conversation = conversation,
-                            onClick = { onConversationClick(conversation.id) }
+                            onClick = { onConversationClick(conversation.id) },
+                            canDelete = project.canDelete || project.isOwner,
+                            onDelete = { onDeleteConversation(conversation.id) }
                         )
                     }
                 }
@@ -4660,80 +4743,169 @@ private fun ProjectTagsRow(
 }
 
 /**
- * Project Conversation Item
+ * Project Conversation Item with delete support
  */
 @Composable
 private fun ProjectConversationItem(
     conversation: com.baatcheet.app.domain.model.Conversation,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    canDelete: Boolean = false,
+    onDelete: (() -> Unit)? = null
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showOptionsMenu by remember { mutableStateOf(false) }
+    
+    // Delete confirmation dialog
+    if (showDeleteDialog && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(
+                    text = "Delete Chat",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF3B30)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this conversation from the project? This action cannot be undone.",
+                    fontSize = 14.sp,
+                    color = DarkText
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
+    
     Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { if (canDelete && onDelete != null) showOptionsMenu = true }
+            ),
         shape = RoundedCornerShape(12.dp),
         color = WhiteBackground,
-        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+        border = BorderStroke(1.dp, InputBorder)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Chat icon
-            Box(
+        Box {
+            Row(
                 modifier = Modifier
-                    .size(40.dp)
-                    .background(Color(0xFFF5F5F5), RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
-                    contentDescription = null,
-                    tint = GrayText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = conversation.title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = DarkText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Chat icon
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFFF5F5F5), RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
                 ) {
+                    Icon(
+                        imageVector = Icons.Outlined.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint = GrayText,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "${conversation.messageCount} messages",
-                        fontSize = 13.sp,
-                        color = GrayText
+                        text = conversation.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = DarkText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     
-                    if (conversation.isPinned) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "${conversation.messageCount} messages",
+                            fontSize = 13.sp,
+                            color = GrayText
+                        )
+                        
+                        if (conversation.isPinned) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = "Pinned",
+                                tint = GreenAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+                
+                // Show options button if can delete
+                if (canDelete && onDelete != null) {
+                    IconButton(
+                        onClick = { showOptionsMenu = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.PushPin,
-                            contentDescription = "Pinned",
-                            tint = GreenAccent,
-                            modifier = Modifier.size(14.dp)
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Options",
+                            tint = GrayText,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = GrayText,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
             
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = GrayText,
-                modifier = Modifier.size(20.dp)
-            )
+            // Options dropdown menu
+            DropdownMenu(
+                expanded = showOptionsMenu,
+                onDismissRequest = { showOptionsMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFFFF3B30)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Delete Chat", color = Color(0xFFFF3B30))
+                        }
+                    },
+                    onClick = {
+                        showOptionsMenu = false
+                        showDeleteDialog = true
+                    }
+                )
+            }
         }
     }
 }

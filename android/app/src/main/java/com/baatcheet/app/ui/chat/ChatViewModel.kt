@@ -471,6 +471,11 @@ class ChatViewModel @Inject constructor(
                         startNewChat()
                     }
                     loadConversations()
+                    
+                    // Also refresh project conversations if we're in a project
+                    _state.value.currentProjectId?.let { projectId ->
+                        loadProjectConversations(projectId)
+                    }
                 }
                 
                 is ApiResult.Error -> {
