@@ -28,7 +28,15 @@ router.get(
 
       // Build where clause
       const where: Record<string, unknown> = { userId };
-      if (projectId) where.projectId = projectId;
+      
+      // Filter by projectId - if not specified, only show non-project conversations
+      if (projectId) {
+        where.projectId = projectId;
+      } else {
+        // By default, exclude project conversations from general list
+        where.projectId = null;
+      }
+      
       if (archived === 'true') where.isArchived = true;
       if (archived === 'false') where.isArchived = false;
       if (pinned === 'true') where.isPinned = true;

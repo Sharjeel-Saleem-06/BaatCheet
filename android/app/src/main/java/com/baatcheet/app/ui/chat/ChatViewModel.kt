@@ -2008,17 +2008,37 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Check if an email exists in the system (for invite validation)
+     * Returns: Triple(exists, isSelf, userName) or null on error
+     */
+    suspend fun checkEmailExists(email: String): Triple<Boolean, Boolean, String?>? {
+        return when (val result = chatRepository.checkEmailExists(email)) {
+            is ApiResult.Success -> {
+                val data = result.data
+                val userName = if (data.user != null) {
+                    listOfNotNull(data.user.firstName, data.user.lastName).joinToString(" ").ifBlank { data.user.username }
+                } else null
+                Triple(data.exists, data.isSelf == true, userName)
+            }
+            is ApiResult.Error -> null
+            is ApiResult.Loading -> null
+        }
+    }
+    
+    /**
      * Invite a collaborator to a project
      */
-    fun inviteCollaborator(projectId: String, email: String) {
+    fun inviteCollaborator(projectId: String, email: String, onResult: (Boolean, String) -> Unit = { _, _ -> }) {
         viewModelScope.launch {
             when (val result = chatRepository.inviteCollaborator(projectId, email)) {
                 is ApiResult.Success -> {
                     // Invitation sent successfully
                     _state.update { it.copy(error = null) }
+                    onResult(true, "Invitation sent successfully!")
                 }
                 is ApiResult.Error -> {
                     _state.update { it.copy(error = "Failed to invite: ${result.message}") }
+                    onResult(false, result.message)
                 }
                 is ApiResult.Loading -> { /* Ignore */ }
             }

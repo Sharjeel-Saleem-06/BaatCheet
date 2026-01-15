@@ -1323,6 +1323,28 @@ class ChatRepository @Inject constructor(
     }
     
     /**
+     * Check if email exists in the system (for invite validation)
+     */
+    suspend fun checkEmailExists(email: String): ApiResult<CheckEmailData> {
+        return try {
+            val response = api.checkEmailExists(email)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("Failed to check email")
+                }
+            } else {
+                ApiResult.Error("Failed to check email", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
      * Invite collaborator to project
      */
     suspend fun inviteCollaborator(projectId: String, email: String, role: String = "viewer"): ApiResult<Boolean> {

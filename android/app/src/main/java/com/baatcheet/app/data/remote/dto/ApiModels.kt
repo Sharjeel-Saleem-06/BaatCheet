@@ -955,6 +955,26 @@ data class InviteResponse(
     val error: String?
 )
 
+// Check email response for invite validation
+data class CheckEmailResponse(
+    val success: Boolean,
+    val data: CheckEmailData?
+)
+
+data class CheckEmailData(
+    val exists: Boolean,
+    val isSelf: Boolean? = null,
+    val message: String? = null,
+    val user: CheckEmailUserData? = null
+)
+
+data class CheckEmailUserData(
+    val firstName: String?,
+    val lastName: String?,
+    val username: String?,
+    val avatar: String?
+)
+
 data class InvitationDto(
     val id: String,
     val projectId: String,

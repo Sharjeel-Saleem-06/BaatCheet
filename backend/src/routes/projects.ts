@@ -767,6 +767,78 @@ router.post(
 // ============================================
 
 /**
+ * GET /api/v1/projects/check-email/:email
+ * Check if a user exists by email (for invite validation)
+ */
+router.get(
+  '/check-email/:email',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email } = req.params;
+      const currentUserId = req.user!.id;
+
+      if (!email || !email.includes('@')) {
+        res.status(400).json({ success: false, error: 'Valid email is required' });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          avatar: true,
+        },
+      });
+
+      if (!user) {
+        res.json({ 
+          success: true, 
+          data: { 
+            exists: false,
+            message: 'User not found. They must sign up first.'
+          } 
+        });
+        return;
+      }
+
+      // Check if it's the current user
+      if (user.id === currentUserId) {
+        res.json({ 
+          success: true, 
+          data: { 
+            exists: true,
+            isSelf: true,
+            message: 'You cannot invite yourself'
+          } 
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          exists: true,
+          isSelf: false,
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            avatar: user.avatar,
+          }
+        }
+      });
+    } catch (error) {
+      logger.error('Error checking email:', error);
+      res.status(500).json({ success: false, error: 'Failed to check email' });
+    }
+  }
+);
+
+/**
  * POST /api/v1/projects/:id/invite
  * Invite a collaborator to a project (owner or collaborator with canInvite permission)
  */
@@ -813,15 +885,25 @@ router.post(
         where: { email: email.toLowerCase() },
       });
 
+      // User must exist in the system to be invited
+      if (!invitee) {
+        res.status(404).json({ success: false, error: 'User not found. They must sign up first before being invited.' });
+        return;
+      }
+
+      // Check if trying to invite yourself
+      if (invitee.id === userId) {
+        res.status(400).json({ success: false, error: 'You cannot invite yourself' });
+        return;
+      }
+
       // Check if already a collaborator
-      if (invitee) {
-        const existing = await prisma.projectCollaborator.findUnique({
-          where: { projectId_userId: { projectId: id, userId: invitee.id } },
-        });
-        if (existing) {
-          res.status(400).json({ success: false, error: 'User is already a collaborator' });
-          return;
-        }
+      const existing = await prisma.projectCollaborator.findUnique({
+        where: { projectId_userId: { projectId: id, userId: invitee.id } },
+      });
+      if (existing) {
+        res.status(400).json({ success: false, error: 'User is already a collaborator' });
+        return;
       }
 
       // Check if invitation already pending

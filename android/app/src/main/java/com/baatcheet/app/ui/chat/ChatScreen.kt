@@ -419,6 +419,32 @@ fun ChatScreen(
                     )
                 }
                 
+                // Loading state when project is being fetched
+                state.isLoadingProject && state.currentProject == null -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(WhiteBackground),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = GreenAccent,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Loading project...",
+                                color = GrayText,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+                }
+                
                 // Project Screen - when viewing a project (like ChatGPT Projects)
                 // Show project list only if not in chat input mode
                 state.currentProject != null && state.messages.isEmpty() && !state.showProjectChatInput -> {
@@ -710,8 +736,11 @@ fun ChatScreen(
                     name = name
                 )
             },
-            onInviteCollaborator = { email ->
-                viewModel.inviteCollaborator(state.currentProjectId!!, email)
+            onInviteCollaborator = { email, onResult ->
+                viewModel.inviteCollaborator(state.currentProjectId!!, email, onResult)
+            },
+            onCheckEmail = { email ->
+                viewModel.checkEmailExists(email)
             }
         )
     }
@@ -4694,6 +4723,14 @@ private fun ProjectConversationItem(
     }
 }
 
+// Email validation state for invite dialog
+private sealed class EmailValidationState {
+    object Idle : EmailValidationState()
+    object Checking : EmailValidationState()
+    data class Valid(val userName: String?) : EmailValidationState()
+    data class Invalid(val message: String) : EmailValidationState()
+}
+
 // Common emojis for project selection
 private val PROJECT_EMOJIS = listOf(
     "📁", "📂", "📱", "💻", "🤖", "🎨", "🎮", "🎯", "🚀", "💡",
@@ -4715,7 +4752,8 @@ private fun ProjectSettingsDialog(
     onDeleteProject: () -> Unit,
     onSaveEmoji: ((String) -> Unit)? = null,
     onSaveName: ((String) -> Unit)? = null,
-    onInviteCollaborator: ((String) -> Unit)? = null // Add invite callback
+    onInviteCollaborator: ((String, (Boolean, String) -> Unit) -> Unit)? = null, // Add invite callback with result
+    onCheckEmail: (suspend (String) -> Triple<Boolean, Boolean, String?>?)? = null // Check email callback
 ) {
     var instructions by remember(project.id) { mutableStateOf(project.description ?: project.instructions ?: "") }
     var projectName by remember(project.id) { mutableStateOf(project.name) }
@@ -4724,7 +4762,9 @@ private fun ProjectSettingsDialog(
     var showEmojiPicker by remember { mutableStateOf(false) }
     var showInviteDialog by remember { mutableStateOf(false) }
     var inviteEmail by remember { mutableStateOf("") }
+    var emailValidationState by remember { mutableStateOf<EmailValidationState>(EmailValidationState.Idle) }
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -5204,6 +5244,7 @@ private fun ProjectSettingsDialog(
             onDismissRequest = { 
                 showInviteDialog = false
                 inviteEmail = ""
+                emailValidationState = EmailValidationState.Idle
             },
             title = {
                 Text(
@@ -5224,13 +5265,25 @@ private fun ProjectSettingsDialog(
                     
                     OutlinedTextField(
                         value = inviteEmail,
-                        onValueChange = { inviteEmail = it },
+                        onValueChange = { 
+                            inviteEmail = it
+                            emailValidationState = EmailValidationState.Idle // Reset validation on change
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Email address", color = GrayText) },
                         singleLine = true,
+                        isError = emailValidationState is EmailValidationState.Invalid,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = GreenAccent,
-                            unfocusedBorderColor = InputBorder,
+                            focusedBorderColor = when (emailValidationState) {
+                                is EmailValidationState.Valid -> GreenAccent
+                                is EmailValidationState.Invalid -> Color(0xFFFF3B30)
+                                else -> GreenAccent
+                            },
+                            unfocusedBorderColor = when (emailValidationState) {
+                                is EmailValidationState.Valid -> GreenAccent
+                                is EmailValidationState.Invalid -> Color(0xFFFF3B30)
+                                else -> InputBorder
+                            },
                             cursorColor = GreenAccent
                         ),
                         shape = RoundedCornerShape(10.dp),
@@ -5240,33 +5293,140 @@ private fun ProjectSettingsDialog(
                                 contentDescription = null,
                                 tint = GrayText
                             )
+                        },
+                        trailingIcon = {
+                            when (emailValidationState) {
+                                is EmailValidationState.Checking -> {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                        color = GreenAccent
+                                    )
+                                }
+                                is EmailValidationState.Valid -> {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = "Valid",
+                                        tint = GreenAccent
+                                    )
+                                }
+                                is EmailValidationState.Invalid -> {
+                                    Icon(
+                                        imageVector = Icons.Default.Error,
+                                        contentDescription = "Invalid",
+                                        tint = Color(0xFFFF3B30)
+                                    )
+                                }
+                                else -> {
+                                    // Check button
+                                    if (inviteEmail.contains("@") && inviteEmail.length > 5) {
+                                        IconButton(
+                                            onClick = {
+                                                emailValidationState = EmailValidationState.Checking
+                                                coroutineScope.launch {
+                                                    val result = onCheckEmail?.invoke(inviteEmail)
+                                                    emailValidationState = when {
+                                                        result == null -> EmailValidationState.Invalid("Failed to check email")
+                                                        !result.first -> EmailValidationState.Invalid("User not found. They must sign up first.")
+                                                        result.second -> EmailValidationState.Invalid("You cannot invite yourself")
+                                                        else -> EmailValidationState.Valid(result.third)
+                                                    }
+                                                }
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Search,
+                                                contentDescription = "Check",
+                                                tint = GreenAccent
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     )
                     
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Role info
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFF5F5F5)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Info,
-                                contentDescription = null,
-                                tint = GrayText,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "They will be added as a Moderator and can create chats but not delete them.",
-                                fontSize = 12.sp,
-                                color = GrayText
-                            )
+                    // Validation message
+                    when (val state = emailValidationState) {
+                        is EmailValidationState.Valid -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = GreenAccent.copy(alpha = 0.1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = GreenAccent,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "User found: ${state.userName ?: inviteEmail}",
+                                        fontSize = 12.sp,
+                                        color = GreenAccent
+                                    )
+                                }
+                            }
+                        }
+                        is EmailValidationState.Invalid -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFFF3B30).copy(alpha = 0.1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Error,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFF3B30),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = state.message,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFFFF3B30)
+                                    )
+                                }
+                            }
+                        }
+                        else -> {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            // Role info
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFF5F5F5)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Info,
+                                        contentDescription = null,
+                                        tint = GrayText,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Click search icon to verify the email before inviting.",
+                                        fontSize = 12.sp,
+                                        color = GrayText
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -5274,13 +5434,19 @@ private fun ProjectSettingsDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (inviteEmail.isNotBlank() && inviteEmail.contains("@")) {
-                            onInviteCollaborator?.invoke(inviteEmail)
-                            showInviteDialog = false
-                            inviteEmail = ""
+                        if (emailValidationState is EmailValidationState.Valid) {
+                            onInviteCollaborator?.invoke(inviteEmail) { success, message ->
+                                if (success) {
+                                    showInviteDialog = false
+                                    inviteEmail = ""
+                                    emailValidationState = EmailValidationState.Idle
+                                } else {
+                                    emailValidationState = EmailValidationState.Invalid(message)
+                                }
+                            }
                         }
                     },
-                    enabled = inviteEmail.isNotBlank() && inviteEmail.contains("@"),
+                    enabled = emailValidationState is EmailValidationState.Valid,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GreenAccent
                     )
@@ -5291,6 +5457,7 @@ private fun ProjectSettingsDialog(
             dismissButton = {
                 TextButton(onClick = { 
                     showInviteDialog = false
+                    emailValidationState = EmailValidationState.Idle
                     inviteEmail = ""
                 }) {
                     Text("Cancel", color = GrayText)

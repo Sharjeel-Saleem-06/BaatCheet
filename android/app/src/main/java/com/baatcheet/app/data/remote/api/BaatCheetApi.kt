@@ -208,6 +208,14 @@ interface BaatCheetApi {
     // ============================================
     
     /**
+     * Check if a user exists by email (for invite validation)
+     */
+    @GET("projects/check-email/{email}")
+    suspend fun checkEmailExists(
+        @Path("email") email: String
+    ): Response<CheckEmailResponse>
+    
+    /**
      * Invite collaborator to project
      */
     @POST("projects/{id}/invite")
