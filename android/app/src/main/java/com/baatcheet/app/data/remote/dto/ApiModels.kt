@@ -944,8 +944,12 @@ data class ProjectContextData(
 
 data class InviteCollaboratorRequest(
     val email: String,
-    val role: String = "viewer",  // owner, editor, viewer
+    val role: String = "viewer",  // admin, moderator, viewer
     val message: String? = null
+)
+
+data class ChangeRoleRequest(
+    val role: String  // admin, moderator, viewer
 )
 
 data class InviteResponse(

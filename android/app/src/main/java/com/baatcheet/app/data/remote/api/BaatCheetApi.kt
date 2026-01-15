@@ -256,10 +256,20 @@ interface BaatCheetApi {
     /**
      * Remove collaborator from project
      */
-    @DELETE("projects/{id}/collaborators/{userId}")
+    @DELETE("projects/{id}/collaborators/{collaboratorId}")
     suspend fun removeCollaborator(
         @Path("id") projectId: String,
-        @Path("userId") userId: String
+        @Path("collaboratorId") collaboratorId: String
+    ): Response<BaseResponse<Any>>
+    
+    /**
+     * Change collaborator's role
+     */
+    @PUT("projects/{id}/collaborators/{collaboratorId}/role")
+    suspend fun changeCollaboratorRole(
+        @Path("id") projectId: String,
+        @Path("collaboratorId") collaboratorId: String,
+        @Body request: ChangeRoleRequest
     ): Response<BaseResponse<Any>>
     
     // ============================================

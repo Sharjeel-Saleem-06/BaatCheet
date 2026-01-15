@@ -2074,6 +2074,44 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Remove a collaborator from the project
+     */
+    fun removeCollaborator(projectId: String, collaboratorId: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.removeCollaborator(projectId, collaboratorId)) {
+                is ApiResult.Success -> {
+                    // Refresh project to update collaborators list
+                    loadProject(projectId)
+                    _state.update { it.copy(error = null) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = "Failed to remove collaborator: ${result.message}") }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Change a collaborator's role
+     */
+    fun changeCollaboratorRole(projectId: String, collaboratorId: String, newRole: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.changeCollaboratorRole(projectId, collaboratorId, newRole)) {
+                is ApiResult.Success -> {
+                    // Refresh project to update collaborators list
+                    loadProject(projectId)
+                    _state.update { it.copy(error = null) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = "Failed to change role: ${result.message}") }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
      * Refresh all data
      */
     fun refreshAll() {

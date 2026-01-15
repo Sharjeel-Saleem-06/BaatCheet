@@ -1364,6 +1364,43 @@ class ChatRepository @Inject constructor(
     }
     
     /**
+     * Remove a collaborator from project
+     */
+    suspend fun removeCollaborator(projectId: String, collaboratorId: String): ApiResult<Boolean> {
+        return try {
+            val response = api.removeCollaborator(projectId, collaboratorId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                val error = response.body()?.error ?: "Failed to remove collaborator"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Change a collaborator's role
+     */
+    suspend fun changeCollaboratorRole(projectId: String, collaboratorId: String, newRole: String): ApiResult<Boolean> {
+        return try {
+            val request = ChangeRoleRequest(role = newRole)
+            val response = api.changeCollaboratorRole(projectId, collaboratorId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                val error = response.body()?.error ?: "Failed to change role"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
      * Respond to project invitation
      */
     suspend fun respondToInvitation(invitationId: String, accept: Boolean): ApiResult<Boolean> {

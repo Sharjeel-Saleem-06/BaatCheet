@@ -76,6 +76,10 @@ import com.baatcheet.app.domain.model.MessageRole
 import com.baatcheet.app.domain.model.Project
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 // Light mode color palette - Pure white background
 private val WhiteBackground = Color(0xFFFFFFFF)
@@ -746,6 +750,12 @@ fun ChatScreen(
             },
             onCheckEmail = { email ->
                 viewModel.checkEmailExists(email)
+            },
+            onRemoveCollaborator = { collaboratorId ->
+                viewModel.removeCollaborator(state.currentProjectId!!, collaboratorId)
+            },
+            onChangeCollaboratorRole = { collaboratorId, newRole ->
+                viewModel.changeCollaboratorRole(state.currentProjectId!!, collaboratorId, newRole)
             }
         )
     }
@@ -4758,7 +4768,9 @@ private fun ProjectSettingsDialog(
     onSaveEmoji: ((String) -> Unit)? = null,
     onSaveName: ((String) -> Unit)? = null,
     onInviteCollaborator: ((String, (Boolean, String) -> Unit) -> Unit)? = null, // Add invite callback with result
-    onCheckEmail: (suspend (String) -> Triple<Boolean, Boolean, String?>?)? = null // Check email callback
+    onCheckEmail: (suspend (String) -> Triple<Boolean, Boolean, String?>?)? = null, // Check email callback
+    onRemoveCollaborator: ((String) -> Unit)? = null, // Remove collaborator callback
+    onChangeCollaboratorRole: ((String, String) -> Unit)? = null // Change role callback (collaboratorId, newRole)
 ) {
     var instructions by remember(project.id) { mutableStateOf(project.description ?: project.instructions ?: "") }
     var projectName by remember(project.id) { mutableStateOf(project.name) }
@@ -5489,125 +5501,462 @@ private fun ProjectSettingsDialog(
         )
     }
     
-    // Collaborators list dialog
+    // Collaborators list dialog - improved UI
     if (showCollaboratorsDialog) {
+        CollaboratorsManagementDialog(
+            project = project,
+            onDismiss = { showCollaboratorsDialog = false },
+            onRemoveCollaborator = { collaboratorId ->
+                onRemoveCollaborator?.invoke(collaboratorId)
+            },
+            onChangeRole = { collaboratorId, newRole ->
+                onChangeCollaboratorRole?.invoke(collaboratorId, newRole)
+            }
+        )
+    }
+}
+
+/**
+ * Collaborators Management Dialog - Full featured dialog for managing project members
+ */
+@Composable
+private fun CollaboratorsManagementDialog(
+    project: Project,
+    onDismiss: () -> Unit,
+    onRemoveCollaborator: (String) -> Unit,
+    onChangeRole: (String, String) -> Unit
+) {
+    var selectedCollaborator by remember { mutableStateOf<Collaborator?>(null) }
+    var showRoleMenu by remember { mutableStateOf(false) }
+    var showRemoveConfirmation by remember { mutableStateOf(false) }
+    
+    val availableRoles = listOf("admin", "moderator", "viewer")
+    
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .heightIn(max = 550.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = WhiteBackground,
+            shadowElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(GreenAccent, GreenAccent.copy(alpha = 0.8f))
+                            )
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Project Members",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${1 + project.collaborators.size} member${if (project.collaborators.size > 0) "s" else ""}",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                }
+                
+                // Content
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Owner Section
+                    item {
+                        Text(
+                            text = "OWNER",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GrayText,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Owner card - premium style
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color(0xFFF0FDF4),
+                            border = BorderStroke(1.dp, GreenAccent.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Avatar with crown
+                                Box {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .background(
+                                                Brush.linearGradient(
+                                                    colors = listOf(GreenAccent, Color(0xFF22C55E))
+                                                ),
+                                                CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = if (project.isOwner) "Y" else (project.owner?.firstName?.firstOrNull()?.toString()?.uppercase() ?: "O"),
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                    // Crown badge
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = 4.dp, y = (-4).dp)
+                                            .size(20.dp)
+                                            .background(Color(0xFFFFD700), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("👑", fontSize = 10.sp)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = if (project.isOwner) "You" else "${project.owner?.firstName ?: ""} ${project.owner?.lastName ?: ""}".trim().ifBlank { "Owner" },
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = DarkText
+                                        )
+                                        if (project.isOwner) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = GreenAccent.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = "(You)",
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    fontSize = 10.sp,
+                                                    color = GreenAccent,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                        }
+                                    }
+                                    if (!project.isOwner && project.owner?.email != null) {
+                                        Text(
+                                            text = project.owner.email,
+                                            fontSize = 12.sp,
+                                            color = GrayText
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Full access • Can manage everything",
+                                        fontSize = 11.sp,
+                                        color = GreenAccent
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Collaborators Section
+                    if (project.collaborators.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "COLLABORATORS",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = GrayText,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                        
+                        items(project.collaborators) { collaborator ->
+                            CollaboratorManagementCard(
+                                collaborator = collaborator,
+                                canManage = project.canManageRoles,
+                                onEditRole = {
+                                    selectedCollaborator = collaborator
+                                    showRoleMenu = true
+                                },
+                                onRemove = {
+                                    selectedCollaborator = collaborator
+                                    showRemoveConfirmation = true
+                                }
+                            )
+                        }
+                    } else {
+                        item {
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Groups,
+                                    contentDescription = null,
+                                    tint = GrayText.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "No collaborators yet",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = GrayText
+                                )
+                                Text(
+                                    text = "Invite people to collaborate on this project",
+                                    fontSize = 13.sp,
+                                    color = GrayText.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Role Legend
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFF8FAFC)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text(
+                                    text = "Role Permissions",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = DarkText
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                RoleLegendItem(
+                                    role = "Admin",
+                                    color = Color(0xFF007AFF),
+                                    description = "Can edit, delete chats & invite others"
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                RoleLegendItem(
+                                    role = "Moderator",
+                                    color = Color(0xFFFF9500),
+                                    description = "Can edit chats & invite others"
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                RoleLegendItem(
+                                    role = "Viewer",
+                                    color = GrayText,
+                                    description = "Can view and create chats only"
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // Footer
+                HorizontalDivider(color = InputBorder)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenAccent),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Done", fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+    }
+    
+    // Role selection dropdown
+    if (showRoleMenu && selectedCollaborator != null) {
         AlertDialog(
-            onDismissRequest = { showCollaboratorsDialog = false },
+            onDismissRequest = { 
+                showRoleMenu = false
+                selectedCollaborator = null
+            },
             title = {
                 Text(
-                    text = "Project Members",
+                    text = "Change Role",
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
             },
             text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                ) {
-                    // Owner section
+                Column {
                     Text(
-                        text = "Owner",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
+                        text = "Select a new role for ${selectedCollaborator?.user?.firstName ?: "this user"}:",
+                        fontSize = 14.sp,
                         color = GrayText
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Owner card
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        color = GreenAccent.copy(alpha = 0.1f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    availableRoles.forEach { role ->
+                        val isSelected = selectedCollaborator?.role == role
+                        Surface(
+                            onClick = {
+                                if (!isSelected) {
+                                    selectedCollaborator?.id?.let { id ->
+                                        onChangeRole(id, role)
+                                    }
+                                }
+                                showRoleMenu = false
+                                selectedCollaborator = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) GreenAccent.copy(alpha = 0.1f) else ChipBackground,
+                            border = if (isSelected) BorderStroke(1.dp, GreenAccent) else null
                         ) {
-                            // Avatar
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(GreenAccent, CircleShape),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = if (project.isOwner) "You" else (project.owner?.firstName?.firstOrNull()?.toString() ?: "O"),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .background(
+                                            when (role) {
+                                                "admin" -> Color(0xFF007AFF)
+                                                "moderator" -> Color(0xFFFF9500)
+                                                else -> GrayText
+                                            },
+                                            CircleShape
+                                        )
                                 )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = if (project.isOwner) "You" else "${project.owner?.firstName ?: ""} ${project.owner?.lastName ?: ""}".trim().ifBlank { project.owner?.email ?: "Owner" },
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = DarkText
-                                )
-                                if (!project.isOwner && project.owner?.email != null) {
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = project.owner.email,
+                                        text = role.replaceFirstChar { c -> c.uppercase() },
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = DarkText
+                                    )
+                                    Text(
+                                        text = when (role) {
+                                            "admin" -> "Full access except ownership"
+                                            "moderator" -> "Can edit and invite"
+                                            else -> "View and create only"
+                                        },
                                         fontSize = 12.sp,
                                         color = GrayText
                                     )
                                 }
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = GreenAccent
-                            ) {
-                                Text(
-                                    text = "Owner",
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontSize = 11.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = GreenAccent,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
-                    }
-                    
-                    // Collaborators section
-                    if (project.collaborators.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Collaborators",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = GrayText
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(project.collaborators) { collaborator ->
-                                CollaboratorCard(
-                                    collaborator = collaborator,
-                                    canManage = project.canManageRoles,
-                                    onRemove = { /* TODO: Implement remove */ },
-                                    onChangeRole = { /* TODO: Implement role change */ }
-                                )
-                            }
+                        if (role != availableRoles.last()) {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
-                    } else if (!project.isOwner) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "No other collaborators yet.",
-                            fontSize = 13.sp,
-                            color = GrayText,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
                 }
             },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { 
+                    showRoleMenu = false
+                    selectedCollaborator = null
+                }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
+    
+    // Remove confirmation dialog
+    if (showRemoveConfirmation && selectedCollaborator != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showRemoveConfirmation = false
+                selectedCollaborator = null
+            },
+            title = {
+                Text(
+                    text = "Remove Collaborator",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF3B30)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to remove ${selectedCollaborator?.user?.firstName ?: "this user"} from this project? They will lose access to all project chats.",
+                    fontSize = 14.sp,
+                    color = DarkText
+                )
+            },
             confirmButton = {
-                TextButton(onClick = { showCollaboratorsDialog = false }) {
-                    Text("Close", color = GreenAccent)
+                Button(
+                    onClick = {
+                        selectedCollaborator?.id?.let { id ->
+                            onRemoveCollaborator(id)
+                        }
+                        showRemoveConfirmation = false
+                        selectedCollaborator = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF3B30))
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showRemoveConfirmation = false
+                    selectedCollaborator = null
+                }) {
+                    Text("Cancel", color = GrayText)
                 }
             },
             containerColor = WhiteBackground
@@ -5616,28 +5965,31 @@ private fun ProjectSettingsDialog(
 }
 
 /**
- * Collaborator card for displaying collaborator info
+ * Individual collaborator card with management options
  */
 @Composable
-private fun CollaboratorCard(
+private fun CollaboratorManagementCard(
     collaborator: Collaborator,
     canManage: Boolean,
-    onRemove: () -> Unit,
-    onChangeRole: (String) -> Unit
+    onEditRole: () -> Unit,
+    onRemove: () -> Unit
 ) {
+    var showOptionsMenu by remember { mutableStateOf(false) }
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        color = ChipBackground
+        shape = RoundedCornerShape(14.dp),
+        color = ChipBackground,
+        border = BorderStroke(1.dp, InputBorder)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .background(
                         when (collaborator.role) {
                             "admin" -> Color(0xFF007AFF)
@@ -5649,78 +6001,168 @@ private fun CollaboratorCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = collaborator.user.firstName?.firstOrNull()?.toString() 
+                    text = collaborator.user.firstName?.firstOrNull()?.toString()?.uppercase() 
                         ?: collaborator.user.email?.firstOrNull()?.toString()?.uppercase() 
                         ?: "?",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 16.sp
                 )
             }
+            
             Spacer(modifier = Modifier.width(12.dp))
+            
+            // Info
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${collaborator.user.firstName ?: ""} ${collaborator.user.lastName ?: ""}".trim().ifBlank { collaborator.user.email ?: "User" },
+                    text = "${collaborator.user.firstName ?: ""} ${collaborator.user.lastName ?: ""}".trim().ifBlank { "User" },
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     color = DarkText
                 )
                 collaborator.user.email?.let { emailText: String ->
                     Text(
                         text = emailText,
                         fontSize = 12.sp,
-                        color = GrayText
+                        color = GrayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                // Show permissions
-                Row(
-                    modifier = Modifier.padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
+                Spacer(modifier = Modifier.height(6.dp))
+                // Permissions row
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (collaborator.canEdit) {
-                        MiniPermissionBadge("Edit", GreenAccent)
+                        PermissionBadge("Edit", GreenAccent)
                     }
                     if (collaborator.canDelete) {
-                        MiniPermissionBadge("Delete", Color(0xFFFF3B30))
+                        PermissionBadge("Delete", Color(0xFFFF3B30))
                     }
                     if (collaborator.canInvite) {
-                        MiniPermissionBadge("Invite", Color(0xFF007AFF))
+                        PermissionBadge("Invite", Color(0xFF007AFF))
                     }
                 }
             }
-            // Role badge
-            Surface(
-                shape = RoundedCornerShape(4.dp),
-                color = when (collaborator.role) {
-                    "admin" -> Color(0xFF007AFF)
-                    "moderator" -> Color(0xFFFF9500)
-                    else -> GrayText
+            
+            // Role badge and menu
+            Column(horizontalAlignment = Alignment.End) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = when (collaborator.role) {
+                        "admin" -> Color(0xFF007AFF)
+                        "moderator" -> Color(0xFFFF9500)
+                        else -> GrayText
+                    }
+                ) {
+                    Text(
+                        text = collaborator.role.replaceFirstChar { c -> c.uppercase() },
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        fontSize = 11.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
-            ) {
-                Text(
-                    text = collaborator.role.replaceFirstChar { char -> char.uppercase() },
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    fontSize = 11.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium
-                )
+                
+                // Management options (only for admins/owners)
+                if (canManage) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box {
+                        IconButton(
+                            onClick = { showOptionsMenu = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Options",
+                                tint = GrayText,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        
+                        DropdownMenu(
+                            expanded = showOptionsMenu,
+                            onDismissRequest = { showOptionsMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Edit,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color(0xFF007AFF)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("Change Role", color = DarkText)
+                                    }
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    onEditRole()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.PersonRemove,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color(0xFFFF3B30)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("Remove", color = Color(0xFFFF3B30))
+                                    }
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    onRemove()
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun MiniPermissionBadge(label: String, color: Color) {
+private fun PermissionBadge(label: String, color: Color) {
     Surface(
-        shape = RoundedCornerShape(3.dp),
-        color = color.copy(alpha = 0.15f)
+        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = 0.12f)
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-            fontSize = 9.sp,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            fontSize = 10.sp,
             color = color,
             fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun RoleLegendItem(role: String, color: Color, description: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = role,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = DarkText,
+            modifier = Modifier.width(70.dp)
+        )
+        Text(
+            text = description,
+            fontSize = 11.sp,
+            color = GrayText
         )
     }
 }
