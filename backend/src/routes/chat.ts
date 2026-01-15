@@ -133,6 +133,8 @@ Now respond to the user's question about this content:`;
             model: result.model,
             provider: result.provider,
             tokens: result.tokens,
+            // Include image result if present (for image generation mode)
+            imageResult: result.imageResult,
           } : undefined,
           error: result.error,
         });
