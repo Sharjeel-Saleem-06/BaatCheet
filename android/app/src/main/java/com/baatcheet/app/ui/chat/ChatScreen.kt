@@ -71,6 +71,7 @@ import com.baatcheet.app.ui.voice.VoiceChatScreen
 import com.baatcheet.app.ui.components.shareText
 import com.baatcheet.app.ui.collaborations.CollaborationsScreen
 import com.baatcheet.app.domain.model.ChatMessage
+import com.baatcheet.app.domain.model.Collaborator
 import com.baatcheet.app.domain.model.MessageRole
 import com.baatcheet.app.domain.model.Project
 import kotlinx.coroutines.launch
@@ -5664,9 +5665,9 @@ private fun CollaboratorCard(
                     fontWeight = FontWeight.Medium,
                     color = DarkText
                 )
-                collaborator.user.email?.let { email ->
+                collaborator.user.email?.let { emailText: String ->
                     Text(
-                        text = email,
+                        text = emailText,
                         fontSize = 12.sp,
                         color = GrayText
                     )
@@ -5697,7 +5698,7 @@ private fun CollaboratorCard(
                 }
             ) {
                 Text(
-                    text = collaborator.role.replaceFirstChar { it.uppercase() },
+                    text = collaborator.role.replaceFirstChar { char -> char.uppercase() },
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     color = Color.White,

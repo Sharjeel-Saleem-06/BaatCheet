@@ -1,316 +1,262 @@
-2026-01-15 23:49:43.721 16862-32177 ProfileInstaller        com.baatcheet.app                    D  Installing profile for com.baatcheet.app
-2026-01-15 23:49:47.529 16862-32117 m.baatcheet.app         com.baatcheet.app                    W  userfaultfd: MOVE ioctl seems unsupported: Connection timed out
-2026-01-15 23:49:47.537 16862-16862 FinalizerDaemon         com.baatcheet.app                    W  type=1400 audit(0.0:131085): avc:  denied  { getopt } for  path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c127,c258,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.baatcheet.app
-2026-01-15 23:50:12.898 16862-16862 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.message.bank.v1.MessageBankLice@abb3e38 from com.transsion.message.bank.IMessageBankLice
-2026-01-15 23:50:12.910 16862-16862 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.policy.TranDecorViewImpl@d864b76 from com.transsion.hubcore.internal.policy.ITranDecorView
-2026-01-15 23:50:13.060 16862-16862 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 171228096; UID 10639; state: ENABLED
-2026-01-15 23:50:13.127 16862-16862 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 289878283; UID 10639; state: ENABLED
-2026-01-15 23:50:13.226 16862-16862 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-15 23:50:16.550 16862-16862 Compose Focus           com.baatcheet.app                    D  Owner FocusChanged(true)
-2026-01-15 23:50:16.583 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:50:16.586 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:50:16.592 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:1fa0707a: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:16.592 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:50:16.594 16862-16862 InputMethodManager      com.baatcheet.app                    D  showSoftInput() view=androidx.compose.ui.platform.AndroidComposeView{b7e1db5 VFED..... .F....ID 0,0-1080,2436 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:16.709 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:50:16.719 16862-16862 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.jank.TranFrameTrackerImpl@76ba2a5 from com.transsion.hubcore.internal.jank.ITranFrameTracker
-2026-01-15 23:50:17.002 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:1fa0707a: onShown
-2026-01-15 23:50:18.029 16862-32116 m.baatcheet.app         com.baatcheet.app                    I  Compiler allocated 9725KB to compile void com.baatcheet.app.ui.login.EmailAuthScreenKt.EmailAuthScreen(kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, com.baatcheet.app.ui.login.ClerkAuthService, androidx.compose.runtime.Composer, int, int)
-2026-01-15 23:50:18.590 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:50:18.598 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:fef1c694: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:18.599 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:50:18.599 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:fef1c694: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:18.675 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:50:18.675 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:f8693a5e: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:19.799 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:50:19.807 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:4c0634f0: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:19.807 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:50:19.807 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:4c0634f0: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:19.820 16862-16862 RemoteInpu...ectionImpl com.baatcheet.app                    W  getSurroundingText on inactive InputConnection
-2026-01-15 23:50:19.839 16862-16862 VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-15 23:50:19.839 16862-16862 ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
-2026-01-15 23:50:19.847 16862-16862 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb4000078f0239f30
-2026-01-15 23:50:19.847 16862-16862 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-15 23:50:19.847 16862-16862 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-15 23:50:19.878 16862-16862 BufferQueueConsumer     com.baatcheet.app                    D  [](id:41de00000001,api:0,p:-1,c:16862) connect: controlledByApp=false
-2026-01-15 23:50:19.880 16862-32130 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-15 23:50:19.889 16862-32130 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#1](f:0,a:1) acquireNextBufferLocked size=131x141 mFrameNumber=1 applyTransaction=true mTimestamp=3494667675438(auto) mPendingTransactions.size=0 graphicBufferId=72421738545165 transform=0
-2026-01-15 23:50:20.000 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:50:20.000 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:36586a3: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:20.679 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:4353c65d: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:20.679 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:50:20.679 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:4353c65d: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:21.827 16862-16862 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@2ade4dd
-2026-01-15 23:50:21.833 16862-16862 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.ui.window.PopupLayout{ba8f1d9 V.E...... ......ID 0,0-51,61 #1020002 android:id/content}
-2026-01-15 23:50:21.834 16862-16862 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#1](f:0,a:3) destructor()
-2026-01-15 23:50:21.834 16862-16862 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#1(BLAST Consumer)1](id:41de00000001,api:0,p:-1,c:16862) disconnect
-2026-01-15 23:50:21.840 16862-16862 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb4000078f0239f30
-2026-01-15 23:50:27.669 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:50:27.673 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:704e63bf: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:27.673 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:50:27.673 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:704e63bf: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:27.715 16862-16862 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:50:27.716 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:3c8e2bbf: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:50:31.231 16862-32117 m.baatcheet.app         com.baatcheet.app                    W  Cleared Reference was only reachable from finalizer (only reported once)
-2026-01-15 23:50:31.262 16862-32119 System                  com.baatcheet.app                    W  A resource failed to call release. 
-2026-01-15 23:50:37.984 16862-16862 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@24995840 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@88dfa49
-2026-01-15 23:50:38.286 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:77316ccd: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:50:38.289 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:35cf0061: onHidden
-2026-01-15 23:50:42.289 16862-16862 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:51:16.018 16862-16862 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#0](f:0,a:4) destructor()
-2026-01-15 23:51:16.018 16862-16862 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[MainActivity]#0(BLAST Consumer)0](id:41de00000000,api:0,p:-1,c:16862) disconnect
-2026-01-15 23:51:19.053 16862-16862 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-15 23:51:19.060   976-1049  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#1459](this:0xb400007cba870020,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#1459'
-2026-01-15 23:51:19.073 16862-16862 BufferQueueConsumer     com.baatcheet.app                    D  [](id:41de00000002,api:0,p:-1,c:16862) connect: controlledByApp=false
-2026-01-15 23:51:19.074 16862-32130 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-15 23:51:19.091 16862-32130 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#2](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=3553869660057(auto) mPendingTransactions.size=0 graphicBufferId=72421738545168 transform=0
-2026-01-15 23:51:19.116   976-2963  BufferQueueDebug        surfaceflinger                       E  [43bbbc2 ActivityRecordInputSink com.baatcheet.app/.MainActivity#1464](this:0xb400007cba8593a0,id:-1,api:0,p:-1,c:-1) id info cannot be read from '43bbbc2 ActivityRecordInputSink com.baatcheet.app/.MainActivity#1464'
-2026-01-15 23:51:19.129 16862-16862 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:09.213 16862-16862 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:55:09.236 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:8779e09d: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:09.236 16862-16862 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:8779e09d: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
----------------------------- PROCESS ENDED (16862) for package com.baatcheet.app ----------------------------
-2026-01-15 23:55:21.246 16862-16862 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#2](f:0,a:4) destructor()
-2026-01-15 23:55:21.247 16862-16862 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[MainActivity]#2(BLAST Consumer)2](id:41de00000002,api:0,p:-1,c:16862) disconnect
----------------------------- PROCESS STARTED (23589) for package com.baatcheet.app ----------------------------
-2026-01-15 23:55:24.484  1744-5121  debug_Tran...Controller system_server                        E  this is Task{412cd10 #10339 type=standard A=10639:com.baatcheet.app} isVisibleRequested false
-2026-01-15 23:55:34.742   976-2963  BufferQueueDebug        surfaceflinger                       E  [ActivityRecord{c342442 u0 com.baatcheet.app/.MainActivity t10342}#1520](this:0xb400007cba87b660,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'ActivityRecord{c342442 u0 com.baatcheet.app/.MainActivity t10342}#1520'
-2026-01-15 23:55:34.768   976-2963  BufferQueueDebug        surfaceflinger                       E  [b1d7e45 Splash Screen com.baatcheet.app#1521](this:0xb400007cba842720,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'b1d7e45 Splash Screen com.baatcheet.app#1521'
-2026-01-15 23:55:34.778   976-2963  BufferQueueDebug        surfaceflinger                       E  [Splash Screen com.baatcheet.app#1522](this:0xb400007cba883f10,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Splash Screen com.baatcheet.app#1522'
-2026-01-15 23:55:34.791 23589-23589 m.baatcheet.app         com.baatcheet.app                    I  Late-enabling -Xcheck:jni
-2026-01-15 23:55:34.825 23589-23589 m.baatcheet.app         com.baatcheet.app                    I  Using CollectorTypeCMC GC.
-2026-01-15 23:55:34.836 23589-23589 nativeloader            com.baatcheet.app                    D  Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
-2026-01-15 23:55:34.889   976-2963  BufferQueueDebug        surfaceflinger                       E  [a048a8d ActivityRecordInputSink com.baatcheet.app/.MainActivity#1526](this:0xb400007cba8abcf0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'a048a8d ActivityRecordInputSink com.baatcheet.app/.MainActivity#1526'
-2026-01-15 23:55:34.910 23589-23589 nativeloader            com.baatcheet.app                    D  Load /data/user/0/com.baatcheet.app/code_cache/startup_agents/69b40b6c-agent.so using system ns (caller=<unknown>): ok
-2026-01-15 23:55:34.918 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  hiddenapi: DexFile /data/data/com.baatcheet.app/code_cache/.studio/instruments-cbb5ff5f.jar is in boot class path but is not in a known location
-2026-01-15 23:55:35.077 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Redefining intrinsic method java.lang.Thread java.lang.Thread.currentThread(). This may cause the unexpected use of the original definition of java.lang.Thread java.lang.Thread.currentThread()in methods that have already been compiled.
-2026-01-15 23:55:35.077 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Redefining intrinsic method boolean java.lang.Thread.interrupted(). This may cause the unexpected use of the original definition of boolean java.lang.Thread.interrupted()in methods that have already been compiled.
-2026-01-15 23:55:35.082 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 171979766; UID 10639; state: ENABLED
-2026-01-15 23:55:35.082 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 242716250; UID 10639; state: ENABLED
-2026-01-15 23:55:35.084 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.graphics.TranGraphicImpl@e7c6aa5 from com.transsion.hubcore.graphics.ITranGraphic
-2026-01-15 23:55:35.085 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.typeface.v1.TypefaceLice@ff6acf3 from android.graphics.IGraphicLice
-2026-01-15 23:55:35.085 23589-23589 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.graphics.GraphicLice@415de7a from android.graphics.IGraphicLice
-2026-01-15 23:55:35.655 23589-23589 nativeloader            com.baatcheet.app                    D  Configuring clns-4 for other apk /data/app/~~KDn8ZSR9jcJNpPihL_OBhg==/com.baatcheet.app-eEeJy2Q_r20ITxc9jLHexw==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~KDn8ZSR9jcJNpPihL_OBhg==/com.baatcheet.app-eEeJy2Q_r20ITxc9jLHexw==/lib/arm64, permitted_path=/data:/mnt/expand:/data/user/0/com.baatcheet.app
-2026-01-15 23:55:35.665 23589-23589 nativeloader            com.baatcheet.app                    D  Load libframework-connectivity-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity.jar: ok
-2026-01-15 23:55:35.671 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V  Currently set values for:
-2026-01-15 23:55:35.671 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_pkgs=[]
-2026-01-15 23:55:35.671 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_values=[]
-2026-01-15 23:55:35.672 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V  ANGLE GameManagerService for com.baatcheet.app: false
-2026-01-15 23:55:35.672 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V  com.baatcheet.app is not listed in per-application setting
-2026-01-15 23:55:35.672 23589-23589 GraphicsEnvironment     com.baatcheet.app                    V  Neither updatable production driver nor prerelease driver is supported.
-2026-01-15 23:55:35.675 23589-23589 LoadedApk               com.baatcheet.app                    I  No resource references to update in package com.transsion.theme.icon
-2026-01-15 23:55:35.681 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 183155436; UID 10639; state: ENABLED
-2026-01-15 23:55:35.685 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  using android.app.IActivityThreadLice$DefaultImpl@a15e3ae instead of com.transsion.activityembedding.ActivityEmbeddingLiceFactory  from android.app.IActivityThreadLice
-2026-01-15 23:55:35.710 23589-23589 MbrainDebugManagerImpl  com.baatcheet.app                    D  getService failed
-2026-01-15 23:55:35.725 23589-2049  libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789025f090
-2026-01-15 23:55:35.728 23589-2049  libMEOW                 com.baatcheet.app                    D  meow reload base cfg path: na
-2026-01-15 23:55:35.729 23589-2049  libMEOW                 com.baatcheet.app                    D  meow reload overlay cfg path: na
-2026-01-15 23:55:35.729 23589-2049  QT                      com.baatcheet.app                    W  qt_process_init() called
-2026-01-15 23:55:35.729 23589-2049  QT                      com.baatcheet.app                    E  [QT]file does not exist
-2026-01-15 23:55:35.729 23589-2049  QT                      com.baatcheet.app                    W  Support!!
-2026-01-15 23:55:35.735 23589-2049  libMEOW_gift            com.baatcheet.app                    I  open /data/performance/gift/arc.ini
-2026-01-15 23:55:35.735 23589-2049  QT                      com.baatcheet.app                    E  [QT]file does not exist
-2026-01-15 23:55:35.736 23589-2049  libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-15 23:55:35.736 23589-2049  libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-15 23:55:35.736 23589-2049  libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789026f0a0
-2026-01-15 23:55:35.736 23589-2049  libMEOW                 com.baatcheet.app                    D  meow delete tls: 0xb40000789025f090
-2026-01-15 23:55:35.749 23589-23589 ActivityThread          com.baatcheet.app                    D  ++ activityComponent:com.baatcheet.app/com.baatcheet.app.MainActivity counts:1 ALEAK_CLEAR_SUPPORT:true
-2026-01-15 23:55:35.756 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranActivityImpl@19e4a30 from com.transsion.hubcore.app.ITranActivity
-2026-01-15 23:55:35.756 23589-23589 TranVersion             com.baatcheet.app                    I  TranVersion static initializer: default = 34.3.1.1
-                                                                                                     debug = false, debug_version = 34.3.1.1
-2026-01-15 23:55:35.756 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanActivityComponentImpl@c2066a9 from com.transsion.hubcore.magellan.ITranMagellanActivityComponent
-2026-01-15 23:55:35.757 23589-23589 System                  com.baatcheet.app                    W  ClassLoader referenced unknown path: /system_ext/framework/multidisplay.jar
-2026-01-15 23:55:35.759 23589-23589 TranClassInfo           com.baatcheet.app                    W  instance failed. com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent (Explain with AI)
-                                                                                                    java.lang.ClassNotFoundException: com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl
-                                                                                                    	at java.lang.Class.classForName(Native Method)
-                                                                                                    	at java.lang.Class.forName(Class.java:591)
-                                                                                                    	at com.transsion.hubcore.utils.TranClassInfo.getImpl(TranClassInfo.java:124)
-                                                                                                    	at com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent.Instance(ITranMultiDisplayCoreComponent.java:32)
-                                                                                                    	at com.transsion.hubcore.app.TranActivityImpl.attach(TranActivityImpl.java:44)
-                                                                                                    	at android.app.Activity.attach(Activity.java:8562)
-                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3885)
-                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4079)
-                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:114)
-                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:139)
-                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:96)
-                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2552)
-                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106)
-                                                                                                    	at android.os.Looper.loopOnce(Looper.java:243)
-                                                                                                    	at android.os.Looper.loop(Looper.java:338)
-                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8506)
-                                                                                                    	at java.lang.reflect.Method.invoke(Native Method)
-                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:602)
-                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1064)
-                                                                                                    Caused by: java.lang.ClassNotFoundException: Didn't find class "com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl" on path: DexPathList[[],nativeLibraryDirectories=[/system/lib64, /system_ext/lib64]]
-                                                                                                    	at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:259)
-                                                                                                    	at java.lang.ClassLoader.loadClass(ClassLoader.java:642)
-                                                                                                    	at java.lang.ClassLoader.loadClass(ClassLoader.java:578)
-                                                                                                    	at java.lang.Class.classForName(Native Method) 
-                                                                                                    	at java.lang.Class.forName(Class.java:591) 
-                                                                                                    	at com.transsion.hubcore.utils.TranClassInfo.getImpl(TranClassInfo.java:124) 
-                                                                                                    	at com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent.Instance(ITranMultiDisplayCoreComponent.java:32) 
-                                                                                                    	at com.transsion.hubcore.app.TranActivityImpl.attach(TranActivityImpl.java:44) 
-                                                                                                    	at android.app.Activity.attach(Activity.java:8562) 
-                                                                                                    	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3885) 
-                                                                                                    	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4079) 
-                                                                                                    	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:114) 
-                                                                                                    	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:139) 
-                                                                                                    	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:96) 
-                                                                                                    	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2552) 
-                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:106) 
-                                                                                                    	at android.os.Looper.loopOnce(Looper.java:243) 
-                                                                                                    	at android.os.Looper.loop(Looper.java:338) 
-                                                                                                    	at android.app.ActivityThread.main(ActivityThread.java:8506) 
-                                                                                                    	at java.lang.reflect.Method.invoke(Native Method) 
-                                                                                                    	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:602) 
-                                                                                                    	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1064) 
-2026-01-15 23:55:35.760 23589-23589 TranClassInfo           com.baatcheet.app                    D  using com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent$1@5d5d95c instead of [com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl] from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent
-2026-01-15 23:55:35.767 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranViewImpl@18b953a from com.transsion.hubcore.view.ITranView
-2026-01-15 23:55:35.772 23589-23589 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from com.transsion.dragdrop.DragDropLiceFactory
-2026-01-15 23:55:35.772 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from android.view.IViewLice
-2026-01-15 23:55:35.772 23589-23589 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.view.ViewLice@952f48 from android.view.IViewLice
-2026-01-15 23:55:35.772 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanViewComponentImpl@d9d41e1 from com.transsion.hubcore.magellan.ITranMagellanViewComponent
-2026-01-15 23:55:35.776 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.TranInternalViewImpl@acb1b1d from com.transsion.hubcore.internal.ITranInternalView
-2026-01-15 23:55:35.777 23589-23589 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.transsion.whitenavigation.WhiteNavigationLiceFactory
-2026-01-15 23:55:35.777 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.android.internal.IInternalViewLice
-2026-01-15 23:55:35.777 23589-23589 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.transsion.screenshothelper.ScreenShotHelperImplLiceFactory
-2026-01-15 23:55:35.777 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.android.internal.IInternalViewLice
-2026-01-15 23:55:35.777 23589-23589 os.SingleLiceFactory    com.baatcheet.app                    D  using com.android.internal.IInternalViewLice$DefaultImpl@db09f60 instead of com.transsion.flamboyant.FlamboyantLiceFactory  from com.android.internal.IInternalViewLice
-2026-01-15 23:55:35.777 23589-23589 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.internal.InternalViewLice@9034c19 from com.android.internal.IInternalViewLice
-2026-01-15 23:55:35.819 23589-2029  ActivityThreadLice      com.baatcheet.app                    D  received OSMessage 110001
-2026-01-15 23:55:35.820 23589-2029  ActivityThreadLice      com.baatcheet.app                    D  send OSMessage 110001 to [-1]
-2026-01-15 23:55:35.824 23589-2029  OSServiceManager        com.baatcheet.app                    D  update local os service os.activity from null to android.os.BinderProxy@d6501b6
-2026-01-15 23:55:35.830 23589-23589 M-ProMotion             com.baatcheet.app                    I  M-ProMotion is disabled
-2026-01-15 23:55:35.835 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowManagerGlobalImpl@e516daf from com.transsion.hubcore.view.ITranWindowManagerGlobal
-2026-01-15 23:55:35.842 23589-2051  nativeloader            com.baatcheet.app                    D  Load libpowerhalwrap_jni.so using system ns (caller=/system_ext/framework/mediatek-framework.jar): ok
-2026-01-15 23:55:35.843 23589-2051  PowerHalWrapper         com.baatcheet.app                    I  PowerHalWrapper.getInstance 
-2026-01-15 23:55:35.845 23589-23589 SurfaceFactory          com.baatcheet.app                    I  [static] sSurfaceFactory = com.transsion.rt.SurfaceFactoryImpl@c7135bc
-2026-01-15 23:55:35.847 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 237531167; UID 10639; state: DISABLED
-2026-01-15 23:55:35.856 23589-23589 VRI[MainActivity]       com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-15 23:55:35.856 23589-23589 VRInsetsControllerHost  com.baatcheet.app                    D  setSystemBarsAppearance appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1024
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:2048
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:4096
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:8
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:16
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:32
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:64
-2026-01-15 23:55:35.857 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:128
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:256
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:8192
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:3
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:5
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:6
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:7
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:8
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:9
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:10
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:11
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:12
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:13
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1001
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-15 23:55:35.858 23589-23589 TranWindow...rationImpl com.baatcheet.app                    I  field:com.transsion.multiwindow.showcaption
-2026-01-15 23:55:35.858 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranWindowConfigurationImpl@df9f1a8 from com.transsion.hubcore.server.app.ITranWindowConfiguration
-2026-01-15 23:55:35.859 23589-23589 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: false
-2026-01-15 23:55:35.859 23589-23589 ViewRootImpl            com.baatcheet.app                    D  setView appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-15 23:55:35.862   976-3002  BufferQueueDebug        surfaceflinger                       E  [d233e6f com.baatcheet.app/com.baatcheet.app.MainActivity#1527](this:0xb400007cba8b45a0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'd233e6f com.baatcheet.app/com.baatcheet.app.MainActivity#1527'
-2026-01-15 23:55:35.865 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowLayoutImpl@afd44c1 from com.transsion.hubcore.view.ITranWindowLayout
-2026-01-15 23:55:35.866 23589-23589 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789027f0b0
-2026-01-15 23:55:35.866 23589-23589 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-15 23:55:35.866 23589-23589 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-15 23:55:35.866 23589-23589 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb4000078902af0e0
-2026-01-15 23:55:35.867 23589-23589 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb4000078f0223be0
-2026-01-15 23:55:35.867 23589-23589 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-15 23:55:35.867 23589-23589 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-15 23:55:36.210 23589-2020  m.baatcheet.app         com.baatcheet.app                    I  Compiler allocated 6110KB to compile void android.view.ViewRootImpl.performTraversals()
-2026-01-15 23:55:36.333 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
-                                                                                                    Common causes for lock verification issues are non-optimized dex code
-                                                                                                    and incorrect proguard optimizations.
-2026-01-15 23:55:36.333 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
-2026-01-15 23:55:36.333 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Method java.lang.Object androidx.compose.runtime.snapshots.SnapshotStateList.mutate(kotlin.jvm.functions.Function1) failed lock verification and will run slower.
-2026-01-15 23:55:36.333 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
-2026-01-15 23:55:36.333 23589-23589 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
-2026-01-15 23:55:36.427   976-2008  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#1528](this:0xb400007cba8a8f60,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#1528'
-2026-01-15 23:55:36.436 23589-23589 BufferQueueConsumer     com.baatcheet.app                    D  [](id:5c2500000000,api:0,p:-1,c:23589) connect: controlledByApp=false
-2026-01-15 23:55:36.438 23589-23589 FBI                     com.baatcheet.app                    E  fbcNotifyBufferUX is NULL: undefined symbol: fbcNotifyBufferUX
-2026-01-15 23:55:36.440 23589-23589 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: true
-2026-01-15 23:55:36.442 23589-2047  libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789025f090
-2026-01-15 23:55:36.442 23589-2047  libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-15 23:55:36.442 23589-2047  libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-15 23:55:36.442 23589-2047  libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789026f0a0
-2026-01-15 23:55:36.469 23589-2047  OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-15 23:55:36.481 23589-23589 Choreographer           com.baatcheet.app                    I  Skipped 32 frames!  The application may be doing too much work on its main thread.
-2026-01-15 23:55:36.481 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.flingmanager.implement.TranFlingManagerImpl@ffc5c from com.transsion.hubcore.flingmanager.ITranFlingManager
-2026-01-15 23:55:36.481 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranChoreographerImpl@daab65 from com.transsion.hubcore.view.ITranChoreographer
-2026-01-15 23:55:36.481 23589-23589 TranChoreographerImpl   com.baatcheet.app                    E  skippedFrames: 32
-2026-01-15 23:55:36.592 23589-2047  MAGT_SYNC_FRAME         com.baatcheet.app                    D  MAGT Sync: MAGT is not supported. Disabling Sync.
-2026-01-15 23:55:36.612 23589-2047  BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=3811391148072(auto) mPendingTransactions.size=0 graphicBufferId=101313983545350 transform=0
-2026-01-15 23:55:36.616   976-2008  BufferQueueDebug        surfaceflinger                       E  [Surface(name=d233e6f com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xecb56d6 - animation-leash of starting_reveal#1531](this:0xb400007cba870020,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=d233e6f com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xecb56d6 - animation-leash of starting_reveal#1531'
-2026-01-15 23:55:36.984   976-2963  BufferQueueDebug        surfaceflinger                       E  [Surface(name=b1d7e45 Splash Screen com.baatcheet.app)/@0x690f26b - animation-leash of window_animation#1533](this:0xb400007cba8b1810,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=b1d7e45 Splash Screen com.baatcheet.app)/@0x690f26b - animation-leash of window_animation#1533'
-2026-01-15 23:55:40.338 23589-23589 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.message.bank.v1.MessageBankLice@91e3ce4 from com.transsion.message.bank.IMessageBankLice
-2026-01-15 23:55:40.345 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.policy.TranDecorViewImpl@22c3802 from com.transsion.hubcore.internal.policy.ITranDecorView
-2026-01-15 23:55:40.503 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 171228096; UID 10639; state: ENABLED
-2026-01-15 23:55:40.580 23589-23589 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 289878283; UID 10639; state: ENABLED
-2026-01-15 23:55:40.779 23589-23589 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-15 23:55:41.062 23589-2310  ProfileInstaller        com.baatcheet.app                    D  Installing profile for com.baatcheet.app
-2026-01-15 23:55:44.765 23589-23589 Compose Focus           com.baatcheet.app                    D  Owner FocusChanged(true)
-2026-01-15 23:55:44.816 23589-23589 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:44.820 23589-23589 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:44.825 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:3cfbc112: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:44.825 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:55:44.826 23589-23589 InputMethodManager      com.baatcheet.app                    D  showSoftInput() view=androidx.compose.ui.platform.AndroidComposeView{b7e1db5 VFED..... .F....ID 0,0-1080,2436 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:44.865 23589-2021  m.baatcheet.app         com.baatcheet.app                    W  userfaultfd: MOVE ioctl seems unsupported: Try again
-2026-01-15 23:55:44.898 23589-2024  System                  com.baatcheet.app                    W  A resource failed to call release. 
-2026-01-15 23:55:45.009 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:55:45.029 23589-23589 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.jank.TranFrameTrackerImpl@685fc30 from com.transsion.hubcore.internal.jank.ITranFrameTracker
-2026-01-15 23:55:45.316 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:3cfbc112: onShown
-2026-01-15 23:55:45.935 23589-23589 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:55:46.595 23589-2020  m.baatcheet.app         com.baatcheet.app                    I  JIT allocated 59KB for stack maps of void com.baatcheet.app.ui.login.EmailAuthScreenKt.EmailAuthScreen(java.lang.String, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, com.baatcheet.app.ui.login.ClerkAuthService, androidx.compose.runtime.Composer, int, int)
-2026-01-15 23:55:46.595 23589-2020  m.baatcheet.app         com.baatcheet.app                    I  Compiler allocated 14MB to compile void com.baatcheet.app.ui.login.EmailAuthScreenKt.EmailAuthScreen(java.lang.String, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function0, com.baatcheet.app.ui.login.ClerkAuthService, androidx.compose.runtime.Composer, int, int)
-2026-01-15 23:55:46.999 23589-23589 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:55:47.003 23589-2284  TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.widget.TranScrollPolicyImpl@c552f8d from com.transsion.hubcore.widget.ITranScrollPolicy
-2026-01-15 23:55:47.003 23589-2284  TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranScrollPolicyMagellanImpl@8d06542 from com.transsion.hubcore.magellan.ITranMagellanScrollPolicyComponent
-2026-01-15 23:55:47.544 23589-23589 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:55:48.880 23589-23589 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:48.883 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:6bfa593f: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:48.883 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:55:48.884 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:6bfa593f: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:48.954 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:55:48.954 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:b4eda896: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:52.784 23589-23589 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:52.787 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:fa2b93d4: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:52.787 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:55:52.787 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:fa2b93d4: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:52.916 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:55:52.916 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:111ee14e: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:55.841 23589-23589 InputMethodManager      com.baatcheet.app                    D  invalidateInput sessionid: 0
-2026-01-15 23:55:55.846 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:d16ee30: onRequestShow at ORIGIN_CLIENT_SHOW_SOFT_INPUT reason SHOW_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:55:55.846 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=false)
-2026-01-15 23:55:55.846 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:d16ee30: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:55.957 23589-23589 InsetsController        com.baatcheet.app                    D  show(ime(), fromIme=true)
-2026-01-15 23:55:55.957 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:9d4890e: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
-2026-01-15 23:55:59.557 23589-23589 ScrollIdentify          com.baatcheet.app                    I  on fling
-2026-01-15 23:56:02.043 23589-23589 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=ImeCallback=ImeOnBackInvokedCallback@24995840 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@4ad1f80
-2026-01-15 23:56:02.341 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:8f7768de: onRequestHide at ORIGIN_CLIENT_HIDE_SOFT_INPUT reason HIDE_SOFT_INPUT_BY_INSETS_API
-2026-01-15 23:56:02.342 23589-23589 ImeTracker              com.baatcheet.app                    I  com.baatcheet.app:1af15e43: onHidden
+failed
+Download info
+:app:compileDebugKotlin
+ChatScreen.kt
+Unresolved reference: Collaborator
+Cannot infer a type for this parameter. Please specify it explicitly.
+Overload resolution ambiguity:
+public fun Text(text: AnnotatedString, modifier: Modifier = ..., color: Color = ..., fontSize: TextUnit = ..., fontStyle: FontStyle? = ..., fontWeight: FontWeight? = ..., fontFamily: FontFamily? = ..., letterSpacing: TextUnit = ..., textDecoration: TextDecoration? = ..., textAlign: TextAlign? = ..., lineHeight: TextUnit = ..., overflow: TextOverflow = ..., softWrap: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., inlineContent: Map<String, InlineTextContent> = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., style: TextStyle = ...): Unit defined in androidx.compose.material3
+public fun Text(text: String, modifier: Modifier = ..., color: Color = ..., fontSize: TextUnit = ..., fontStyle: FontStyle? = ..., fontWeight: FontWeight? = ..., fontFamily: FontFamily? = ..., letterSpacing: TextUnit = ..., textDecoration: TextDecoration? = ..., textAlign: TextAlign? = ..., lineHeight: TextUnit = ..., overflow: TextOverflow = ..., softWrap: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., onTextLayout: ((TextLayoutResult) -> Unit)? = ..., style: TextStyle = ...): Unit defined in androidx.compose.material3
+Unresolved reference: it
+Incompatible Gradle JVMExecuting tasks: [:app:assembleDebug] in project /Users/muhammadsharjeel/Documents/BaatCheet/android
+
+Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:createDebugVariantModel UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:5622:19 Unresolved reference: Collaborator
+e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:5667:48 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:5668:21 Overload resolution ambiguity: 
+public fun Text(text: AnnotatedString, modifier: Modifier = ..., color: Color = ..., fontSize: TextUnit = ..., fontStyle: FontStyle? = ..., fontWeight: FontWeight? = ..., fontFamily: FontFamily? = ..., letterSpacing: TextUnit = ..., textDecoration: TextDecoration? = ..., textAlign: TextAlign? = ..., lineHeight: TextUnit = ..., overflow: TextOverflow = ..., softWrap: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., inlineContent: Map<String, InlineTextContent> = ..., onTextLayout: (TextLayoutResult) -> Unit = ..., style: TextStyle = ...): Unit defined in androidx.compose.material3
+public fun Text(text: String, modifier: Modifier = ..., color: Color = ..., fontSize: TextUnit = ..., fontStyle: FontStyle? = ..., fontWeight: FontWeight? = ..., fontFamily: FontFamily? = ..., letterSpacing: TextUnit = ..., textDecoration: TextDecoration? = ..., textAlign: TextAlign? = ..., lineHeight: TextUnit = ..., overflow: TextOverflow = ..., softWrap: Boolean = ..., maxLines: Int = ..., minLines: Int = ..., onTextLayout: ((TextLayoutResult) -> Unit)? = ..., style: TextStyle = ...): Unit defined in androidx.compose.material3
+e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:5700:65 Unresolved reference: it
+
+> Task :app:compileDebugKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:compileDebugKotlin'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:149)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:282)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:147)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:337)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:324)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:317)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+	at org.gradle.workers.internal.DefaultWorkerExecutor$WorkItemExecution.waitForCompletion(DefaultWorkerExecutor.java:283)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.lambda$waitForItemsAndGatherFailures$2(DefaultAsyncWorkTracker.java:130)
+	at org.gradle.internal.Factories$1.create(Factories.java:31)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:321)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLocks(DefaultWorkerLeaseService.java:304)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withoutLock(DefaultWorkerLeaseService.java:309)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:126)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForItemsAndGatherFailures(DefaultAsyncWorkTracker.java:92)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForAll(DefaultAsyncWorkTracker.java:78)
+	at org.gradle.internal.work.DefaultAsyncWorkTracker.waitForCompletion(DefaultAsyncWorkTracker.java:66)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:256)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.run(DefaultBuildOperationExecutor.java:68)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:233)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:216)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:199)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:166)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:41)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:74)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:50)
+	at org.gradle.internal.execution.steps.CreateOutputsStep.execute(CreateOutputsStep.java:28)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.executeDelegateBroadcastingChanges(CaptureStateAfterExecutionStep.java:100)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:72)
+	at org.gradle.internal.execution.steps.CaptureStateAfterExecutionStep.execute(CaptureStateAfterExecutionStep.java:50)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:179)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:70)
+	at org.gradle.internal.Either$Right.fold(Either.java:175)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:59)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:68)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:25)
+	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:36)
+	at org.gradle.internal.execution.steps.RecordOutputsStep.execute(RecordOutputsStep.java:22)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:91)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:55)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:55)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:77)
+	at org.gradle.internal.execution.steps.ResolveCachingStateStep.execute(ResolveCachingStateStep.java:38)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:94)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:49)
+	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:71)
+	at org.gradle.internal.execution.steps.CaptureStateBeforeExecutionStep.execute(CaptureStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.executeWithNonEmptySources(SkipEmptyWorkStep.java:177)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:86)
+	at org.gradle.internal.execution.steps.SkipEmptyWorkStep.execute(SkipEmptyWorkStep.java:53)
+	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:32)
+	at org.gradle.internal.execution.steps.RemoveUntrackedExecutionStateStep.execute(RemoveUntrackedExecutionStateStep.java:21)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:75)
+	at org.gradle.internal.execution.steps.CleanupStaleOutputsStep.execute(CleanupStaleOutputsStep.java:41)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.lambda$execute$0(AssignWorkspaceStep.java:32)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:293)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignWorkspaceStep.execute(AssignWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:37)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:27)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:47)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:34)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:64)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:146)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:337)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:324)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:317)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
+	at org.jetbrains.kotlin.gradle.tasks.TasksUtilsKt.throwExceptionIfCompilationFailed(tasksUtils.kt:20)
+	at org.jetbrains.kotlin.compilerRunner.GradleKotlinCompilerWork.run(GradleKotlinCompilerWork.kt:141)
+	at org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction.execute(GradleCompilerRunnerWithWorkers.kt:73)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:199)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:170)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:187)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:120)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:162)
+	at org.gradle.internal.Factories$1.create(Factories.java:31)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:249)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:109)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:114)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:157)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:126)
+	... 2 more
+
+
+BUILD FAILED in 12s
+29 actionable tasks: 3 executed, 26 up-to-date
+Configuration cache entry reused.
