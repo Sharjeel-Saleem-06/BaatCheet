@@ -317,7 +317,8 @@ private fun VoiceCard(voice: AIVoice, isSelected: Boolean, isPlaying: Boolean, o
 /**
  * Screen 3: ACTIVE VOICE CALL
  * Design based on Figma with animated cloud bubble
- * Only 2 buttons: Stop/Record and Close
+ * Tap to start speaking, tap again to stop and analyze
+ * Fixed button positions at bottom
  */
 @Composable
 private fun ActiveVoiceCallScreen(
@@ -442,63 +443,99 @@ private fun ActiveVoiceCallScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Status text
+            // Status text - shows current state
             Text(
                 text = when {
-                    isAISpeaking -> "Speaking..."
-                    isProcessing -> "Thinking..."
-                    isRecording -> "Listening..."
-                    else -> "Tap to cancel"
+                    isAISpeaking -> "AI is speaking..."
+                    isProcessing -> "Analyzing..."
+                    isRecording -> "Listening to you..."
+                    else -> "Tap to speak"
                 },
                 fontSize = 18.sp,
-                color = Color.White.copy(alpha = 0.6f)
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.8f)
             )
             
-            Spacer(modifier = Modifier.weight(0.3f))
+            // Hint text
+            if (!isRecording && !isProcessing && !isAISpeaking) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Tap the mic button to start",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.weight(1f))
             
             // =============================================
-            // CONTROL BUTTONS - Only 2: Stop/Record & Close
-            // Based on Figma design
+            // CONTROL BUTTONS - Fixed at bottom
+            // Stop/Record button centered, Close button on right
             // =============================================
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
-                    .padding(bottom = 48.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 32.dp)
+                    .padding(bottom = 48.dp)
             ) {
-                // Stop/Record button (left) - Dark gray with stop icon
-                Surface(
-                    onClick = onToggleRecording,
-                    shape = CircleShape,
-                    color = Color(0xFF787880).copy(alpha = 0.24f),
-                    modifier = Modifier.size(72.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        // Show stop square icon
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .background(Color.White, RoundedCornerShape(4.dp))
-                        )
-                    }
-                }
-                
-                // Close/End call button (right) - Red with X
+                // Close/End call button (left side) - Always visible
                 Surface(
                     onClick = onEndCall,
                     shape = CircleShape,
                     color = VoiceRed,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier
+                        .size(64.dp)
+                        .align(Alignment.CenterStart)
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         Icon(
                             Icons.Default.Close,
                             contentDescription = "End call",
                             tint = Color.White,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(28.dp)
                         )
+                    }
+                }
+                
+                // Main Mic/Stop button (center) - Large, prominent
+                Surface(
+                    onClick = onToggleRecording,
+                    shape = CircleShape,
+                    color = when {
+                        isRecording -> VoiceRed // Red when recording (tap to stop)
+                        isProcessing -> VoicePurple.copy(alpha = 0.6f) // Disabled look when processing
+                        isAISpeaking -> VoiceGray.copy(alpha = 0.4f) // Disabled when AI speaking
+                        else -> VoiceAccent // Green when ready to record
+                    },
+                    modifier = Modifier
+                        .size(88.dp)
+                        .align(Alignment.Center),
+                    enabled = !isProcessing && !isAISpeaking
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        if (isRecording) {
+                            // Stop icon (square) when recording
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .background(Color.White, RoundedCornerShape(4.dp))
+                            )
+                        } else if (isProcessing) {
+                            // Loading indicator when processing
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                color = Color.White,
+                                strokeWidth = 3.dp
+                            )
+                        } else {
+                            // Mic icon when idle
+                            Icon(
+                                Icons.Default.Mic,
+                                contentDescription = "Tap to speak",
+                                tint = Color.White,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
                     }
                 }
             }

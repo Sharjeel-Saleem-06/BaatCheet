@@ -1306,23 +1306,6 @@ class ChatRepository @Inject constructor(
     }
     
     /**
-     * Remove collaborator from project
-     */
-    suspend fun removeCollaborator(projectId: String, userId: String): ApiResult<Boolean> {
-        return try {
-            val response = api.removeCollaborator(projectId, userId)
-            
-            if (response.isSuccessful && response.body()?.success == true) {
-                ApiResult.Success(true)
-            } else {
-                ApiResult.Error("Failed to remove collaborator", response.code())
-            }
-        } catch (e: Exception) {
-            ApiResult.Error(e.message ?: "Network error")
-        }
-    }
-    
-    /**
      * Check if email exists in the system (for invite validation)
      */
     suspend fun checkEmailExists(email: String): ApiResult<CheckEmailData> {

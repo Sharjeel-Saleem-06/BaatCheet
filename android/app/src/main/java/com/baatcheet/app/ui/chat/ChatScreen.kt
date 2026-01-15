@@ -1585,6 +1585,7 @@ private fun CreateProjectDialog(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChatHistoryItem(
     text: String,
@@ -4745,6 +4746,7 @@ private fun ProjectTagsRow(
 /**
  * Project Conversation Item with delete support
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ProjectConversationItem(
     conversation: com.baatcheet.app.domain.model.Conversation,

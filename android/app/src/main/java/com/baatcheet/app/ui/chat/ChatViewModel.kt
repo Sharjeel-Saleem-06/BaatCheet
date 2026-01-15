@@ -768,23 +768,6 @@ class ChatViewModel @Inject constructor(
         }
     }
     
-    /**
-     * Remove a collaborator from a project
-     */
-    fun removeCollaborator(projectId: String, userId: String, onResult: (Boolean, String) -> Unit) {
-        viewModelScope.launch {
-            when (val result = chatRepository.removeCollaborator(projectId, userId)) {
-                is ApiResult.Success -> {
-                    loadProjectCollaborators(projectId)
-                    onResult(true, "Collaborator removed")
-                }
-                is ApiResult.Error -> {
-                    onResult(false, result.message)
-                }
-                is ApiResult.Loading -> { }
-            }
-        }
-    }
     
     /**
      * Clear project collaborators state
