@@ -10,7 +10,32 @@ import { clerkAuth } from '../middleware/clerkAuth.js';
 
 const router = Router();
 
-// Apply authentication
+/**
+ * GET /tts/health (PUBLIC - no auth required)
+ * Check TTS service health status
+ */
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const status = ttsService.getProviderInfo();
+    
+    res.json({
+      success: true,
+      data: {
+        available: status.available,
+        provider: status.provider,
+        elevenLabsKeys: status.elevenLabsKeys || 0,
+        elevenLabsAvailable: status.elevenLabsAvailable || 0,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Apply authentication to all other routes
 router.use(clerkAuth);
 
 /**

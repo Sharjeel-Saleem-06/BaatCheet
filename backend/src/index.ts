@@ -163,6 +163,20 @@ app.get('/health', async (_req, res) => {
     dbStatus = 'disconnected';
   }
   
+  // Check TTS service
+  let ttsStatus = { available: false, provider: 'none', keys: 0 };
+  try {
+    const { ttsService } = await import('./services/TTSService.js');
+    const ttsInfo = ttsService.getProviderInfo();
+    ttsStatus = {
+      available: ttsInfo.available,
+      provider: ttsInfo.provider,
+      keys: ttsInfo.elevenLabsKeys || 0,
+    };
+  } catch {
+    // TTS service not available
+  }
+  
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -177,6 +191,7 @@ app.get('/health', async (_req, res) => {
         capacity: summary.totalCapacity,
         used: summary.totalUsed,
       },
+      tts: ttsStatus,
     },
     docs: '/api/docs',
   });
