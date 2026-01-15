@@ -150,17 +150,81 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
       logger.warn('Clerk user lookup failed:', clerkError);
     }
 
-    // For new mobile users, we need to inform them to sign up via web first
-    // OR implement proper email verification
-    // For now, return a message asking them to sign up via web
-    res.status(200).json({
-      success: true,
-      data: {
-        status: 'web_signup_required',
-        message: 'Please sign up via the web app first at https://baatcheet.app, then sign in here.',
-        email: email.toLowerCase(),
-      },
-    });
+    // Create user in Clerk using Backend API
+    try {
+      const clerkUser = await clerkClient.users.createUser({
+        emailAddress: [email.toLowerCase()],
+        password,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        skipPasswordChecks: false,
+        skipPasswordRequirement: false,
+      });
+
+      // Create user in our database
+      const user = await prisma.user.create({
+        data: {
+          clerkId: clerkUser.id,
+          email: email.toLowerCase(),
+          firstName: firstName || clerkUser.firstName,
+          lastName: lastName || clerkUser.lastName,
+          avatar: clerkUser.imageUrl,
+        },
+      });
+
+      // Generate JWT
+      const token = generateJWT(user.id, clerkUser.id, user.email);
+
+      logger.info(`Mobile user created: ${email}`);
+
+      res.status(201).json({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+          },
+          token,
+          message: 'Account created successfully!',
+        },
+      });
+    } catch (clerkCreateError: any) {
+      logger.error('Clerk user creation failed:', clerkCreateError);
+      
+      // Check for specific Clerk errors
+      const errorMessage = clerkCreateError?.errors?.[0]?.message || 
+                          clerkCreateError?.errors?.[0]?.longMessage ||
+                          clerkCreateError?.message || 
+                          'Failed to create account';
+      
+      // Handle duplicate email error
+      if (errorMessage.toLowerCase().includes('already exists') || 
+          errorMessage.toLowerCase().includes('taken') ||
+          errorMessage.toLowerCase().includes('unique')) {
+        res.status(409).json({
+          success: false,
+          error: 'An account with this email already exists. Please sign in instead.',
+        });
+        return;
+      }
+      
+      // Handle password requirements
+      if (errorMessage.toLowerCase().includes('password')) {
+        res.status(400).json({
+          success: false,
+          error: errorMessage,
+        });
+        return;
+      }
+      
+      res.status(500).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
   } catch (error) {
     logger.error('Mobile signup error:', error);
     res.status(500).json({

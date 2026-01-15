@@ -106,6 +106,13 @@ class ClerkAuthService @Inject constructor(
                             return@withContext ClerkAuthResult.NeedsVerification
                         }
                         
+                        // Check if web signup is required (legacy - should not happen anymore)
+                        if (data.status == "web_signup_required") {
+                            return@withContext ClerkAuthResult.Failure(
+                                Exception(data.message ?: "Please sign up via web first")
+                            )
+                        }
+                        
                         // User created successfully
                         if (data.token != null && data.user != null) {
                             saveAuthToken(data.token)
@@ -115,6 +122,11 @@ class ClerkAuthService @Inject constructor(
                                 userId = data.user.id,
                                 user = data.user
                             )
+                        }
+                        
+                        // If we have a message but no token, show the message
+                        if (data.message != null && data.token == null) {
+                            return@withContext ClerkAuthResult.Failure(Exception(data.message))
                         }
                     }
                 }
