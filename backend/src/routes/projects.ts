@@ -98,7 +98,7 @@ Respond in JSON format:
 
 /**
  * GET /api/v1/projects
- * List all projects for the user
+ * List all projects for the user (owned + collaborations)
  */
 router.get(
   '/',
@@ -106,22 +106,55 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
+      const { includeArchived } = req.query;
 
-      const projects = await prisma.project.findMany({
-        where: { userId },
+      // Get owned projects
+      const ownedProjects = await prisma.project.findMany({
+        where: { 
+          userId,
+          isArchived: includeArchived === 'true' ? undefined : false,
+        },
         include: {
           _count: {
-            select: { conversations: true },
+            select: { conversations: true, collaborators: true },
+          },
+          collaborators: {
+            take: 5,
+            include: {
+              // We need user info but can't include it directly here
+            },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { updatedAt: 'desc' },
       });
 
-      // Transform to include conversation count
-      const items = projects.map((p) => ({
-        ...p,
+      // Transform to include counts and role
+      const items = ownedProjects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        color: p.color,
+        icon: p.icon,
+        emoji: p.emoji,
+        isArchived: p.isArchived,
+        context: p.context,
+        keyTopics: p.keyTopics,
+        techStack: p.techStack,
+        goals: p.goals,
+        constraints: p.constraints,
+        targetAudience: p.targetAudience,
+        communicationStyle: p.communicationStyle,
+        preferredLanguage: p.preferredLanguage,
+        domainExpertise: p.domainExpertise,
+        customInstructions: p.customInstructions,
+        lastContextUpdate: p.lastContextUpdate,
+        messageCount: p.messageCount,
         conversationCount: p._count.conversations,
-        _count: undefined,
+        collaboratorCount: p._count.collaborators,
+        myRole: 'admin', // Owner is always admin
+        isOwner: true,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
       }));
 
       res.json({
@@ -159,19 +192,43 @@ router.get(
           project: {
             include: {
               user: {
-                select: { id: true, username: true, firstName: true, avatar: true },
+                select: { id: true, username: true, firstName: true, lastName: true, avatar: true, email: true },
               },
-              _count: { select: { conversations: true } },
+              _count: { select: { conversations: true, collaborators: true } },
             },
           },
         },
         orderBy: { addedAt: 'desc' },
       });
 
+      // Update last accessed
+      await prisma.projectCollaborator.updateMany({
+        where: { userId },
+        data: { 
+          lastAccessedAt: new Date(),
+          accessCount: { increment: 1 },
+        },
+      });
+
       const items = collaborations.map(c => ({
-        ...c.project,
+        id: c.project.id,
+        name: c.project.name,
+        description: c.project.description,
+        color: c.project.color,
+        icon: c.project.icon,
+        emoji: c.project.emoji,
+        context: c.project.context,
+        keyTopics: c.project.keyTopics,
+        techStack: c.project.techStack,
+        goals: c.project.goals,
         conversationCount: c.project._count.conversations,
+        collaboratorCount: c.project._count.collaborators,
         myRole: c.role,
+        canEdit: c.canEdit,
+        canDelete: c.canDelete,
+        canInvite: c.canInvite,
+        canManageRoles: c.canManageRoles,
+        isOwner: false,
         owner: c.project.user,
         _count: undefined,
       }));
@@ -189,7 +246,7 @@ router.get(
 
 /**
  * GET /api/v1/projects/:id
- * Get a single project
+ * Get a single project with full details (owner or collaborator)
  */
 router.get(
   '/:id',
@@ -199,11 +256,26 @@ router.get(
       const userId = req.user!.id;
       const { id } = req.params;
 
+      // Check if user is owner or collaborator
       const project = await prisma.project.findFirst({
-        where: { id, userId },
+        where: { 
+          id,
+          OR: [
+            { userId },
+            { collaborators: { some: { userId } } },
+          ],
+        },
         include: {
+          user: {
+            select: { id: true, username: true, firstName: true, lastName: true, avatar: true, email: true },
+          },
           _count: {
-            select: { conversations: true },
+            select: { conversations: true, collaborators: true },
+          },
+          collaborators: {
+            include: {
+              // Get user info for collaborators
+            },
           },
         },
       });
@@ -216,12 +288,74 @@ router.get(
         return;
       }
 
+      // Get user's role in this project
+      const isOwner = project.userId === userId;
+      let myRole = isOwner ? 'admin' : 'viewer';
+      let permissions = { canEdit: isOwner, canDelete: isOwner, canInvite: isOwner, canManageRoles: isOwner };
+
+      if (!isOwner) {
+        const collaboration = await prisma.projectCollaborator.findUnique({
+          where: { projectId_userId: { projectId: id, userId } },
+        });
+        if (collaboration) {
+          myRole = collaboration.role;
+          permissions = {
+            canEdit: collaboration.canEdit,
+            canDelete: collaboration.canDelete,
+            canInvite: collaboration.canInvite,
+            canManageRoles: collaboration.canManageRoles,
+          };
+        }
+      }
+
+      // Get collaborator user info
+      const collaboratorUserIds = project.collaborators.map(c => c.userId);
+      const collaboratorUsers = await prisma.user.findMany({
+        where: { id: { in: collaboratorUserIds } },
+        select: { id: true, username: true, firstName: true, lastName: true, avatar: true, email: true },
+      });
+      const userMap = new Map(collaboratorUsers.map(u => [u.id, u]));
+
       res.json({
         success: true,
         data: {
-          ...project,
+          id: project.id,
+          name: project.name,
+          description: project.description,
+          color: project.color,
+          icon: project.icon,
+          emoji: project.emoji,
+          isArchived: project.isArchived,
+          context: project.context,
+          keyTopics: project.keyTopics,
+          techStack: project.techStack,
+          goals: project.goals,
+          constraints: project.constraints,
+          targetAudience: project.targetAudience,
+          communicationStyle: project.communicationStyle,
+          preferredLanguage: project.preferredLanguage,
+          domainExpertise: project.domainExpertise,
+          customInstructions: project.customInstructions,
+          lastContextUpdate: project.lastContextUpdate,
+          messageCount: project.messageCount,
           conversationCount: project._count.conversations,
-          _count: undefined,
+          collaboratorCount: project._count.collaborators,
+          myRole,
+          isOwner,
+          ...permissions,
+          owner: project.user,
+          collaborators: project.collaborators.map(c => ({
+            id: c.id,
+            userId: c.userId,
+            role: c.role,
+            canEdit: c.canEdit,
+            canDelete: c.canDelete,
+            canInvite: c.canInvite,
+            addedAt: c.addedAt,
+            user: userMap.get(c.userId),
+          })),
+          createdAt: project.createdAt,
+          updatedAt: project.updatedAt,
         },
       });
     } catch (error) {
@@ -236,7 +370,7 @@ router.get(
 
 /**
  * POST /api/v1/projects
- * Create a new project
+ * Create a new project with advanced context options
  */
 router.post(
   '/',
@@ -245,21 +379,52 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const { name, description, color, icon } = req.body;
+      const { 
+        name, 
+        description, 
+        color, 
+        icon,
+        emoji,
+        targetAudience,
+        communicationStyle,
+        preferredLanguage,
+        domainExpertise,
+        customInstructions,
+        constraints,
+        goals,
+      } = req.body;
 
       const project = await prisma.project.create({
         data: {
           userId,
           name,
           description,
-          color,
-          icon,
+          color: color || '#1e293b',
+          icon: icon || 'folder',
+          emoji,
+          targetAudience,
+          communicationStyle,
+          preferredLanguage,
+          domainExpertise: domainExpertise || [],
+          customInstructions,
+          constraints: constraints || [],
+          goals: goals || [],
+        },
+        include: {
+          _count: { select: { conversations: true, collaborators: true } },
         },
       });
 
       res.status(201).json({
         success: true,
-        data: project,
+        data: {
+          ...project,
+          conversationCount: project._count.conversations,
+          collaboratorCount: project._count.collaborators,
+          myRole: 'admin',
+          isOwner: true,
+          _count: undefined,
+        },
         message: 'Project created',
       });
     } catch (error) {
@@ -274,7 +439,7 @@ router.post(
 
 /**
  * PUT /api/v1/projects/:id
- * Update a project
+ * Update a project (owner or collaborator with canEdit permission)
  */
 router.put(
   '/:id',
@@ -284,13 +449,19 @@ router.put(
     try {
       const userId = req.user!.id;
       const { id } = req.params;
+      const { name, description, emoji, instructions } = req.body;
 
-      // Verify ownership
-      const existing = await prisma.project.findFirst({
-        where: { id, userId },
+      // Check if user is owner or has edit permission
+      const project = await prisma.project.findFirst({
+        where: { id },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
       });
 
-      if (!existing) {
+      if (!project) {
         res.status(404).json({
           success: false,
           error: 'Project not found',
@@ -298,14 +469,42 @@ router.put(
         return;
       }
 
-      const project = await prisma.project.update({
+      const isOwner = project.userId === userId;
+      const collaborator = project.collaborators[0];
+      const canEdit = isOwner || collaborator?.canEdit;
+
+      if (!canEdit) {
+        res.status(403).json({
+          success: false,
+          error: 'You do not have permission to edit this project',
+        });
+        return;
+      }
+
+      // Build update data
+      const updateData: Record<string, any> = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (emoji !== undefined) updateData.emoji = emoji;
+      if (instructions !== undefined) updateData.instructions = instructions;
+
+      const updatedProject = await prisma.project.update({
         where: { id },
-        data: req.body,
+        data: updateData,
+        include: {
+          _count: {
+            select: { conversations: true },
+          },
+        },
       });
 
       res.json({
         success: true,
-        data: project,
+        data: {
+          ...updatedProject,
+          conversationCount: updatedProject._count.conversations,
+          _count: undefined,
+        },
         message: 'Project updated',
       });
     } catch (error) {
@@ -320,7 +519,7 @@ router.put(
 
 /**
  * DELETE /api/v1/projects/:id
- * Delete a project (conversations are unlinked, not deleted)
+ * Delete a project (only owner or admin collaborator can delete)
  */
 router.delete(
   '/:id',
@@ -330,18 +529,45 @@ router.delete(
       const userId = req.user!.id;
       const { id } = req.params;
 
-      // Verify ownership
-      const existing = await prisma.project.findFirst({
-        where: { id, userId },
+      // Check if user is owner or has delete permission
+      const project = await prisma.project.findFirst({
+        where: { id },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
       });
 
-      if (!existing) {
+      if (!project) {
         res.status(404).json({
           success: false,
           error: 'Project not found',
         });
         return;
       }
+
+      const isOwner = project.userId === userId;
+      const collaborator = project.collaborators[0];
+      const canDelete = isOwner || collaborator?.canDelete;
+
+      if (!canDelete) {
+        res.status(403).json({
+          success: false,
+          error: 'You do not have permission to delete this project',
+        });
+        return;
+      }
+
+      // Delete all collaborators first
+      await prisma.projectCollaborator.deleteMany({
+        where: { projectId: id },
+      });
+
+      // Delete all invitations
+      await prisma.projectInvitation.deleteMany({
+        where: { projectId: id },
+      });
 
       // Delete project (conversations will have projectId set to null)
       await prisma.project.delete({ where: { id } });
@@ -362,7 +588,7 @@ router.delete(
 
 /**
  * GET /api/v1/projects/:id/conversations
- * Get all conversations in a project
+ * Get all conversations in a project (owner and collaborators can access)
  */
 router.get(
   '/:id/conversations',
@@ -372,21 +598,33 @@ router.get(
       const userId = req.user!.id;
       const { id } = req.params;
 
-      // Verify project ownership
+      // Verify user is owner or collaborator
       const project = await prisma.project.findFirst({
-        where: { id, userId },
+        where: { 
+          id,
+          OR: [
+            { userId },
+            { collaborators: { some: { userId } } },
+          ],
+        },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
       });
 
       if (!project) {
         res.status(404).json({
           success: false,
-          error: 'Project not found',
+          error: 'Project not found or you do not have access',
         });
         return;
       }
 
+      // Get all conversations in the project (not filtered by userId for shared projects)
       const conversations = await prisma.conversation.findMany({
-        where: { projectId: id, userId },
+        where: { projectId: id },
         select: {
           id: true,
           title: true,
@@ -397,6 +635,15 @@ router.get(
           totalTokens: true,
           createdAt: true,
           updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              imageUrl: true,
+            },
+          },
           _count: {
             select: { messages: true },
           },
@@ -407,6 +654,9 @@ router.get(
       const items = conversations.map((c) => ({
         ...c,
         messageCount: c._count.messages,
+        isOwner: c.userId === userId,
+        createdBy: c.user,
+        user: undefined,
         _count: undefined,
       }));
 
@@ -517,7 +767,7 @@ router.post(
 
 /**
  * POST /api/v1/projects/:id/invite
- * Invite a collaborator to a project
+ * Invite a collaborator to a project (owner or collaborator with canInvite permission)
  */
 router.post(
   '/:id/invite',
@@ -533,13 +783,27 @@ router.post(
         return;
       }
 
-      // Verify project ownership
+      // Check if user is owner or has invite permission
       const project = await prisma.project.findFirst({
-        where: { id, userId },
+        where: { id },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
       });
 
       if (!project) {
-        res.status(404).json({ success: false, error: 'Project not found or not owner' });
+        res.status(404).json({ success: false, error: 'Project not found' });
+        return;
+      }
+
+      const isOwner = project.userId === userId;
+      const collaborator = project.collaborators[0];
+      const canInvite = isOwner || collaborator?.canInvite;
+
+      if (!canInvite) {
+        res.status(403).json({ success: false, error: 'You do not have permission to invite collaborators' });
         return;
       }
 
@@ -702,13 +966,25 @@ router.post(
       }
 
       if (accept) {
-        // Add as collaborator
+        // Set permissions based on role
+        // admin: full access (edit, delete, invite, manage roles)
+        // moderator: can edit and create, but not delete
+        // viewer: read-only access
+        const role = invitation.role || 'viewer';
+        const isAdmin = role === 'admin';
+        const isModerator = role === 'moderator';
+
+        // Add as collaborator with role-based permissions
         await prisma.projectCollaborator.create({
           data: {
             projectId: invitation.projectId,
             userId: userId,
-            role: invitation.role,
+            role: role,
             addedBy: invitation.inviterId,
+            canEdit: isAdmin || isModerator,
+            canDelete: isAdmin,
+            canInvite: isAdmin,
+            canManageRoles: isAdmin,
           },
         });
       }
@@ -803,7 +1079,7 @@ router.get(
 
 /**
  * DELETE /api/v1/projects/:id/collaborators/:collaboratorId
- * Remove a collaborator from project
+ * Remove a collaborator from project (owner or collaborator with canManageRoles permission)
  */
 router.delete(
   '/:id/collaborators/:collaboratorId',
@@ -813,13 +1089,36 @@ router.delete(
       const userId = req.user!.id;
       const { id, collaboratorId } = req.params;
 
-      // Verify ownership
+      // Check if user is owner or has manage roles permission
       const project = await prisma.project.findFirst({
-        where: { id, userId },
+        where: { id },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
       });
 
       if (!project) {
-        res.status(404).json({ success: false, error: 'Project not found or not owner' });
+        res.status(404).json({ success: false, error: 'Project not found' });
+        return;
+      }
+
+      const isOwner = project.userId === userId;
+      const myCollaborator = project.collaborators[0];
+      const canManageRoles = isOwner || myCollaborator?.canManageRoles;
+
+      // Users can always remove themselves
+      const isSelfRemoval = collaboratorId === userId;
+
+      if (!canManageRoles && !isSelfRemoval) {
+        res.status(403).json({ success: false, error: 'You do not have permission to remove collaborators' });
+        return;
+      }
+
+      // Prevent removing the owner
+      if (collaboratorId === project.userId) {
+        res.status(400).json({ success: false, error: 'Cannot remove the project owner' });
         return;
       }
 
@@ -827,15 +1126,96 @@ router.delete(
         where: { projectId: id, userId: collaboratorId },
       });
 
-      logger.info('Collaborator removed', { projectId: id, collaboratorId });
+      logger.info('Collaborator removed', { projectId: id, collaboratorId, removedBy: userId });
 
       res.json({
         success: true,
-        message: 'Collaborator removed',
+        message: isSelfRemoval ? 'You have left the project' : 'Collaborator removed',
       });
     } catch (error) {
       logger.error('Remove collaborator error:', error);
       res.status(500).json({ success: false, error: 'Failed to remove collaborator' });
+    }
+  }
+);
+
+/**
+ * PUT /api/v1/projects/:id/collaborators/:collaboratorId/role
+ * Update a collaborator's role (only owner or admin can do this)
+ */
+router.put(
+  '/:id/collaborators/:collaboratorId/role',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+      const { id, collaboratorId } = req.params;
+      const { role } = req.body;
+
+      if (!role || !['admin', 'moderator', 'viewer'].includes(role)) {
+        res.status(400).json({ success: false, error: 'Invalid role. Must be admin, moderator, or viewer.' });
+        return;
+      }
+
+      // Check if user is owner or has manage roles permission
+      const project = await prisma.project.findFirst({
+        where: { id },
+        include: {
+          collaborators: {
+            where: { userId },
+          },
+        },
+      });
+
+      if (!project) {
+        res.status(404).json({ success: false, error: 'Project not found' });
+        return;
+      }
+
+      const isOwner = project.userId === userId;
+      const myCollaborator = project.collaborators[0];
+      const canManageRoles = isOwner || myCollaborator?.canManageRoles;
+
+      if (!canManageRoles) {
+        res.status(403).json({ success: false, error: 'You do not have permission to change roles' });
+        return;
+      }
+
+      // Prevent changing owner's role
+      if (collaboratorId === project.userId) {
+        res.status(400).json({ success: false, error: 'Cannot change the project owner\'s role' });
+        return;
+      }
+
+      // Set permissions based on new role
+      const isAdmin = role === 'admin';
+      const isModerator = role === 'moderator';
+
+      const updated = await prisma.projectCollaborator.updateMany({
+        where: { projectId: id, userId: collaboratorId },
+        data: {
+          role: role,
+          canEdit: isAdmin || isModerator,
+          canDelete: isAdmin,
+          canInvite: isAdmin,
+          canManageRoles: isAdmin,
+        },
+      });
+
+      if (updated.count === 0) {
+        res.status(404).json({ success: false, error: 'Collaborator not found' });
+        return;
+      }
+
+      logger.info('Collaborator role updated', { projectId: id, collaboratorId, newRole: role, updatedBy: userId });
+
+      res.json({
+        success: true,
+        message: `Role updated to ${role}`,
+      });
+    } catch (error) {
+      logger.error('Update collaborator role error:', error);
+      res.status(500).json({ success: false, error: 'Failed to update role' });
     }
   }
 );

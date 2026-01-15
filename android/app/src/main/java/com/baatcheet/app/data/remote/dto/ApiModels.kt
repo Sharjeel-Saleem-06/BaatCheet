@@ -241,6 +241,7 @@ data class ProjectDto(
     val description: String?,
     val color: String?,
     val icon: String?,
+    val emoji: String? = null, // Project emoji (e.g., "🤖", "📱")
     val conversationCount: Int?,
     val createdAt: String?,
     val updatedAt: String?,
@@ -249,7 +250,19 @@ data class ProjectDto(
     val keyTopics: List<String>? = null,
     val techStack: List<String>? = null,
     val goals: List<String>? = null,
-    val lastContextUpdate: String? = null
+    val lastContextUpdate: String? = null,
+    val instructions: String? = null, // User-defined instructions
+    val customInstructions: String? = null, // Advanced custom instructions
+    // Collaboration fields
+    val myRole: String? = null, // "admin", "moderator", "viewer", or null if owner
+    val isOwner: Boolean? = null,
+    val canEdit: Boolean? = null,
+    val canDelete: Boolean? = null,
+    val canInvite: Boolean? = null,
+    val canManageRoles: Boolean? = null,
+    val collaboratorCount: Int? = null,
+    val owner: ProjectOwnerDto? = null,
+    val collaborators: List<CollaboratorDto>? = null
 )
 
 data class ProjectDetailResponse(
@@ -257,18 +270,45 @@ data class ProjectDetailResponse(
     val data: ProjectDto?
 )
 
+data class ProjectOwnerDto(
+    val id: String?,
+    val username: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val email: String?,
+    val avatar: String?
+)
+
+data class CollaboratorDto(
+    val id: String,
+    val userId: String?,
+    val role: String?,
+    val canEdit: Boolean?,
+    val canDelete: Boolean?,
+    val canInvite: Boolean?,
+    val canManageRoles: Boolean?,
+    val addedAt: String?,
+    val lastAccessedAt: String?,
+    val accessCount: Int?,
+    val user: ProjectOwnerDto?
+)
+
 data class CreateProjectRequest(
     val name: String,
     val description: String? = null,
     val color: String? = null,
-    val icon: String? = null
+    val icon: String? = null,
+    val emoji: String? = null,
+    val instructions: String? = null
 )
 
 data class UpdateProjectRequest(
     val name: String? = null,
     val description: String? = null,
     val color: String? = null,
-    val icon: String? = null
+    val icon: String? = null,
+    val emoji: String? = null,
+    val instructions: String? = null
 )
 
 data class ProjectResponse(

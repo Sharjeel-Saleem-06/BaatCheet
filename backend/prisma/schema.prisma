@@ -95,23 +95,35 @@ model AuditLog {
 }
 
 // ============================================
-// Project Model (Enhanced with Context)
+// Project Model (Enhanced with Advanced Context)
 // ============================================
 model Project {
   id          String   @id @default(uuid())
   userId      String   @map("user_id")
   name        String
-  description String?
+  description String?  @db.Text  // User-provided project instructions
   color       String   @default("#1e293b")
-  icon        String   @default("folder")
+  icon        String   @default("folder")  // Can be emoji like "📱" or icon name
+  emoji       String?  // Emoji for project (e.g., "🤖", "📱", "💻")
   isDefault   Boolean  @default(false) @map("is_default")
+  isArchived  Boolean  @default(false) @map("is_archived")
   
-  // Project context - AI learns what this project is about
-  context       String?  @db.Text  // AI-generated summary of project scope
-  keyTopics     String[] @default([]) @map("key_topics")  // Main topics discussed
-  techStack     String[] @default([]) @map("tech_stack")  // Technologies mentioned
-  goals         String[] @default([])  // Project goals extracted from conversations
+  // Advanced Project Context - AI learns what this project is about
+  context           String?  @db.Text  // AI-generated summary of project scope
+  keyTopics         String[] @default([]) @map("key_topics")  // Main topics discussed
+  techStack         String[] @default([]) @map("tech_stack")  // Technologies mentioned
+  goals             String[] @default([])  // Project goals extracted from conversations
+  constraints       String[] @default([])  // Project constraints/limitations
+  targetAudience    String?  @map("target_audience")  // Who is this project for
+  communicationStyle String? @map("communication_style")  // formal, casual, technical
+  preferredLanguage String?  @map("preferred_language")  // Response language preference
+  domainExpertise   String[] @default([]) @map("domain_expertise")  // Areas of expertise needed
+  customInstructions String? @db.Text @map("custom_instructions")  // Advanced custom AI instructions
+  
+  // Context learning metadata
   lastContextUpdate DateTime? @map("last_context_update")
+  contextVersion    Int       @default(0) @map("context_version")  // Track context updates
+  messageCount      Int       @default(0) @map("message_count")  // Total messages in project
   
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -122,26 +134,47 @@ model Project {
   invitations   ProjectInvitation[]
   
   @@index([userId])
+  @@index([isArchived])
   @@map("projects")
 }
 
 // ============================================
 // Project Collaboration Model
+// Roles: admin (full access), moderator (edit, create, no delete), viewer (read only)
+// Project creator is always admin and cannot be removed
 // ============================================
 model ProjectCollaborator {
   id        String   @id @default(uuid())
   projectId String   @map("project_id")
   userId    String   @map("user_id")
-  role      String   @default("viewer")  // owner, editor, viewer
+  role      ProjectRole @default(viewer)  // admin, moderator, viewer
+  
+  // Permissions (derived from role but can be customized)
+  canEdit       Boolean @default(false) @map("can_edit")
+  canDelete     Boolean @default(false) @map("can_delete")
+  canInvite     Boolean @default(false) @map("can_invite")
+  canManageRoles Boolean @default(false) @map("can_manage_roles")
+  
   addedAt   DateTime @default(now()) @map("added_at")
   addedBy   String   @map("added_by")  // User ID who added this collaborator
+  
+  // Activity tracking
+  lastAccessedAt DateTime? @map("last_accessed_at")
+  accessCount    Int       @default(0) @map("access_count")
   
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   @@unique([projectId, userId])
   @@index([userId])
   @@index([projectId])
+  @@index([role])
   @@map("project_collaborators")
+}
+
+enum ProjectRole {
+  admin      // Full access: edit, delete, invite, manage roles
+  moderator  // Can edit and create, but cannot delete or manage roles
+  viewer     // Read-only access
 }
 
 // ============================================

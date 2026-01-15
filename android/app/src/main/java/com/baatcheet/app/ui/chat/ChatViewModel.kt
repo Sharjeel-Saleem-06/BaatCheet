@@ -920,6 +920,37 @@ class ChatViewModel @Inject constructor(
         }
     }
     
+    /**
+     * Update project settings (name, emoji, instructions)
+     */
+    fun updateProjectSettings(
+        projectId: String, 
+        name: String? = null,
+        emoji: String? = null,
+        instructions: String? = null
+    ) {
+        viewModelScope.launch {
+            when (val result = chatRepository.updateProject(
+                projectId = projectId,
+                name = name,
+                description = instructions,
+                emoji = emoji
+            )) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(
+                        currentProject = result.data
+                    ) }
+                    // Also update in the projects list
+                    loadProjects()
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
     // ============================================
     // Advanced AI Features
     // ============================================

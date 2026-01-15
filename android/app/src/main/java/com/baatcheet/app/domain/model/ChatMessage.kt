@@ -76,17 +76,45 @@ data class Project(
     val description: String? = null,
     val color: String? = null,
     val icon: String? = null,
+    val emoji: String? = null, // Project emoji (e.g., "🤖", "📱")
     val conversationCount: Int = 0,
+    // User-defined instructions
+    val instructions: String? = null,
+    val customInstructions: String? = null,
     // Collaboration fields
-    val myRole: String? = null, // "owner", "editor", "viewer" - null means user is owner
+    val myRole: String? = null, // "admin", "moderator", "viewer" - null means user is owner
+    val isOwner: Boolean = false,
+    val canEdit: Boolean = true, // Default true for owner
+    val canDelete: Boolean = true, // Default true for owner
+    val canInvite: Boolean = true, // Default true for owner
+    val canManageRoles: Boolean = true, // Default true for owner
+    val collaboratorCount: Int = 0,
     val owner: UserSummary? = null, // Only set for collaborations
+    val collaborators: List<Collaborator> = emptyList(),
     // Project context (AI-learned from conversations)
     val context: String? = null, // AI-generated summary of what this project is about
     val keyTopics: List<String> = emptyList(), // Main topics discussed in this project
     val techStack: List<String> = emptyList(), // Technologies mentioned
     val goals: List<String> = emptyList(), // Project goals extracted from conversations
     val lastContextUpdate: String? = null // When context was last updated
-)
+) {
+    /**
+     * Display emoji or default icon
+     */
+    val displayEmoji: String
+        get() = emoji ?: "📁"
+    
+    /**
+     * Check if user has permission to perform action
+     */
+    fun hasPermission(action: String): Boolean = when (action) {
+        "edit" -> isOwner || canEdit
+        "delete" -> isOwner || canDelete
+        "invite" -> isOwner || canInvite
+        "manage_roles" -> isOwner || canManageRoles
+        else -> false
+    }
+}
 
 /**
  * User summary for displaying collaborators
@@ -138,10 +166,28 @@ data class PendingInvitation(
 data class Collaborator(
     val id: String,
     val userId: String,
-    val role: String, // "owner", "editor", "viewer"
+    val role: String, // "admin", "moderator", "viewer"
     val user: UserSummary,
-    val addedAt: String? = null
-)
+    val addedAt: String? = null,
+    val lastAccessedAt: String? = null,
+    val accessCount: Int = 0,
+    // Permissions
+    val canEdit: Boolean = false,
+    val canDelete: Boolean = false,
+    val canInvite: Boolean = false,
+    val canManageRoles: Boolean = false
+) {
+    /**
+     * Display role name
+     */
+    val roleDisplayName: String
+        get() = when (role) {
+            "admin" -> "Admin"
+            "moderator" -> "Moderator"
+            "viewer" -> "Viewer"
+            else -> role.replaceFirstChar { it.uppercase() }
+        }
+}
 
 /**
  * User profile information

@@ -24,6 +24,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -669,6 +670,18 @@ fun ChatScreen(
             onDeleteProject = {
                 viewModel.deleteProject(state.currentProjectId!!)
                 showProjectSettingsDialog = false
+            },
+            onSaveEmoji = { emoji ->
+                viewModel.updateProjectSettings(
+                    projectId = state.currentProjectId!!,
+                    emoji = emoji
+                )
+            },
+            onSaveName = { name ->
+                viewModel.updateProjectSettings(
+                    projectId = state.currentProjectId!!,
+                    name = name
+                )
             }
         )
     }
@@ -4103,7 +4116,7 @@ private fun ProjectChatScreen(
                     
                     Spacer(modifier = Modifier.width(8.dp))
                     
-                    // Project icon and name
+                    // Project emoji/icon
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -4114,12 +4127,20 @@ private fun ProjectChatScreen(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Folder,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        // Show emoji if set, otherwise show folder icon
+                        if (!project.emoji.isNullOrEmpty()) {
+                            Text(
+                                text = project.emoji,
+                                fontSize = 20.sp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Outlined.Folder,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.width(12.dp))
@@ -4591,31 +4612,48 @@ private fun ProjectConversationItem(
     }
 }
 
+// Common emojis for project selection
+private val PROJECT_EMOJIS = listOf(
+    "📁", "📂", "📱", "💻", "🤖", "🎨", "🎮", "🎯", "🚀", "💡",
+    "📊", "📈", "🔧", "⚙️", "🛠️", "🔬", "🧪", "📝", "✏️", "📚",
+    "🎵", "🎬", "📷", "🌐", "🔒", "💰", "🛒", "🏠", "🏢", "🌟",
+    "⭐", "🔥", "💎", "🎁", "🏆", "🎪", "🎭", "🌈", "☀️", "🌙"
+)
+
 /**
- * Project Settings Dialog - Like ChatGPT's project settings
+ * Project Settings Dialog - Like ChatGPT's project settings with emoji picker
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectSettingsDialog(
     project: Project,
     onDismiss: () -> Unit,
     onSaveInstructions: (String) -> Unit,
-    onDeleteProject: () -> Unit
+    onDeleteProject: () -> Unit,
+    onSaveEmoji: ((String) -> Unit)? = null,
+    onSaveName: ((String) -> Unit)? = null
 ) {
-    var instructions by remember { mutableStateOf(project.description ?: "") }
+    var instructions by remember { mutableStateOf(project.description ?: project.instructions ?: "") }
+    var projectName by remember { mutableStateOf(project.name) }
+    var selectedEmoji by remember { mutableStateOf(project.emoji ?: "📁") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showEmojiPicker by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = WhiteBackground,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        windowInsets = WindowInsets(0, 0, 0, 0) // Allow content to show above keyboard
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState) // Make scrollable when keyboard opens
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
                 .navigationBarsPadding()
+                .imePadding() // Add padding when keyboard is visible
         ) {
             // Header
             Row(
@@ -4641,45 +4679,94 @@ private fun ProjectSettingsDialog(
             
             Spacer(modifier = Modifier.height(20.dp))
             
-            // Project name (read-only display)
+            // Project icon/emoji selection
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Clickable emoji box
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(50.dp)
                         .background(
                             color = try { Color(android.graphics.Color.parseColor(project.color ?: "#1e293b")) } 
                                     catch (e: Exception) { Color(0xFF1E293B) },
-                            shape = RoundedCornerShape(10.dp)
-                        ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable { showEmojiPicker = !showEmojiPicker },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Folder,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp)
+                    Text(
+                        text = selectedEmoji,
+                        fontSize = 28.sp
                     )
                 }
                 
                 Spacer(modifier = Modifier.width(12.dp))
                 
-                Column {
-                    Text(
-                        text = project.name,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = DarkText
-                    )
-                    Text(
-                        text = "${project.conversationCount} chats",
-                        fontSize = 13.sp,
-                        color = GrayText
+                Column(modifier = Modifier.weight(1f)) {
+                    // Editable project name
+                    OutlinedTextField(
+                        value = projectName,
+                        onValueChange = { projectName = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Project name") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenAccent,
+                            unfocusedBorderColor = InputBorder,
+                            cursorColor = GreenAccent
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = TextStyle(fontSize = 16.sp, color = DarkText, fontWeight = FontWeight.Medium)
                     )
                 }
             }
+            
+            // Emoji picker
+            AnimatedVisibility(visible = showEmojiPicker) {
+                Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Text(
+                        text = "Choose an emoji",
+                        fontSize = 13.sp,
+                        color = GrayText,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        PROJECT_EMOJIS.forEach { emoji ->
+                            Surface(
+                                onClick = {
+                                    selectedEmoji = emoji
+                                    showEmojiPicker = false
+                                },
+                                modifier = Modifier.size(44.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (selectedEmoji == emoji) GreenAccent.copy(alpha = 0.2f) else Color.Transparent,
+                                border = if (selectedEmoji == emoji) 
+                                    androidx.compose.foundation.BorderStroke(2.dp, GreenAccent) 
+                                else null
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(text = emoji, fontSize = 22.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "${project.conversationCount} chats • Tap emoji to change",
+                fontSize = 13.sp,
+                color = GrayText
+            )
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -4701,13 +4788,13 @@ private fun ProjectSettingsDialog(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Instructions text field
+            // Instructions text field with better keyboard handling
             OutlinedTextField(
                 value = instructions,
                 onValueChange = { instructions = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 120.dp),
+                    .heightIn(min = 120.dp, max = 200.dp),
                 placeholder = {
                     Text(
                         text = "e.g. \"Respond in Spanish. Reference the latest JavaScript documentation. Keep answers short and focused.\"",
@@ -4752,9 +4839,61 @@ private fun ProjectSettingsDialog(
                                 color = Color(0xFF9C27B0)
                             )
                             Text(
-                                text = "Project can access memories from outside chats, and vice versa. This cannot be changed.",
+                                text = "BaatCheet learns from conversations in this project to provide better context-aware responses.",
                                 fontSize = 12.sp,
                                 color = Color(0xFF7B1FA2),
+                                lineHeight = 16.sp
+                            )
+                            
+                            // Show learned topics
+                            if (project.keyTopics.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Topics: ${project.keyTopics.take(5).joinToString(", ")}",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF9C27B0),
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            
+            // Collaboration info (if applicable)
+            if (project.collaboratorCount > 0 || !project.isOwner) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF0F8FF)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Group,
+                            contentDescription = null,
+                            tint = Color(0xFF2196F3),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = if (project.isOwner) "Shared project" else "Collaboration",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF2196F3)
+                            )
+                            Text(
+                                text = if (project.isOwner) 
+                                    "${project.collaboratorCount} collaborator${if (project.collaboratorCount > 1) "s" else ""}"
+                                else 
+                                    "You are a ${project.myRole ?: "collaborator"} on this project",
+                                fontSize = 12.sp,
+                                color = Color(0xFF1976D2),
                                 lineHeight = 16.sp
                             )
                         }
@@ -4766,7 +4905,11 @@ private fun ProjectSettingsDialog(
             
             // Save button
             Button(
-                onClick = { onSaveInstructions(instructions) },
+                onClick = { 
+                    onSaveInstructions(instructions)
+                    onSaveEmoji?.invoke(selectedEmoji)
+                    onSaveName?.invoke(projectName)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -4782,18 +4925,20 @@ private fun ProjectSettingsDialog(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Delete project button
-            TextButton(
-                onClick = { showDeleteConfirmation = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Delete project",
-                    color = Color(0xFFFF3B30),
-                    fontSize = 15.sp
-                )
+            // Delete project button (only for owners or those with delete permission)
+            if (project.isOwner || project.canDelete) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                TextButton(
+                    onClick = { showDeleteConfirmation = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Delete project",
+                        color = Color(0xFFFF3B30),
+                        fontSize = 15.sp
+                    )
+                }
             }
         }
     }

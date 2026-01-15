@@ -444,13 +444,17 @@ class ChatRepository @Inject constructor(
         projectId: String,
         name: String? = null,
         description: String? = null,
-        color: String? = null
+        color: String? = null,
+        emoji: String? = null,
+        instructions: String? = null
     ): ApiResult<Project> {
         return try {
             val request = UpdateProjectRequest(
                 name = name,
                 description = description,
-                color = color
+                color = color,
+                emoji = emoji,
+                instructions = instructions
             )
             val response = api.updateProject(projectId, request)
             
@@ -1568,12 +1572,48 @@ fun ProjectDto.toProject() = Project(
     description = description,
     color = color,
     icon = icon,
+    emoji = emoji,
     conversationCount = conversationCount ?: 0,
+    instructions = instructions,
+    customInstructions = customInstructions,
+    // Collaboration fields
+    myRole = myRole,
+    isOwner = isOwner ?: (myRole == null), // If no role specified, user is owner
+    canEdit = canEdit ?: (isOwner ?: true),
+    canDelete = canDelete ?: (isOwner ?: true),
+    canInvite = canInvite ?: (isOwner ?: true),
+    canManageRoles = canManageRoles ?: (isOwner ?: true),
+    collaboratorCount = collaboratorCount ?: 0,
+    owner = owner?.toUserSummary(),
+    collaborators = collaborators?.map { it.toCollaborator() } ?: emptyList(),
+    // Project context
     context = context,
     keyTopics = keyTopics ?: emptyList(),
     techStack = techStack ?: emptyList(),
     goals = goals ?: emptyList(),
     lastContextUpdate = lastContextUpdate
+)
+
+fun ProjectOwnerDto.toUserSummary() = UserSummary(
+    id = id ?: "",
+    username = username,
+    firstName = firstName,
+    lastName = lastName,
+    email = email
+)
+
+fun CollaboratorDto.toCollaborator() = Collaborator(
+    id = id,
+    userId = userId ?: "",
+    role = role ?: "viewer",
+    user = user?.toUserSummary() ?: UserSummary(id = userId ?: ""),
+    addedAt = addedAt,
+    lastAccessedAt = lastAccessedAt,
+    accessCount = accessCount ?: 0,
+    canEdit = canEdit ?: false,
+    canDelete = canDelete ?: false,
+    canInvite = canInvite ?: false,
+    canManageRoles = canManageRoles ?: false
 )
 
 // ============================================
