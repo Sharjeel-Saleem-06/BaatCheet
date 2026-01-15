@@ -1274,18 +1274,24 @@ class ChatRepository @Inject constructor(
                 val collaborators = data?.collaborators?.map { dto ->
                     Collaborator(
                         id = dto.id,
-                        userId = dto.userId,
-                        role = dto.role,
+                        userId = dto.userId ?: "",
+                        role = dto.role ?: "viewer",
                         user = dto.user?.let { 
                             UserSummary(
-                                id = it.id,
+                                id = it.id ?: "",
                                 username = it.username,
                                 firstName = it.firstName,
                                 lastName = it.lastName,
                                 email = it.email
                             )
-                        } ?: UserSummary(id = dto.userId),
-                        addedAt = dto.addedAt
+                        } ?: UserSummary(id = dto.userId ?: ""),
+                        addedAt = dto.addedAt,
+                        lastAccessedAt = dto.lastAccessedAt,
+                        accessCount = dto.accessCount ?: 0,
+                        canEdit = dto.canEdit ?: false,
+                        canDelete = dto.canDelete ?: false,
+                        canInvite = dto.canInvite ?: false,
+                        canManageRoles = dto.canManageRoles ?: false
                     )
                 } ?: emptyList()
                 

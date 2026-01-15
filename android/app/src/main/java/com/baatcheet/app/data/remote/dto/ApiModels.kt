@@ -1015,14 +1015,7 @@ data class CollaboratorsData(
     val owner: UserSummaryDto?,
     val collaborators: List<CollaboratorDto>?
 )
-
-data class CollaboratorDto(
-    val id: String,
-    val userId: String,
-    val role: String,
-    val addedAt: String?,
-    val user: UserSummaryDto?
-)
+// Note: CollaboratorDto is defined near ProjectDto with all permission fields
 
 // ============================================
 // Analytics Models
