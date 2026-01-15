@@ -862,21 +862,21 @@ Return ONLY a JSON array with exactly 3 objects:
       const callResponse = await axios.post(
         Z_IMAGE_TURBO_SPACE.apiEndpoint,
         { data: [prompt, 1024, 1024, 9, 42, true] }, // prompt, height, width, steps, seed, randomize
-        { headers, timeout: 30000 }
+        { headers, timeout: 60000 } // Increased timeout to 60 seconds
       );
       
       if (callResponse.data?.event_id) {
         const eventId = callResponse.data.event_id;
         logger.info(`Z-Image-Turbo: Got event_id: ${eventId}, polling for result...`);
         
-        // Z-Image-Turbo is fast, should complete in ~3-10 seconds
-        for (let i = 0; i < 15; i++) { // Up to 30 seconds of polling
+        // Z-Image-Turbo is fast, should complete in ~3-10 seconds, but allow more time for queue
+        for (let i = 0; i < 30; i++) { // Up to 60 seconds of polling (30 iterations * 2 seconds)
           await new Promise(r => setTimeout(r, 2000));
           
           try {
             const resultResponse = await axios.get(
               `${Z_IMAGE_TURBO_SPACE.apiEndpoint}/${eventId}`,
-              { headers, timeout: 30000, responseType: 'text' }
+              { headers, timeout: 45000, responseType: 'text' }
             );
             
             const responseText = typeof resultResponse.data === 'string' 
@@ -932,7 +932,7 @@ Return ONLY a JSON array with exactly 3 objects:
             throw pollError;
           }
         }
-        throw new Error('Timeout waiting for Z-Image-Turbo (30 seconds)');
+        throw new Error('Timeout waiting for Z-Image-Turbo (60 seconds)');
       }
       
       // If no event_id, check if response contains image directly
@@ -997,7 +997,7 @@ Return ONLY a JSON array with exactly 3 objects:
             try {
               const resultResponse = await axios.get(
                 `${IMAGEPRO_SPACE.apiEndpoint}/${eventId}`,
-                { headers, timeout: 30000, responseType: 'text' }
+                { headers, timeout: 45000, responseType: 'text' }
               );
               
               const responseText = typeof resultResponse.data === 'string' 

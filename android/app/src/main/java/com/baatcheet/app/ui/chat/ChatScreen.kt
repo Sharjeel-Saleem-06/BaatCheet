@@ -443,18 +443,22 @@ fun ChatScreen(
                                 }
                             )
                         }
+                        
+                        // Image Generation Progress Placeholder - INSIDE LazyColumn as last item
+                        if (state.isGeneratingImage) {
+                            item(key = "image_generation_placeholder") {
+                                ImageGenerationPlaceholder()
+                            }
+                        }
+                        
+                        // Mode-specific loading indicator (Thinking, Research, Web Search, Code) - INSIDE LazyColumn
+                        val loadingMode = state.currentLoadingMode
+                        if (loadingMode != null && !state.isGeneratingImage) {
+                            item(key = "mode_loading_indicator") {
+                                ModeLoadingIndicator(mode = loadingMode)
+                            }
+                        }
                     }
-                }
-                
-                // Image Generation Progress Placeholder (ChatGPT-style)
-                if (state.isGeneratingImage) {
-                    ImageGenerationPlaceholder()
-                }
-                
-                // Mode-specific loading indicator (Thinking, Research, Web Search, Code)
-                val loadingMode = state.currentLoadingMode
-                if (loadingMode != null && !state.isGeneratingImage) {
-                    ModeLoadingIndicator(mode = loadingMode)
                 }
                 
                 // Follow-up suggestions

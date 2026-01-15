@@ -65,9 +65,9 @@ object NetworkModule {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(120, TimeUnit.SECONDS)  // Increased for image generation
+            .readTimeout(120, TimeUnit.SECONDS)     // Image generation can take 60-90 seconds
+            .writeTimeout(120, TimeUnit.SECONDS)    // Allow longer uploads
             .build()
     }
     
