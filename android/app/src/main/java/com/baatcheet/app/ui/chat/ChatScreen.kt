@@ -449,8 +449,9 @@ fun ChatScreen(
                 }
                 
                 // Mode-specific loading indicator (Thinking, Research, Web Search, Code)
-                if (state.currentLoadingMode != null && !state.isGeneratingImage) {
-                    ModeLoadingIndicator(mode = state.currentLoadingMode)
+                val loadingMode = state.currentLoadingMode
+                if (loadingMode != null && !state.isGeneratingImage) {
+                    ModeLoadingIndicator(mode = loadingMode)
                 }
                 
                 // Follow-up suggestions
