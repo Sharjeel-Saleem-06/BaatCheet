@@ -855,15 +855,21 @@ Return ONLY a JSON array with exactly 3 objects:
     };
 
     try {
-      logger.info('Calling Z-Image-Turbo Space for fast image generation');
+      logger.info('Calling Z-Image-Turbo Space for fast image generation with prompt:', prompt.substring(0, 100));
       
       // Z-Image-Turbo uses Gradio API with /gradio_api/call/generate_image endpoint
       // Parameters based on /gradio_api/info: prompt, height, width, num_inference_steps, seed, randomize_seed
       const callResponse = await axios.post(
         Z_IMAGE_TURBO_SPACE.apiEndpoint,
         { data: [prompt, 1024, 1024, 9, 42, true] }, // prompt, height, width, steps, seed, randomize
-        { headers, timeout: 60000 } // Increased timeout to 60 seconds
+        { 
+          headers, 
+          timeout: 30000, // 30 seconds for initial call
+          validateStatus: (status) => status < 500, // Accept 4xx for better error handling
+        }
       );
+      
+      logger.info('Z-Image-Turbo initial response status:', callResponse.status);
       
       if (callResponse.data?.event_id) {
         const eventId = callResponse.data.event_id;
