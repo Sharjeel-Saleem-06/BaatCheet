@@ -153,7 +153,9 @@ private sealed class MarkdownElement {
  * Tables with horizontal scroll, Lists, Blockquotes, Links, and more
  * 
  * CLEANED: Removes special characters (#*_~`) from display unless needed
- * OPTIMIZED: Uses lazy parsing to prevent ANR with long content
+ * OPTIMIZED: Uses background parsing to prevent ANR with long content
+ * 
+ * CRITICAL FIX: Parsing now happens on Dispatchers.Default to prevent UI thread blocking
  */
 @Composable
 fun MarkdownText(
@@ -163,14 +165,11 @@ fun MarkdownText(
     fontSize: Float = 15f,
     lineHeight: Float = 22f
 ) {
-    // Safety check for very long text - use simple rendering to prevent ANR
-    val isTooLong = text.length > 8000
-    
-    if (isTooLong) {
-        // For very long text, use simple text rendering to prevent ANR
+    // For very short text, render directly without parsing
+    if (text.length < 100 && !text.contains("```") && !text.contains("#") && !text.contains("|")) {
         SelectionContainer(modifier = modifier) {
             Text(
-                text = text.take(8000) + if (text.length > 8000) "\n\n[Content truncated for performance...]" else "",
+                text = text,
                 fontSize = fontSize.sp,
                 lineHeight = lineHeight.sp,
                 color = color
@@ -179,22 +178,62 @@ fun MarkdownText(
         return
     }
     
-    // Parse markdown with timeout protection
-    val elements = remember(text) { 
+    // For very long text, use simple rendering to prevent ANR
+    if (text.length > 6000) {
+        SelectionContainer(modifier = modifier) {
+            Text(
+                text = text.take(6000) + "\n\n[Content truncated for performance...]",
+                fontSize = fontSize.sp,
+                lineHeight = lineHeight.sp,
+                color = color
+            )
+        }
+        return
+    }
+    
+    // State for parsed elements - starts with null (loading)
+    var elements by remember { mutableStateOf<List<MarkdownElement>?>(null) }
+    var parseError by remember { mutableStateOf(false) }
+    
+    // Parse markdown on a background thread to prevent ANR
+    LaunchedEffect(text) {
+        elements = null
+        parseError = false
+        
         try {
-            parseMarkdownSafe(text, color)
+            // Run parsing on Default dispatcher (background thread)
+            val parsed = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                parseMarkdownSafe(text, color)
+            }
+            elements = parsed
         } catch (e: Exception) {
-            // Fallback to simple text if parsing fails
-            listOf(MarkdownElement.Paragraph(AnnotatedString(text)))
+            parseError = true
+            // Fallback to simple paragraph
+            elements = listOf(MarkdownElement.Paragraph(AnnotatedString(text)))
         }
     }
     
+    // Show loading state while parsing
+    if (elements == null) {
+        SelectionContainer(modifier = modifier) {
+            // Show plain text immediately while parsing markdown in background
+            Text(
+                text = text.take(500) + if (text.length > 500) "..." else "",
+                fontSize = fontSize.sp,
+                lineHeight = lineHeight.sp,
+                color = color.copy(alpha = 0.7f)
+            )
+        }
+        return
+    }
+    
+    // Render parsed elements
     SelectionContainer(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            elements.forEach { element ->
+            elements!!.forEach { element ->
                 when (element) {
                     is MarkdownElement.Heading -> HeadingView(element, color)
                     is MarkdownElement.Paragraph -> ParagraphView(element, fontSize, lineHeight)

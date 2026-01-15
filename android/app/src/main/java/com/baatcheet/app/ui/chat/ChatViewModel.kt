@@ -314,6 +314,7 @@ class ChatViewModel @Inject constructor(
                         timeoutJob.cancel() // Cancel timeout since we got a response
                         val response = result.data
                         
+                        // Update state on main thread - this is lightweight, only state update
                         _state.update { state ->
                             val updatedMessages = state.messages.toMutableList()
                             val lastIndex = updatedMessages.lastIndex
@@ -328,18 +329,15 @@ class ChatViewModel @Inject constructor(
                                 isGeneratingImage = false,
                                 currentLoadingMode = null,
                                 currentConversationId = response.conversationId ?: state.currentConversationId,
-                                promptAnalysis = null
+                                promptAnalysis = null,
+                                uploadedFiles = emptyList() // Clear uploaded files after successful send
                             )
                         }
                         
-                        // Refresh conversations list
-                        loadConversations()
-                        
-                        // Load follow-up suggestions based on the response
-                        loadSuggestions(response.content)
-                        
-                        // Refresh usage (message count increased)
-                        loadUsage()
+                        // Run follow-up operations in separate coroutines to not block UI
+                        launch { loadConversations() }
+                        launch { loadSuggestions(response.content) }
+                        launch { loadUsage() }
                     }
                     
                     is ApiResult.Error -> {
