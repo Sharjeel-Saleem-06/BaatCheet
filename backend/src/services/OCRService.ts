@@ -1,11 +1,12 @@
 /**
  * OCR Service
  * Handles text extraction from images and documents using multiple providers:
- * 1. OCR.space (Primary) - Fast, 60+ languages
- * 2. MinerU HuggingFace Space (Secondary) - Advanced document parsing
- * 3. Gemini Vision (Fallback) - AI-powered OCR
+ * 1. Gemini Vision (Primary) - AI-powered OCR with many API keys
+ * 2. OCR.space (Secondary) - Fast, 60+ languages
+ * 3. MinerU HuggingFace Space (Tertiary) - Advanced document parsing
  * 
- * Includes HuggingFace API key rotation for rate limit handling.
+ * Includes safe rate limiting with random delays to prevent bot detection.
+ * Uses API key rotation for handling rate limits across all providers.
  * 
  * @module OCRService
  */
@@ -45,12 +46,40 @@ const MINERU_SPACE = {
   gradioEndpoint: 'https://opendatalab-mineru.hf.space/gradio_api/call/predict',
 };
 
+// Safe rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  minDelayMs: 100,   // Minimum delay between requests
+  maxDelayMs: 500,   // Maximum random delay
+  retryDelayMs: 2000, // Delay before retry on rate limit
+  maxRetries: 3,     // Max retries per provider
+};
+
 // ============================================
 // OCR Service Class
 // ============================================
 
 class OCRServiceClass {
   private hfKeyIndex: number = 0;
+  private lastRequestTime: number = 0;
+  private geminiKeyIndex: number = 0;
+
+  /**
+   * Add safe delay between requests to prevent bot detection
+   */
+  private async safeDelay(): Promise<void> {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    
+    if (timeSinceLastRequest < RATE_LIMIT_CONFIG.minDelayMs) {
+      const randomDelay = Math.floor(
+        Math.random() * (RATE_LIMIT_CONFIG.maxDelayMs - RATE_LIMIT_CONFIG.minDelayMs)
+      ) + RATE_LIMIT_CONFIG.minDelayMs;
+      
+      await new Promise(resolve => setTimeout(resolve, randomDelay));
+    }
+    
+    this.lastRequestTime = Date.now();
+  }
 
   /**
    * Get next HuggingFace API key (rotation for rate limits)
@@ -66,7 +95,8 @@ class OCRServiceClass {
 
   /**
    * Extract text from image using best available provider
-   * Priority: OCR.space → MinerU (for docs) → Gemini
+   * Priority: Gemini (primary with many keys) → OCR.space → MinerU
+   * Uses safe rate limiting to prevent bot detection
    */
   public async extractText(
     imageBase64: string,
@@ -75,26 +105,30 @@ class OCRServiceClass {
   ): Promise<OCRResult> {
     const startTime = Date.now();
     
-    // For documents, try MinerU first (better for PDFs/docs)
+    // Add safe delay before processing
+    await this.safeDelay();
+    
+    // For documents, try all providers in order
     if (options.isDocument) {
-      const providers = ['ocrspace', 'mineru', 'gemini'] as const;
+      const providers = ['gemini', 'ocrspace', 'mineru'] as const;
       
       for (const provider of providers) {
         try {
           let result: OCRResult;
           
-          if (provider === 'ocrspace') {
+          if (provider === 'gemini') {
+            if (!providerManager.hasCapacity('gemini')) continue;
+            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
+          } else if (provider === 'ocrspace') {
             if (!providerManager.hasCapacity('ocrspace')) continue;
             result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
-          } else if (provider === 'mineru') {
-            result = await this.mineruExtract(imageBase64, mimeType, options);
           } else {
-            if (!providerManager.hasCapacity('gemini')) continue;
-            result = await this.geminiExtract(imageBase64, mimeType, options);
+            result = await this.mineruExtract(imageBase64, mimeType, options);
           }
           
-          if (result.success && result.text) {
+          if (result.success && result.text && result.text.length > 10) {
             result.processingTime = Date.now() - startTime;
+            logger.info(`OCR successful with ${provider}: ${result.text.length} chars`);
             return result;
           }
         } catch (error) {
@@ -103,8 +137,8 @@ class OCRServiceClass {
         }
       }
     } else {
-      // For images, use standard OCR providers
-      const providers: ProviderType[] = ['ocrspace', 'gemini'];
+      // For images, prioritize Gemini (we have many keys)
+      const providers = ['gemini', 'ocrspace'] as const;
 
       for (const provider of providers) {
         if (!providerManager.hasCapacity(provider)) {
@@ -115,14 +149,15 @@ class OCRServiceClass {
         try {
           let result: OCRResult;
 
-          if (provider === 'ocrspace') {
-            result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
+          if (provider === 'gemini') {
+            result = await this.geminiExtractSafe(imageBase64, mimeType, options);
           } else {
-            result = await this.geminiExtract(imageBase64, mimeType, options);
+            result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
           }
 
-          if (result.success && result.text) {
+          if (result.success && result.text && result.text.length > 5) {
             result.processingTime = Date.now() - startTime;
+            logger.info(`OCR successful with ${provider}: ${result.text.length} chars`);
             return result;
           }
         } catch (error) {
@@ -136,7 +171,7 @@ class OCRServiceClass {
       success: false,
       text: '',
       provider: 'unknown',
-      error: 'All OCR providers failed. Please try again later.',
+      error: 'Text extraction failed. The image may not contain readable text or the file format is not supported.',
       processingTime: Date.now() - startTime,
     };
   }
@@ -278,12 +313,14 @@ class OCRServiceClass {
   }
 
   /**
-   * Extract text using Gemini Vision API (Fallback)
+   * Extract text using Gemini Vision API with safe rate limiting
+   * Includes automatic retry with different keys on rate limit
    */
-  private async geminiExtract(
+  private async geminiExtractSafe(
     imageBase64: string,
     mimeType: string,
-    options: OCROptions
+    options: OCROptions,
+    retryCount: number = 0
   ): Promise<OCRResult> {
     const keyData = providerManager.getNextKey('gemini');
     if (!keyData) {
@@ -291,6 +328,10 @@ class OCRServiceClass {
     }
 
     try {
+      // Add small random delay to prevent bot detection
+      const delay = Math.floor(Math.random() * 200) + 50;
+      await new Promise(resolve => setTimeout(resolve, delay));
+
       const languageHint = options.language === 'urd' 
         ? 'The image may contain Urdu text. ' 
         : options.language === 'ara'
@@ -303,7 +344,7 @@ Preserve the original formatting, line breaks, and structure.
 If there is no text, respond with "NO_TEXT_FOUND".`;
 
       const response = await axios.post(
-        `${config.urls.gemini}/models/gemini-2.5-flash:generateContent?key=${keyData.key}`,
+        `${config.urls.gemini}/models/gemini-2.0-flash:generateContent?key=${keyData.key}`,
         {
           contents: [{
             parts: [
@@ -335,6 +376,7 @@ If there is no text, respond with "NO_TEXT_FOUND".`;
       }
 
       providerManager.markKeySuccess('gemini', keyData.index);
+      logger.info(`Gemini OCR successful with key ${keyData.index}: ${text.length} chars`);
 
       return {
         success: true,
@@ -344,10 +386,33 @@ If there is no text, respond with "NO_TEXT_FOUND".`;
       };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429');
+      const isRateLimit = errorMessage.includes('rate') || errorMessage.includes('429') || errorMessage.includes('quota');
+      
       providerManager.markKeyError('gemini', keyData.index, errorMessage, isRateLimit);
+      
+      // If rate limited and we have more retries, try with a different key
+      if (isRateLimit && retryCount < RATE_LIMIT_CONFIG.maxRetries) {
+        logger.info(`Gemini rate limited, retrying with different key (attempt ${retryCount + 1}/${RATE_LIMIT_CONFIG.maxRetries})`);
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_CONFIG.retryDelayMs));
+        
+        return this.geminiExtractSafe(imageBase64, mimeType, options, retryCount + 1);
+      }
+      
       throw error;
     }
+  }
+
+  /**
+   * Legacy Gemini extract method (kept for compatibility)
+   */
+  private async geminiExtract(
+    imageBase64: string,
+    mimeType: string,
+    options: OCROptions
+  ): Promise<OCRResult> {
+    return this.geminiExtractSafe(imageBase64, mimeType, options);
   }
 
   /**

@@ -527,8 +527,8 @@ fun ChatScreen(
                     onPlusModeSelect = { mode ->
                         selectedPlusMode = if (mode.isEmpty()) null else mode
                     },
-                    uploadLimitReached = !state.canUploadMoreFiles,
-                    imageGenLimitReached = state.imageGenStatus?.canGenerate == false
+                    uploadLimitReached = state.uploadLimitReached,
+                    imageGenLimitReached = state.imageGenLimitReached
                 )
                 
                 // Mode Selector Bottom Sheet

@@ -1607,7 +1607,6 @@ class ChatViewModel @Inject constructor(
         tts?.shutdown()
         tts = null
     }
-    }
     
     /**
      * Regenerate the last AI response
