@@ -926,28 +926,45 @@ Return ONLY a JSON array with exactly 3 objects:
                       
                       if (imageData?.url) {
                         logger.info('Z-Image-Turbo: Got image URL:', imageData.url);
-                        // Download the image
-                        const imgResponse = await axios.get(imageData.url, { 
-                          responseType: 'arraybuffer',
-                          timeout: 45000,
-                          headers: { 'Accept': 'image/*' }
-                        });
-                        const base64 = Buffer.from(imgResponse.data).toString('base64');
-                        const mimeType = imageData.mime_type || 'image/webp';
-                        return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                        // Download the image with retry
+                        for (let retry = 0; retry < 3; retry++) {
+                          try {
+                            const imgResponse = await axios.get(imageData.url, { 
+                              responseType: 'arraybuffer',
+                              timeout: 45000,
+                              headers: { 'Accept': 'image/*' }
+                            });
+                            const base64 = Buffer.from(imgResponse.data).toString('base64');
+                            const mimeType = imageData.mime_type || 'image/webp';
+                            return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                          } catch (downloadError: any) {
+                            logger.warn(`Z-Image-Turbo: Download retry ${retry + 1}/3 failed:`, downloadError.message);
+                            if (retry === 2) throw downloadError;
+                            await new Promise(r => setTimeout(r, 1000));
+                          }
+                        }
                       }
                       if (imageData?.path) {
                         // Handle file path format - new Gradio API format
                         const fileUrl = `${Z_IMAGE_TURBO_SPACE.url}/gradio_api/file=${imageData.path}`;
                         logger.info('Z-Image-Turbo: Downloading from path:', fileUrl);
-                        const imgResponse = await axios.get(fileUrl, { 
-                          responseType: 'arraybuffer',
-                          timeout: 45000,
-                          headers: { 'Accept': 'image/*' }
-                        });
-                        const base64 = Buffer.from(imgResponse.data).toString('base64');
-                        const mimeType = imageData.mime_type || 'image/webp';
-                        return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                        // Download with retry
+                        for (let retry = 0; retry < 3; retry++) {
+                          try {
+                            const imgResponse = await axios.get(fileUrl, { 
+                              responseType: 'arraybuffer',
+                              timeout: 45000,
+                              headers: { 'Accept': 'image/*' }
+                            });
+                            const base64 = Buffer.from(imgResponse.data).toString('base64');
+                            const mimeType = imageData.mime_type || 'image/webp';
+                            return { success: true, imageBase64: base64, imageUrl: `data:${mimeType};base64,${base64}` };
+                          } catch (downloadError: any) {
+                            logger.warn(`Z-Image-Turbo: Path download retry ${retry + 1}/3 failed:`, downloadError.message);
+                            if (retry === 2) throw downloadError;
+                            await new Promise(r => setTimeout(r, 1000));
+                          }
+                        }
                       }
                       if (typeof imageData === 'string' && imageData.startsWith('data:')) {
                         const base64 = imageData.split(',')[1];
@@ -967,13 +984,17 @@ Return ONLY a JSON array with exactly 3 objects:
               throw new Error('Z-Image-Turbo returned an error event');
             }
           } catch (pollError: any) {
-            if (pollError.response?.status === 404) {
-              // Event might have expired, continue polling
-              logger.debug('Z-Image-Turbo: 404 on poll, continuing...');
+            // Handle 404/410 - event might not be ready yet or expired, continue polling
+            if (pollError.response?.status === 404 || pollError.response?.status === 410) {
+              logger.debug(`Z-Image-Turbo: ${pollError.response?.status} on poll, continuing...`);
               continue;
             }
-            logger.error('Z-Image-Turbo poll error:', pollError.message);
-            throw pollError;
+            // For other errors, log but don't throw immediately - try a few more times
+            logger.warn('Z-Image-Turbo poll error:', pollError.message);
+            if (i >= 5) { // Only throw after 5 attempts
+              throw pollError;
+            }
+            continue;
           }
         }
         throw new Error('Timeout waiting for Z-Image-Turbo (60 seconds)');
