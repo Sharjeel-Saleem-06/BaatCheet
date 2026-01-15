@@ -43,13 +43,15 @@ class ChatRepository @Inject constructor(
      * Send a message and get AI response
      * @param mode Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
      * @param imageIds List of attachment IDs (documents/images) for context
+     * @param projectId Project ID to associate conversation with and use project context
      */
     suspend fun sendMessage(
         message: String,
         conversationId: String? = null,
         model: String? = null,
         mode: String? = null,
-        imageIds: List<String>? = null
+        imageIds: List<String>? = null,
+        projectId: String? = null
     ): ApiResult<ChatMessage> {
         return try {
             val request = ChatRequest(
@@ -58,7 +60,8 @@ class ChatRepository @Inject constructor(
                 model = model,
                 stream = false,
                 mode = mode,
-                imageIds = imageIds
+                imageIds = imageIds,
+                projectId = projectId
             )
             
             val response = api.sendMessage(request)
@@ -375,6 +378,28 @@ class ChatRepository @Inject constructor(
                 ApiResult.Success(items)
             } else {
                 ApiResult.Error("Failed to load projects", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Get a single project with full details
+     */
+    suspend fun getProject(projectId: String): ApiResult<Project> {
+        return try {
+            val response = api.getProject(projectId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data.toProject())
+                } else {
+                    ApiResult.Error("Project not found")
+                }
+            } else {
+                ApiResult.Error("Failed to load project", response.code())
             }
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Network error")
@@ -1543,7 +1568,12 @@ fun ProjectDto.toProject() = Project(
     description = description,
     color = color,
     icon = icon,
-    conversationCount = conversationCount ?: 0
+    conversationCount = conversationCount ?: 0,
+    context = context,
+    keyTopics = keyTopics ?: emptyList(),
+    techStack = techStack ?: emptyList(),
+    goals = goals ?: emptyList(),
+    lastContextUpdate = lastContextUpdate
 )
 
 // ============================================

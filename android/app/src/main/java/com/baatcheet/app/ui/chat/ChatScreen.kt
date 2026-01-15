@@ -189,16 +189,29 @@ fun ChatScreen(
     // Collaborations screen state
     var showCollaborationsScreen by remember { mutableStateOf(false) }
     
+    // Project settings dialog state
+    var showProjectSettingsDialog by remember { mutableStateOf(false) }
+    
     // Handle back navigation properly - close overlays before exiting app
     BackHandler(
         enabled = showSettingsScreen || showAnalyticsScreen || showCollaborationsScreen || 
-                  showVoiceModeScreen || drawerState.isOpen
+                  showVoiceModeScreen || showProjectSettingsDialog || 
+                  state.currentProject != null || drawerState.isOpen
     ) {
         when {
+            showProjectSettingsDialog -> showProjectSettingsDialog = false
             showSettingsScreen -> showSettingsScreen = false
             showAnalyticsScreen -> showAnalyticsScreen = false
             showCollaborationsScreen -> showCollaborationsScreen = false
             showVoiceModeScreen -> showVoiceModeScreen = false
+            state.currentProject != null && state.messages.isNotEmpty() -> {
+                // If in project chat with messages, go back to project screen
+                viewModel.loadProject(state.currentProjectId!!)
+            }
+            state.currentProject != null -> {
+                // If in project screen, exit project
+                viewModel.exitProject()
+            }
             drawerState.isOpen -> coroutineScope.launch { drawerState.close() }
         }
     }
@@ -247,7 +260,7 @@ fun ChatScreen(
                     coroutineScope.launch { drawerState.close() }
                 },
                 onProjectClick = { projectId ->
-                    viewModel.loadProjectConversations(projectId)
+                    viewModel.loadProject(projectId)
                     coroutineScope.launch { drawerState.close() }
                 },
                 onCreateProject = { name, description ->
@@ -351,7 +364,7 @@ fun ChatScreen(
                         isLoadingInvitations = state.isLoadingInvitations,
                         onBack = { showCollaborationsScreen = false },
                         onProjectClick = { projectId ->
-                            viewModel.loadProjectConversations(projectId)
+                            viewModel.loadProject(projectId)
                             showCollaborationsScreen = false
                         },
                         onAcceptInvitation = { invitationId ->
@@ -379,6 +392,29 @@ fun ChatScreen(
                     )
                 }
                 
+                // Project Screen - when viewing a project (like ChatGPT Projects)
+                state.currentProject != null && state.messages.isEmpty() -> {
+                    ProjectChatScreen(
+                        project = state.currentProject!!,
+                        conversations = state.conversations,
+                        isLoadingProject = state.isLoadingProject,
+                        isLoadingConversations = state.isLoadingConversations,
+                        onBack = { viewModel.exitProject() },
+                        onNewChat = { 
+                            // Start new chat in this project
+                            viewModel.startNewChat()
+                        },
+                        onConversationClick = { conversationId ->
+                            viewModel.loadConversation(conversationId)
+                        },
+                        onSettingsClick = { showProjectSettingsDialog = true },
+                        onMenuClick = { coroutineScope.launch { drawerState.open() } },
+                        onSendMessage = { message ->
+                            viewModel.sendMessage(message) // Project ID is automatically included from state
+                        }
+                    )
+                }
+                
                 else -> {
                     // Main chat interface with proper keyboard handling
                     Column(
@@ -386,7 +422,7 @@ fun ChatScreen(
                             .fillMaxSize()
                             .imePadding() // Handle keyboard padding properly
                     ) {
-                    // Header with share option
+                    // Header with share option - show project name if in project
                     ChatHeader(
                         onMenuClick = { coroutineScope.launch { drawerState.open() } },
                         onNewChat = { viewModel.startNewChat() },
@@ -397,7 +433,11 @@ fun ChatScreen(
                             }
                         },
                         hasMessages = state.messages.isNotEmpty(),
-                        isProjectChat = state.currentProjectId != null // Only show "Add People" for project chats
+                        isProjectChat = state.currentProjectId != null, // Only show "Add People" for project chats
+                        projectName = state.currentProject?.name,
+                        onBackToProject = if (state.currentProject != null) {
+                            { viewModel.loadProject(state.currentProjectId!!) }
+                        } else null
                     )
                 
                 // Content
@@ -616,6 +656,22 @@ fun ChatScreen(
             } // Close when statement
         } // Close Box
     } // Close ModalNavigationDrawer
+    
+    // Project Settings Dialog
+    if (showProjectSettingsDialog && state.currentProject != null) {
+        ProjectSettingsDialog(
+            project = state.currentProject!!,
+            onDismiss = { showProjectSettingsDialog = false },
+            onSaveInstructions = { instructions ->
+                viewModel.updateProjectInstructions(state.currentProjectId!!, instructions)
+                showProjectSettingsDialog = false
+            },
+            onDeleteProject = {
+                viewModel.deleteProject(state.currentProjectId!!)
+                showProjectSettingsDialog = false
+            }
+        )
+    }
     
     // Show error snackbar if there's an error
     if (state.error != null) {
@@ -1425,7 +1481,9 @@ private fun ChatHeader(
     onShareChat: () -> Unit = {},
     onAddPeople: (String) -> Unit = {},
     hasMessages: Boolean = false,
-    isProjectChat: Boolean = false // Collaboration only available for project chats
+    isProjectChat: Boolean = false, // Collaboration only available for project chats
+    projectName: String? = null, // Show project name if in a project
+    onBackToProject: (() -> Unit)? = null // Callback to go back to project screen
 ) {
     var showShareMenu by remember { mutableStateOf(false) }
     
@@ -1441,27 +1499,59 @@ private fun ChatHeader(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Menu button
-            IconButton(
-                onClick = onMenuClick,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.menu),
-                    contentDescription = "Menu",
-                    modifier = Modifier.size(24.dp)
-                )
+            // Back to project or Menu button
+            if (onBackToProject != null) {
+                IconButton(
+                    onClick = onBackToProject,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back to Project",
+                        tint = DarkText,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = onMenuClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.menu),
+                        contentDescription = "Menu",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Title - "BaatCheet 1.0" in BLACK
-            Text(
-                text = "BaatCheet 1.0",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = DarkText
-            )
+            // Title - Show project name if in project, otherwise "BaatCheet 1.0"
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (projectName != null) {
+                    Text(
+                        text = projectName,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "Project Chat",
+                        fontSize = 12.sp,
+                        color = GrayText
+                    )
+                } else {
+                    Text(
+                        text = "BaatCheet 1.0",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.weight(1f))
             
@@ -3952,4 +4042,801 @@ private fun getFileNameFromUri(context: Context, uri: Uri): String? {
     }
     
     return name
+}
+
+// ============================================
+// Project Chat Screen (Like ChatGPT Projects)
+// ============================================
+
+/**
+ * Project Chat Screen - Shows project details and conversations
+ * Similar to ChatGPT's project interface
+ */
+@Composable
+private fun ProjectChatScreen(
+    project: Project,
+    conversations: List<com.baatcheet.app.domain.model.Conversation>,
+    isLoadingProject: Boolean,
+    isLoadingConversations: Boolean,
+    onBack: () -> Unit,
+    onNewChat: () -> Unit,
+    onConversationClick: (String) -> Unit,
+    onSettingsClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onSendMessage: (String) -> Unit
+) {
+    var messageText by remember { mutableStateOf("") }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WhiteBackground)
+    ) {
+        // Project Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = WhiteBackground,
+            shadowElevation = 1.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Back button
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = DarkText,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Project icon and name
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                color = try { Color(android.graphics.Color.parseColor(project.color ?: "#1e293b")) } 
+                                        catch (e: Exception) { Color(0xFF1E293B) },
+                                shape = RoundedCornerShape(8.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Folder,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = project.name,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DarkText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${conversations.size} chats",
+                            fontSize = 13.sp,
+                            color = GrayText
+                        )
+                    }
+                    
+                    // Settings button
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Project Settings",
+                            tint = DarkText,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Content
+        if (isLoadingProject || isLoadingConversations) {
+            // Loading state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = GreenAccent,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Project Description/Instructions
+                item {
+                    ProjectInstructionsCard(
+                        description = project.description,
+                        context = project.context,
+                        keyTopics = project.keyTopics,
+                        techStack = project.techStack,
+                        goals = project.goals,
+                        onEditClick = onSettingsClick
+                    )
+                }
+                
+                // Conversations section
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Chats in this project",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = DarkText
+                        )
+                        
+                        TextButton(onClick = onNewChat) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = GreenAccent,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "New chat",
+                                color = GreenAccent,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+                
+                // Conversation list
+                if (conversations.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                                    contentDescription = null,
+                                    tint = GrayText.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = "No chats yet",
+                                    fontSize = 16.sp,
+                                    color = GrayText
+                                )
+                                Text(
+                                    text = "Start a conversation to get going",
+                                    fontSize = 14.sp,
+                                    color = GrayText.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(conversations, key = { it.id }) { conversation ->
+                        ProjectConversationItem(
+                            conversation = conversation,
+                            onClick = { onConversationClick(conversation.id) }
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Input area - Quick message to start new chat
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = WhiteBackground,
+            shadowElevation = 4.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .navigationBarsPadding(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(24.dp),
+                    color = Color(0xFFF5F5F5),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                ) {
+                    BasicTextField(
+                        value = messageText,
+                        onValueChange = { messageText = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        textStyle = TextStyle(
+                            fontSize = 16.sp,
+                            color = DarkText
+                        ),
+                        cursorBrush = SolidColor(GreenAccent),
+                        decorationBox = { innerTextField ->
+                            if (messageText.isEmpty()) {
+                                Text(
+                                    text = "New chat in ${project.name}",
+                                    color = GrayText,
+                                    fontSize = 16.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                // Send button
+                IconButton(
+                    onClick = {
+                        if (messageText.isNotBlank()) {
+                            onSendMessage(messageText)
+                            messageText = ""
+                        }
+                    },
+                    enabled = messageText.isNotBlank(),
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            if (messageText.isNotBlank()) GreenAccent else Color(0xFFE5E5EA),
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Send",
+                        tint = if (messageText.isNotBlank()) Color.White else GrayText,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Project Instructions Card - Shows project description and AI-learned context
+ */
+@Composable
+private fun ProjectInstructionsCard(
+    description: String?,
+    context: String?,
+    keyTopics: List<String>,
+    techStack: List<String>,
+    goals: List<String>,
+    onEditClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFF8F8F8),
+        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Description,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Instructions",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = DarkText
+                    )
+                }
+                
+                TextButton(onClick = onEditClick) {
+                    Text(
+                        text = "Edit",
+                        color = GreenAccent,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // User-provided description
+            if (!description.isNullOrBlank()) {
+                Text(
+                    text = description,
+                    fontSize = 14.sp,
+                    color = DarkText,
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            } else {
+                Text(
+                    text = "Set context and customize how BaatCheet responds in this project.",
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
+            // AI-learned context
+            if (!context.isNullOrBlank()) {
+                HorizontalDivider(color = InputBorder)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF9C27B0),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "AI-learned context",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF9C27B0)
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = context,
+                    fontSize = 13.sp,
+                    color = GrayText,
+                    lineHeight = 18.sp
+                )
+            }
+            
+            // Key topics, tech stack, goals
+            if (keyTopics.isNotEmpty() || techStack.isNotEmpty() || goals.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = InputBorder)
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                if (keyTopics.isNotEmpty()) {
+                    ProjectTagsRow(label = "Topics", tags = keyTopics, color = Color(0xFF2196F3))
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                
+                if (techStack.isNotEmpty()) {
+                    ProjectTagsRow(label = "Tech", tags = techStack, color = Color(0xFF4CAF50))
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                
+                if (goals.isNotEmpty()) {
+                    ProjectTagsRow(label = "Goals", tags = goals, color = Color(0xFFFF9800))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Row of project tags
+ */
+@Composable
+private fun ProjectTagsRow(
+    label: String,
+    tags: List<String>,
+    color: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$label:",
+            fontSize = 12.sp,
+            color = GrayText,
+            modifier = Modifier.width(50.dp)
+        )
+        
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            tags.take(5).forEach { tag ->
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = color.copy(alpha = 0.1f)
+                ) {
+                    Text(
+                        text = tag,
+                        fontSize = 11.sp,
+                        color = color,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            if (tags.size > 5) {
+                Text(
+                    text = "+${tags.size - 5}",
+                    fontSize = 11.sp,
+                    color = GrayText
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Project Conversation Item
+ */
+@Composable
+private fun ProjectConversationItem(
+    conversation: com.baatcheet.app.domain.model.Conversation,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = WhiteBackground,
+        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Chat icon
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color(0xFFF5F5F5), RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint = GrayText,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = conversation.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = DarkText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${conversation.messageCount} messages",
+                        fontSize = 13.sp,
+                        color = GrayText
+                    )
+                    
+                    if (conversation.isPinned) {
+                        Icon(
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = "Pinned",
+                            tint = GreenAccent,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+            
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = GrayText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Project Settings Dialog - Like ChatGPT's project settings
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProjectSettingsDialog(
+    project: Project,
+    onDismiss: () -> Unit,
+    onSaveInstructions: (String) -> Unit,
+    onDeleteProject: () -> Unit
+) {
+    var instructions by remember { mutableStateOf(project.description ?: "") }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = WhiteBackground,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+                .navigationBarsPadding()
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Project settings",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+                
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = GrayText
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // Project name (read-only display)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = try { Color(android.graphics.Color.parseColor(project.color ?: "#1e293b")) } 
+                                    catch (e: Exception) { Color(0xFF1E293B) },
+                            shape = RoundedCornerShape(10.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Folder,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column {
+                    Text(
+                        text = project.name,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText
+                    )
+                    Text(
+                        text = "${project.conversationCount} chats",
+                        fontSize = 13.sp,
+                        color = GrayText
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Instructions section
+            Text(
+                text = "Instructions",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = DarkText
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = "Set context and customize how BaatCheet responds in this project.",
+                fontSize = 13.sp,
+                color = GrayText
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Instructions text field
+            OutlinedTextField(
+                value = instructions,
+                onValueChange = { instructions = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp),
+                placeholder = {
+                    Text(
+                        text = "e.g. \"Respond in Spanish. Reference the latest JavaScript documentation. Keep answers short and focused.\"",
+                        color = GrayText,
+                        fontSize = 14.sp
+                    )
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenAccent,
+                    unfocusedBorderColor = InputBorder,
+                    cursorColor = GreenAccent
+                ),
+                shape = RoundedCornerShape(12.dp),
+                textStyle = TextStyle(fontSize = 14.sp, color = DarkText)
+            )
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // AI Memory info
+            if (project.context != null || project.keyTopics.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF5F0FF)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            tint = Color(0xFF9C27B0),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "Memory",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF9C27B0)
+                            )
+                            Text(
+                                text = "Project can access memories from outside chats, and vice versa. This cannot be changed.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF7B1FA2),
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            
+            // Save button
+            Button(
+                onClick = { onSaveInstructions(instructions) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenAccent
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Save changes",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Delete project button
+            TextButton(
+                onClick = { showDeleteConfirmation = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Delete project",
+                    color = Color(0xFFFF3B30),
+                    fontSize = 15.sp
+                )
+            }
+        }
+    }
+    
+    // Delete confirmation dialog
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete project?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "This will delete the project \"${project.name}\". Conversations in this project will be moved to your main chat list.",
+                    color = GrayText
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onDeleteProject()
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = Color(0xFFFF3B30),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(
+                        text = "Cancel",
+                        color = GrayText
+                    )
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
 }

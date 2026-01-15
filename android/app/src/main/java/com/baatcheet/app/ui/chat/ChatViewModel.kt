@@ -107,6 +107,8 @@ data class ChatState(
     
     // Current Project Context
     val currentProjectId: String? = null,
+    val currentProject: Project? = null, // Full project details when viewing a project
+    val isLoadingProject: Boolean = false,
     
     // Collaborations (shared projects)
     val collaborations: List<Project> = emptyList(),
@@ -308,7 +310,8 @@ class ChatViewModel @Inject constructor(
                     message = content,
                     conversationId = _state.value.currentConversationId,
                     mode = modeToSend,
-                    imageIds = uploadedFileIds.ifEmpty { null }
+                    imageIds = uploadedFileIds.ifEmpty { null },
+                    projectId = _state.value.currentProjectId // Include project context
                 )) {
                     is ApiResult.Success -> {
                         timeoutJob.cancel() // Cancel timeout since we got a response
@@ -794,7 +797,65 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
-     * Load conversations for a specific project
+     * Load a project with full details and its conversations
+     * This is the main function to call when user clicks on a project
+     */
+    fun loadProject(projectId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(
+                isLoadingProject = true,
+                isLoadingConversations = true,
+                currentProjectId = projectId,
+                currentProject = null,
+                currentConversationId = null, // Clear current conversation
+                messages = emptyList() // Clear messages when switching to project view
+            ) }
+            
+            // Load project details and conversations in parallel
+            val projectDeferred = viewModelScope.launch {
+                when (val result = chatRepository.getProject(projectId)) {
+                    is ApiResult.Success -> {
+                        _state.update { it.copy(
+                            currentProject = result.data,
+                            isLoadingProject = false
+                        ) }
+                    }
+                    is ApiResult.Error -> {
+                        _state.update { it.copy(
+                            error = result.message,
+                            isLoadingProject = false
+                        ) }
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+            }
+            
+            val conversationsDeferred = viewModelScope.launch {
+                when (val result = chatRepository.getProjectConversations(projectId)) {
+                    is ApiResult.Success -> {
+                        _state.update { it.copy(
+                            conversations = result.data,
+                            isLoadingConversations = false
+                        ) }
+                    }
+                    is ApiResult.Error -> {
+                        _state.update { it.copy(
+                            error = result.message,
+                            isLoadingConversations = false
+                        ) }
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+            }
+            
+            // Wait for both to complete
+            projectDeferred.join()
+            conversationsDeferred.join()
+        }
+    }
+    
+    /**
+     * Load conversations for a specific project (legacy - use loadProject instead)
      */
     fun loadProjectConversations(projectId: String) {
         viewModelScope.launch {
@@ -818,6 +879,42 @@ class ChatViewModel @Inject constructor(
                     ) }
                 }
                 
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Exit project view and return to main chat
+     */
+    fun exitProject() {
+        _state.update { it.copy(
+            currentProjectId = null,
+            currentProject = null,
+            conversations = emptyList()
+        ) }
+        loadConversations()
+    }
+    
+    /**
+     * Update project instructions/description
+     */
+    fun updateProjectInstructions(projectId: String, instructions: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.updateProject(
+                projectId = projectId,
+                description = instructions
+            )) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(
+                        currentProject = result.data
+                    ) }
+                    // Also update in the projects list
+                    loadProjects()
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = result.message) }
+                }
                 is ApiResult.Loading -> { /* Ignore */ }
             }
         }

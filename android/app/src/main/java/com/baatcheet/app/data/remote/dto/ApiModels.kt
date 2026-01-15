@@ -31,7 +31,8 @@ data class ChatRequest(
     val imageIds: List<String>? = null,
     val maxTokens: Int? = null, // Limit response length (useful for voice chat)
     val temperature: Float? = null,
-    val mode: String? = null // Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
+    val mode: String? = null, // Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
+    val projectId: String? = null // Project ID to associate conversation with and use project context
 )
 
 data class ChatResponse(
@@ -242,7 +243,13 @@ data class ProjectDto(
     val icon: String?,
     val conversationCount: Int?,
     val createdAt: String?,
-    val updatedAt: String?
+    val updatedAt: String?,
+    // Project context fields (AI-learned)
+    val context: String? = null,
+    val keyTopics: List<String>? = null,
+    val techStack: List<String>? = null,
+    val goals: List<String>? = null,
+    val lastContextUpdate: String? = null
 )
 
 data class ProjectDetailResponse(

@@ -21,6 +21,7 @@ import { getModeSystemPrompt } from '../config/modePrompts.js';
 import { prisma } from '../config/database.js';
 import { config } from '../config/index.js';
 import { getSystemPrompt, getIntentPrompt } from '../config/systemPrompts.js';
+import { updateProjectContext } from '../routes/projects.js';
 
 // ============================================
 // Types
@@ -42,6 +43,7 @@ export interface ChatOptions {
   originalMessage?: string; // Original message without image context
   imageIds?: string[]; // Attached image IDs
   explicitMode?: string; // Explicit mode selection from frontend (e.g., "image-generation", "code", "web-search")
+  projectId?: string; // Project ID to associate conversation with and get project context
 }
 
 export interface ChatResult {
@@ -255,6 +257,52 @@ class ChatServiceClass {
       // Get or create conversation
       let conversationId = options.conversationId;
       let conversation;
+      let projectContext = '';
+
+      // Get project context if projectId is provided
+      if (options.projectId) {
+        const project = await prisma.project.findFirst({
+          where: { 
+            id: options.projectId,
+            OR: [
+              { userId: options.userId },
+              { collaborators: { some: { userId: options.userId } } },
+            ],
+          },
+          select: {
+            name: true,
+            description: true,
+            context: true,
+            keyTopics: true,
+            techStack: true,
+            goals: true,
+          },
+        });
+
+        if (project) {
+          const contextParts = [];
+          if (project.description) {
+            contextParts.push(`Project Instructions: ${project.description}`);
+          }
+          if (project.context) {
+            contextParts.push(`Project Context: ${project.context}`);
+          }
+          if (project.keyTopics?.length) {
+            contextParts.push(`Key Topics: ${project.keyTopics.join(', ')}`);
+          }
+          if (project.techStack?.length) {
+            contextParts.push(`Tech Stack: ${project.techStack.join(', ')}`);
+          }
+          if (project.goals?.length) {
+            contextParts.push(`Goals: ${project.goals.join(', ')}`);
+          }
+          
+          if (contextParts.length > 0) {
+            projectContext = `\n\n[PROJECT CONTEXT - ${project.name}]\n${contextParts.join('\n')}\n[END PROJECT CONTEXT]\n`;
+            logger.info('Using project context', { projectId: options.projectId, projectName: project.name });
+          }
+        }
+      }
 
       if (conversationId) {
         conversation = await prisma.conversation.findUnique({
@@ -266,10 +314,11 @@ class ChatServiceClass {
           return { success: false, error: 'Conversation not found' };
         }
       } else {
-        // Create new conversation
+        // Create new conversation (with projectId if provided)
         conversation = await prisma.conversation.create({
           data: {
             userId: options.userId,
+            projectId: options.projectId || null,
             title: this.generateTitle(userMessage),
             model: options.model || config.ai.defaultModel,
             systemPrompt: options.systemPrompt,
@@ -354,9 +403,10 @@ class ChatServiceClass {
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + mode prompt + tag context + profile context + recent conversations + web search + formatting hints
+      // Combine: base prompt + mode prompt + project context + tag context + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
         '\n\n' + modeSystemPrompt +
+        projectContext + // Project-specific context and instructions
         tagSystemPrompt +
         userContext.profile + 
         userContext.recentConversations + 
@@ -507,6 +557,14 @@ class ChatServiceClass {
         }
       }).catch(err => logger.error('Summary check failed:', err));
 
+      // Update project context if this conversation is in a project (async, non-blocking)
+      if (options.projectId || conversation.projectId) {
+        const projectIdToUpdate = options.projectId || conversation.projectId;
+        updateProjectContext(projectIdToUpdate!).catch(err => 
+          logger.error('Project context update failed:', err)
+        );
+      }
+
       return {
         success: true,
         message: { role: 'assistant', content: formattedResponse.content },
@@ -556,6 +614,52 @@ class ChatServiceClass {
       // Get or create conversation
       let conversationId = options.conversationId;
       let conversation;
+      let projectContext = '';
+
+      // Get project context if projectId is provided
+      if (options.projectId) {
+        const project = await prisma.project.findFirst({
+          where: { 
+            id: options.projectId,
+            OR: [
+              { userId: options.userId },
+              { collaborators: { some: { userId: options.userId } } },
+            ],
+          },
+          select: {
+            name: true,
+            description: true,
+            context: true,
+            keyTopics: true,
+            techStack: true,
+            goals: true,
+          },
+        });
+
+        if (project) {
+          const contextParts = [];
+          if (project.description) {
+            contextParts.push(`Project Instructions: ${project.description}`);
+          }
+          if (project.context) {
+            contextParts.push(`Project Context: ${project.context}`);
+          }
+          if (project.keyTopics?.length) {
+            contextParts.push(`Key Topics: ${project.keyTopics.join(', ')}`);
+          }
+          if (project.techStack?.length) {
+            contextParts.push(`Tech Stack: ${project.techStack.join(', ')}`);
+          }
+          if (project.goals?.length) {
+            contextParts.push(`Goals: ${project.goals.join(', ')}`);
+          }
+          
+          if (contextParts.length > 0) {
+            projectContext = `\n\n[PROJECT CONTEXT - ${project.name}]\n${contextParts.join('\n')}\n[END PROJECT CONTEXT]\n`;
+            logger.info('Stream: Using project context', { projectId: options.projectId, projectName: project.name });
+          }
+        }
+      }
 
       if (conversationId) {
         conversation = await prisma.conversation.findUnique({
@@ -569,9 +673,11 @@ class ChatServiceClass {
           return;
         }
       } else {
+        // Create new conversation (with projectId if provided)
         conversation = await prisma.conversation.create({
           data: {
             userId: options.userId,
+            projectId: options.projectId || null,
             title: this.generateTitle(userMessage),
             model: options.model || config.ai.defaultModel,
             systemPrompt: options.systemPrompt,
@@ -621,8 +727,9 @@ class ChatServiceClass {
       const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
-      // Combine: base prompt + profile context + recent conversations + web search + formatting hints
+      // Combine: base prompt + project context + profile context + recent conversations + web search + formatting hints
       const enhancedSystemPrompt = baseSystemPrompt + 
+        projectContext + // Project-specific context and instructions
         userContext.profile + 
         userContext.recentConversations + 
         webSearchContext +
@@ -728,6 +835,14 @@ class ChatServiceClass {
           await profileLearning.generateConversationSummary(options.userId, conversationId!);
         }
       }).catch(err => logger.error('Summary check failed:', err));
+
+      // Update project context if this conversation is in a project (async, non-blocking)
+      if (options.projectId || conversation.projectId) {
+        const projectIdToUpdate = options.projectId || conversation.projectId;
+        updateProjectContext(projectIdToUpdate!).catch(err => 
+          logger.error('Stream: Project context update failed:', err)
+        );
+      }
 
       // Send completion event with metadata
       this.sendSSE(res, {

@@ -79,7 +79,13 @@ data class Project(
     val conversationCount: Int = 0,
     // Collaboration fields
     val myRole: String? = null, // "owner", "editor", "viewer" - null means user is owner
-    val owner: UserSummary? = null // Only set for collaborations
+    val owner: UserSummary? = null, // Only set for collaborations
+    // Project context (AI-learned from conversations)
+    val context: String? = null, // AI-generated summary of what this project is about
+    val keyTopics: List<String> = emptyList(), // Main topics discussed in this project
+    val techStack: List<String> = emptyList(), // Technologies mentioned
+    val goals: List<String> = emptyList(), // Project goals extracted from conversations
+    val lastContextUpdate: String? = null // When context was last updated
 )
 
 /**

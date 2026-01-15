@@ -13,8 +13,9 @@ const router = Router();
 /**
  * Update project context based on conversations
  * This helps AI understand what the project is about
+ * Exported for use by ChatService after new messages
  */
-async function updateProjectContext(projectId: string): Promise<void> {
+export async function updateProjectContext(projectId: string): Promise<void> {
   try {
     // Get recent conversations in this project
     const conversations = await prisma.conversation.findMany({
