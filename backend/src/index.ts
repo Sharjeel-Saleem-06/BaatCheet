@@ -207,6 +207,96 @@ app.get('/ready', async (_req, res) => {
   }
 });
 
+// Comprehensive diagnostics endpoint
+app.get('/diagnostics', async (_req, res) => {
+  try {
+    const summary = providerManager.getSummary();
+    const healthStatus = providerManager.getHealthStatus();
+    const circuitStatus = providerManager.getCircuitBreakerStatus();
+    
+    // Check database
+    let dbStatus = { status: 'connected', latency: 0 };
+    try {
+      const start = Date.now();
+      await prisma.$queryRaw`SELECT 1`;
+      dbStatus.latency = Date.now() - start;
+    } catch {
+      dbStatus.status = 'disconnected';
+    }
+    
+    // Check TTS
+    let ttsStatus = { available: false, provider: 'none', keys: 0 };
+    try {
+      const { ttsService } = await import('./services/TTSService.js');
+      const ttsInfo = ttsService.getProviderInfo();
+      ttsStatus = {
+        available: ttsInfo.available,
+        provider: ttsInfo.provider,
+        keys: ttsInfo.elevenLabsKeys || 0,
+      };
+    } catch {
+      // TTS not available
+    }
+    
+    // Check OCR
+    let ocrStatus = { available: false, providers: [] as string[] };
+    try {
+      const { ocrService } = await import('./services/OCRService.js');
+      const ocrHealth = ocrService.getHealth();
+      ocrStatus = {
+        available: ocrHealth.available,
+        providers: Object.entries(ocrHealth.providers)
+          .filter(([_, v]) => v)
+          .map(([k]) => k),
+      };
+    } catch {
+      // OCR not available
+    }
+    
+    // Check Image Generation
+    let imageGenStatus = { available: false, models: 0 };
+    try {
+      const { imageGeneration } = await import('./services/ImageGenerationService.js');
+      const models = imageGeneration.getAvailableModels();
+      imageGenStatus = {
+        available: models.length > 0,
+        models: models.length,
+      };
+    } catch {
+      // Image gen not available
+    }
+    
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      environment: config.server.nodeEnv,
+      uptime: process.uptime(),
+      memory: {
+        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
+      },
+      providers: {
+        summary,
+        details: healthStatus,
+        circuitBreakers: circuitStatus,
+      },
+      services: {
+        database: dbStatus,
+        tts: ttsStatus,
+        ocr: ocrStatus,
+        imageGeneration: imageGenStatus,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 // Liveness probe (for Kubernetes)
 app.get('/live', (_req, res) => {
   res.status(200).json({ status: 'alive' });

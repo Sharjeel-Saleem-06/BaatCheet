@@ -1,7 +1,14 @@
 /**
  * Provider Manager Service
  * Centralized management of all AI providers with intelligent load balancing,
- * automatic failover, and usage tracking.
+ * automatic failover, circuit breaker pattern, and usage tracking.
+ * 
+ * Features:
+ * - Multi-key rotation for each provider
+ * - Automatic failover when keys are exhausted
+ * - Circuit breaker to prevent cascading failures
+ * - Daily limit tracking with database persistence
+ * - Safe rate limiting to prevent bot detection
  * 
  * @module ProviderManager
  */
@@ -9,6 +16,7 @@
 import { config, limits } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { prisma } from '../config/database.js';
+import { circuitBreakerManager, CircuitStats } from '../utils/circuitBreaker.js';
 
 // ============================================
 // Types
@@ -286,6 +294,7 @@ class ProviderManagerService {
     usedToday: number;
     remainingCapacity: number;
     percentUsed: number;
+    circuitState?: string;
   }> {
     const status: Record<string, {
       available: boolean;
@@ -295,6 +304,7 @@ class ProviderManagerService {
       usedToday: number;
       remainingCapacity: number;
       percentUsed: number;
+      circuitState?: string;
     }> = {};
 
     this.providers.forEach((state, provider) => {
@@ -304,19 +314,47 @@ class ProviderManagerService {
       const usedToday = state.keys.reduce((sum, k) => sum + k.requestCount, 0);
       const totalCapacity = state.keys.length * state.dailyLimit;
       const remainingCapacity = totalCapacity - usedToday;
+      
+      // Get circuit breaker state
+      const circuit = circuitBreakerManager.getCircuit(provider);
+      const circuitStats = circuit.getStats();
 
       status[provider] = {
-        available: availableKeys.length > 0,
+        available: availableKeys.length > 0 && circuit.isAvailable(),
         totalKeys: state.keys.length,
         availableKeys: availableKeys.length,
         totalCapacity,
         usedToday,
         remainingCapacity: Math.max(0, remainingCapacity),
         percentUsed: totalCapacity > 0 ? Math.round((usedToday / totalCapacity) * 100) : 0,
+        circuitState: circuitStats.state,
       };
     });
 
     return status as Record<ProviderType, typeof status[string]>;
+  }
+
+  /**
+   * Get circuit breaker status for all providers
+   */
+  public getCircuitBreakerStatus(): CircuitStats[] {
+    return circuitBreakerManager.getAllStats();
+  }
+
+  /**
+   * Reset circuit breaker for a specific provider
+   */
+  public resetCircuitBreaker(provider: ProviderType): void {
+    const circuit = circuitBreakerManager.getCircuit(provider);
+    circuit.forceClose();
+    logger.info(`Circuit breaker reset for ${provider}`);
+  }
+
+  /**
+   * Reset all circuit breakers
+   */
+  public resetAllCircuitBreakers(): void {
+    circuitBreakerManager.resetAll();
   }
 
   /**
