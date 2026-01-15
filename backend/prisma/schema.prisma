@@ -781,13 +781,14 @@ model ImageGenerationQuota {
 model PendingSignup {
   id               String   @id @default(uuid())
   email            String   @unique
-  password         String   // Hashed password
+  passwordHash     String   @map("password_hash") // Hashed password (empty for password reset)
   firstName        String?  @map("first_name")
   lastName         String?  @map("last_name")
   username         String?
   verificationCode String   @map("verification_code")
   codeExpiry       DateTime @map("code_expiry")
   attempts         Int      @default(0) // Track verification attempts
+  isPasswordReset  Boolean  @default(false) @map("is_password_reset") // True if this is a password reset request
   
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")

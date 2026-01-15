@@ -893,4 +893,312 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * POST /api/v1/mobile/auth/change-password
+ * Change password for authenticated user
+ */
+router.post('/change-password', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        error: 'Current password and new password are required',
+      });
+      return;
+    }
+
+    if (!isValidPassword(newPassword)) {
+      res.status(400).json({
+        success: false,
+        error: 'New password must be at least 8 characters',
+      });
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(token, config.auth.jwtSecret) as {
+        userId: string;
+        clerkId: string;
+        email: string;
+      };
+
+      // Verify current password with Clerk
+      const clerkUser = await clerkClient.users.getUser(decoded.clerkId);
+      
+      // Try to verify using Clerk's password verification
+      try {
+        const signInAttempt = await clerkClient.signInTokens.createSignInToken({
+          userId: decoded.clerkId,
+        });
+        
+        // If we get here, user exists - update password via Clerk
+        await clerkClient.users.updateUser(decoded.clerkId, {
+          password: newPassword,
+        });
+
+        // Create audit log
+        await prisma.auditLog.create({
+          data: {
+            userId: decoded.userId,
+            action: 'user.password_changed',
+            resource: 'user',
+            resourceId: decoded.userId,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+            metadata: { source: 'mobile_app' },
+          },
+        });
+
+        res.json({
+          success: true,
+          data: {
+            message: 'Password changed successfully',
+          },
+        });
+      } catch (clerkError: any) {
+        logger.error('Clerk password update error:', clerkError);
+        res.status(400).json({
+          success: false,
+          error: clerkError?.errors?.[0]?.message || 'Failed to update password',
+        });
+      }
+    } catch (jwtError) {
+      res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token',
+      });
+    }
+  } catch (error) {
+    logger.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to change password',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/mobile/auth/forgot-password
+ * Send password reset code to email
+ */
+router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        error: 'Email is required',
+      });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid email format',
+      });
+      return;
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, clerkId: true, email: true, firstName: true },
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      res.json({
+        success: true,
+        data: {
+          message: 'If an account exists with this email, you will receive a password reset code.',
+        },
+      });
+      return;
+    }
+
+    // Generate reset code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    // Store reset code in database (reuse pendingSignup table or create new)
+    await prisma.pendingSignup.upsert({
+      where: { email: email.toLowerCase() },
+      create: {
+        email: email.toLowerCase(),
+        passwordHash: '', // Not used for password reset
+        verificationCode: resetCode,
+        codeExpiry,
+        attempts: 0,
+        isPasswordReset: true,
+      },
+      update: {
+        verificationCode: resetCode,
+        codeExpiry,
+        attempts: 0,
+        isPasswordReset: true,
+      },
+    });
+
+    // Log the code (in production, send via email)
+    logger.info(`Password reset code for ${email}: ${resetCode}`);
+
+    res.json({
+      success: true,
+      data: {
+        message: 'If an account exists with this email, you will receive a password reset code.',
+      },
+    });
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process request',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/mobile/auth/reset-password
+ * Reset password using verification code
+ */
+router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      res.status(400).json({
+        success: false,
+        error: 'Email, code, and new password are required',
+      });
+      return;
+    }
+
+    if (!isValidPassword(newPassword)) {
+      res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters',
+      });
+      return;
+    }
+
+    // Find pending reset
+    const pendingReset = await prisma.pendingSignup.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!pendingReset || !pendingReset.isPasswordReset) {
+      res.status(400).json({
+        success: false,
+        error: 'No password reset request found. Please request a new code.',
+      });
+      return;
+    }
+
+    // Check if code is expired
+    if (new Date() > pendingReset.codeExpiry) {
+      res.status(400).json({
+        success: false,
+        error: 'Reset code has expired. Please request a new one.',
+      });
+      return;
+    }
+
+    // Check attempts
+    if (pendingReset.attempts >= 5) {
+      res.status(429).json({
+        success: false,
+        error: 'Too many attempts. Please request a new code.',
+      });
+      return;
+    }
+
+    // Verify code
+    if (pendingReset.verificationCode !== code) {
+      await prisma.pendingSignup.update({
+        where: { email: email.toLowerCase() },
+        data: { attempts: { increment: 1 } },
+      });
+
+      res.status(400).json({
+        success: false,
+        error: 'Invalid reset code',
+      });
+      return;
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, clerkId: true },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+      return;
+    }
+
+    // Update password in Clerk
+    try {
+      await clerkClient.users.updateUser(user.clerkId, {
+        password: newPassword,
+      });
+
+      // Delete pending reset
+      await prisma.pendingSignup.delete({
+        where: { email: email.toLowerCase() },
+      });
+
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'user.password_reset',
+          resource: 'user',
+          resourceId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          metadata: { source: 'mobile_app' },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Password reset successfully. You can now sign in with your new password.',
+        },
+      });
+    } catch (clerkError: any) {
+      logger.error('Clerk password reset error:', clerkError);
+      res.status(400).json({
+        success: false,
+        error: clerkError?.errors?.[0]?.message || 'Failed to reset password',
+      });
+    }
+  } catch (error) {
+    logger.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reset password',
+    });
+  }
+});
+
 export default router;

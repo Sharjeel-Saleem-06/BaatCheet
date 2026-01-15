@@ -440,7 +440,9 @@ router.post(
 
 /**
  * PUT /api/v1/projects/:id
- * Update a project (owner or collaborator with canEdit permission)
+ * Update a project
+ * - Name & Emoji: Only owner/admin can change
+ * - Description & Instructions: Anyone with canEdit permission
  */
 router.put(
   '/:id',
@@ -472,7 +474,9 @@ router.put(
 
       const isOwner = project.userId === userId;
       const collaborator = project.collaborators[0];
+      const isAdmin = collaborator?.role === 'admin';
       const canEdit = isOwner || collaborator?.canEdit;
+      const canChangeNameAndEmoji = isOwner || isAdmin; // Only owner or admin
 
       if (!canEdit) {
         res.status(403).json({
@@ -482,11 +486,22 @@ router.put(
         return;
       }
 
+      // Check if trying to change name/emoji without admin rights
+      if ((name !== undefined || emoji !== undefined) && !canChangeNameAndEmoji) {
+        res.status(403).json({
+          success: false,
+          error: 'Only the project owner or admin can change the project name and emoji',
+        });
+        return;
+      }
+
       // Build update data
       const updateData: Record<string, any> = {};
-      if (name !== undefined) updateData.name = name;
+      // Only owner/admin can change name and emoji
+      if (name !== undefined && canChangeNameAndEmoji) updateData.name = name;
+      if (emoji !== undefined && canChangeNameAndEmoji) updateData.emoji = emoji;
+      // Anyone with canEdit can change description and instructions
       if (description !== undefined) updateData.description = description;
-      if (emoji !== undefined) updateData.emoji = emoji;
       if (instructions !== undefined) updateData.customInstructions = instructions;
 
       const updatedProject = await prisma.project.update({
