@@ -59,9 +59,13 @@ data class ChatState(
     // Current loading mode for progress indicator (thinking, research, web-search, etc.)
     val currentLoadingMode: String? = null,
     
-    // Conversations
+    // Conversations (global - all user's conversations)
     val conversations: List<Conversation> = emptyList(),
     val isLoadingConversations: Boolean = false,
+    
+    // Project-specific conversations (only conversations in the current project)
+    val projectConversations: List<Conversation> = emptyList(),
+    val isLoadingProjectConversations: Boolean = false,
     
     // Projects
     val projects: List<Project> = emptyList(),
@@ -804,9 +808,10 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(
                 isLoadingProject = true,
-                isLoadingConversations = true,
+                isLoadingProjectConversations = true,
                 currentProjectId = projectId,
                 currentProject = null,
+                projectConversations = emptyList(), // Clear project conversations
                 currentConversationId = null, // Clear current conversation
                 messages = emptyList() // Clear messages when switching to project view
             ) }
@@ -834,14 +839,14 @@ class ChatViewModel @Inject constructor(
                 when (val result = chatRepository.getProjectConversations(projectId)) {
                     is ApiResult.Success -> {
                         _state.update { it.copy(
-                            conversations = result.data,
-                            isLoadingConversations = false
+                            projectConversations = result.data, // Use projectConversations, not conversations
+                            isLoadingProjectConversations = false
                         ) }
                     }
                     is ApiResult.Error -> {
                         _state.update { it.copy(
                             error = result.message,
-                            isLoadingConversations = false
+                            isLoadingProjectConversations = false
                         ) }
                     }
                     is ApiResult.Loading -> { /* Ignore */ }
@@ -860,22 +865,22 @@ class ChatViewModel @Inject constructor(
     fun loadProjectConversations(projectId: String) {
         viewModelScope.launch {
             _state.update { it.copy(
-                isLoadingConversations = true,
+                isLoadingProjectConversations = true,
                 currentProjectId = projectId
             ) }
             
             when (val result = chatRepository.getProjectConversations(projectId)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(
-                        conversations = result.data,
-                        isLoadingConversations = false
+                        projectConversations = result.data, // Use projectConversations
+                        isLoadingProjectConversations = false
                     ) }
                 }
                 
                 is ApiResult.Error -> {
                     _state.update { it.copy(
                         error = result.message,
-                        isLoadingConversations = false
+                        isLoadingProjectConversations = false
                     ) }
                 }
                 
@@ -891,9 +896,9 @@ class ChatViewModel @Inject constructor(
         _state.update { it.copy(
             currentProjectId = null,
             currentProject = null,
-            conversations = emptyList()
+            projectConversations = emptyList() // Clear project conversations
         ) }
-        loadConversations()
+        loadConversations() // Reload global conversations
     }
     
     /**

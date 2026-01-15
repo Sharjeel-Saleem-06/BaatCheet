@@ -397,9 +397,9 @@ fun ChatScreen(
                 state.currentProject != null && state.messages.isEmpty() -> {
                     ProjectChatScreen(
                         project = state.currentProject!!,
-                        conversations = state.conversations,
+                        conversations = state.projectConversations, // Use projectConversations, not global conversations
                         isLoadingProject = state.isLoadingProject,
-                        isLoadingConversations = state.isLoadingConversations,
+                        isLoadingConversations = state.isLoadingProjectConversations,
                         onBack = { viewModel.exitProject() },
                         onNewChat = { 
                             // Start new chat in this project
@@ -805,12 +805,11 @@ private fun ChatDrawerContent(
                 onClick = { showNewProjectDialog = true }
             )
             
-            // Real Projects section
+            // Real Projects section - show emoji if available
             if (state.projects.isNotEmpty()) {
                 state.projects.take(3).forEach { project ->
-                    DrawerMenuItem(
-                        icon = Icons.Outlined.Folder,
-                        text = project.name,
+                    DrawerProjectItem(
+                        project = project,
                         onClick = { onProjectClick(project.id) }
                     )
                 }
@@ -1345,6 +1344,57 @@ private fun DrawerMenuItem(
             text = text,
             fontSize = 15.sp,
             color = DarkText
+        )
+    }
+}
+
+/**
+ * Drawer item for projects - shows emoji if available
+ */
+@Composable
+private fun DrawerProjectItem(
+    project: Project,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Show emoji if available, otherwise show folder icon
+        if (!project.emoji.isNullOrEmpty()) {
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .background(
+                        color = try { Color(android.graphics.Color.parseColor(project.color ?: "#1e293b")).copy(alpha = 0.15f) } 
+                                catch (e: Exception) { Color(0xFF1E293B).copy(alpha = 0.15f) },
+                        shape = RoundedCornerShape(4.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = project.emoji,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            Icon(
+                Icons.Outlined.Folder,
+                contentDescription = null,
+                tint = DarkText,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = project.name,
+            fontSize = 15.sp,
+            color = DarkText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -4622,6 +4672,7 @@ private val PROJECT_EMOJIS = listOf(
 
 /**
  * Project Settings Dialog - Like ChatGPT's project settings with emoji picker
+ * Layout: Instructions at TOP, then Access/Collaborators, then Memory, then Delete
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -4633,9 +4684,9 @@ private fun ProjectSettingsDialog(
     onSaveEmoji: ((String) -> Unit)? = null,
     onSaveName: ((String) -> Unit)? = null
 ) {
-    var instructions by remember { mutableStateOf(project.description ?: project.instructions ?: "") }
-    var projectName by remember { mutableStateOf(project.name) }
-    var selectedEmoji by remember { mutableStateOf(project.emoji ?: "📁") }
+    var instructions by remember(project.id) { mutableStateOf(project.description ?: project.instructions ?: "") }
+    var projectName by remember(project.id) { mutableStateOf(project.name) }
+    var selectedEmoji by remember(project.id, project.emoji) { mutableStateOf(project.emoji ?: "📁") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showEmojiPicker by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
@@ -4644,16 +4695,16 @@ private fun ProjectSettingsDialog(
         onDismissRequest = onDismiss,
         containerColor = WhiteBackground,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        windowInsets = WindowInsets(0, 0, 0, 0) // Allow content to show above keyboard
+        windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(scrollState) // Make scrollable when keyboard opens
+                .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
                 .navigationBarsPadding()
-                .imePadding() // Add padding when keyboard is visible
+                .imePadding()
         ) {
             // Header
             Row(
@@ -4677,9 +4728,9 @@ private fun ProjectSettingsDialog(
                 }
             }
             
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            // Project icon/emoji selection
+            // ========== SECTION 1: Project Name & Emoji (at top) ==========
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -4705,7 +4756,6 @@ private fun ProjectSettingsDialog(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Column(modifier = Modifier.weight(1f)) {
-                    // Editable project name
                     OutlinedTextField(
                         value = projectName,
                         onValueChange = { projectName = it },
@@ -4760,21 +4810,22 @@ private fun ProjectSettingsDialog(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
             Text(
                 text = "${project.conversationCount} chats • Tap emoji to change",
                 fontSize = 13.sp,
-                color = GrayText
+                color = GrayText,
+                modifier = Modifier.padding(top = 8.dp)
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+            HorizontalDivider(color = InputBorder)
+            Spacer(modifier = Modifier.height(20.dp))
             
-            // Instructions section
+            // ========== SECTION 2: Instructions (MOVED TO TOP) ==========
             Text(
                 text = "Instructions",
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 color = DarkText
             )
             
@@ -4788,13 +4839,12 @@ private fun ProjectSettingsDialog(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Instructions text field with better keyboard handling
             OutlinedTextField(
                 value = instructions,
                 onValueChange = { instructions = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 120.dp, max = 200.dp),
+                    .heightIn(min = 100.dp, max = 160.dp),
                 placeholder = {
                     Text(
                         text = "e.g. \"Respond in Spanish. Reference the latest JavaScript documentation. Keep answers short and focused.\"",
@@ -4812,9 +4862,148 @@ private fun ProjectSettingsDialog(
             )
             
             Spacer(modifier = Modifier.height(20.dp))
+            HorizontalDivider(color = InputBorder)
+            Spacer(modifier = Modifier.height(20.dp))
             
-            // AI Memory info
+            // ========== SECTION 3: Access & Collaborators ==========
+            Text(
+                text = "Access",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DarkText
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Owner info
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFF0F8FF)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (project.isOwner) Icons.Outlined.Person else Icons.Outlined.Group,
+                        contentDescription = null,
+                        tint = Color(0xFF2196F3),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (project.isOwner) "You are the owner" else "Shared with you",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = DarkText
+                        )
+                        if (!project.isOwner && project.myRole != null) {
+                            Text(
+                                text = "Your role: ${project.myRole.replaceFirstChar { it.uppercase() }}",
+                                fontSize = 12.sp,
+                                color = GrayText
+                            )
+                        }
+                    }
+                    
+                    // Show role badge
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (project.isOwner) GreenAccent.copy(alpha = 0.15f) else Color(0xFF2196F3).copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = if (project.isOwner) "Owner" else (project.myRole?.replaceFirstChar { it.uppercase() } ?: "Member"),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (project.isOwner) GreenAccent else Color(0xFF2196F3),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+            
+            // Collaborators count
+            if (project.collaboratorCount > 0) {
+                Spacer(modifier = Modifier.height(10.dp))
+                
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = ChipBackground
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Groups,
+                            contentDescription = null,
+                            tint = GrayText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "${project.collaboratorCount} collaborator${if (project.collaboratorCount > 1) "s" else ""}",
+                            fontSize = 14.sp,
+                            color = DarkText
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = GrayText,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+            
+            // Permissions info
+            if (!project.isOwner) {
+                Spacer(modifier = Modifier.height(10.dp))
+                
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = ChipBackground
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Your permissions",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = DarkText
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row {
+                            PermissionChip(label = "Edit", enabled = project.canEdit)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            PermissionChip(label = "Delete", enabled = project.canDelete)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            PermissionChip(label = "Invite", enabled = project.canInvite)
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // ========== SECTION 4: AI Memory (if available) ==========
             if (project.context != null || project.keyTopics.isNotEmpty()) {
+                HorizontalDivider(color = InputBorder)
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                Text(
+                    text = "Memory",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkText
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -4833,23 +5022,26 @@ private fun ProjectSettingsDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "Memory",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF9C27B0)
-                            )
-                            Text(
                                 text = "BaatCheet learns from conversations in this project to provide better context-aware responses.",
                                 fontSize = 12.sp,
                                 color = Color(0xFF7B1FA2),
                                 lineHeight = 16.sp
                             )
                             
-                            // Show learned topics
                             if (project.keyTopics.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = "Topics: ${project.keyTopics.take(5).joinToString(", ")}",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF9C27B0),
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                )
+                            }
+                            
+                            if (project.techStack.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tech: ${project.techStack.take(5).joinToString(", ")}",
                                     fontSize = 11.sp,
                                     color = Color(0xFF9C27B0),
                                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -4862,53 +5054,13 @@ private fun ProjectSettingsDialog(
                 Spacer(modifier = Modifier.height(20.dp))
             }
             
-            // Collaboration info (if applicable)
-            if (project.collaboratorCount > 0 || !project.isOwner) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFF0F8FF)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Group,
-                            contentDescription = null,
-                            tint = Color(0xFF2196F3),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = if (project.isOwner) "Shared project" else "Collaboration",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF2196F3)
-                            )
-                            Text(
-                                text = if (project.isOwner) 
-                                    "${project.collaboratorCount} collaborator${if (project.collaboratorCount > 1) "s" else ""}"
-                                else 
-                                    "You are a ${project.myRole ?: "collaborator"} on this project",
-                                fontSize = 12.sp,
-                                color = Color(0xFF1976D2),
-                                lineHeight = 16.sp
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-            
-            // Save button
+            // ========== SECTION 5: Save Button ==========
             Button(
                 onClick = { 
                     onSaveInstructions(instructions)
                     onSaveEmoji?.invoke(selectedEmoji)
                     onSaveName?.invoke(projectName)
+                    onDismiss() // Close dialog after saving
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -4925,7 +5077,7 @@ private fun ProjectSettingsDialog(
                 )
             }
             
-            // Delete project button (only for owners or those with delete permission)
+            // ========== SECTION 6: Delete (only for owners or those with permission) ==========
             if (project.isOwner || project.canDelete) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -4983,5 +5135,34 @@ private fun ProjectSettingsDialog(
             },
             containerColor = WhiteBackground
         )
+    }
+}
+
+/**
+ * Small permission chip for showing user's permissions
+ */
+@Composable
+private fun PermissionChip(label: String, enabled: Boolean) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = if (enabled) GreenAccent.copy(alpha = 0.15f) else Color(0xFFFF3B30).copy(alpha = 0.1f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (enabled) Icons.Default.Check else Icons.Default.Close,
+                contentDescription = null,
+                tint = if (enabled) GreenAccent else Color(0xFFFF3B30),
+                modifier = Modifier.size(12.dp)
+            )
+            Spacer(modifier = Modifier.width(3.dp))
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                color = if (enabled) GreenAccent else Color(0xFFFF3B30)
+            )
+        }
     }
 }

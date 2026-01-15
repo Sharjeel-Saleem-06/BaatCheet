@@ -73,23 +73,21 @@ fun BaatCheetNavHost() {
     // Check if user is already logged in
     val isLoggedIn = remember { SessionManager.isLoggedIn(context) }
     
+    // Skip splash screen entirely if user is logged in - go directly to main
+    // The system splash (Android 12+) already provides a nice transition
+    val startDestination = if (isLoggedIn) Routes.MAIN else Routes.SPLASH
+    
     NavHost(
         navController = navController,
-        startDestination = Routes.SPLASH
+        startDestination = startDestination
     ) {
-        // Animated Splash Screen (shown after system splash)
+        // Animated Splash Screen (only shown for first-time/logged-out users)
         composable(Routes.SPLASH) {
             AnimatedSplashContent(
                 onSplashComplete = {
-                    // Navigate based on login state
-                    if (isLoggedIn) {
-                        navController.navigate(Routes.MAIN) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(Routes.SPLASH) { inclusive = true }
-                        }
+                    // Navigate to login (user is not logged in if they see this)
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
                     }
                 }
             )
