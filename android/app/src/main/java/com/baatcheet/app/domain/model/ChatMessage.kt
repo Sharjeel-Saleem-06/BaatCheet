@@ -12,7 +12,24 @@ data class ChatMessage(
     val timestamp: Long = System.currentTimeMillis(),
     val isStreaming: Boolean = false,
     val conversationId: String? = null,
-    val attachments: List<MessageAttachment> = emptyList()
+    val attachments: List<MessageAttachment> = emptyList(),
+    val imageResult: ImageResult? = null  // For image generation responses
+)
+
+/**
+ * Image result for generated images
+ */
+data class ImageResult(
+    val success: Boolean,
+    val imageUrl: String?,
+    val imageBase64: String?,
+    val model: String?,
+    val originalPrompt: String?,
+    val enhancedPrompt: String?,
+    val seed: Long?,
+    val generationTime: Long?,
+    val style: String?,
+    val error: String?
 )
 
 /**

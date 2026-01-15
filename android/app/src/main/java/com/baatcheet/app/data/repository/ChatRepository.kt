@@ -65,12 +65,29 @@ class ChatRepository @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()?.data
                 if (data != null && data.message?.content != null) {
+                    // Convert image result if present (for image generation mode)
+                    val imageResult = data.imageResult?.let { img ->
+                        ImageResult(
+                            success = img.success ?: false,
+                            imageUrl = img.imageUrl,
+                            imageBase64 = img.imageBase64,
+                            model = img.model,
+                            originalPrompt = img.originalPrompt,
+                            enhancedPrompt = img.enhancedPrompt,
+                            seed = img.seed,
+                            generationTime = img.generationTime,
+                            style = img.style,
+                            error = img.error
+                        )
+                    }
+                    
                     ApiResult.Success(
                         ChatMessage(
                             id = System.currentTimeMillis().toString(),
                             content = data.message.content,
                             role = MessageRole.ASSISTANT,
-                            conversationId = data.conversationId
+                            conversationId = data.conversationId,
+                            imageResult = imageResult
                         )
                     )
                 } else {

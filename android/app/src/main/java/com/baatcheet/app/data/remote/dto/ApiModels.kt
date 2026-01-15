@@ -45,7 +45,26 @@ data class ChatData(
     val conversationId: String?,
     val model: String?,
     val provider: String?,
-    val tokens: TokenInfo?
+    val tokens: TokenInfo?,
+    val imageResult: ImageResultDto?,  // For image generation responses
+    val modeDetected: String?,
+    val tagDetected: String?
+)
+
+/**
+ * Image result from image generation mode
+ */
+data class ImageResultDto(
+    val success: Boolean?,
+    val imageUrl: String?,
+    val imageBase64: String?,
+    val model: String?,
+    val originalPrompt: String?,
+    val enhancedPrompt: String?,
+    val seed: Long?,
+    val generationTime: Long?,
+    val style: String?,
+    val error: String?
 )
 
 /**

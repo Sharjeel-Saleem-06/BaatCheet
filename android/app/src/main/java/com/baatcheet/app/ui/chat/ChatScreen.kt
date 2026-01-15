@@ -47,7 +47,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -1769,6 +1771,17 @@ private fun MessageBubble(
                                 MessageAttachmentThumbnail(attachment = attachment)
                             }
                         }
+                    }
+                    
+                    // Show generated image if present (for image generation responses)
+                    if (message.imageResult?.success == true && message.imageResult.imageUrl != null) {
+                        GeneratedImageDisplay(
+                            imageUrl = message.imageResult.imageUrl,
+                            imageBase64 = message.imageResult.imageBase64,
+                            model = message.imageResult.model,
+                            originalPrompt = message.imageResult.originalPrompt
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                     
                     if (message.isStreaming && message.content.isEmpty()) {
@@ -3806,6 +3819,134 @@ private data class ModeConfig(
     val color: Color,
     val helpText: String
 )
+
+/**
+ * Display generated image in chat message
+ * Handles both base64 and URL images with download option
+ */
+@Composable
+private fun GeneratedImageDisplay(
+    imageUrl: String,
+    imageBase64: String?,
+    model: String?,
+    originalPrompt: String?
+) {
+    val context = LocalContext.current
+    var showFullScreen by remember { mutableStateOf(false) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF8F8F8))
+            .padding(8.dp)
+    ) {
+        // Image container
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .clickable { showFullScreen = true }
+        ) {
+            // Load image from base64 or URL
+            if (imageBase64 != null) {
+                val bitmap = remember(imageBase64) {
+                    try {
+                        val decodedBytes = android.util.Base64.decode(imageBase64, android.util.Base64.DEFAULT)
+                        android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Generated Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    // Fallback loading indicator
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Failed to load image", color = Color.Gray)
+                    }
+                }
+            } else if (imageUrl.startsWith("http")) {
+                // Load from URL using Coil
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = "Generated Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            
+            // Download button overlay
+            IconButton(
+                onClick = {
+                    // Download image
+                    if (imageBase64 != null) {
+                        try {
+                            val decodedBytes = android.util.Base64.decode(imageBase64, android.util.Base64.DEFAULT)
+                            val filename = "baatcheet_${System.currentTimeMillis()}.png"
+                            val values = android.content.ContentValues().apply {
+                                put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, filename)
+                                put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+                                put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BaatCheet")
+                            }
+                            val uri = context.contentResolver.insert(
+                                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                values
+                            )
+                            uri?.let {
+                                context.contentResolver.openOutputStream(it)?.use { out ->
+                                    out.write(decodedBytes)
+                                }
+                                android.widget.Toast.makeText(context, "Image saved!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "Failed to save image", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(36.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = "Download",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        
+        // Model info
+        if (model != null) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🎨 $model",
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+    }
+}
 
 /**
  * Helper function to get filename from URI
