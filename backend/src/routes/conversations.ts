@@ -167,6 +167,7 @@ router.get(
 /**
  * GET /api/v1/conversations/:id
  * Get a single conversation with messages
+ * Supports both owned conversations and project collaborator access
  */
 router.get(
   '/:id',
@@ -176,7 +177,8 @@ router.get(
       const userId = req.user!.id;
       const { id } = req.params;
 
-      const conversation = await prisma.conversation.findFirst({
+      // First try to find conversation owned by user
+      let conversation = await prisma.conversation.findFirst({
         where: { id, userId },
         include: {
           messages: {
@@ -194,6 +196,35 @@ router.get(
           },
         },
       });
+
+      // If not found, check if user is a collaborator on the project
+      if (!conversation) {
+        conversation = await prisma.conversation.findFirst({
+          where: {
+            id,
+            project: {
+              collaborators: {
+                some: { userId },
+              },
+            },
+          },
+          include: {
+            messages: {
+              orderBy: { createdAt: 'asc' },
+              include: {
+                attachments: true,
+              },
+            },
+            project: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+          },
+        });
+      }
 
       if (!conversation) {
         res.status(404).json({

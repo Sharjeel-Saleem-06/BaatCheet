@@ -241,100 +241,145 @@ private fun CollaborationCard(
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ChipBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = WhiteBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            // Project Icon
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // Project Emoji/Icon
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (project.emoji != null) {
+                        Text(
+                            text = project.emoji,
+                            fontSize = 26.sp
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.Folder,
+                            contentDescription = null,
+                            tint = GreenAccent,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.width(14.dp))
+                
+                // Project Info
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = project.name,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Owner info with avatar
+                    if (project.owner != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .background(GrayText.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = project.owner.firstName?.firstOrNull()?.toString()?.uppercase() ?: "O",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GrayText
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = project.owner.displayName,
+                                fontSize = 13.sp,
+                                color = GrayText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                
                 Icon(
-                    Icons.Outlined.Folder,
+                    Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = GreenAccent,
+                    tint = GrayText,
                     modifier = Modifier.size(24.dp)
                 )
             }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            // Project Info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = project.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DarkText,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            // Bottom row with role and stats
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Role badge - prominent
+                RoleBadge(role = project.myRole ?: "viewer")
                 
-                if (project.description != null) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = project.description,
-                        fontSize = 13.sp,
-                        color = GrayText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Owner info
-                    if (project.owner != null) {
+                // Stats row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Conversation count
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            Icons.Outlined.Person,
+                            Icons.Outlined.ChatBubbleOutline,
                             contentDescription = null,
                             tint = GrayText,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = project.owner.displayName,
-                            fontSize = 12.sp,
-                            color = GrayText
+                            text = "${project.conversationCount}",
+                            fontSize = 13.sp,
+                            color = GrayText,
+                            fontWeight = FontWeight.Medium
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
                     }
                     
-                    // Role badge
-                    RoleBadge(role = project.myRole ?: "viewer")
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    // Conversation count
-                    Icon(
-                        Icons.Outlined.ChatBubbleOutline,
-                        contentDescription = null,
-                        tint = GrayText,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${project.conversationCount}",
-                        fontSize = 12.sp,
-                        color = GrayText
-                    )
+                    // Collaborators count
+                    if (project.collaboratorCount > 0) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Outlined.Groups,
+                                contentDescription = null,
+                                tint = GrayText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${project.collaboratorCount + 1}", // +1 for owner
+                                fontSize = 13.sp,
+                                color = GrayText,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
             }
-            
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = GrayText
-            )
         }
     }
 }
@@ -349,86 +394,154 @@ private fun InvitationCard(
     
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = ChipBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = WhiteBackground),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, GreenAccent.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // "New Invitation" badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = GreenAccent.copy(alpha = 0.1f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.Mail,
+                            contentDescription = null,
+                            tint = GreenAccent,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "New Invitation",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = GreenAccent
+                        )
+                    }
+                }
+                
+                // Role badge
+                RoleBadge(role = invitation.role)
+            }
+            
+            Spacer(modifier = Modifier.height(14.dp))
+            
             // Header with project info
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        .size(52.dp)
+                        .background(GreenAccent.copy(alpha = 0.1f), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Outlined.Folder,
                         contentDescription = null,
                         tint = GreenAccent,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = invitation.projectName,
-                        fontSize = 16.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = DarkText
                     )
                     
                     if (invitation.projectDescription != null) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = invitation.projectDescription,
                             fontSize = 13.sp,
                             color = GrayText,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-                
-                RoleBadge(role = invitation.role)
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Inviter info
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Outlined.PersonAdd,
-                    contentDescription = null,
-                    tint = GrayText,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Invited by ${invitation.inviterName}",
-                    fontSize = 13.sp,
-                    color = GrayText
-                )
+            // Inviter info with avatar
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(ChipBackground, RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(GrayText.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = invitation.inviterName.firstOrNull()?.toString()?.uppercase() ?: "?",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = GrayText
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Invited by",
+                        fontSize = 11.sp,
+                        color = GrayText
+                    )
+                    Text(
+                        text = invitation.inviterName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = DarkText
+                    )
+                }
             }
             
             // Custom message if present
             if (invitation.message != null) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.White
+                    shape = RoundedCornerShape(10.dp),
+                    color = ChipBackground
                 ) {
-                    Text(
-                        text = "\"${invitation.message}\"",
-                        fontSize = 13.sp,
-                        color = DarkText,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            Icons.Outlined.FormatQuote,
+                            contentDescription = null,
+                            tint = GrayText,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = invitation.message,
+                            fontSize = 13.sp,
+                            color = DarkText,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        )
+                    }
                 }
             }
             
@@ -446,22 +559,22 @@ private fun InvitationCard(
                         onDecline()
                     },
                     enabled = !isProcessing,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = GrayText
+                        contentColor = ErrorRed
                     ),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
-                        brush = androidx.compose.ui.graphics.SolidColor(InputBorder)
-                    )
+                    border = androidx.compose.foundation.BorderStroke(1.dp, ErrorRed.copy(alpha = 0.5f))
                 ) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Decline")
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Decline", fontWeight = FontWeight.Medium)
                 }
                 
                 // Accept button
@@ -471,7 +584,9 @@ private fun InvitationCard(
                         onAccept()
                     },
                     enabled = !isProcessing,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GreenAccent,
@@ -480,7 +595,7 @@ private fun InvitationCard(
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(20.dp),
                             color = Color.White,
                             strokeWidth = 2.dp
                         )
@@ -490,8 +605,8 @@ private fun InvitationCard(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Accept")
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Accept", fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -501,36 +616,41 @@ private fun InvitationCard(
 
 @Composable
 private fun RoleBadge(role: String) {
-    val (backgroundColor, textColor, icon) = when (role.lowercase()) {
-        "owner" -> Triple(GreenAccent.copy(alpha = 0.1f), GreenAccent, Icons.Outlined.Shield)
-        "editor" -> Triple(Color(0xFF007AFF).copy(alpha = 0.1f), Color(0xFF007AFF), Icons.Outlined.Edit)
-        else -> Triple(GrayText.copy(alpha = 0.1f), GrayText, Icons.Outlined.Visibility)
+    val (backgroundColor, textColor, icon, displayName) = when (role.lowercase()) {
+        "owner" -> Quadruple(GreenAccent.copy(alpha = 0.15f), GreenAccent, Icons.Outlined.Shield, "Owner")
+        "admin" -> Quadruple(Color(0xFF007AFF).copy(alpha = 0.15f), Color(0xFF007AFF), Icons.Outlined.AdminPanelSettings, "Admin")
+        "moderator" -> Quadruple(WarningOrange.copy(alpha = 0.15f), WarningOrange, Icons.Outlined.ManageAccounts, "Moderator")
+        "editor" -> Quadruple(Color(0xFF007AFF).copy(alpha = 0.15f), Color(0xFF007AFF), Icons.Outlined.Edit, "Editor")
+        else -> Quadruple(GrayText.copy(alpha = 0.15f), GrayText, Icons.Outlined.Visibility, "Viewer")
     }
     
     Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(8.dp),
         color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 icon,
                 contentDescription = null,
                 tint = textColor,
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(14.dp)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = role.replaceFirstChar { it.uppercase() },
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
+                text = displayName,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = textColor
             )
         }
     }
 }
+
+// Helper data class for quadruple
+private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
 private fun EmptyState(
