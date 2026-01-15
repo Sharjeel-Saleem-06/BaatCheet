@@ -358,6 +358,33 @@ class ProviderManagerService {
   }
 
   /**
+   * Reset error counts for all keys of a provider (for recovery)
+   */
+  public resetProviderErrors(provider: ProviderType): void {
+    const state = this.providers.get(provider);
+    if (!state) return;
+
+    state.keys.forEach(key => {
+      key.errorCount = 0;
+      key.lastError = undefined;
+      key.isAvailable = true;
+    });
+    
+    logger.info(`🔄 Reset error counts for ${provider} (${state.keys.length} keys)`);
+  }
+
+  /**
+   * Reset all providers - clear all errors and circuit breakers
+   */
+  public resetAllProviders(): void {
+    this.providers.forEach((_, provider) => {
+      this.resetProviderErrors(provider);
+    });
+    this.resetAllCircuitBreakers();
+    logger.info('🔄 All providers reset');
+  }
+
+  /**
    * Get detailed key status for a provider
    */
   public getKeyDetails(provider: ProviderType): Array<{

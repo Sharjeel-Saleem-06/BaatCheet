@@ -129,7 +129,7 @@ data class ChatState(
     // File Upload Limits (combined for files, images, camera)
     val uploadLimitReached: Boolean = false,
     val uploadsUsedToday: Int = 0,
-    val uploadDailyLimit: Int = 6,
+    val uploadDailyLimit: Int = 10,  // 10 for testing
     val uploadNextAvailableAt: String? = null,  // ISO timestamp
     
     // Image Generation Limits

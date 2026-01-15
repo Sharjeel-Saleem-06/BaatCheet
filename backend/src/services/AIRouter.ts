@@ -87,7 +87,9 @@ class AIRouterService {
   public async chat(request: ChatRequest): Promise<ChatResponse> {
     const startTime = Date.now();
     const providers: ProviderType[] = ['groq', 'openrouter', 'deepseek', 'gemini'];
+    const errors: string[] = [];
 
+    // First pass: try providers with capacity
     for (const provider of providers) {
       if (!providerManager.hasCapacity(provider)) {
         logger.debug(`${provider} has no capacity, trying next...`);
@@ -95,31 +97,34 @@ class AIRouterService {
       }
 
       try {
-        let response: ChatResponse;
-
-        switch (provider) {
-          case 'groq':
-            response = await this.groqChat(request);
-            break;
-          case 'openrouter':
-            response = await this.openRouterChat(request);
-            break;
-          case 'deepseek':
-            response = await this.deepSeekChat(request);
-            break;
-          case 'gemini':
-            response = await this.geminiChat(request);
-            break;
-          default:
-            continue;
-        }
-
+        const response = await this.tryProvider(provider, request);
         if (response.success) {
           response.processingTime = Date.now() - startTime;
           return response;
         }
+        errors.push(`${provider}: ${response.error || 'Unknown error'}`);
       } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`${provider}: ${errMsg}`);
         logger.warn(`Chat with ${provider} failed:`, error);
+        continue;
+      }
+    }
+
+    // Second pass: try all providers as fallback (ignore capacity)
+    logger.warn('⚠️ All providers with capacity failed. Trying fallback...');
+    providerManager.resetAllProviders(); // Reset errors to give providers another chance
+    
+    for (const provider of providers) {
+      try {
+        const response = await this.tryProvider(provider, request);
+        if (response.success) {
+          response.processingTime = Date.now() - startTime;
+          logger.info(`✅ Fallback to ${provider} succeeded`);
+          return response;
+        }
+      } catch (error) {
+        logger.warn(`Fallback with ${provider} also failed:`, error);
         continue;
       }
     }
@@ -129,9 +134,27 @@ class AIRouterService {
       content: '',
       model: 'unknown',
       provider: 'unknown',
-      error: 'All AI providers are currently unavailable. Please try again later.',
+      error: `All AI providers are currently unavailable. Errors: ${errors.slice(0, 3).join('; ')}`,
       processingTime: Date.now() - startTime,
     };
+  }
+
+  /**
+   * Try a specific provider
+   */
+  private async tryProvider(provider: ProviderType, request: ChatRequest): Promise<ChatResponse> {
+    switch (provider) {
+      case 'groq':
+        return await this.groqChat(request);
+      case 'openrouter':
+        return await this.openRouterChat(request);
+      case 'deepseek':
+        return await this.deepSeekChat(request);
+      case 'gemini':
+        return await this.geminiChat(request);
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
   }
 
   /**

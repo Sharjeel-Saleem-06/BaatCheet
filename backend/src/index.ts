@@ -297,6 +297,25 @@ app.get('/diagnostics', async (_req, res) => {
   }
 });
 
+// Reset all providers endpoint (for recovery)
+app.post('/reset-providers', async (_req, res) => {
+  try {
+    providerManager.resetAllProviders();
+    logger.info('🔄 All providers reset via API');
+    
+    res.json({
+      success: true,
+      message: 'All providers reset successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 // Liveness probe (for Kubernetes)
 app.get('/live', (_req, res) => {
   res.status(200).json({ status: 'alive' });
