@@ -202,7 +202,7 @@ fun ChatScreen(
     BackHandler(
         enabled = showSettingsScreen || showAnalyticsScreen || showCollaborationsScreen || 
                   showVoiceModeScreen || showProjectSettingsDialog || showAllChatsScreen ||
-                  state.currentProject != null || drawerState.isOpen
+                  state.currentProject != null || state.showProjectChatInput || drawerState.isOpen
     ) {
         when {
             showAllChatsScreen -> showAllChatsScreen = false
@@ -211,12 +211,16 @@ fun ChatScreen(
             showAnalyticsScreen -> showAnalyticsScreen = false
             showCollaborationsScreen -> showCollaborationsScreen = false
             showVoiceModeScreen -> showVoiceModeScreen = false
-            state.currentProject != null && state.messages.isNotEmpty() -> {
-                // If in project chat with messages, go back to project screen
-                viewModel.loadProject(state.currentProjectId!!)
+            // If in project chat input mode (new chat started), go back to project screen
+            state.showProjectChatInput -> {
+                viewModel.cancelNewChatInProject()
             }
+            // If in project chat with messages, go back to project screen (clear messages)
+            state.currentProject != null && state.messages.isNotEmpty() -> {
+                viewModel.clearMessagesAndShowProject()
+            }
+            // If in project screen (no messages), exit project completely
             state.currentProject != null -> {
-                // If in project screen, exit project
                 viewModel.exitProject()
             }
             drawerState.isOpen -> coroutineScope.launch { drawerState.close() }
@@ -4761,6 +4765,7 @@ private fun ProjectSettingsDialog(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showEmojiPicker by remember { mutableStateOf(false) }
     var showInviteDialog by remember { mutableStateOf(false) }
+    var showCollaboratorsDialog by remember { mutableStateOf(false) }
     var inviteEmail by remember { mutableStateOf("") }
     var emailValidationState by remember { mutableStateOf<EmailValidationState>(EmailValidationState.Idle) }
     val scrollState = rememberScrollState()
@@ -5025,11 +5030,12 @@ private fun ProjectSettingsDialog(
                 }
             }
             
-            // Collaborators count
-            if (project.collaboratorCount > 0) {
+            // Collaborators list - clickable to show all collaborators
+            if (project.collaboratorCount > 0 || project.isOwner) {
                 Spacer(modifier = Modifier.height(10.dp))
                 
                 Surface(
+                    onClick = { showCollaboratorsDialog = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     color = ChipBackground
@@ -5045,12 +5051,27 @@ private fun ProjectSettingsDialog(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "${project.collaboratorCount} collaborator${if (project.collaboratorCount > 1) "s" else ""}",
-                            fontSize = 14.sp,
-                            color = DarkText
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Collaborators",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = DarkText
+                            )
+                            if (project.collaboratorCount > 0) {
+                                Text(
+                                    text = "${project.collaboratorCount} member${if (project.collaboratorCount > 1) "s" else ""}",
+                                    fontSize = 12.sp,
+                                    color = GrayText
+                                )
+                            } else {
+                                Text(
+                                    text = "Only you",
+                                    fontSize = 12.sp,
+                                    color = GrayText
+                                )
+                            }
+                        }
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
@@ -5464,6 +5485,241 @@ private fun ProjectSettingsDialog(
                 }
             },
             containerColor = WhiteBackground
+        )
+    }
+    
+    // Collaborators list dialog
+    if (showCollaboratorsDialog) {
+        AlertDialog(
+            onDismissRequest = { showCollaboratorsDialog = false },
+            title = {
+                Text(
+                    text = "Project Members",
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                ) {
+                    // Owner section
+                    Text(
+                        text = "Owner",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GrayText
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Owner card
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = GreenAccent.copy(alpha = 0.1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(GreenAccent, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (project.isOwner) "You" else (project.owner?.firstName?.firstOrNull()?.toString() ?: "O"),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (project.isOwner) "You" else "${project.owner?.firstName ?: ""} ${project.owner?.lastName ?: ""}".trim().ifBlank { project.owner?.email ?: "Owner" },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = DarkText
+                                )
+                                if (!project.isOwner && project.owner?.email != null) {
+                                    Text(
+                                        text = project.owner.email,
+                                        fontSize = 12.sp,
+                                        color = GrayText
+                                    )
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = GreenAccent
+                            ) {
+                                Text(
+                                    text = "Owner",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Collaborators section
+                    if (project.collaborators.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Collaborators",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = GrayText
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(project.collaborators) { collaborator ->
+                                CollaboratorCard(
+                                    collaborator = collaborator,
+                                    canManage = project.canManageRoles,
+                                    onRemove = { /* TODO: Implement remove */ },
+                                    onChangeRole = { /* TODO: Implement role change */ }
+                                )
+                            }
+                        }
+                    } else if (!project.isOwner) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "No other collaborators yet.",
+                            fontSize = 13.sp,
+                            color = GrayText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCollaboratorsDialog = false }) {
+                    Text("Close", color = GreenAccent)
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
+}
+
+/**
+ * Collaborator card for displaying collaborator info
+ */
+@Composable
+private fun CollaboratorCard(
+    collaborator: Collaborator,
+    canManage: Boolean,
+    onRemove: () -> Unit,
+    onChangeRole: (String) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = ChipBackground
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        when (collaborator.role) {
+                            "admin" -> Color(0xFF007AFF)
+                            "moderator" -> Color(0xFFFF9500)
+                            else -> GrayText
+                        },
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = collaborator.user.firstName?.firstOrNull()?.toString() 
+                        ?: collaborator.user.email?.firstOrNull()?.toString()?.uppercase() 
+                        ?: "?",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${collaborator.user.firstName ?: ""} ${collaborator.user.lastName ?: ""}".trim().ifBlank { collaborator.user.email ?: "User" },
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = DarkText
+                )
+                collaborator.user.email?.let { email ->
+                    Text(
+                        text = email,
+                        fontSize = 12.sp,
+                        color = GrayText
+                    )
+                }
+                // Show permissions
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (collaborator.canEdit) {
+                        MiniPermissionBadge("Edit", GreenAccent)
+                    }
+                    if (collaborator.canDelete) {
+                        MiniPermissionBadge("Delete", Color(0xFFFF3B30))
+                    }
+                    if (collaborator.canInvite) {
+                        MiniPermissionBadge("Invite", Color(0xFF007AFF))
+                    }
+                }
+            }
+            // Role badge
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = when (collaborator.role) {
+                    "admin" -> Color(0xFF007AFF)
+                    "moderator" -> Color(0xFFFF9500)
+                    else -> GrayText
+                }
+            ) {
+                Text(
+                    text = collaborator.role.replaceFirstChar { it.uppercase() },
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    fontSize = 11.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniPermissionBadge(label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(3.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            fontSize = 9.sp,
+            color = color,
+            fontWeight = FontWeight.Medium
         )
     }
 }

@@ -351,6 +351,7 @@ router.get(
             canEdit: c.canEdit,
             canDelete: c.canDelete,
             canInvite: c.canInvite,
+            canManageRoles: c.canManageRoles,
             addedAt: c.addedAt,
             user: userMap.get(c.userId),
           })),

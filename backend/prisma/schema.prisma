@@ -774,3 +774,25 @@ model ImageGenerationQuota {
   @@index([userId])
   @@map("image_generation_quotas")
 }
+
+// ============================================
+// Pending Signup Model (for email verification)
+// ============================================
+model PendingSignup {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String   // Hashed password
+  firstName        String?  @map("first_name")
+  lastName         String?  @map("last_name")
+  username         String?
+  verificationCode String   @map("verification_code")
+  codeExpiry       DateTime @map("code_expiry")
+  attempts         Int      @default(0) // Track verification attempts
+  
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  @@index([email])
+  @@index([verificationCode])
+  @@map("pending_signups")
+}

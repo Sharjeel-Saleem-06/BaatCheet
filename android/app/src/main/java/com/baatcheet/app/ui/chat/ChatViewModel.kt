@@ -923,9 +923,37 @@ class ChatViewModel @Inject constructor(
             currentProjectId = null,
             currentProject = null,
             projectConversations = emptyList(), // Clear project conversations
-            showProjectChatInput = false // Reset chat input flag
+            showProjectChatInput = false, // Reset chat input flag
+            messages = emptyList(), // Clear messages
+            currentConversationId = null
         ) }
         loadConversations() // Reload global conversations
+    }
+    
+    /**
+     * Cancel new chat in project and go back to project screen
+     */
+    fun cancelNewChatInProject() {
+        _state.update { it.copy(
+            showProjectChatInput = false,
+            messages = emptyList(),
+            currentConversationId = null
+        ) }
+    }
+    
+    /**
+     * Clear messages and show project screen (go back from chat to project)
+     */
+    fun clearMessagesAndShowProject() {
+        _state.update { it.copy(
+            messages = emptyList(),
+            currentConversationId = null,
+            showProjectChatInput = false
+        ) }
+        // Reload project conversations to refresh the list
+        _state.value.currentProjectId?.let { projectId ->
+            loadProjectConversations(projectId)
+        }
     }
     
     /**
