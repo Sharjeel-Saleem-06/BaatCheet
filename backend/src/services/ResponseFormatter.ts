@@ -434,12 +434,20 @@ class ResponseFormatterClass {
       .replace(/\*\*\s*\*\*/g, '')
       // Remove empty italic
       .replace(/\*\s*\*/g, '')
+      // Remove trailing asterisks at end of paragraphs (common AI artifact)
+      .replace(/\*+\s*$/gm, '')
+      .replace(/\*+\n/g, '\n')
+      // Remove orphan asterisks that aren't part of formatting
+      .replace(/([.!?])\s*\*+\s*$/gm, '$1')
+      .replace(/([.!?])\s*\*+\n/g, '$1\n')
       // Fix broken lists
       .replace(/^-\s*$/gm, '')
       // Remove trailing colons from headings
       .replace(/^(#{1,6}\s+.+):$/gm, '$1')
-      // Normalize bullet points to -
-      .replace(/^\s*[*+]\s+/gm, '- ');
+      // Normalize bullet points to • for better appearance
+      .replace(/^\s*[-*+]\s+/gm, '• ')
+      // Clean up multiple newlines
+      .replace(/\n{4,}/g, '\n\n\n');
   }
   
   /**

@@ -949,6 +949,7 @@ private val LINK_REGEX = Regex("\\[([^\\]]+)\\]\\(([^)]+)\\)")
 /**
  * Parse inline markdown with optimized performance
  * OPTIMIZED: No regex creation inside loops
+ * ENHANCED: Better handling of citations, superscripts, and trailing asterisks
  */
 private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString {
     // Safety limit for very long text
@@ -956,33 +957,101 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
         return AnnotatedString(text.take(5000) + "...")
     }
     
+    // Pre-clean text: remove trailing asterisks that aren't part of formatting
+    val cleanedText = text
+        .replace(Regex("\\*+\\s*$"), "") // Remove trailing asterisks
+        .replace(Regex("\\*+\\n"), "\n") // Remove asterisks before newlines
+    
     return buildAnnotatedString {
         var i = 0
-        val len = text.length
+        val len = cleanedText.length
         
         while (i < len) {
-            val char = text[i]
+            val char = cleanedText[i]
             
             when {
+                // Citation style [1], [2], etc. - style as superscript-like
+                char == '[' && i + 2 < len && cleanedText[i + 1].isDigit() -> {
+                    val closeBracket = cleanedText.indexOf(']', i + 1)
+                    if (closeBracket != -1 && closeBracket <= i + 4) {
+                        // Check if this is just a citation number like [1] or [12]
+                        val content = cleanedText.substring(i + 1, closeBracket)
+                        if (content.all { it.isDigit() }) {
+                            // Style as citation (superscript-like with color)
+                            withStyle(
+                                SpanStyle(
+                                    color = MarkdownColors.Link,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    baselineShift = androidx.compose.ui.text.style.BaselineShift.Superscript
+                                )
+                            ) {
+                                append("[$content]")
+                            }
+                            i = closeBracket + 1
+                        } else {
+                            // Not a simple citation, check for link
+                            if (closeBracket + 1 < len && cleanedText[closeBracket + 1] == '(') {
+                                val closeParen = cleanedText.indexOf(')', closeBracket + 2)
+                                if (closeParen != -1) {
+                                    val linkText = cleanedText.substring(i + 1, closeBracket)
+                                    withStyle(
+                                        SpanStyle(
+                                            color = MarkdownColors.Link,
+                                            textDecoration = TextDecoration.Underline
+                                        )
+                                    ) {
+                                        append(linkText)
+                                    }
+                                    i = closeParen + 1
+                                } else {
+                                    withStyle(SpanStyle(color = textColor)) { append(char) }
+                                    i++
+                                }
+                            } else {
+                                withStyle(SpanStyle(color = textColor)) { append(char) }
+                                i++
+                            }
+                        }
+                    } else {
+                        withStyle(SpanStyle(color = textColor)) { append(char) }
+                        i++
+                    }
+                }
+                
+                // Superscript numbers: ¹²³⁴⁵⁶⁷⁸⁹⁰ - keep and style them
+                char in "¹²³⁴⁵⁶⁷⁸⁹⁰" -> {
+                    withStyle(
+                        SpanStyle(
+                            color = MarkdownColors.Link,
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append(char)
+                    }
+                    i++
+                }
+                
                 // Bold: **text**
-                char == '*' && i + 1 < len && text[i + 1] == '*' -> {
-                    val endIndex = text.indexOf("**", i + 2)
+                char == '*' && i + 1 < len && cleanedText[i + 1] == '*' -> {
+                    val endIndex = cleanedText.indexOf("**", i + 2)
                     if (endIndex != -1 && endIndex > i + 2) {
                         withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = textColor)) {
-                            append(text.substring(i + 2, endIndex))
+                            append(cleanedText.substring(i + 2, endIndex))
                         }
                         i = endIndex + 2
                     } else {
+                        // Skip unclosed bold markers
                         i += 2
                     }
                 }
                 
                 // Strikethrough: ~~text~~
-                char == '~' && i + 1 < len && text[i + 1] == '~' -> {
-                    val endIndex = text.indexOf("~~", i + 2)
+                char == '~' && i + 1 < len && cleanedText[i + 1] == '~' -> {
+                    val endIndex = cleanedText.indexOf("~~", i + 2)
                     if (endIndex != -1 && endIndex > i + 2) {
                         withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough, color = textColor)) {
-                            append(text.substring(i + 2, endIndex))
+                            append(cleanedText.substring(i + 2, endIndex))
                         }
                         i = endIndex + 2
                     } else {
@@ -990,22 +1059,32 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                     }
                 }
                 
-                // Italic: *text* (not preceded by *)
-                char == '*' && (i == 0 || text[i - 1] != '*') -> {
-                    val endIndex = text.indexOf('*', i + 1)
-                    if (endIndex != -1 && endIndex > i + 1 && (endIndex + 1 >= len || text[endIndex + 1] != '*')) {
-                        withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = textColor)) {
-                            append(text.substring(i + 1, endIndex))
+                // Single asterisk - skip if at end of text or before whitespace/newline
+                char == '*' -> {
+                    val nextChar = if (i + 1 < len) cleanedText[i + 1] else ' '
+                    val prevChar = if (i > 0) cleanedText[i - 1] else ' '
+                    
+                    // If this looks like italic formatting
+                    if (nextChar.isLetterOrDigit() && (prevChar.isWhitespace() || i == 0)) {
+                        val endIndex = cleanedText.indexOf('*', i + 1)
+                        if (endIndex != -1 && endIndex > i + 1 && (endIndex + 1 >= len || cleanedText[endIndex + 1] != '*')) {
+                            withStyle(SpanStyle(fontStyle = FontStyle.Italic, color = textColor)) {
+                                append(cleanedText.substring(i + 1, endIndex))
+                            }
+                            i = endIndex + 1
+                        } else {
+                            // Skip orphan asterisk
+                            i++
                         }
-                        i = endIndex + 1
                     } else {
+                        // Skip orphan asterisk (at end of word, sentence, etc.)
                         i++
                     }
                 }
                 
                 // Inline code: `code`
-                char == '`' && (i == 0 || text[i - 1] != '`') -> {
-                    val endIndex = text.indexOf('`', i + 1)
+                char == '`' && (i == 0 || cleanedText[i - 1] != '`') -> {
+                    val endIndex = cleanedText.indexOf('`', i + 1)
                     if (endIndex != -1 && endIndex > i + 1) {
                         withStyle(
                             SpanStyle(
@@ -1014,7 +1093,7 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                                 color = MarkdownColors.CodeText
                             )
                         ) {
-                            append(" ${text.substring(i + 1, endIndex)} ")
+                            append(" ${cleanedText.substring(i + 1, endIndex)} ")
                         }
                         i = endIndex + 1
                     } else {
@@ -1024,11 +1103,11 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                 
                 // Link: [text](url) - Use manual parsing instead of regex for performance
                 char == '[' -> {
-                    val closeBracket = text.indexOf(']', i + 1)
-                    if (closeBracket != -1 && closeBracket + 1 < len && text[closeBracket + 1] == '(') {
-                        val closeParen = text.indexOf(')', closeBracket + 2)
+                    val closeBracket = cleanedText.indexOf(']', i + 1)
+                    if (closeBracket != -1 && closeBracket + 1 < len && cleanedText[closeBracket + 1] == '(') {
+                        val closeParen = cleanedText.indexOf(')', closeBracket + 2)
                         if (closeParen != -1) {
-                            val linkText = text.substring(i + 1, closeBracket)
+                            val linkText = cleanedText.substring(i + 1, closeBracket)
                             withStyle(
                                 SpanStyle(
                                     color = MarkdownColors.Link,
@@ -1049,7 +1128,7 @@ private fun parseInlineMarkdown(text: String, textColor: Color): AnnotatedString
                 }
                 
                 // Skip hash at line start
-                char == '#' && (i == 0 || text[i - 1] == '\n' || text[i - 1] == ' ') -> {
+                char == '#' && (i == 0 || cleanedText[i - 1] == '\n' || cleanedText[i - 1] == ' ') -> {
                     i++
                 }
                 
