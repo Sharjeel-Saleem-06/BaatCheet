@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -52,15 +53,27 @@ import kotlinx.coroutines.launch
  * - Terms and Privacy links
  */
 
+// Auth mode enum
+private enum class AuthMode {
+    SIGN_IN,
+    SIGN_UP
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmailAuthScreen(
+    initialMode: String = "signin",
     onAuthSuccess: () -> Unit = {},
     onDismiss: () -> Unit = {},
     clerkAuthService: ClerkAuthService = hiltViewModel()
 ) {
+    var authMode by remember { 
+        mutableStateOf(if (initialMode == "signup") AuthMode.SIGN_UP else AuthMode.SIGN_IN) 
+    }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var isPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -79,8 +92,17 @@ fun EmailAuthScreen(
     val isPasswordValid = remember(password) {
         password.length >= 8
     }
+    
+    // Name validation for signup
+    val isNameValid = remember(firstName) {
+        firstName.isNotBlank()
+    }
 
-    val isFormValid = isEmailValid && isPasswordValid
+    val isFormValid = if (authMode == AuthMode.SIGN_UP) {
+        isEmailValid && isPasswordValid && isNameValid
+    } else {
+        isEmailValid && isPasswordValid
+    }
 
     val scrollState = rememberScrollState()
     
@@ -128,9 +150,9 @@ fun EmailAuthScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Title
+                // Title - changes based on mode
                 Text(
-                    text = "Log in or sign up",
+                    text = if (authMode == AuthMode.SIGN_UP) "Create your account" else "Welcome back",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -140,7 +162,10 @@ fun EmailAuthScreen(
 
                 // Subtitle
                 Text(
-                    text = "You'll get smarter responses and can upload files, images and more.",
+                    text = if (authMode == AuthMode.SIGN_UP) 
+                        "Sign up to get smarter responses and access all features." 
+                    else 
+                        "Sign in to continue your conversations.",
                     fontSize = 15.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
@@ -148,6 +173,84 @@ fun EmailAuthScreen(
                 )
 
                 Spacer(modifier = Modifier.height(40.dp))
+                
+                // Name fields for signup
+                if (authMode == AuthMode.SIGN_UP) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // First Name
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "First Name *",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = firstName,
+                                onValueChange = { firstName = it; errorMessage = null },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("First", color = Color.Gray) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text,
+                                    imeAction = ImeAction.Next,
+                                    capitalization = KeyboardCapitalization.Words
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Black,
+                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    cursorColor = Color.Black,
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                        
+                        // Last Name
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Last Name",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            OutlinedTextField(
+                                value = lastName,
+                                onValueChange = { lastName = it; errorMessage = null },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Last", color = Color.Gray) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text,
+                                    imeAction = ImeAction.Next,
+                                    capitalization = KeyboardCapitalization.Words
+                                ),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Black,
+                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    cursorColor = Color.Black,
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Email Field
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -252,46 +355,53 @@ fun EmailAuthScreen(
                                 isLoading = true
                                 errorMessage = null
                                 
-                                // Try sign in first
-                                when (val signInResult = clerkAuthService.signIn(email, password)) {
-                                    is ClerkAuthResult.Success -> {
-                                        isLoading = false
-                                        onAuthSuccess()
-                                    }
-                                    is ClerkAuthResult.NeedsVerification -> {
-                                        isLoading = false
-                                        clerkAuthService.setPendingEmail(email)
-                                        showVerificationScreen = true
-                                    }
-                                    is ClerkAuthResult.Failure -> {
-                                        // Sign-in failed - try sign up
-                                        val signInError = signInResult.error.message?.lowercase() ?: ""
-                                        
-                                        if (signInError.contains("invalid email or password")) {
-                                            // Try sign up
-                                            when (val signUpResult = clerkAuthService.signUp(email, password)) {
-                                                is ClerkAuthResult.Success -> {
-                                                    isLoading = false
-                                                    onAuthSuccess()
-                                                }
-                                                is ClerkAuthResult.NeedsVerification -> {
-                                                    isLoading = false
-                                                    clerkAuthService.setPendingEmail(email)
-                                                    showVerificationScreen = true
-                                                }
-                                                is ClerkAuthResult.Failure -> {
-                                                    isLoading = false
-                                                    val signUpError = signUpResult.error.message?.lowercase() ?: ""
-                                                    errorMessage = if (signUpError.contains("already exists")) {
-                                                        "Invalid password. Please try again."
-                                                    } else {
-                                                        signUpResult.error.message ?: "Sign up failed"
-                                                    }
-                                                }
-                                            }
-                                        } else {
+                                if (authMode == AuthMode.SIGN_IN) {
+                                    // Sign in flow
+                                    when (val signInResult = clerkAuthService.signIn(email, password)) {
+                                        is ClerkAuthResult.Success -> {
                                             isLoading = false
-                                            errorMessage = signInResult.error.message ?: "Sign in failed"
+                                            onAuthSuccess()
+                                        }
+                                        is ClerkAuthResult.NeedsVerification -> {
+                                            isLoading = false
+                                            clerkAuthService.setPendingEmail(email)
+                                            showVerificationScreen = true
+                                        }
+                                        is ClerkAuthResult.Failure -> {
+                                            isLoading = false
+                                            val signInError = signInResult.error.message?.lowercase() ?: ""
+                                            errorMessage = if (signInError.contains("invalid email or password")) {
+                                                "Invalid email or password. Don't have an account? Sign up below."
+                                            } else {
+                                                signInResult.error.message ?: "Sign in failed"
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Sign up flow
+                                    when (val signUpResult = clerkAuthService.signUp(
+                                        email = email, 
+                                        password = password,
+                                        firstName = firstName.trim().ifBlank { null },
+                                        lastName = lastName.trim().ifBlank { null }
+                                    )) {
+                                        is ClerkAuthResult.Success -> {
+                                            isLoading = false
+                                            onAuthSuccess()
+                                        }
+                                        is ClerkAuthResult.NeedsVerification -> {
+                                            isLoading = false
+                                            clerkAuthService.setPendingEmail(email)
+                                            showVerificationScreen = true
+                                        }
+                                        is ClerkAuthResult.Failure -> {
+                                            isLoading = false
+                                            val signUpError = signUpResult.error.message?.lowercase() ?: ""
+                                            errorMessage = if (signUpError.contains("already exists") || signUpError.contains("taken")) {
+                                                "An account with this email already exists. Please sign in instead."
+                                            } else {
+                                                signUpResult.error.message ?: "Sign up failed"
+                                            }
                                         }
                                     }
                                 }
@@ -318,7 +428,7 @@ fun EmailAuthScreen(
                         )
                     } else {
                         Text(
-                            text = "Continue",
+                            text = if (authMode == AuthMode.SIGN_UP) "Create Account" else "Sign In",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -386,7 +496,35 @@ fun EmailAuthScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Toggle between Sign In and Sign Up
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (authMode == AuthMode.SIGN_IN) "Don't have an account? " else "Already have an account? ",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = if (authMode == AuthMode.SIGN_IN) "Sign Up" else "Sign In",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { 
+                            authMode = if (authMode == AuthMode.SIGN_IN) AuthMode.SIGN_UP else AuthMode.SIGN_IN
+                            errorMessage = null
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Terms and Privacy
                 Row(

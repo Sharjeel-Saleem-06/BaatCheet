@@ -12,9 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.baatcheet.app.ui.analytics.AnalyticsScreen
 import com.baatcheet.app.ui.chat.ChatScreen
 import com.baatcheet.app.ui.imagegen.ImageGenScreen
@@ -100,17 +102,27 @@ fun BaatCheetNavHost() {
                     // TODO: Implement Google Sign In
                 },
                 onEmailSignUp = {
-                    navController.navigate(Routes.EMAIL_AUTH)
+                    navController.navigate("${Routes.EMAIL_AUTH}?mode=signup")
                 },
                 onLogin = {
-                    navController.navigate(Routes.EMAIL_AUTH)
+                    navController.navigate("${Routes.EMAIL_AUTH}?mode=signin")
                 }
             )
         }
         
         // Email Auth Screen (handles both sign up and login)
-        composable(Routes.EMAIL_AUTH) {
+        composable(
+            route = "${Routes.EMAIL_AUTH}?mode={mode}",
+            arguments = listOf(
+                navArgument("mode") { 
+                    defaultValue = "signin"
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "signin"
             EmailAuthScreen(
+                initialMode = mode,
                 onDismiss = { navController.popBackStack() },
                 onAuthSuccess = {
                     navController.navigate(Routes.MAIN) {
