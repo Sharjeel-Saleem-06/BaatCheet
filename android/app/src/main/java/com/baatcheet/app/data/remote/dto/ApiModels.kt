@@ -1011,13 +1011,32 @@ data class FileUploadResponse(
     val error: String?
 )
 
+/**
+ * Upload status response (daily limits)
+ */
+data class UploadStatusResponse(
+    val success: Boolean,
+    val data: UploadStatusData?,
+    val error: String?
+)
+
+data class UploadStatusData(
+    val documentsUsedToday: Int,
+    val dailyLimit: Int,
+    val remaining: Int,
+    val canUpload: Boolean
+)
+
 data class UploadedFileDto(
     val id: String,
-    val filename: String?,
+    val originalName: String?, // Backend uses originalName
+    val filename: String?,     // Also accept filename
+    val storedName: String?,   // Backend also sends storedName
     val mimeType: String?,
     val size: Long?,
     val status: String?,
-    val extractedText: String?
+    val extractedText: String?,
+    val url: String?
 )
 
 data class FileDetailResponse(
@@ -1031,8 +1050,12 @@ data class FileStatusResponse(
 )
 
 data class FileStatus(
+    val id: String?,
     val status: String?,
     val extractedText: String?,
+    val analysisResult: String?,
+    val url: String?,
+    val name: String?,
     val error: String?
 )
 

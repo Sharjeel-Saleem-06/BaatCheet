@@ -41,12 +41,14 @@ class ChatRepository @Inject constructor(
     /**
      * Send a message and get AI response
      * @param mode Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
+     * @param imageIds List of attachment IDs (documents/images) for context
      */
     suspend fun sendMessage(
         message: String,
         conversationId: String? = null,
         model: String? = null,
-        mode: String? = null
+        mode: String? = null,
+        imageIds: List<String>? = null
     ): ApiResult<ChatMessage> {
         return try {
             val request = ChatRequest(
@@ -54,7 +56,8 @@ class ChatRepository @Inject constructor(
                 conversationId = conversationId,
                 model = model,
                 stream = false,
-                mode = mode
+                mode = mode,
+                imageIds = imageIds
             )
             
             val response = api.sendMessage(request)
@@ -515,6 +518,98 @@ class ChatRepository @Inject constructor(
                 ApiResult.Success(response.body()?.data?.description ?: "")
             } else {
                 ApiResult.Error(response.body()?.error ?: "Failed to analyze image", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    // ============================================
+    // Document Upload Operations
+    // ============================================
+    
+    /**
+     * Get upload status (daily limits)
+     */
+    suspend fun getUploadStatus(): ApiResult<UploadStatus> {
+        return try {
+            val response = api.getUploadStatus()
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(
+                        UploadStatus(
+                            usedToday = data.documentsUsedToday,
+                            dailyLimit = data.dailyLimit,
+                            remaining = data.remaining,
+                            canUpload = data.canUpload
+                        )
+                    )
+                } else {
+                    // Default values if no data
+                    ApiResult.Success(UploadStatus(0, 4, 4, true))
+                }
+            } else {
+                // Return default on error
+                ApiResult.Success(UploadStatus(0, 4, 4, true))
+            }
+        } catch (e: Exception) {
+            // Return default on exception
+            ApiResult.Success(UploadStatus(0, 4, 4, true))
+        }
+    }
+    
+    /**
+     * Upload a document file (PDF, TXT, DOC, etc.)
+     * Returns the attachment ID and status
+     */
+    suspend fun uploadDocument(file: okhttp3.MultipartBody.Part): ApiResult<UploadedDocument> {
+        return try {
+            val response = api.uploadFile(file)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(
+                        UploadedDocument(
+                            id = data.id,
+                            filename = data.originalName ?: data.filename ?: "document",
+                            mimeType = data.mimeType ?: "application/octet-stream",
+                            size = data.size ?: 0L,
+                            status = data.status ?: "processing",
+                            extractedText = data.extractedText
+                        )
+                    )
+                } else {
+                    ApiResult.Error("No upload data returned")
+                }
+            } else {
+                ApiResult.Error(response.body()?.error ?: "Failed to upload document", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Get document processing status
+     */
+    suspend fun getDocumentStatus(documentId: String): ApiResult<DocumentStatus> {
+        return try {
+            val response = api.getFileStatus(documentId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                ApiResult.Success(
+                    DocumentStatus(
+                        status = data?.status ?: "unknown",
+                        extractedText = data?.extractedText,
+                        error = data?.error
+                    )
+                )
+            } else {
+                ApiResult.Error("Failed to get document status", response.code())
             }
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Network error")
@@ -1437,6 +1532,29 @@ fun ProjectDto.toProject() = Project(
 data class ConversationWithMessages(
     val conversation: Conversation,
     val messages: List<ChatMessage>
+)
+
+// Document Models
+data class UploadedDocument(
+    val id: String,
+    val filename: String,
+    val mimeType: String,
+    val size: Long,
+    val status: String,
+    val extractedText: String?
+)
+
+data class DocumentStatus(
+    val status: String,
+    val extractedText: String?,
+    val error: String?
+)
+
+data class UploadStatus(
+    val usedToday: Int,
+    val dailyLimit: Int,
+    val remaining: Int,
+    val canUpload: Boolean
 )
 
 // Image Models

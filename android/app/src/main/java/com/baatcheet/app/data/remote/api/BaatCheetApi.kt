@@ -679,6 +679,12 @@ interface BaatCheetApi {
     ): Response<FileUploadResponse>
     
     /**
+     * Get upload status (daily limits)
+     */
+    @GET("files/upload-status")
+    suspend fun getUploadStatus(): Response<UploadStatusResponse>
+    
+    /**
      * Get file by ID
      */
     @GET("files/{id}")

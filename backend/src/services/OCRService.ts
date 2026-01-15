@@ -1,7 +1,11 @@
 /**
  * OCR Service
- * Handles text extraction from images using OCR.space as primary
- * and Gemini as backup. Integrates with Groq for AI processing.
+ * Handles text extraction from images and documents using multiple providers:
+ * 1. OCR.space (Primary) - Fast, 60+ languages
+ * 2. MinerU HuggingFace Space (Secondary) - Advanced document parsing
+ * 3. Gemini Vision (Fallback) - AI-powered OCR
+ * 
+ * Includes HuggingFace API key rotation for rate limit handling.
  * 
  * @module OCRService
  */
@@ -20,7 +24,7 @@ export interface OCRResult {
   success: boolean;
   text: string;
   confidence?: number;
-  provider: ProviderType | 'unknown';
+  provider: ProviderType | 'mineru' | 'unknown';
   language?: string;
   error?: string;
   processingTime?: number;
@@ -31,16 +35,38 @@ export interface OCROptions {
   isTable?: boolean;  // Enable table detection
   scale?: boolean;    // Auto-scale image
   detectOrientation?: boolean;
+  isDocument?: boolean; // True for PDF/DOC, false for images
 }
+
+// MinerU HuggingFace Space configuration
+const MINERU_SPACE = {
+  url: 'https://huggingface.co/spaces/opendatalab/MinerU',
+  apiEndpoint: 'https://opendatalab-mineru.hf.space/api/predict',
+  gradioEndpoint: 'https://opendatalab-mineru.hf.space/gradio_api/call/predict',
+};
 
 // ============================================
 // OCR Service Class
 // ============================================
 
 class OCRServiceClass {
+  private hfKeyIndex: number = 0;
+
+  /**
+   * Get next HuggingFace API key (rotation for rate limits)
+   */
+  private getNextHuggingFaceKey(): string | null {
+    const keys = config.providers.huggingFace.keys;
+    if (keys.length === 0) return null;
+    
+    const key = keys[this.hfKeyIndex % keys.length];
+    this.hfKeyIndex++;
+    return key;
+  }
+
   /**
    * Extract text from image using best available provider
-   * Priority: OCR.space → Gemini
+   * Priority: OCR.space → MinerU (for docs) → Gemini
    */
   public async extractText(
     imageBase64: string,
@@ -48,30 +74,61 @@ class OCRServiceClass {
     options: OCROptions = {}
   ): Promise<OCRResult> {
     const startTime = Date.now();
-    const providers: ProviderType[] = ['ocrspace', 'gemini'];
-
-    for (const provider of providers) {
-      if (!providerManager.hasCapacity(provider)) {
-        logger.debug(`${provider} has no capacity, trying next...`);
-        continue;
+    
+    // For documents, try MinerU first (better for PDFs/docs)
+    if (options.isDocument) {
+      const providers = ['ocrspace', 'mineru', 'gemini'] as const;
+      
+      for (const provider of providers) {
+        try {
+          let result: OCRResult;
+          
+          if (provider === 'ocrspace') {
+            if (!providerManager.hasCapacity('ocrspace')) continue;
+            result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
+          } else if (provider === 'mineru') {
+            result = await this.mineruExtract(imageBase64, mimeType, options);
+          } else {
+            if (!providerManager.hasCapacity('gemini')) continue;
+            result = await this.geminiExtract(imageBase64, mimeType, options);
+          }
+          
+          if (result.success && result.text) {
+            result.processingTime = Date.now() - startTime;
+            return result;
+          }
+        } catch (error) {
+          logger.warn(`OCR with ${provider} failed:`, error);
+          continue;
+        }
       }
+    } else {
+      // For images, use standard OCR providers
+      const providers: ProviderType[] = ['ocrspace', 'gemini'];
 
-      try {
-        let result: OCRResult;
-
-        if (provider === 'ocrspace') {
-          result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
-        } else {
-          result = await this.geminiExtract(imageBase64, mimeType, options);
+      for (const provider of providers) {
+        if (!providerManager.hasCapacity(provider)) {
+          logger.debug(`${provider} has no capacity, trying next...`);
+          continue;
         }
 
-        if (result.success && result.text) {
-          result.processingTime = Date.now() - startTime;
-          return result;
+        try {
+          let result: OCRResult;
+
+          if (provider === 'ocrspace') {
+            result = await this.ocrSpaceExtract(imageBase64, mimeType, options);
+          } else {
+            result = await this.geminiExtract(imageBase64, mimeType, options);
+          }
+
+          if (result.success && result.text) {
+            result.processingTime = Date.now() - startTime;
+            return result;
+          }
+        } catch (error) {
+          logger.warn(`OCR with ${provider} failed:`, error);
+          continue;
         }
-      } catch (error) {
-        logger.warn(`OCR with ${provider} failed:`, error);
-        continue;
       }
     }
 
@@ -85,7 +142,7 @@ class OCRServiceClass {
   }
 
   /**
-   * Extract text using OCR.space API
+   * Extract text using OCR.space API (Primary)
    */
   private async ocrSpaceExtract(
     imageBase64: string,
@@ -148,7 +205,80 @@ class OCRServiceClass {
   }
 
   /**
-   * Extract text using Gemini Vision API
+   * Extract text using MinerU HuggingFace Space (Secondary - for documents)
+   * Uses API key rotation for handling rate limits
+   */
+  private async mineruExtract(
+    imageBase64: string,
+    mimeType: string,
+    options: OCROptions
+  ): Promise<OCRResult> {
+    const hfKey = this.getNextHuggingFaceKey();
+    
+    try {
+      logger.info('Attempting MinerU OCR extraction...');
+      
+      // MinerU accepts files, so we need to send as file data
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (hfKey) {
+        headers['Authorization'] = `Bearer ${hfKey}`;
+      }
+
+      // Try Gradio API first
+      const response = await axios.post(
+        MINERU_SPACE.gradioEndpoint,
+        {
+          data: [`data:${mimeType};base64,${imageBase64}`],
+        },
+        {
+          headers,
+          timeout: 60000, // 60 second timeout for document processing
+        }
+      );
+
+      // Handle Gradio response format
+      let text = '';
+      if (response.data && response.data.data) {
+        text = Array.isArray(response.data.data) 
+          ? response.data.data[0] 
+          : response.data.data;
+      } else if (typeof response.data === 'string') {
+        text = response.data;
+      }
+
+      if (text && text.length > 0) {
+        logger.info(`MinerU extraction successful: ${text.length} chars`);
+        return {
+          success: true,
+          text: text.trim(),
+          provider: 'mineru',
+          language: options.language,
+        };
+      }
+
+      throw new Error('MinerU returned empty response');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.warn('MinerU extraction failed:', errorMessage);
+      
+      // If rate limited, try with next key
+      if (errorMessage.includes('429') || errorMessage.includes('rate')) {
+        const nextKey = this.getNextHuggingFaceKey();
+        if (nextKey && nextKey !== hfKey) {
+          logger.info('Retrying MinerU with next HuggingFace key...');
+          return this.mineruExtract(imageBase64, mimeType, options);
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Extract text using Gemini Vision API (Fallback)
    */
   private async geminiExtract(
     imageBase64: string,
@@ -233,7 +363,7 @@ If there is no text, respond with "NO_TEXT_FOUND".`;
     success: boolean;
     extractedText: string;
     processedResult: string;
-    provider: ProviderType | 'unknown';
+    provider: ProviderType | 'mineru' | 'unknown';
     error?: string;
   }> {
     // First, extract text
@@ -309,13 +439,18 @@ If there is no text, respond with "NO_TEXT_FOUND".`;
     providers: {
       ocrspace: boolean;
       gemini: boolean;
+      mineru: boolean;
     };
   } {
+    const hfKeys = config.providers.huggingFace.keys;
     return {
-      available: providerManager.hasCapacity('ocrspace') || providerManager.hasCapacity('gemini'),
+      available: providerManager.hasCapacity('ocrspace') || 
+                 providerManager.hasCapacity('gemini') ||
+                 hfKeys.length > 0,
       providers: {
         ocrspace: providerManager.hasCapacity('ocrspace'),
         gemini: providerManager.hasCapacity('gemini'),
+        mineru: hfKeys.length > 0,
       },
     };
   }

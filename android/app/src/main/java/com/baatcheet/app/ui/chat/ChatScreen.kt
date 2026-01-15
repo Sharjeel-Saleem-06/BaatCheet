@@ -1,6 +1,9 @@
 package com.baatcheet.app.ui.chat
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -34,9 +37,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,6 +56,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.baatcheet.app.R
 import com.baatcheet.app.ui.voice.VoiceChatScreen
@@ -60,6 +66,7 @@ import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.MessageRole
 import com.baatcheet.app.domain.model.Project
 import kotlinx.coroutines.launch
+import androidx.activity.compose.BackHandler
 
 // Light mode color palette - Pure white background
 private val WhiteBackground = Color(0xFFFFFFFF)
@@ -88,17 +95,48 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
+    // Initialize TTS engine
+    LaunchedEffect(Unit) {
+        viewModel.initTTS(context)
+    }
+    
     // Media picker for camera, gallery, and file picking
     val mediaPicker = rememberMediaPicker(
         onImageSelected = { uri ->
-            // Get file info and add to upload queue
-            val filename = "image_${System.currentTimeMillis()}.jpg"
-            viewModel.addFileToUpload(uri, filename, "image/jpeg")
+            // Check upload limit first
+            if (!viewModel.canUploadFile()) {
+                android.widget.Toast.makeText(
+                    context, 
+                    "Daily upload limit reached (${state.uploadDailyLimit}/day). Try again in 24 hours.", 
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                return@rememberMediaPicker
+            }
+            // Get file info from URI
+            val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+            val filename = getFileNameFromUri(context, uri) ?: "image_${System.currentTimeMillis()}.jpg"
+            val uploaded = viewModel.addFileToUpload(uri, filename, mimeType, context)
+            if (uploaded) {
+                android.widget.Toast.makeText(context, "Uploading image: $filename", android.widget.Toast.LENGTH_SHORT).show()
+            }
         },
         onFileSelected = { uri ->
-            // Get file info and add to upload queue
-            val filename = "document_${System.currentTimeMillis()}"
-            viewModel.addFileToUpload(uri, filename, "application/octet-stream")
+            // Check upload limit first
+            if (!viewModel.canUploadFile()) {
+                android.widget.Toast.makeText(
+                    context, 
+                    "Daily upload limit reached (${state.uploadDailyLimit}/day). Try again in 24 hours.", 
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                return@rememberMediaPicker
+            }
+            // Get file info from URI
+            val mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
+            val filename = getFileNameFromUri(context, uri) ?: "document_${System.currentTimeMillis()}"
+            val uploaded = viewModel.addFileToUpload(uri, filename, mimeType, context)
+            if (uploaded) {
+                android.widget.Toast.makeText(context, "Uploading document: $filename", android.widget.Toast.LENGTH_SHORT).show()
+            }
         }
     )
     
@@ -129,6 +167,20 @@ fun ChatScreen(
     
     // Collaborations screen state
     var showCollaborationsScreen by remember { mutableStateOf(false) }
+    
+    // Handle back navigation properly - close overlays before exiting app
+    BackHandler(
+        enabled = showSettingsScreen || showAnalyticsScreen || showCollaborationsScreen || 
+                  showVoiceModeScreen || drawerState.isOpen
+    ) {
+        when {
+            showSettingsScreen -> showSettingsScreen = false
+            showAnalyticsScreen -> showAnalyticsScreen = false
+            showCollaborationsScreen -> showCollaborationsScreen = false
+            showVoiceModeScreen -> showVoiceModeScreen = false
+            drawerState.isOpen -> coroutineScope.launch { drawerState.close() }
+        }
+    }
     
     // Get clipboard manager for sharing
     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
@@ -205,40 +257,138 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(WhiteBackground)
-                .imePadding() // Handle keyboard padding
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // Header with share option
-                ChatHeader(
-                    onMenuClick = { coroutineScope.launch { drawerState.open() } },
-                    onNewChat = { viewModel.startNewChat() },
-                    onShareChat = { viewModel.shareChat() },
-                    onAddPeople = { email ->
-                        state.currentProjectId?.let { projectId ->
-                            viewModel.inviteCollaborator(projectId, email)
-                        } ?: run {
-                            // No project selected, show toast
-                            android.widget.Toast.makeText(
-                                context, 
-                                "Create or select a project first to invite collaborators", 
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
+            // Use when to ensure one screen is always shown
+            when {
+                showSettingsScreen -> {
+                    // Settings Screen (Full screen)
+                    com.baatcheet.app.ui.settings.SettingsScreen(
+                        userSettings = com.baatcheet.app.ui.settings.UserSettings(
+                            displayName = state.userProfile?.displayName ?: "",
+                            email = state.userProfile?.email ?: "",
+                            tier = "free",
+                            totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
+                            totalConversations = state.conversations.size,
+                            imageGenerationsToday = 0,
+                            imageGenerationsLimit = 2
+                        ),
+                        onBack = { showSettingsScreen = false },
+                        onLogout = {
+                            showSettingsScreen = false
+                            onLogout()
+                        },
+                        onDeleteAccount = { /* TODO: Implement */ },
+                        onThemeChange = { /* TODO: Implement */ },
+                        onLanguageChange = { /* TODO: Implement */ },
+                        onVoiceEnabledChange = { /* TODO: Implement */ },
+                        onAutoPlayVoiceChange = { /* TODO: Implement */ },
+                        onStreamingEnabledChange = { /* TODO: Implement */ },
+                        onHapticFeedbackChange = { /* TODO: Implement */ },
+                        onNotificationsChange = { /* TODO: Implement */ },
+                        onSaveHistoryChange = { /* TODO: Implement */ },
+                        onShareAnalyticsChange = { /* TODO: Implement */ },
+                        onClearHistory = { viewModel.clearAllConversations() },
+                        onExportData = { /* TODO: Implement */ },
+                        onPrivacyPolicy = { /* TODO: Open URL */ },
+                        onTermsOfService = { /* TODO: Open URL */ },
+                        onHelpCenter = { /* TODO: Open URL */ },
+                        onContactSupport = { /* TODO: Open email */ },
+                        onUpgrade = { /* TODO: Implement */ }
+                    )
+                }
+                
+                showAnalyticsScreen -> {
+                    // Analytics Screen (Full screen)
+                    com.baatcheet.app.ui.analytics.AnalyticsScreen(
+                        analyticsData = com.baatcheet.app.ui.analytics.AnalyticsData(
+                            totalMessages = state.usageInfo.messagesUsed,
+                            totalConversations = state.conversations.size,
+                            totalProjects = state.projects.size,
+                            totalCollaborations = state.collaborations.size,
+                            imageGenerations = state.usageInfo.imagesUsed,
+                            voiceMinutes = 0,
+                            tokensUsed = state.usageInfo.messagesUsed.toLong() * 100,
+                            tokensLimit = state.usageInfo.messagesLimit.toLong() * 100,
+                            topModes = emptyList(),
+                            weeklyActivity = emptyList(),
+                            topTopics = emptyList(),
+                            streak = 1,
+                            lastActive = "Today"
+                        ),
+                        isLoading = state.isLoadingUsage,
+                        onBack = { showAnalyticsScreen = false },
+                        onRefresh = { viewModel.loadUsage() }
+                    )
+                }
+                
+                showCollaborationsScreen -> {
+                    // Collaborations Screen (Full screen)
+                    CollaborationsScreen(
+                        collaborations = state.collaborations,
+                        pendingInvitations = state.pendingInvitations,
+                        isLoading = state.isLoadingProjects,
+                        isLoadingInvitations = state.isLoadingInvitations,
+                        onBack = { showCollaborationsScreen = false },
+                        onProjectClick = { projectId ->
+                            viewModel.loadProjectConversations(projectId)
+                            showCollaborationsScreen = false
+                        },
+                        onAcceptInvitation = { invitationId ->
+                            viewModel.respondToInvitation(invitationId, true) { success, message ->
+                                if (success) {
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        onDeclineInvitation = { invitationId ->
+                            viewModel.respondToInvitation(invitationId, false) { success, message ->
+                                if (success) {
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+                                } else {
+                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        onRefresh = {
+                            viewModel.loadProjects()
+                            viewModel.loadPendingInvitations()
                         }
-                    },
-                    hasMessages = state.messages.isNotEmpty()
-                )
+                    )
+                }
+                
+                else -> {
+                    // Main chat interface with proper keyboard handling
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .imePadding() // Handle keyboard padding properly
+                    ) {
+                    // Header with share option
+                    ChatHeader(
+                        onMenuClick = { coroutineScope.launch { drawerState.open() } },
+                        onNewChat = { viewModel.startNewChat() },
+                        onShareChat = { viewModel.shareChat() },
+                        onAddPeople = { email ->
+                            state.currentProjectId?.let { projectId ->
+                                viewModel.inviteCollaborator(projectId, email)
+                            }
+                        },
+                        hasMessages = state.messages.isNotEmpty(),
+                        isProjectChat = state.currentProjectId != null // Only show "Add People" for project chats
+                    )
                 
                 // Content
                 if (state.messages.isEmpty()) {
                     // Empty state - ChatGPT style
                     EmptyStateContent(
                         onSuggestionClick = { suggestion ->
-                            viewModel.sendMessage(suggestion)
+                            // Fill in the text box with the suggestion (don't send immediately)
+                            messageText = suggestion
                         },
                         onModeSelect = { mode ->
-                            viewModel.selectAIMode(mode)
+                            selectedPlusMode = mode
                         },
                         modifier = Modifier.weight(1f)
                     )
@@ -325,9 +475,39 @@ fun ChatScreen(
                     onRemoveFile = { fileId ->
                         viewModel.removeFile(fileId)
                     },
-                    onCameraClick = mediaPicker.onCameraClick,
-                    onImageClick = mediaPicker.onGalleryClick,
-                    onFolderClick = mediaPicker.onFileClick,
+                    onCameraClick = {
+                        if (viewModel.canUploadFile()) {
+                            mediaPicker.onCameraClick()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Daily upload limit reached (${state.uploadDailyLimit}/day). Try again in 24 hours.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    onImageClick = {
+                        if (viewModel.canUploadFile()) {
+                            mediaPicker.onGalleryClick()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Daily upload limit reached (${state.uploadDailyLimit}/day). Try again in 24 hours.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    onFolderClick = {
+                        if (viewModel.canUploadFile()) {
+                            mediaPicker.onFileClick()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Daily upload limit reached (${state.uploadDailyLimit}/day). Try again in 24 hours.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
                     isListening = voiceState.isListening,
                     audioLevel = voiceState.audioLevel,
                     onMicClick = {
@@ -346,7 +526,9 @@ fun ChatScreen(
                     selectedPlusMode = selectedPlusMode,
                     onPlusModeSelect = { mode ->
                         selectedPlusMode = if (mode.isEmpty()) null else mode
-                    }
+                    },
+                    uploadLimitReached = !state.canUploadMoreFiles,
+                    imageGenLimitReached = state.imageGenStatus?.canGenerate == false
                 )
                 
                 // Mode Selector Bottom Sheet
@@ -392,133 +574,18 @@ fun ChatScreen(
                         }
                     )
                 }
-                
-                // Settings Screen
-                if (showSettingsScreen) {
-                    com.baatcheet.app.ui.settings.SettingsScreen(
-                        userSettings = com.baatcheet.app.ui.settings.UserSettings(
-                            displayName = state.userProfile?.displayName ?: "",
-                            email = state.userProfile?.email ?: "",
-                            tier = "free", // TODO: Get from user profile
-                            totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
-                            totalConversations = state.conversations.size,
-                            imageGenerationsToday = 0, // TODO: Get from backend
-                            imageGenerationsLimit = 2
-                        ),
-                        onBack = { showSettingsScreen = false },
-                        onLogout = {
-                            showSettingsScreen = false
-                            onLogout()
-                        },
-                        onDeleteAccount = { /* TODO: Implement */ },
-                        onThemeChange = { /* TODO: Implement */ },
-                        onLanguageChange = { /* TODO: Implement */ },
-                        onVoiceEnabledChange = { /* TODO: Implement */ },
-                        onAutoPlayVoiceChange = { /* TODO: Implement */ },
-                        onStreamingEnabledChange = { /* TODO: Implement */ },
-                        onHapticFeedbackChange = { /* TODO: Implement */ },
-                        onNotificationsChange = { /* TODO: Implement */ },
-                        onSaveHistoryChange = { /* TODO: Implement */ },
-                        onShareAnalyticsChange = { /* TODO: Implement */ },
-                        onClearHistory = { viewModel.clearAllConversations() },
-                        onExportData = { /* TODO: Implement */ },
-                        onPrivacyPolicy = { /* TODO: Open URL */ },
-                        onTermsOfService = { /* TODO: Open URL */ },
-                        onHelpCenter = { /* TODO: Open URL */ },
-                        onContactSupport = { /* TODO: Open email */ },
-                        onUpgrade = { /* TODO: Implement */ }
-                    )
-                }
-                
-                // Analytics Screen
-                if (showAnalyticsScreen) {
-                    com.baatcheet.app.ui.analytics.AnalyticsScreen(
-                        analyticsData = com.baatcheet.app.ui.analytics.AnalyticsData(
-                            totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
-                            totalConversations = state.conversations.size,
-                            totalProjects = state.projects.size,
-                            totalCollaborations = state.collaborations.size,
-                            imageGenerations = 0, // TODO: Get from backend
-                            voiceMinutes = 0, // TODO: Get from backend
-                            tokensUsed = state.usageInfo.tokensUsed.toLong(),
-                            tokensLimit = state.usageInfo.tokensLimit.toLong(),
-                            topModes = listOf(
-                                com.baatcheet.app.ui.analytics.ModeUsage("Chat", 45, 0.45f, GreenAccent),
-                                com.baatcheet.app.ui.analytics.ModeUsage("Code", 25, 0.25f, Color(0xFF007AFF)),
-                                com.baatcheet.app.ui.analytics.ModeUsage("Research", 15, 0.15f, Color(0xFF7C4DFF)),
-                                com.baatcheet.app.ui.analytics.ModeUsage("Image", 10, 0.10f, Color(0xFFFF2D55)),
-                                com.baatcheet.app.ui.analytics.ModeUsage("Other", 5, 0.05f, GrayText)
-                            ),
-                            weeklyActivity = listOf(
-                                com.baatcheet.app.ui.analytics.DayActivity("Mon", 12),
-                                com.baatcheet.app.ui.analytics.DayActivity("Tue", 8),
-                                com.baatcheet.app.ui.analytics.DayActivity("Wed", 15),
-                                com.baatcheet.app.ui.analytics.DayActivity("Thu", 20),
-                                com.baatcheet.app.ui.analytics.DayActivity("Fri", 18),
-                                com.baatcheet.app.ui.analytics.DayActivity("Sat", 5),
-                                com.baatcheet.app.ui.analytics.DayActivity("Sun", 3)
-                            ),
-                            topTopics = listOf(
-                                com.baatcheet.app.ui.analytics.TopicUsage("Android", 23),
-                                com.baatcheet.app.ui.analytics.TopicUsage("Kotlin", 18),
-                                com.baatcheet.app.ui.analytics.TopicUsage("API", 12),
-                                com.baatcheet.app.ui.analytics.TopicUsage("UI/UX", 8)
-                            ),
-                            streak = 7,
-                            lastActive = "Today"
-                        ),
-                        isLoading = false,
-                        onBack = { showAnalyticsScreen = false },
-                        onRefresh = { viewModel.loadAnalytics() }
-                    )
-                }
-                
-                // Collaborations Screen (Full screen like ChatGPT Teams)
-                if (showCollaborationsScreen) {
-                    CollaborationsScreen(
-                        collaborations = state.collaborations,
-                        pendingInvitations = state.pendingInvitations,
-                        isLoading = state.isLoadingProjects,
-                        isLoadingInvitations = state.isLoadingInvitations,
-                        onBack = { showCollaborationsScreen = false },
-                        onProjectClick = { projectId ->
-                            viewModel.loadProjectConversations(projectId)
-                            showCollaborationsScreen = false
-                        },
-                        onAcceptInvitation = { invitationId ->
-                            viewModel.respondToInvitation(invitationId, true) { success, message ->
-                                if (success) {
-                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
-                                } else {
-                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        },
-                        onDeclineInvitation = { invitationId ->
-                            viewModel.respondToInvitation(invitationId, false) { success, message ->
-                                if (success) {
-                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
-                                } else {
-                                    android.widget.Toast.makeText(context, "Error: $message", android.widget.Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        },
-                        onRefresh = {
-                            viewModel.loadProjects()
-                            viewModel.loadPendingInvitations()
-                        }
-                    )
-                }
             }
-            
-            // Show error snackbar if there's an error
-            if (state.error != null) {
-                LaunchedEffect(state.error) {
-                    // Error is shown in the message, clear it
-                    kotlinx.coroutines.delay(3000)
-                    viewModel.clearError()
-                }
-            }
+                } // Close else block of when statement
+            } // Close when statement
+        } // Close Box
+    } // Close ModalNavigationDrawer
+    
+    // Show error snackbar if there's an error
+    if (state.error != null) {
+        LaunchedEffect(state.error) {
+            // Error is shown in the message, clear it
+            kotlinx.coroutines.delay(3000)
+            viewModel.clearError()
         }
     }
 }
@@ -606,14 +673,6 @@ private fun ChatDrawerContent(
                 onClick = onNewChat
             )
             
-            // Collaborations Tab (replaces Images)
-            DrawerMenuItemWithBadge(
-                icon = Icons.Outlined.Group,
-                text = "Collaborations",
-                badge = state.collaborations.size + state.pendingInvitationsCount,
-                onClick = onCollaborationsClick
-            )
-            
             DrawerMenuItem(
                 icon = Icons.Outlined.Analytics,
                 text = "Analytics",
@@ -623,6 +682,16 @@ private fun ChatDrawerContent(
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider(color = InputBorder)
             Spacer(modifier = Modifier.height(8.dp))
+            
+            // Projects Section Header
+            Text(
+                text = "PROJECTS",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GrayText,
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
             
             DrawerMenuItem(
                 icon = Icons.Outlined.AddBox,
@@ -664,11 +733,23 @@ private fun ChatDrawerContent(
             
             // Collaborations section - More prominent like ChatGPT Teams
             Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = InputBorder)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Collaborations Section Header
+            Text(
+                text = "COLLABORATIONS",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = GrayText,
+                letterSpacing = 1.sp,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
             
             // Collaborations header with badge
             DrawerMenuItemWithBadge(
                 icon = Icons.Outlined.Group,
-                text = "Collaborations",
+                text = "View All",
                 badge = state.collaborations.size + state.pendingInvitationsCount,
                 onClick = onCollaborationsClick
             )
@@ -1306,7 +1387,8 @@ private fun ChatHeader(
     onNewChat: () -> Unit,
     onShareChat: () -> Unit = {},
     onAddPeople: (String) -> Unit = {},
-    hasMessages: Boolean = false
+    hasMessages: Boolean = false,
+    isProjectChat: Boolean = false // Collaboration only available for project chats
 ) {
     var showShareMenu by remember { mutableStateOf(false) }
     
@@ -1387,7 +1469,8 @@ private fun ChatHeader(
             },
             onAddPeople = { email ->
                 onAddPeople(email)
-            }
+            },
+            isProjectChat = isProjectChat // Only show "Add People" for project chats
         )
     }
 }
@@ -1418,7 +1501,7 @@ private fun EmptyStateContent(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Mode suggestion chips - First row
+        // Mode suggestion chips - First row (clickable suggestions)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -1427,7 +1510,7 @@ private fun EmptyStateContent(
             HomeModeChip(
                 icon = "🎨",
                 label = "Create image",
-                onClick = { onModeSelect("image-generation") }
+                onClick = { onSuggestionClick("Create an image of ") }
             )
             Spacer(modifier = Modifier.width(8.dp))
             HomeModeChip(
@@ -1448,19 +1531,19 @@ private fun EmptyStateContent(
             HomeModeChip(
                 icon = "📊",
                 label = "Analyze data",
-                onClick = { onModeSelect("data-analysis") }
+                onClick = { onSuggestionClick("Analyze this data: ") }
             )
             Spacer(modifier = Modifier.width(8.dp))
             HomeModeChip(
                 icon = "💻",
                 label = "Code",
-                onClick = { onModeSelect("code") }
+                onClick = { onSuggestionClick("Write code to ") }
             )
             Spacer(modifier = Modifier.width(8.dp))
             HomeModeChip(
-                icon = "⋯",
-                label = "More",
-                onClick = { /* Show more options */ }
+                icon = "🔍",
+                label = "Research",
+                onClick = { onSuggestionClick("Research about ") }
             )
         }
         
@@ -1639,6 +1722,20 @@ private fun MessageBubble(
                 Column(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
+                    // Show attachments if present (for user messages)
+                    if (message.attachments.isNotEmpty() && message.role == MessageRole.USER) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            message.attachments.forEach { attachment ->
+                                MessageAttachmentThumbnail(attachment = attachment)
+                            }
+                        }
+                    }
+                    
                     if (message.isStreaming && message.content.isEmpty()) {
                         TypingIndicator()
                     } else if (message.isStreaming) {
@@ -1949,49 +2046,85 @@ private fun FilePreviewItem(
 ) {
     Box(
         modifier = Modifier
-            .size(64.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .size(72.dp)
+            .clip(RoundedCornerShape(12.dp))
             .border(
                 width = 2.dp,
                 color = when (file.status) {
                     FileUploadStatus.READY -> GreenAccent
                     FileUploadStatus.FAILED -> Color.Red
+                    FileUploadStatus.UPLOADING, FileUploadStatus.PROCESSING -> Color(0xFF2196F3)
                     else -> GrayText
                 },
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
             .background(ChipBackground)
     ) {
         // File icon/preview
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            if (file.mimeType.startsWith("image/")) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = "Image",
-                    tint = GrayText,
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Description,
-                    contentDescription = "Document",
-                    tint = GrayText,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            
-            Text(
-                text = file.filename.take(8) + if (file.filename.length > 8) "..." else "",
-                fontSize = 9.sp,
-                color = GrayText,
-                maxLines = 1
+        if (file.mimeType.startsWith("image/")) {
+            // Show actual image thumbnail for images
+            AsyncImage(
+                model = file.uri,
+                contentDescription = "Image preview",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
             )
+        } else {
+            // Document preview with icon and filename
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF4CAF50).copy(alpha = 0.1f),
+                                Color(0xFF2196F3).copy(alpha = 0.1f)
+                            )
+                        )
+                    )
+                    .padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Document type icon
+                val icon = when {
+                    file.mimeType.contains("pdf") -> Icons.Default.PictureAsPdf
+                    file.mimeType.contains("word") || file.mimeType.contains("doc") -> Icons.Default.Article
+                    file.mimeType.contains("text") -> Icons.Default.TextSnippet
+                    else -> Icons.Default.Description
+                }
+                
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Document",
+                    tint = GreenAccent,
+                    modifier = Modifier.size(28.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Filename
+                Text(
+                    text = file.filename.take(10) + if (file.filename.length > 10) "..." else "",
+                    fontSize = 8.sp,
+                    color = DarkText,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+                
+                // File extension badge
+                val extension = file.filename.substringAfterLast('.', "").uppercase()
+                if (extension.isNotEmpty() && extension.length <= 4) {
+                    Text(
+                        text = extension,
+                        fontSize = 7.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .background(GreenAccent, RoundedCornerShape(2.dp))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+            }
         }
         
         // Status indicator
@@ -2082,7 +2215,9 @@ private fun ChatInputBar(
     promptAnalysis: com.baatcheet.app.domain.model.PromptAnalysisResult? = null,
     onModeClick: () -> Unit = {},
     selectedPlusMode: String? = null,
-    onPlusModeSelect: (String) -> Unit = {}
+    onPlusModeSelect: (String) -> Unit = {},
+    uploadLimitReached: Boolean = false,
+    imageGenLimitReached: Boolean = false
 ) {
     var showPlusMenu by remember { mutableStateOf(false) }
     
@@ -2340,7 +2475,9 @@ private fun ChatInputBar(
             onModeSelect = { mode ->
                 showPlusMenu = false
                 onPlusModeSelect(mode)
-            }
+            },
+            uploadLimitReached = uploadLimitReached,
+            imageGenLimitReached = imageGenLimitReached
         )
     }
 }
@@ -2355,9 +2492,12 @@ private fun PlusMenuBottomSheet(
     onCameraClick: () -> Unit,
     onPhotosClick: () -> Unit,
     onFilesClick: () -> Unit,
-    onModeSelect: (String) -> Unit
+    onModeSelect: (String) -> Unit,
+    uploadLimitReached: Boolean = false,
+    imageGenLimitReached: Boolean = false
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2379,17 +2519,38 @@ private fun PlusMenuBottomSheet(
                 MediaOptionButton(
                     icon = Icons.Outlined.CameraAlt,
                     label = "Camera",
-                    onClick = onCameraClick
+                    onClick = {
+                        if (uploadLimitReached) {
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            onCameraClick()
+                        }
+                    },
+                    enabled = !uploadLimitReached
                 )
                 MediaOptionButton(
                     icon = Icons.Outlined.Image,
                     label = "Photos",
-                    onClick = onPhotosClick
+                    onClick = {
+                        if (uploadLimitReached) {
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            onPhotosClick()
+                        }
+                    },
+                    enabled = !uploadLimitReached
                 )
                 MediaOptionButton(
                     icon = Icons.Outlined.AttachFile,
                     label = "Files",
-                    onClick = onFilesClick
+                    onClick = {
+                        if (uploadLimitReached) {
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            onFilesClick()
+                        }
+                    },
+                    enabled = !uploadLimitReached
                 )
             }
             
@@ -2404,9 +2565,16 @@ private fun PlusMenuBottomSheet(
             ) {
                 ModeMenuItem(
                     icon = "🎨",
-                    title = "Create image",
-                    subtitle = "Visualize anything",
-                    onClick = { onModeSelect("image-generation") }
+                    title = if (imageGenLimitReached) "Create image (limit reached)" else "Create image",
+                    subtitle = if (imageGenLimitReached) "Try again in 24 hours" else "Visualize anything",
+                    onClick = {
+                        if (imageGenLimitReached) {
+                            android.widget.Toast.makeText(context, "Daily image generation limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            onModeSelect("image-generation")
+                        }
+                    },
+                    enabled = !imageGenLimitReached
                 )
                 ModeMenuItem(
                     icon = "💡",
@@ -2453,14 +2621,17 @@ private fun PlusMenuBottomSheet(
 private fun MediaOptionButton(
     icon: ImageVector,
     label: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
+    val alpha = if (enabled) 1f else 0.4f
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(16.dp)
+            .alpha(alpha)
     ) {
         Box(
             modifier = Modifier
@@ -2471,7 +2642,7 @@ private fun MediaOptionButton(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = DarkText,
+                tint = if (enabled) DarkText else GrayText,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -2479,7 +2650,7 @@ private fun MediaOptionButton(
         Text(
             text = label,
             fontSize = 13.sp,
-            color = DarkText
+            color = if (enabled) DarkText else GrayText
         )
     }
 }
@@ -2489,14 +2660,17 @@ private fun ModeMenuItem(
     icon: String,
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
+    val alpha = if (enabled) 1f else 0.4f
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 8.dp),
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 8.dp)
+            .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -2509,13 +2683,78 @@ private fun ModeMenuItem(
                 text = title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = DarkText
+                color = if (enabled) DarkText else GrayText
             )
             Text(
                 text = subtitle,
                 fontSize = 13.sp,
                 color = GrayText
             )
+        }
+    }
+}
+
+/**
+ * Attachment thumbnail in a message bubble
+ */
+@Composable
+private fun MessageAttachmentThumbnail(
+    attachment: com.baatcheet.app.domain.model.MessageAttachment
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(ChipBackground)
+    ) {
+        if (attachment.mimeType.startsWith("image/")) {
+            // Show image thumbnail
+            val imageUri = attachment.thumbnailUri ?: attachment.url
+            if (imageUri != null) {
+                androidx.compose.foundation.Image(
+                    painter = rememberAsyncImagePainter(imageUri),
+                    contentDescription = attachment.filename,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.Image,
+                    contentDescription = attachment.filename,
+                    tint = GrayText,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        } else {
+            // Show document icon based on type
+            val icon = when {
+                attachment.mimeType.contains("pdf") -> Icons.Outlined.Description
+                attachment.mimeType.contains("word") || attachment.mimeType.contains("doc") -> Icons.Outlined.Description
+                attachment.mimeType.contains("text") -> Icons.Outlined.Description
+                else -> Icons.Outlined.Folder
+            }
+            
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = attachment.filename,
+                    tint = GreenAccent,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = attachment.filename.takeLast(8),
+                    fontSize = 8.sp,
+                    color = GrayText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -2855,7 +3094,8 @@ private fun ShareChatBottomSheet(
     onDismiss: () -> Unit,
     onShareLink: () -> Unit,
     onCopyLink: () -> Unit,
-    onAddPeople: (String) -> Unit = {}
+    onAddPeople: (String) -> Unit = {},
+    isProjectChat: Boolean = false // Only show "Add People" for project chats
 ) {
     val sheetState = rememberModalBottomSheetState()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -2952,52 +3192,54 @@ private fun ShareChatBottomSheet(
                 Text("Copy Link", fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
             
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Add people option
-            Surface(
-                onClick = { showAddPeopleDialog = true },
-                shape = RoundedCornerShape(12.dp),
-                color = ChipBackground
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            // Add people option - Only show for project chats
+            if (isProjectChat) {
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                Surface(
+                    onClick = { showAddPeopleDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    color = ChipBackground
                 ) {
-                    Icon(
-                        Icons.Outlined.PersonAdd,
-                        contentDescription = "Add people",
-                        tint = GreenAccent,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Add people",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = DarkText
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.PersonAdd,
+                            contentDescription = "Add people",
+                            tint = GreenAccent,
+                            modifier = Modifier.size(24.dp)
                         )
-                        Text(
-                            text = "Invite by email to collaborate",
-                            fontSize = 13.sp,
-                            color = GrayText
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Add people",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = DarkText
+                            )
+                            Text(
+                                text = "Invite by email to collaborate on this project",
+                                fontSize = 13.sp,
+                                color = GrayText
+                            )
+                        }
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = GrayText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = GrayText,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
         }
     }
     
-    // Add People Dialog
+    // Add People Dialog - Only accessible for project chats
     if (showAddPeopleDialog) {
         AlertDialog(
             onDismissRequest = { showAddPeopleDialog = false },
@@ -3364,4 +3606,25 @@ private fun ImageGenerationPlaceholder() {
             }
         }
     }
+}
+
+/**
+ * Helper function to get filename from URI
+ */
+private fun getFileNameFromUri(context: Context, uri: Uri): String? {
+    var name: String? = null
+    
+    try {
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (nameIndex >= 0 && cursor.moveToFirst()) {
+                name = cursor.getString(nameIndex)
+            }
+        }
+    } catch (e: Exception) {
+        // Fallback to URI last path segment
+        name = uri.lastPathSegment
+    }
+    
+    return name
 }

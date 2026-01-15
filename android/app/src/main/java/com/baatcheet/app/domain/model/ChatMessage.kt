@@ -11,7 +11,20 @@ data class ChatMessage(
     val role: MessageRole,
     val timestamp: Long = System.currentTimeMillis(),
     val isStreaming: Boolean = false,
-    val conversationId: String? = null
+    val conversationId: String? = null,
+    val attachments: List<MessageAttachment> = emptyList()
+)
+
+/**
+ * Attachment in a message (image, document, etc.)
+ */
+data class MessageAttachment(
+    val id: String,
+    val filename: String,
+    val mimeType: String,
+    val url: String? = null,
+    val thumbnailUri: String? = null, // Local URI for thumbnail preview
+    val status: String = "ready"
 )
 
 /**

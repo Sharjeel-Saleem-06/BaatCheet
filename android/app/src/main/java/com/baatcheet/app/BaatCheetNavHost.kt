@@ -24,6 +24,8 @@ import com.baatcheet.app.ui.memory.MemoryScreen
 import com.baatcheet.app.ui.projects.ProjectsScreen
 import com.baatcheet.app.ui.settings.SettingsScreen
 import com.baatcheet.app.ui.splash.AnimatedSplashContent
+import com.baatcheet.app.ui.settings.UserSettings
+import com.baatcheet.app.ui.analytics.AnalyticsData
 
 /**
  * BaatCheet Navigation Host
@@ -159,21 +161,58 @@ fun BaatCheetNavHost() {
         
         // Settings Screen
         composable(Routes.SETTINGS) {
+            // Provide default UserSettings - in a real app, this would come from a ViewModel
+            val defaultSettings = UserSettings(
+                displayName = "User",
+                email = "user@example.com",
+                tier = "free"
+            )
+            
             SettingsScreen(
+                userSettings = defaultSettings,
                 onBack = { navController.popBackStack() },
                 onLogout = {
                     SessionManager.clearSession(context)
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.MAIN) { inclusive = true }
                     }
-                }
+                },
+                onDeleteAccount = { /* TODO: Implement delete account */ },
+                onThemeChange = { /* TODO: Implement theme change */ },
+                onLanguageChange = { /* TODO: Implement language change */ },
+                onVoiceEnabledChange = { /* TODO: Implement voice toggle */ },
+                onAutoPlayVoiceChange = { /* TODO: Implement auto-play toggle */ },
+                onStreamingEnabledChange = { /* TODO: Implement streaming toggle */ },
+                onHapticFeedbackChange = { /* TODO: Implement haptic toggle */ },
+                onNotificationsChange = { /* TODO: Implement notifications toggle */ },
+                onSaveHistoryChange = { /* TODO: Implement save history toggle */ },
+                onShareAnalyticsChange = { /* TODO: Implement analytics toggle */ },
+                onClearHistory = { /* TODO: Implement clear history */ },
+                onExportData = { /* TODO: Implement export data */ },
+                onPrivacyPolicy = { /* TODO: Open privacy policy */ },
+                onTermsOfService = { /* TODO: Open terms of service */ },
+                onHelpCenter = { /* TODO: Open help center */ },
+                onContactSupport = { /* TODO: Open contact support */ },
+                onUpgrade = { /* TODO: Implement upgrade */ }
             )
         }
         
         // Analytics Screen
         composable(Routes.ANALYTICS) {
+            // Provide default AnalyticsData - in a real app, this would come from a ViewModel
+            val defaultAnalytics = AnalyticsData(
+                totalMessages = 0,
+                totalConversations = 0,
+                totalProjects = 0,
+                streak = 0,
+                lastActive = "Today"
+            )
+            
             AnalyticsScreen(
-                onBack = { navController.popBackStack() }
+                analyticsData = defaultAnalytics,
+                isLoading = false,
+                onBack = { navController.popBackStack() },
+                onRefresh = { /* TODO: Implement refresh */ }
             )
         }
         

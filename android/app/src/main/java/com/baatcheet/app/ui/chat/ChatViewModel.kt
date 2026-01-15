@@ -123,6 +123,14 @@ data class ChatState(
     val generatedImage: GeneratedImage? = null,
     val isGeneratingImage: Boolean = false,
     
+    // File Upload Limits
+    val uploadLimitReached: Boolean = false,
+    val uploadsUsedToday: Int = 0,
+    val uploadDailyLimit: Int = 4,
+    
+    // Image Generation Limits
+    val imageGenLimitReached: Boolean = false,
+    
     // Voice
     val isRecording: Boolean = false,
     val isTranscribing: Boolean = false,
@@ -160,6 +168,7 @@ class ChatViewModel @Inject constructor(
         loadProjects()
         loadAIModes()
         loadUsage()
+        loadUploadStatus()
     }
     
     // ============================================
@@ -202,11 +211,40 @@ class ChatViewModel @Inject constructor(
         // Store the selected mode for the API call
         val modeToSend = selectedMode
         
-        // Add user message immediately
+        // Check if this is an image generation request
+        val isImageRequest = selectedMode == "image-generation" || 
+                            content.lowercase().let { 
+                                it.contains("create image") || 
+                                it.contains("generate image") || 
+                                it.contains("draw") ||
+                                it.contains("make image") ||
+                                it.contains("image of")
+                            }
+        
+        // Set image generating state if applicable
+        if (isImageRequest) {
+            _state.update { it.copy(isGeneratingImage = true) }
+        }
+        
+        // Convert uploaded files to message attachments
+        val messageAttachments = _state.value.uploadedFiles.filter { 
+            it.status == FileUploadStatus.READY || it.status == FileUploadStatus.PROCESSING 
+        }.map { file ->
+            com.baatcheet.app.domain.model.MessageAttachment(
+                id = file.remoteId ?: file.id,
+                filename = file.filename,
+                mimeType = file.mimeType,
+                thumbnailUri = file.uri.toString(),
+                status = file.status.name.lowercase()
+            )
+        }
+        
+        // Add user message immediately with attachments
         val userMessage = ChatMessage(
             content = content.trim(),
             role = MessageRole.USER,
-            conversationId = _state.value.currentConversationId
+            conversationId = _state.value.currentConversationId,
+            attachments = messageAttachments
         )
         
         _state.update { 
@@ -228,12 +266,16 @@ class ChatViewModel @Inject constructor(
             it.copy(messages = it.messages + streamingMessage)
         }
         
+        // Get uploaded file IDs for context
+        val uploadedFileIds = getUploadedFileIds()
+        
         // Send to API
         viewModelScope.launch {
             when (val result = chatRepository.sendMessage(
                 message = content,
                 conversationId = _state.value.currentConversationId,
-                mode = modeToSend
+                mode = modeToSend,
+                imageIds = uploadedFileIds.ifEmpty { null }
             )) {
                 is ApiResult.Success -> {
                     val response = result.data
@@ -249,6 +291,7 @@ class ChatViewModel @Inject constructor(
                         state.copy(
                             messages = updatedMessages,
                             isLoading = false,
+                            isGeneratingImage = false, // Clear image generation state
                             currentConversationId = response.conversationId ?: state.currentConversationId,
                             promptAnalysis = null // Clear analysis after sending
                         )
@@ -280,6 +323,7 @@ class ChatViewModel @Inject constructor(
                         state.copy(
                             messages = updatedMessages,
                             isLoading = false,
+                            isGeneratingImage = false, // Clear image generation state on error
                             error = result.message
                         )
                     }
@@ -919,19 +963,206 @@ class ChatViewModel @Inject constructor(
     // ============================================
     
     /**
-     * Add file to upload queue
+     * Load upload status from backend
      */
-    fun addFileToUpload(uri: Uri, filename: String, mimeType: String) {
+    fun loadUploadStatus() {
+        viewModelScope.launch {
+            when (val result = chatRepository.getUploadStatus()) {
+                is ApiResult.Success -> {
+                    val status = result.data
+                    _state.update { it.copy(
+                        uploadsUsedToday = status.usedToday,
+                        uploadDailyLimit = status.dailyLimit,
+                        uploadLimitReached = !status.canUpload
+                    )}
+                }
+                is ApiResult.Error -> {
+                    // Keep defaults on error
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Check if user can upload more files
+     */
+    fun canUploadFile(): Boolean {
+        return _state.value.uploadsUsedToday < _state.value.uploadDailyLimit && !_state.value.uploadLimitReached
+    }
+    
+    /**
+     * Get remaining uploads message
+     */
+    fun getRemainingUploadsMessage(): String {
+        val remaining = _state.value.uploadDailyLimit - _state.value.uploadsUsedToday
+        return if (remaining > 0) {
+            "$remaining uploads remaining today"
+        } else {
+            "Daily upload limit reached. Try again in 24 hours."
+        }
+    }
+    
+    /**
+     * Add file to upload queue and start uploading to backend
+     */
+    fun addFileToUpload(uri: Uri, filename: String, mimeType: String, context: android.content.Context): Boolean {
+        // Check upload limit first
+        if (!canUploadFile()) {
+            _state.update { it.copy(
+                error = "Daily upload limit reached (${_state.value.uploadDailyLimit}/day). Try again in 24 hours.",
+                uploadLimitReached = true
+            )}
+            return false
+        }
+        
+        val localId = "local-${System.currentTimeMillis()}"
         val fileState = UploadedFileState(
-            id = "local-${System.currentTimeMillis()}",
+            id = localId,
             uri = uri,
             filename = filename,
             mimeType = mimeType,
-            status = FileUploadStatus.PENDING
+            status = FileUploadStatus.UPLOADING
         )
         
         _state.update { 
-            it.copy(uploadedFiles = it.uploadedFiles + fileState)
+            it.copy(
+                uploadedFiles = it.uploadedFiles + fileState,
+                isUploading = true
+            )
+        }
+        
+        // Upload to backend
+        viewModelScope.launch {
+            try {
+                // Read file from URI
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream == null) {
+                    updateFileStatus(localId, FileUploadStatus.FAILED)
+                    _state.update { it.copy(isUploading = false, error = "Could not read file") }
+                    return@launch
+                }
+                
+                val bytes = inputStream.readBytes()
+                inputStream.close()
+                
+                // Create multipart request
+                val requestBody = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("file", filename, requestBody)
+                
+                // Upload to backend
+                when (val result = chatRepository.uploadDocument(part)) {
+                    is ApiResult.Success -> {
+                        val uploadedDoc = result.data
+                        _state.update { state ->
+                            val updatedFiles = state.uploadedFiles.map { f ->
+                                if (f.id == localId) {
+                                    f.copy(
+                                        remoteId = uploadedDoc.id,
+                                        status = if (uploadedDoc.status == "ready" || uploadedDoc.status == "completed") FileUploadStatus.READY else FileUploadStatus.PROCESSING,
+                                        extractedText = uploadedDoc.extractedText
+                                    )
+                                } else f
+                            }
+                            state.copy(
+                                uploadedFiles = updatedFiles,
+                                isUploading = false,
+                                uploadsUsedToday = state.uploadsUsedToday + 1 // Increment local counter
+                            )
+                        }
+                        
+                        // Poll for processing status if still processing
+                        if (uploadedDoc.status != "ready" && uploadedDoc.status != "completed") {
+                            pollDocumentStatus(localId, uploadedDoc.id)
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        // Check if it's a rate limit error
+                        val isLimitError = result.message.contains("limit", ignoreCase = true) || result.code == 429
+                        
+                        updateFileStatus(localId, FileUploadStatus.FAILED)
+                        _state.update { it.copy(
+                            uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }, // Remove failed file
+                            isUploading = false,
+                            uploadLimitReached = isLimitError,
+                            error = result.message
+                        )}
+                    }
+                    is ApiResult.Loading -> { /* Already handled */ }
+                }
+            } catch (e: Exception) {
+                updateFileStatus(localId, FileUploadStatus.FAILED)
+                _state.update { it.copy(
+                    uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }, // Remove failed file
+                    isUploading = false,
+                    error = "Upload error: ${e.message}"
+                )}
+            }
+        }
+        return true
+    }
+    
+    /**
+     * Poll document processing status until ready
+     */
+    private fun pollDocumentStatus(localId: String, remoteId: String) {
+        viewModelScope.launch {
+            var attempts = 0
+            val maxAttempts = 30 // 30 seconds max
+            
+            while (attempts < maxAttempts) {
+                kotlinx.coroutines.delay(1000) // Wait 1 second between polls
+                
+                when (val result = chatRepository.getDocumentStatus(remoteId)) {
+                    is ApiResult.Success -> {
+                        val status = result.data
+                        if (status.status == "ready" || status.status == "completed") {
+                            _state.update { state ->
+                                val updatedFiles = state.uploadedFiles.map { f ->
+                                    if (f.id == localId) {
+                                        f.copy(
+                                            status = FileUploadStatus.READY,
+                                            extractedText = status.extractedText
+                                        )
+                                    } else f
+                                }
+                                state.copy(uploadedFiles = updatedFiles)
+                            }
+                            return@launch
+                        } else if (status.status == "error" || status.status == "failed") {
+                            updateFileStatus(localId, FileUploadStatus.FAILED)
+                            return@launch
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        // Continue polling on error
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+                attempts++
+            }
+            
+            // Timeout - mark as ready anyway to allow sending
+            _state.update { state ->
+                val updatedFiles = state.uploadedFiles.map { f ->
+                    if (f.id == localId && f.status == FileUploadStatus.PROCESSING) {
+                        f.copy(status = FileUploadStatus.READY)
+                    } else f
+                }
+                state.copy(uploadedFiles = updatedFiles)
+            }
+        }
+    }
+    
+    /**
+     * Update file status
+     */
+    private fun updateFileStatus(fileId: String, status: FileUploadStatus) {
+        _state.update { state ->
+            val updatedFiles = state.uploadedFiles.map { f ->
+                if (f.id == fileId) f.copy(status = status) else f
+            }
+            state.copy(uploadedFiles = updatedFiles)
         }
     }
     
@@ -956,6 +1187,15 @@ class ChatViewModel @Inject constructor(
      */
     fun areAllFilesReady(): Boolean {
         return _state.value.uploadedFiles.all { it.status == FileUploadStatus.READY }
+    }
+    
+    /**
+     * Get list of remote IDs for uploaded files
+     */
+    fun getUploadedFileIds(): List<String> {
+        return _state.value.uploadedFiles
+            .filter { it.status == FileUploadStatus.READY && it.remoteId != null }
+            .mapNotNull { it.remoteId }
     }
     
     // ============================================
@@ -1082,7 +1322,12 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = chatRepository.getImageGenStatus()) {
                 is ApiResult.Success -> {
-                    _state.update { it.copy(imageGenStatus = result.data) }
+                    _state.update { 
+                        it.copy(
+                            imageGenStatus = result.data,
+                            imageGenLimitReached = !result.data.canGenerate
+                        ) 
+                    }
                 }
                 is ApiResult.Error -> { /* Ignore */ }
                 is ApiResult.Loading -> { /* Ignore */ }
@@ -1298,27 +1543,70 @@ class ChatViewModel @Inject constructor(
     /**
      * Speak text using TTS
      */
-    fun speakText(text: String, voice: String = "alloy", onAudioReady: ((ByteArray) -> Unit)? = null) {
-        viewModelScope.launch {
-            _state.update { it.copy(isSpeaking = true) }
-            
-            when (val result = chatRepository.generateSpeech(text, voice)) {
-                is ApiResult.Success -> {
-                    onAudioReady?.invoke(result.data)
-                    _state.update { it.copy(isSpeaking = false) }
-                    // TODO: Play the audio bytes using MediaPlayer
+    // Text-to-speech engine (initialized lazily in ChatScreen)
+    private var tts: android.speech.tts.TextToSpeech? = null
+    private var ttsInitialized = false
+    
+    fun initTTS(context: android.content.Context) {
+        if (tts == null) {
+            tts = android.speech.tts.TextToSpeech(context) { status ->
+                ttsInitialized = status == android.speech.tts.TextToSpeech.SUCCESS
+                if (ttsInitialized) {
+                    tts?.language = java.util.Locale.US
+                    tts?.setSpeechRate(1.0f)
                 }
-                is ApiResult.Error -> {
-                    _state.update { 
-                        it.copy(
-                            isSpeaking = false,
-                            error = result.message
-                        )
-                    }
-                }
-                is ApiResult.Loading -> { /* Ignore */ }
             }
         }
+    }
+    
+    fun speakText(text: String, voice: String = "alloy", onAudioReady: ((ByteArray) -> Unit)? = null) {
+        // Use Android's built-in TTS for immediate response
+        if (ttsInitialized && tts != null) {
+            _state.update { it.copy(isSpeaking = true) }
+            
+            // Set utterance listener to know when speech is done
+            tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) {}
+                override fun onDone(utteranceId: String?) {
+                    viewModelScope.launch {
+                        _state.update { it.copy(isSpeaking = false) }
+                    }
+                }
+                override fun onError(utteranceId: String?) {
+                    viewModelScope.launch {
+                        _state.update { it.copy(isSpeaking = false, error = "Speech failed") }
+                    }
+                }
+            })
+            
+            // Clean text for TTS (remove markdown, code blocks, etc.)
+            val cleanText = text
+                .replace(Regex("```[\\s\\S]*?```"), " code block ")
+                .replace(Regex("`[^`]+`"), "")
+                .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+                .replace(Regex("\\*([^*]+)\\*"), "$1")
+                .replace(Regex("#+ "), "")
+                .replace(Regex("\\[([^\\]]+)\\]\\([^)]+\\)"), "$1")
+                .replace(Regex("\\|[^|]+\\|"), " ")
+                .trim()
+            
+            val params = android.os.Bundle()
+            tts?.speak(cleanText, android.speech.tts.TextToSpeech.QUEUE_FLUSH, params, "msg_${System.currentTimeMillis()}")
+        } else {
+            _state.update { it.copy(error = "Text-to-speech not available") }
+        }
+    }
+    
+    fun stopSpeaking() {
+        tts?.stop()
+        _state.update { it.copy(isSpeaking = false) }
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        tts?.shutdown()
+        tts = null
+    }
     }
     
     /**

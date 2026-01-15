@@ -54,13 +54,15 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = api.getApiKeys()
                 if (response.isSuccessful && response.body()?.success == true) {
-                    val keys = response.body()?.data?.map { dto ->
-                        ApiKeyItem(
-                            id = dto.id,
-                            name = dto.name,
-                            keyPreview = dto.keyPreview,
-                            isActive = dto.isActive ?: true
-                        )
+                    val keys = response.body()?.data?.mapNotNull { dto ->
+                        if (dto.name != null && dto.keyPreview != null) {
+                            ApiKeyItem(
+                                id = dto.id,
+                                name = dto.name,
+                                keyPreview = dto.keyPreview,
+                                isActive = dto.isActive ?: true
+                            )
+                        } else null
                     } ?: emptyList()
                     _uiState.update { it.copy(apiKeys = keys, isLoadingApiKeys = false) }
                 } else {
@@ -84,13 +86,15 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = api.getWebhooks()
                 if (response.isSuccessful && response.body()?.success == true) {
-                    val webhooks = response.body()?.data?.map { dto ->
-                        WebhookItem(
-                            id = dto.id,
-                            url = dto.url,
-                            events = dto.events,
-                            isActive = dto.isActive ?: true
-                        )
+                    val webhooks = response.body()?.data?.mapNotNull { dto ->
+                        if (dto.url != null && dto.events != null) {
+                            WebhookItem(
+                                id = dto.id,
+                                url = dto.url,
+                                events = dto.events,
+                                isActive = dto.isActive ?: true
+                            )
+                        } else null
                     } ?: emptyList()
                     _uiState.update { it.copy(webhooks = webhooks, isLoadingWebhooks = false) }
                 } else {
@@ -218,3 +222,18 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(error = null) }
     }
 }
+
+// Data classes for API Keys and Webhooks
+data class ApiKeyItem(
+    val id: String,
+    val name: String,
+    val keyPreview: String,
+    val isActive: Boolean = true
+)
+
+data class WebhookItem(
+    val id: String,
+    val url: String,
+    val events: List<String>,
+    val isActive: Boolean = true
+)

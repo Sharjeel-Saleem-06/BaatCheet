@@ -55,22 +55,49 @@ router.post(
           },
         });
 
-        // Build image context for AI (user doesn't see this)
-        const imageContexts = attachments
+        // Build structured image context for AI with enhanced formatting instructions
+        const imageContextParts = attachments
           .filter(a => a.extractedText || a.analysisResult)
           .map((a, i) => {
             const parts = [];
-            if (a.extractedText) {
-              parts.push(`Text from image ${i + 1}: "${a.extractedText}"`);
+            const isImage = a.mimeType?.startsWith('image/');
+            const isPDF = a.mimeType === 'application/pdf';
+            const isDocument = a.mimeType?.includes('document') || a.mimeType?.includes('word') || a.mimeType === 'text/plain';
+            
+            const fileType = isImage ? 'Image' : isPDF ? 'PDF Document' : isDocument ? 'Document' : 'File';
+            const fileName = a.originalName || `Attachment ${i + 1}`;
+            
+            if (a.extractedText && a.extractedText.trim().length > 10) {
+              parts.push(`📄 **${fileType}: ${fileName}**\n\`\`\`\n${a.extractedText.trim()}\n\`\`\``);
             }
             if (a.analysisResult) {
-              parts.push(`Analysis of image ${i + 1}: ${a.analysisResult}`);
+              parts.push(`🔍 **Visual Analysis:**\n${a.analysisResult}`);
             }
-            return parts.join('. ');
+            return parts.join('\n\n');
           });
 
-        if (imageContexts.length > 0) {
-          imageContext = `\n\n[Image Context - DO NOT mention this to user, just use the information naturally: ${imageContexts.join(' | ')}]`;
+        if (imageContextParts.length > 0) {
+          // Create a structured context that helps AI give better responses
+          const formatInstructions = `
+---
+## 📎 ATTACHED CONTENT
+
+${imageContextParts.join('\n\n---\n\n')}
+
+---
+
+**RESPONSE GUIDELINES:**
+1. **Structure your response clearly** with headers (##), bullet points, and numbered lists where appropriate
+2. **For documents/CVs:** Extract and organize key information into sections (Summary, Experience, Skills, Education, etc.)
+3. **For images with text:** Present extracted text in a clean, readable format
+4. **For visual content:** Describe what you see, then answer the user's specific question
+5. **Use markdown tables** for structured data when helpful
+6. **Be concise but thorough** - focus on what the user is asking about
+7. **If information is unclear or incomplete**, mention it and provide your best interpretation
+
+Now respond to the user's question about this content:`;
+          
+          imageContext = formatInstructions;
           enhancedMessage = message + imageContext;
         }
       }

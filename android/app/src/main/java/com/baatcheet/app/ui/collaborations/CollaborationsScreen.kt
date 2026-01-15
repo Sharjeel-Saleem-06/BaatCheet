@@ -93,13 +93,7 @@ fun CollaborationsScreen(
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = WhiteBackground,
-                contentColor = GreenAccent,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                        color = GreenAccent
-                    )
-                }
+                contentColor = GreenAccent
             ) {
                 tabs.forEachIndexed { index, (title, count) ->
                     Tab(
