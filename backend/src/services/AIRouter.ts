@@ -201,7 +201,11 @@ class AIRouterService {
 
     try {
       const groq = new Groq({ apiKey: keyData.key });
-      const model = request.model || 'llama-3.3-70b-versatile';
+      // Groq only supports Llama models - map any other model to Llama
+      const validGroqModels = ['llama-3.3-70b-versatile', 'llama-3.1-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+      const model = validGroqModels.includes(request.model || '') 
+        ? request.model! 
+        : 'llama-3.3-70b-versatile';
 
       const completion = await groq.chat.completions.create({
         model,

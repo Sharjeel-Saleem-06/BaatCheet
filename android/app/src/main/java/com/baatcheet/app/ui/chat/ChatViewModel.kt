@@ -293,70 +293,82 @@ class ChatViewModel @Inject constructor(
         // Get uploaded file IDs for context
         val uploadedFileIds = getUploadedFileIds()
         
-        // Send to API
+        // Send to API with proper error handling
         viewModelScope.launch {
-            when (val result = chatRepository.sendMessage(
-                message = content,
-                conversationId = _state.value.currentConversationId,
-                mode = modeToSend,
-                imageIds = uploadedFileIds.ifEmpty { null }
-            )) {
-                is ApiResult.Success -> {
-                    val response = result.data
-                    
-                    _state.update { state ->
-                        val updatedMessages = state.messages.toMutableList()
-                        val lastIndex = updatedMessages.lastIndex
+            try {
+                when (val result = chatRepository.sendMessage(
+                    message = content,
+                    conversationId = _state.value.currentConversationId,
+                    mode = modeToSend,
+                    imageIds = uploadedFileIds.ifEmpty { null }
+                )) {
+                    is ApiResult.Success -> {
+                        val response = result.data
                         
-                        if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
-                            updatedMessages[lastIndex] = response.copy(isStreaming = false)
-                        }
-                        
-                        state.copy(
-                            messages = updatedMessages,
-                            isLoading = false,
-                            isGeneratingImage = false, // Clear image generation state
-                            currentLoadingMode = null, // Clear loading mode indicator
-                            currentConversationId = response.conversationId ?: state.currentConversationId,
-                            promptAnalysis = null // Clear analysis after sending
-                        )
-                    }
-                    
-                    // Refresh conversations list
-                    loadConversations()
-                    
-                    // Load follow-up suggestions based on the response
-                    loadSuggestions(response.content)
-                    
-                    // Refresh usage (message count increased)
-                    loadUsage()
-                }
-                
-                is ApiResult.Error -> {
-                    _state.update { state ->
-                        val updatedMessages = state.messages.toMutableList()
-                        val lastIndex = updatedMessages.lastIndex
-                        
-                        if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
-                            updatedMessages[lastIndex] = ChatMessage(
-                                content = "Sorry, I couldn't process your request. Please try again.",
-                                role = MessageRole.ASSISTANT,
-                                isStreaming = false
+                        _state.update { state ->
+                            val updatedMessages = state.messages.toMutableList()
+                            val lastIndex = updatedMessages.lastIndex
+                            
+                            if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
+                                updatedMessages[lastIndex] = response.copy(isStreaming = false)
+                            }
+                            
+                            state.copy(
+                                messages = updatedMessages,
+                                isLoading = false,
+                                isGeneratingImage = false,
+                                currentLoadingMode = null,
+                                currentConversationId = response.conversationId ?: state.currentConversationId,
+                                promptAnalysis = null
                             )
                         }
                         
-                        state.copy(
-                            messages = updatedMessages,
-                            isLoading = false,
-                            isGeneratingImage = false, // Clear image generation state on error
-                            currentLoadingMode = null, // Clear loading mode on error
-                            error = result.message
-                        )
+                        // Refresh conversations list
+                        loadConversations()
+                        
+                        // Load follow-up suggestions based on the response
+                        loadSuggestions(response.content)
+                        
+                        // Refresh usage (message count increased)
+                        loadUsage()
                     }
+                    
+                    is ApiResult.Error -> {
+                        handleApiError(result.message)
+                    }
+                    
+                    is ApiResult.Loading -> { /* Already handled */ }
                 }
-                
-                is ApiResult.Loading -> { /* Already handled */ }
+            } catch (e: Exception) {
+                // Catch any unexpected errors and clear loading state
+                handleApiError(e.message ?: "An unexpected error occurred")
             }
+        }
+    }
+    
+    /**
+     * Handle API errors consistently and clear all loading states
+     */
+    private fun handleApiError(errorMessage: String) {
+        _state.update { state ->
+            val updatedMessages = state.messages.toMutableList()
+            val lastIndex = updatedMessages.lastIndex
+            
+            if (lastIndex >= 0 && updatedMessages[lastIndex].isStreaming) {
+                updatedMessages[lastIndex] = ChatMessage(
+                    content = "Sorry, I couldn't process your request. Please try again.",
+                    role = MessageRole.ASSISTANT,
+                    isStreaming = false
+                )
+            }
+            
+            state.copy(
+                messages = updatedMessages,
+                isLoading = false,
+                isGeneratingImage = false,
+                currentLoadingMode = null,
+                error = errorMessage
+            )
         }
     }
     

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import android.content.ContentValues
+import android.graphics.Bitmap
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 
 /**
  * Image Generation Screen
@@ -256,19 +266,42 @@ fun ImageGenScreen(
                     color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    AsyncImage(
-                        model = image.imageUrl,
-                        contentDescription = "Generated image",
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        AsyncImage(
+                            model = image.imageUrl,
+                            contentDescription = "Generated image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(getAspectRatioFloat(selectedAspectRatio)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    
+                    // Download button overlay
+                    val context = LocalContext.current
+                    val scope = rememberCoroutineScope()
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                downloadImage(context, image.imageUrl, image.prompt)
+                            }
+                        },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(getAspectRatioFloat(selectedAspectRatio)),
-                        contentScale = ContentScale.Crop
-                    )
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Download,
+                            contentDescription = "Download",
+                            tint = Color.White
+                        )
+                    }
                 }
                 
                 // Enhanced prompt if available
@@ -380,5 +413,54 @@ private fun getAspectRatioFloat(ratio: String): Float {
         "9:16" -> 9f / 16f
         "4:3" -> 4f / 3f
         else -> 1f
+    }
+}
+
+/**
+ * Download image to device gallery
+ */
+private suspend fun downloadImage(context: android.content.Context, imageUrl: String, prompt: String) {
+    try {
+        withContext(Dispatchers.IO) {
+            // Download bitmap from URL
+            val url = URL(imageUrl)
+            val connection = url.openConnection()
+            connection.connect()
+            val inputStream = connection.getInputStream()
+            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+            inputStream.close()
+            
+            // Generate filename
+            val filename = "BaatCheet_${System.currentTimeMillis()}.png"
+            
+            // Save to gallery using MediaStore
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/BaatCheet")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                }
+                
+                contentValues.clear()
+                contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                resolver.update(uri, contentValues, null, null)
+            }
+            
+            withContext(Dispatchers.Main) {
+                android.widget.Toast.makeText(context, "Image saved to gallery!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    } catch (e: Exception) {
+        withContext(Dispatchers.Main) {
+            android.widget.Toast.makeText(context, "Failed to save image: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+        }
     }
 }

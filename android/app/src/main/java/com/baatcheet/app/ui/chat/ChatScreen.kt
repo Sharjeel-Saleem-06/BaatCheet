@@ -37,6 +37,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -3793,15 +3795,17 @@ private fun ModeLoadingIndicator(mode: String) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Progress bar
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = color,
-                trackColor = color.copy(alpha = 0.2f)
-            )
+            // Progress bar (explicitly LTR direction)
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = color,
+                    trackColor = color.copy(alpha = 0.2f)
+                )
+            }
         }
     }
 }
