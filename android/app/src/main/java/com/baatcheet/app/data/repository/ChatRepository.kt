@@ -5,6 +5,7 @@ import com.baatcheet.app.data.remote.dto.*
 import com.baatcheet.app.domain.model.ChatMessage
 import com.baatcheet.app.domain.model.Collaborator
 import com.baatcheet.app.domain.model.Conversation
+import com.baatcheet.app.domain.model.ImageResult
 import com.baatcheet.app.domain.model.MessageRole
 import com.baatcheet.app.domain.model.PendingInvitation
 import com.baatcheet.app.domain.model.Project
