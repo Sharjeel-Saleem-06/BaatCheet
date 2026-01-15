@@ -966,184 +966,188 @@ private fun ChangePasswordDialog(
                   newPassword.length >= 8 && 
                   newPassword == confirmPassword
     
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = WhiteBackground,
-        shape = RoundedCornerShape(20.dp)
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteBackground)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
             ) {
-                Text(
-                    text = "Change Password",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, "Close", tint = GrayText)
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Current Password
-            OutlinedTextField(
-                value = currentPassword,
-                onValueChange = { 
-                    currentPassword = it
-                    errorMessage = null
-                },
-                label = { Text("Current Password") },
-                singleLine = true,
-                visualTransformation = if (showCurrentPassword) 
-                    androidx.compose.ui.text.input.VisualTransformation.None 
-                else 
-                    androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
-                        Icon(
-                            if (showCurrentPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = null,
-                            tint = GrayText
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenAccent,
-                    unfocusedBorderColor = InputBorder
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // New Password
-            OutlinedTextField(
-                value = newPassword,
-                onValueChange = { 
-                    newPassword = it
-                    errorMessage = null
-                },
-                label = { Text("New Password") },
-                singleLine = true,
-                visualTransformation = if (showNewPassword) 
-                    androidx.compose.ui.text.input.VisualTransformation.None 
-                else 
-                    androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { showNewPassword = !showNewPassword }) {
-                        Icon(
-                            if (showNewPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = null,
-                            tint = GrayText
-                        )
-                    }
-                },
-                supportingText = {
-                    if (newPassword.isNotEmpty() && newPassword.length < 8) {
-                        Text("Password must be at least 8 characters", color = RedColor)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenAccent,
-                    unfocusedBorderColor = InputBorder
-                )
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Confirm Password
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { 
-                    confirmPassword = it
-                    errorMessage = null
-                },
-                label = { Text("Confirm New Password") },
-                singleLine = true,
-                visualTransformation = if (showConfirmPassword) 
-                    androidx.compose.ui.text.input.VisualTransformation.None 
-                else 
-                    androidx.compose.ui.text.input.PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
-                        Icon(
-                            if (showConfirmPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = null,
-                            tint = GrayText
-                        )
-                    }
-                },
-                isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
-                supportingText = {
-                    if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
-                        Text("Passwords don't match", color = RedColor)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenAccent,
-                    unfocusedBorderColor = InputBorder,
-                    errorBorderColor = RedColor
-                )
-            )
-            
-            // Error message
-            if (errorMessage != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = errorMessage!!,
-                    color = RedColor,
-                    fontSize = 13.sp
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Cancel", color = GrayText)
+                    Text(
+                        text = "Change Password",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "Close", tint = GrayText)
+                    }
                 }
                 
-                Button(
-                    onClick = {
-                        if (isValid) {
-                            onChangePassword()
-                        } else {
-                            errorMessage = "Please fill all fields correctly"
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                // Current Password
+                OutlinedTextField(
+                    value = currentPassword,
+                    onValueChange = { 
+                        currentPassword = it
+                        errorMessage = null
+                    },
+                    label = { Text("Current Password") },
+                    singleLine = true,
+                    visualTransformation = if (showCurrentPassword) 
+                        androidx.compose.ui.text.input.VisualTransformation.None 
+                    else 
+                        androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showCurrentPassword = !showCurrentPassword }) {
+                            Icon(
+                                if (showCurrentPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = null,
+                                tint = GrayText
+                            )
                         }
                     },
-                    enabled = isValid,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GreenAccent,
-                        disabledContainerColor = GreenAccent.copy(alpha = 0.5f)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
                     )
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // New Password
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { 
+                        newPassword = it
+                        errorMessage = null
+                    },
+                    label = { Text("New Password") },
+                    singleLine = true,
+                    visualTransformation = if (showNewPassword) 
+                        androidx.compose.ui.text.input.VisualTransformation.None 
+                    else 
+                        androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showNewPassword = !showNewPassword }) {
+                            Icon(
+                                if (showNewPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = null,
+                                tint = GrayText
+                            )
+                        }
+                    },
+                    supportingText = {
+                        if (newPassword.isNotEmpty() && newPassword.length < 8) {
+                            Text("Password must be at least 8 characters", color = RedColor)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Confirm Password
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { 
+                        confirmPassword = it
+                        errorMessage = null
+                    },
+                    label = { Text("Confirm New Password") },
+                    singleLine = true,
+                    visualTransformation = if (showConfirmPassword) 
+                        androidx.compose.ui.text.input.VisualTransformation.None 
+                    else 
+                        androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
+                            Icon(
+                                if (showConfirmPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = null,
+                                tint = GrayText
+                            )
+                        }
+                    },
+                    isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
+                    supportingText = {
+                        if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
+                            Text("Passwords don't match", color = RedColor)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder,
+                        errorBorderColor = RedColor
+                    )
+                )
+                
+                // Error message
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = RedColor,
+                        fontSize = 13.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Update")
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                    ) {
+                        Text("Cancel", color = GrayText)
+                    }
+                    
+                    Button(
+                        onClick = {
+                            if (isValid) {
+                                onChangePassword()
+                            } else {
+                                errorMessage = "Please fill all fields correctly"
+                            }
+                        },
+                        enabled = isValid,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GreenAccent,
+                            disabledContainerColor = GreenAccent.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Text("Update")
+                    }
                 }
             }
         }
