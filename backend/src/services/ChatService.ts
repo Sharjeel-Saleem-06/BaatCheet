@@ -307,11 +307,26 @@ class ChatServiceClass {
       if (conversationId) {
         conversation = await prisma.conversation.findUnique({
           where: { id: conversationId },
-          include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
+          include: { 
+            messages: { orderBy: { createdAt: 'asc' }, take: 50 },
+            project: {
+              select: {
+                id: true,
+                collaborators: {
+                  where: { userId: options.userId },
+                  select: { id: true }
+                }
+              }
+            }
+          },
         });
 
-        if (!conversation || conversation.userId !== options.userId) {
-          return { success: false, error: 'Conversation not found' };
+        // Check access: user owns conversation OR is a collaborator on the project
+        const isOwner = conversation?.userId === options.userId;
+        const isCollaborator = conversation?.project?.collaborators && conversation.project.collaborators.length > 0;
+        
+        if (!conversation || (!isOwner && !isCollaborator)) {
+          return { success: false, error: 'Conversation not found or access denied' };
         }
       } else {
         // Create new conversation (with projectId if provided)
@@ -664,11 +679,26 @@ class ChatServiceClass {
       if (conversationId) {
         conversation = await prisma.conversation.findUnique({
           where: { id: conversationId },
-          include: { messages: { orderBy: { createdAt: 'asc' }, take: 50 } },
+          include: { 
+            messages: { orderBy: { createdAt: 'asc' }, take: 50 },
+            project: {
+              select: {
+                id: true,
+                collaborators: {
+                  where: { userId: options.userId },
+                  select: { id: true }
+                }
+              }
+            }
+          },
         });
 
-        if (!conversation || conversation.userId !== options.userId) {
-          this.sendSSE(res, { error: 'Conversation not found' });
+        // Check access: user owns conversation OR is a collaborator on the project
+        const isOwner = conversation?.userId === options.userId;
+        const isCollaborator = conversation?.project?.collaborators && conversation.project.collaborators.length > 0;
+        
+        if (!conversation || (!isOwner && !isCollaborator)) {
+          this.sendSSE(res, { error: 'Conversation not found or access denied' });
           res.end();
           return;
         }
