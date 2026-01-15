@@ -201,7 +201,7 @@ const MODELS: Record<string, ModelConfig> = {
 // ============================================
 
 const DAILY_LIMITS = {
-  free: 2,      // Free users get 2 images per day
+  free: 6,      // Free users get 6 images per day (testing)
   pro: 50,      // Pro users get 50 images per day
   enterprise: 500,  // Enterprise users get 500 images per day
 };

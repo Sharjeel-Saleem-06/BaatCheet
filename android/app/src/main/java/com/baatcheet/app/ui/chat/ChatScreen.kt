@@ -81,6 +81,22 @@ private val MessageBubbleUser = Color(0xFFF2F2F7)
 private val MessageBubbleAssistant = Color(0xFFFFFFFF)
 private val DrawerBackground = Color(0xFFF8F8F8)
 
+/**
+ * Format ISO timestamp to local time for display
+ */
+private fun formatNextAvailableTime(isoTimestamp: String?): String? {
+    if (isoTimestamp == null) return null
+    
+    return try {
+        val instant = java.time.Instant.parse(isoTimestamp)
+        val localDateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, h:mm a")
+        localDateTime.format(formatter)
+    } catch (e: Exception) {
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
@@ -432,6 +448,11 @@ fun ChatScreen(
                     ImageGenerationPlaceholder()
                 }
                 
+                // Mode-specific loading indicator (Thinking, Research, Web Search, Code)
+                if (state.currentLoadingMode != null && !state.isGeneratingImage) {
+                    ModeLoadingIndicator(mode = state.currentLoadingMode)
+                }
+                
                 // Follow-up suggestions
                 if (state.suggestions.isNotEmpty() && state.messages.isNotEmpty() && !state.isLoading) {
                     SuggestionsRow(
@@ -528,7 +549,13 @@ fun ChatScreen(
                         selectedPlusMode = if (mode.isEmpty()) null else mode
                     },
                     uploadLimitReached = state.uploadLimitReached,
-                    imageGenLimitReached = state.imageGenLimitReached
+                    imageGenLimitReached = state.imageGenLimitReached,
+                    uploadsUsedToday = state.uploadsUsedToday,
+                    uploadDailyLimit = state.uploadDailyLimit,
+                    uploadNextAvailableAt = state.uploadNextAvailableAt,
+                    imageGenUsedToday = state.imageGenStatus?.usedToday ?: 0,
+                    imageGenDailyLimit = state.imageGenStatus?.dailyLimit ?: 6,
+                    imageGenNextAvailableAt = state.imageGenStatus?.nextAvailableAt
                 )
                 
                 // Mode Selector Bottom Sheet
@@ -2217,7 +2244,13 @@ private fun ChatInputBar(
     selectedPlusMode: String? = null,
     onPlusModeSelect: (String) -> Unit = {},
     uploadLimitReached: Boolean = false,
-    imageGenLimitReached: Boolean = false
+    imageGenLimitReached: Boolean = false,
+    uploadsUsedToday: Int = 0,
+    uploadDailyLimit: Int = 6,
+    uploadNextAvailableAt: String? = null,
+    imageGenUsedToday: Int = 0,
+    imageGenDailyLimit: Int = 6,
+    imageGenNextAvailableAt: String? = null
 ) {
     var showPlusMenu by remember { mutableStateOf(false) }
     
@@ -2477,7 +2510,13 @@ private fun ChatInputBar(
                 onPlusModeSelect(mode)
             },
             uploadLimitReached = uploadLimitReached,
-            imageGenLimitReached = imageGenLimitReached
+            imageGenLimitReached = imageGenLimitReached,
+            uploadsUsedToday = uploadsUsedToday,
+            uploadDailyLimit = uploadDailyLimit,
+            uploadNextAvailableAt = uploadNextAvailableAt,
+            imageGenUsedToday = imageGenUsedToday,
+            imageGenDailyLimit = imageGenDailyLimit,
+            imageGenNextAvailableAt = imageGenNextAvailableAt
         )
     }
 }
@@ -2494,10 +2533,26 @@ private fun PlusMenuBottomSheet(
     onFilesClick: () -> Unit,
     onModeSelect: (String) -> Unit,
     uploadLimitReached: Boolean = false,
-    imageGenLimitReached: Boolean = false
+    imageGenLimitReached: Boolean = false,
+    uploadsUsedToday: Int = 0,
+    uploadDailyLimit: Int = 6,
+    uploadNextAvailableAt: String? = null,
+    imageGenUsedToday: Int = 0,
+    imageGenDailyLimit: Int = 6,
+    imageGenNextAvailableAt: String? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // Format next available time for uploads
+    val uploadNextTimeFormatted = remember(uploadNextAvailableAt) {
+        formatNextAvailableTime(uploadNextAvailableAt)
+    }
+    
+    // Format next available time for image gen
+    val imageGenNextTimeFormatted = remember(imageGenNextAvailableAt) {
+        formatNextAvailableTime(imageGenNextAvailableAt)
+    }
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -2509,6 +2564,47 @@ private fun PlusMenuBottomSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
+            // Upload limit status bar
+            if (uploadLimitReached || uploadsUsedToday > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(
+                            if (uploadLimitReached) Color(0xFFFFF3E0) else Color(0xFFE3F2FD),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (uploadLimitReached) Icons.Outlined.Warning else Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = if (uploadLimitReached) Color(0xFFFF9800) else Color(0xFF2196F3),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (uploadLimitReached) 
+                                "Upload limit reached" 
+                            else 
+                                "Uploads: $uploadsUsedToday/$uploadDailyLimit used today",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = if (uploadLimitReached) Color(0xFFE65100) else Color(0xFF1565C0)
+                        )
+                        if (uploadLimitReached && uploadNextTimeFormatted != null) {
+                            Text(
+                                text = "⏰ Next available: $uploadNextTimeFormatted",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFE65100)
+                            )
+                        }
+                    }
+                }
+            }
+            
             // Media options - Camera, Photos, Files
             Row(
                 modifier = Modifier
@@ -2521,7 +2617,7 @@ private fun PlusMenuBottomSheet(
                     label = "Camera",
                     onClick = {
                         if (uploadLimitReached) {
-                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Next available: $uploadNextTimeFormatted", android.widget.Toast.LENGTH_LONG).show()
                         } else {
                             onCameraClick()
                         }
@@ -2533,7 +2629,7 @@ private fun PlusMenuBottomSheet(
                     label = "Photos",
                     onClick = {
                         if (uploadLimitReached) {
-                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Next available: $uploadNextTimeFormatted", android.widget.Toast.LENGTH_LONG).show()
                         } else {
                             onPhotosClick()
                         }
@@ -2545,7 +2641,7 @@ private fun PlusMenuBottomSheet(
                     label = "Files",
                     onClick = {
                         if (uploadLimitReached) {
-                            android.widget.Toast.makeText(context, "Daily upload limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, "Daily upload limit reached. Next available: $uploadNextTimeFormatted", android.widget.Toast.LENGTH_LONG).show()
                         } else {
                             onFilesClick()
                         }
@@ -2566,10 +2662,13 @@ private fun PlusMenuBottomSheet(
                 ModeMenuItem(
                     icon = "🎨",
                     title = if (imageGenLimitReached) "Create image (limit reached)" else "Create image",
-                    subtitle = if (imageGenLimitReached) "Try again in 24 hours" else "Visualize anything",
+                    subtitle = if (imageGenLimitReached) 
+                        "⏰ Next: ${imageGenNextTimeFormatted ?: "24 hours"}" 
+                    else 
+                        "Visualize anything ($imageGenUsedToday/$imageGenDailyLimit used)",
                     onClick = {
                         if (imageGenLimitReached) {
-                            android.widget.Toast.makeText(context, "Daily image generation limit reached. Try again in 24 hours.", android.widget.Toast.LENGTH_LONG).show()
+                            android.widget.Toast.makeText(context, "Daily image limit reached. Next available: $imageGenNextTimeFormatted", android.widget.Toast.LENGTH_LONG).show()
                         } else {
                             onModeSelect("image-generation")
                         }
@@ -3604,6 +3703,104 @@ private fun ImageGenerationPlaceholder() {
                     color = Color(0xFF9B59B6).copy(alpha = 0.7f)
                 )
             }
+        }
+    }
+}
+
+/**
+ * Mode-specific loading indicator (Thinking, Research, Web Search, Code)
+ * Shows animated progress with mode-specific emoji and text like ChatGPT
+ */
+@Composable
+private fun ModeLoadingIndicator(mode: String) {
+    val infiniteTransition = rememberInfiniteTransition(label = "mode_loading_animation")
+    
+    // Pulse animation for emoji
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+    
+    // Progress dots animation
+    val dotsOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "dots"
+    )
+    
+    val dots = when (dotsOffset.toInt()) {
+        0 -> "."
+        1 -> ".."
+        else -> "..."
+    }
+    
+    // Mode-specific configuration
+    val (emoji, text, color, helpText) = remember(mode) {
+        when (mode) {
+            "thinking" -> listOf("🧠", "Thinking", Color(0xFF9B59B6), "Analyzing your request deeply")
+            "research" -> listOf("🔬", "Researching", Color(0xFF3498DB), "Gathering comprehensive information")
+            "web-search" -> listOf("🌐", "Searching the web", Color(0xFF27AE60), "Finding real-time information")
+            "code" -> listOf("💻", "Writing code", Color(0xFFE67E22), "Crafting your solution")
+            else -> listOf("✨", "Processing", Color(0xFF34C759), "Working on your request")
+        }
+    }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .background(
+                color = (color as Color).copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Animated emoji
+        Text(
+            text = emoji as String,
+            fontSize = (24 * pulseScale).sp,
+            modifier = Modifier.padding(end = 12.dp)
+        )
+        
+        Column(modifier = Modifier.weight(1f)) {
+            // Main status text with dots
+            Text(
+                text = "$text$dots",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = color as Color
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Help text
+            Text(
+                text = helpText as String,
+                fontSize = 12.sp,
+                color = GrayText
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Progress bar
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = color,
+                trackColor = color.copy(alpha = 0.2f)
+            )
         }
     }
 }

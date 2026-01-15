@@ -25,7 +25,7 @@ const FILE_SIZE_LIMITS = {
 
 // Daily upload limits by user tier (COMBINED for files, images, camera - all share same limit)
 const DAILY_UPLOAD_LIMITS = {
-  free: 2,      // 2 uploads per day for free users (testing)
+  free: 6,      // 6 uploads per day for free users (testing)
   pro: 100,     // 100 uploads per day for pro users
   enterprise: 1000, // 1000 uploads per day for enterprise
 };

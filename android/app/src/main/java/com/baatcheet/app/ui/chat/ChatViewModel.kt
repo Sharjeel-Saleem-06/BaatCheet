@@ -56,6 +56,9 @@ data class ChatState(
     val currentConversationId: String? = null,
     val error: String? = null,
     
+    // Current loading mode for progress indicator (thinking, research, web-search, etc.)
+    val currentLoadingMode: String? = null,
+    
     // Conversations
     val conversations: List<Conversation> = emptyList(),
     val isLoadingConversations: Boolean = false,
@@ -126,7 +129,7 @@ data class ChatState(
     // File Upload Limits (combined for files, images, camera)
     val uploadLimitReached: Boolean = false,
     val uploadsUsedToday: Int = 0,
-    val uploadDailyLimit: Int = 2,
+    val uploadDailyLimit: Int = 6,
     val uploadNextAvailableAt: String? = null,  // ISO timestamp
     
     // Image Generation Limits
@@ -224,7 +227,27 @@ class ChatViewModel @Inject constructor(
         
         // Set image generating state if applicable
         if (isImageRequest) {
-            _state.update { it.copy(isGeneratingImage = true) }
+            _state.update { it.copy(isGeneratingImage = true, currentLoadingMode = "image-generation") }
+        }
+        
+        // Set current loading mode for progress indicator
+        val loadingMode = when {
+            isImageRequest -> "image-generation"
+            selectedMode == "research" || content.lowercase().contains("research") -> "research"
+            selectedMode == "web-search" || content.lowercase().let { 
+                it.contains("search") || it.contains("latest") || it.contains("news") || it.contains("current")
+            } -> "web-search"
+            selectedMode == "code" || content.lowercase().let {
+                it.contains("code") || it.contains("function") || it.contains("program") || it.contains("debug")
+            } -> "code"
+            selectedMode == "thinking" || content.lowercase().let {
+                it.contains("think") || it.contains("analyze") || it.contains("explain")
+            } -> "thinking"
+            else -> null
+        }
+        
+        if (loadingMode != null && !isImageRequest) {
+            _state.update { it.copy(currentLoadingMode = loadingMode) }
         }
         
         // Convert uploaded files to message attachments
@@ -293,6 +316,7 @@ class ChatViewModel @Inject constructor(
                             messages = updatedMessages,
                             isLoading = false,
                             isGeneratingImage = false, // Clear image generation state
+                            currentLoadingMode = null, // Clear loading mode indicator
                             currentConversationId = response.conversationId ?: state.currentConversationId,
                             promptAnalysis = null // Clear analysis after sending
                         )
@@ -325,6 +349,7 @@ class ChatViewModel @Inject constructor(
                             messages = updatedMessages,
                             isLoading = false,
                             isGeneratingImage = false, // Clear image generation state on error
+                            currentLoadingMode = null, // Clear loading mode on error
                             error = result.message
                         )
                     }

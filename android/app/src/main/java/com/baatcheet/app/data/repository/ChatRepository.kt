@@ -549,15 +549,15 @@ class ChatRepository @Inject constructor(
                     )
                 } else {
                     // Default values if no data
-                    ApiResult.Success(UploadStatus(0, 2, 2, true))
+                    ApiResult.Success(UploadStatus(0, 6, 6, true))
                 }
             } else {
                 // Return default on error
-                ApiResult.Success(UploadStatus(0, 2, 2, true))
+                ApiResult.Success(UploadStatus(0, 6, 6, true))
             }
         } catch (e: Exception) {
             // Return default on exception
-            ApiResult.Success(UploadStatus(0, 2, 2, true))
+            ApiResult.Success(UploadStatus(0, 6, 6, true))
         }
     }
     
