@@ -84,10 +84,10 @@ fun AnimatedSplashContent(
                 painter = painterResource(id = R.drawable.splash_logo),
                 contentDescription = "BaatCheet Logo",
                 modifier = Modifier
-                    .size(280.dp)
+                    .size(350.dp) // Increased from 280dp for better visibility
                     .scale(logoScale)
                     .alpha(logoAlpha)
-                    .clip(RoundedCornerShape(56.dp))
+                    .clip(RoundedCornerShape(70.dp))
             )
             
             Spacer(modifier = Modifier.height(48.dp))

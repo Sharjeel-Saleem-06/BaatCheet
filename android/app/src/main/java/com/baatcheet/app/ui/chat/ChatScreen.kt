@@ -193,13 +193,17 @@ fun ChatScreen(
     // Project settings dialog state
     var showProjectSettingsDialog by remember { mutableStateOf(false) }
     
+    // All chats screen state
+    var showAllChatsScreen by remember { mutableStateOf(false) }
+    
     // Handle back navigation properly - close overlays before exiting app
     BackHandler(
         enabled = showSettingsScreen || showAnalyticsScreen || showCollaborationsScreen || 
-                  showVoiceModeScreen || showProjectSettingsDialog || 
+                  showVoiceModeScreen || showProjectSettingsDialog || showAllChatsScreen ||
                   state.currentProject != null || drawerState.isOpen
     ) {
         when {
+            showAllChatsScreen -> showAllChatsScreen = false
             showProjectSettingsDialog -> showProjectSettingsDialog = false
             showSettingsScreen -> showSettingsScreen = false
             showAnalyticsScreen -> showAnalyticsScreen = false
@@ -283,6 +287,10 @@ fun ChatScreen(
                 onCollaborationsClick = {
                     showCollaborationsScreen = true
                     viewModel.loadPendingInvitations()
+                    coroutineScope.launch { drawerState.close() }
+                },
+                onAllChatsClick = {
+                    showAllChatsScreen = true
                     coroutineScope.launch { drawerState.close() }
                 }
             )
@@ -389,6 +397,22 @@ fun ChatScreen(
                         onRefresh = {
                             viewModel.loadProjects()
                             viewModel.loadPendingInvitations()
+                        }
+                    )
+                }
+                
+                // All Chats Screen - show all conversations
+                showAllChatsScreen -> {
+                    AllChatsScreen(
+                        conversations = state.conversations,
+                        isLoading = state.isLoadingConversations,
+                        onBack = { showAllChatsScreen = false },
+                        onConversationClick = { conversationId ->
+                            viewModel.loadConversation(conversationId)
+                            showAllChatsScreen = false
+                        },
+                        onDeleteConversation = { conversationId ->
+                            viewModel.deleteConversation(conversationId)
                         }
                     )
                 }
@@ -709,7 +733,8 @@ private fun ChatDrawerContent(
     onClose: () -> Unit,
     onSettingsClick: () -> Unit = {},
     onAnalyticsClick: () -> Unit = {},
-    onCollaborationsClick: () -> Unit = {}
+    onCollaborationsClick: () -> Unit = {},
+    onAllChatsClick: () -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showNewProjectDialog by remember { mutableStateOf(false) }
@@ -1028,7 +1053,7 @@ private fun ChatDrawerContent(
                                 color = GreenAccent,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { }
+                                    .clickable { onAllChatsClick() }
                                     .padding(horizontal = 16.dp, vertical = 10.dp)
                             )
                         }
@@ -4135,6 +4160,7 @@ private fun ProjectChatScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(WhiteBackground)
+            .imePadding() // Handle keyboard properly
     ) {
         // Project Header
         Surface(
@@ -4343,8 +4369,7 @@ private fun ProjectChatScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .navigationBarsPadding(),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
@@ -5166,4 +5191,232 @@ private fun PermissionChip(label: String, enabled: Boolean) {
             )
         }
     }
+}
+
+// ============================================
+// All Chats Screen - View all conversations
+// ============================================
+
+/**
+ * All Chats Screen - Shows all conversations in a full screen list
+ */
+@Composable
+private fun AllChatsScreen(
+    conversations: List<com.baatcheet.app.domain.model.Conversation>,
+    isLoading: Boolean,
+    onBack: () -> Unit,
+    onConversationClick: (String) -> Unit,
+    onDeleteConversation: (String) -> Unit
+) {
+    var conversationToDelete by remember { mutableStateOf<String?>(null) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WhiteBackground)
+    ) {
+        // Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = WhiteBackground,
+            shadowElevation = 1.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = DarkText
+                    )
+                }
+                
+                Text(
+                    text = "All Chats",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkText,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                Text(
+                    text = "${conversations.size} total",
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+            }
+        }
+        
+        // Content
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = GreenAccent,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+        } else if (conversations.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint = GrayText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No conversations yet",
+                        fontSize = 18.sp,
+                        color = GrayText
+                    )
+                    Text(
+                        text = "Start chatting to see your history here",
+                        fontSize = 14.sp,
+                        color = GrayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(conversations, key = { it.id }) { conversation ->
+                    AllChatsItem(
+                        conversation = conversation,
+                        onClick = { onConversationClick(conversation.id) },
+                        onLongClick = { conversationToDelete = conversation.id }
+                    )
+                }
+            }
+        }
+    }
+    
+    // Delete confirmation dialog
+    if (conversationToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { conversationToDelete = null },
+            title = {
+                Text(
+                    text = "Delete conversation?",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "This conversation will be permanently deleted.",
+                    color = GrayText
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        conversationToDelete?.let { onDeleteConversation(it) }
+                        conversationToDelete = null
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = Color(0xFFFF3B30),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { conversationToDelete = null }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
+}
+
+/**
+ * Individual chat item in All Chats list
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun AllChatsItem(
+    conversation: com.baatcheet.app.domain.model.Conversation,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Chat icon
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(
+                    color = if (conversation.isPinned) GreenAccent.copy(alpha = 0.15f) else InputBorder.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(10.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (conversation.isPinned) Icons.Default.PushPin else Icons.Outlined.ChatBubbleOutline,
+                contentDescription = null,
+                tint = if (conversation.isPinned) GreenAccent else GrayText,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = conversation.title,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = DarkText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            
+            Spacer(modifier = Modifier.height(2.dp))
+            
+            Text(
+                text = "${conversation.messageCount} messages",
+                fontSize = 13.sp,
+                color = GrayText
+            )
+        }
+        
+        // Pinned indicator
+        if (conversation.isPinned) {
+            Icon(
+                imageVector = Icons.Default.PushPin,
+                contentDescription = "Pinned",
+                tint = GreenAccent,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+    
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 68.dp),
+        color = InputBorder.copy(alpha = 0.5f)
+    )
 }
