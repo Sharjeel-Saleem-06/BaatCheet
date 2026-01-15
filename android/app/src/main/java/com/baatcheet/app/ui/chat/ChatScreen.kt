@@ -709,6 +709,9 @@ fun ChatScreen(
                     projectId = state.currentProjectId!!,
                     name = name
                 )
+            },
+            onInviteCollaborator = { email ->
+                viewModel.inviteCollaborator(state.currentProjectId!!, email)
             }
         )
     }
@@ -4711,13 +4714,16 @@ private fun ProjectSettingsDialog(
     onSaveInstructions: (String) -> Unit,
     onDeleteProject: () -> Unit,
     onSaveEmoji: ((String) -> Unit)? = null,
-    onSaveName: ((String) -> Unit)? = null
+    onSaveName: ((String) -> Unit)? = null,
+    onInviteCollaborator: ((String) -> Unit)? = null // Add invite callback
 ) {
     var instructions by remember(project.id) { mutableStateOf(project.description ?: project.instructions ?: "") }
     var projectName by remember(project.id) { mutableStateOf(project.name) }
     var selectedEmoji by remember(project.id, project.emoji) { mutableStateOf(project.emoji ?: "📁") }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showEmojiPicker by remember { mutableStateOf(false) }
+    var showInviteDialog by remember { mutableStateOf(false) }
+    var inviteEmail by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
     
     ModalBottomSheet(
@@ -4953,6 +4959,32 @@ private fun ProjectSettingsDialog(
                 }
             }
             
+            // Invite collaborator button - only for owners or those with invite permission
+            if (project.isOwner || project.canInvite) {
+                Spacer(modifier = Modifier.height(10.dp))
+                
+                Button(
+                    onClick = { showInviteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenAccent
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.PersonAdd,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Invite Collaborator",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
             // Collaborators count
             if (project.collaboratorCount > 0) {
                 Spacer(modifier = Modifier.height(10.dp))
@@ -5160,6 +5192,108 @@ private fun ProjectSettingsDialog(
                         text = "Cancel",
                         color = GrayText
                     )
+                }
+            },
+            containerColor = WhiteBackground
+        )
+    }
+    
+    // Invite collaborator dialog
+    if (showInviteDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showInviteDialog = false
+                inviteEmail = ""
+            },
+            title = {
+                Text(
+                    text = "Invite Collaborator",
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter the email address of the person you want to invite to collaborate on this project.",
+                        fontSize = 14.sp,
+                        color = GrayText
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    OutlinedTextField(
+                        value = inviteEmail,
+                        onValueChange = { inviteEmail = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Email address", color = GrayText) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenAccent,
+                            unfocusedBorderColor = InputBorder,
+                            cursorColor = GreenAccent
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Email,
+                                contentDescription = null,
+                                tint = GrayText
+                            )
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Role info
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFF5F5F5)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = GrayText,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "They will be added as a Moderator and can create chats but not delete them.",
+                                fontSize = 12.sp,
+                                color = GrayText
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inviteEmail.isNotBlank() && inviteEmail.contains("@")) {
+                            onInviteCollaborator?.invoke(inviteEmail)
+                            showInviteDialog = false
+                            inviteEmail = ""
+                        }
+                    },
+                    enabled = inviteEmail.isNotBlank() && inviteEmail.contains("@"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenAccent
+                    )
+                ) {
+                    Text("Send Invite")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showInviteDialog = false
+                    inviteEmail = ""
+                }) {
+                    Text("Cancel", color = GrayText)
                 }
             },
             containerColor = WhiteBackground
