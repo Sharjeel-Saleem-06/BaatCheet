@@ -540,23 +540,24 @@ class ChatRepository @Inject constructor(
                 if (data != null) {
                     ApiResult.Success(
                         UploadStatus(
-                            usedToday = data.documentsUsedToday,
+                            usedToday = data.getUsedToday(),
                             dailyLimit = data.dailyLimit,
                             remaining = data.remaining,
-                            canUpload = data.canUpload
+                            canUpload = data.canUpload,
+                            nextAvailableAt = data.nextAvailableAt
                         )
                     )
                 } else {
                     // Default values if no data
-                    ApiResult.Success(UploadStatus(0, 4, 4, true))
+                    ApiResult.Success(UploadStatus(0, 2, 2, true))
                 }
             } else {
                 // Return default on error
-                ApiResult.Success(UploadStatus(0, 4, 4, true))
+                ApiResult.Success(UploadStatus(0, 2, 2, true))
             }
         } catch (e: Exception) {
             // Return default on exception
-            ApiResult.Success(UploadStatus(0, 4, 4, true))
+            ApiResult.Success(UploadStatus(0, 2, 2, true))
         }
     }
     
@@ -667,9 +668,11 @@ class ChatRepository @Inject constructor(
                 ApiResult.Success(
                     ImageGenStatus(
                         canGenerate = data?.canGenerate ?: false,
-                        remainingToday = data?.remainingToday ?: 0,
-                        dailyLimit = data?.dailyLimit ?: 0,
-                        tier = data?.tier ?: "free"
+                        remainingToday = data?.getRemainingToday() ?: 0,
+                        dailyLimit = data?.dailyLimit ?: 2,
+                        usedToday = data?.usedToday ?: 0,
+                        tier = data?.tier ?: "free",
+                        nextAvailableAt = data?.nextAvailableAt
                     )
                 )
             } else {
@@ -1554,7 +1557,8 @@ data class UploadStatus(
     val usedToday: Int,
     val dailyLimit: Int,
     val remaining: Int,
-    val canUpload: Boolean
+    val canUpload: Boolean,
+    val nextAvailableAt: String? = null  // ISO timestamp for client-side formatting
 )
 
 // Image Models
@@ -1588,7 +1592,9 @@ data class ImageGenStatus(
     val canGenerate: Boolean,
     val remainingToday: Int,
     val dailyLimit: Int,
-    val tier: String
+    val usedToday: Int = 0,
+    val tier: String,
+    val nextAvailableAt: String? = null  // ISO timestamp for client-side formatting
 )
 
 data class ImageStyle(

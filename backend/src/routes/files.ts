@@ -23,21 +23,23 @@ const FILE_SIZE_LIMITS = {
   image: 2 * 1024 * 1024, // 2MB for images
 };
 
-// Daily upload limits by user tier
+// Daily upload limits by user tier (COMBINED for files, images, camera - all share same limit)
 const DAILY_UPLOAD_LIMITS = {
-  free: 4,      // 4 documents/images per day for free users
-  pro: 100,     // 100 documents per day for pro users
-  enterprise: 1000, // 1000 documents per day for enterprise
+  free: 2,      // 2 uploads per day for free users (testing)
+  pro: 100,     // 100 uploads per day for pro users
+  enterprise: 1000, // 1000 uploads per day for enterprise
 };
 
 /**
- * Check if user has exceeded daily document upload limit
+ * Check if user has exceeded daily upload limit
+ * NOTE: This counts ALL uploads (documents + images) together as a combined limit
  */
 async function checkDocumentUploadLimit(userId: string): Promise<{
   allowed: boolean;
   used: number;
   limit: number;
   remaining: number;
+  nextAvailableAt?: string;
 }> {
   // Get user tier
   const user = await prisma.user.findUnique({
@@ -48,25 +50,40 @@ async function checkDocumentUploadLimit(userId: string): Promise<{
   const tier = (user?.tier || 'free') as keyof typeof DAILY_UPLOAD_LIMITS;
   const limit = DAILY_UPLOAD_LIMITS[tier] || DAILY_UPLOAD_LIMITS.free;
   
-  // Count today's uploads
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Count ALL uploads in last 24 hours (documents + images combined)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   
   const todayUploads = await prisma.attachment.count({
     where: {
       userId,
-      type: 'document',
       createdAt: {
-        gte: today,
+        gte: twentyFourHoursAgo,
       },
     },
   });
+  
+  // Calculate next available time if limit reached
+  let nextAvailableAt: string | undefined;
+  if (todayUploads >= limit) {
+    const oldestUpload = await prisma.attachment.findFirst({
+      where: {
+        userId,
+        createdAt: { gte: twentyFourHoursAgo },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    
+    if (oldestUpload) {
+      nextAvailableAt = new Date(oldestUpload.createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    }
+  }
   
   return {
     allowed: todayUploads < limit,
     used: todayUploads,
     limit,
     remaining: Math.max(0, limit - todayUploads),
+    nextAvailableAt,
   };
 }
 
@@ -143,10 +160,11 @@ router.get(
       res.json({
         success: true,
         data: {
-          documentsUsedToday: status.used,
+          uploadsUsedToday: status.used,
           dailyLimit: status.limit,
           remaining: status.remaining,
           canUpload: status.allowed,
+          nextAvailableAt: status.nextAvailableAt, // ISO string for client-side formatting
         },
       });
     } catch (error) {

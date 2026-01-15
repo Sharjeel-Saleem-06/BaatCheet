@@ -62,6 +62,7 @@ export interface ChatResult {
     language: string;
     mode?: string;
     modeConfidence?: number;
+    nextAvailableAt?: string | null;  // ISO timestamp for limits
   };
   imageResult?: {
     success: boolean;
@@ -115,25 +116,26 @@ class ChatServiceClass {
           const limitStatus = await imageGeneration.checkUserLimit(options.userId);
           
           if (!limitStatus.canGenerate) {
-            // Return friendly limit reached message
-            const nextAvailable = limitStatus.nextAvailableAt 
-              ? new Date(limitStatus.nextAvailableAt).toLocaleString('en-US', { 
-                  hour: 'numeric', 
-                  minute: 'numeric', 
-                  hour12: true,
-                  month: 'short',
-                  day: 'numeric'
-                })
-              : 'tomorrow';
+            // Return friendly limit reached message with ISO timestamp for client-side formatting
+            const nextAvailableISO = limitStatus.nextAvailableAt 
+              ? new Date(limitStatus.nextAvailableAt).toISOString()
+              : null;
             
             return {
               success: true,
               message: {
                 role: 'assistant',
-                content: `⏳ **Image Generation Limit Reached**\n\nYou've used your daily image generation quota (${limitStatus.dailyLimit} image${limitStatus.dailyLimit > 1 ? 's' : ''}/day for ${limitStatus.tier} tier).\n\n🕐 **Next Available:** ${nextAvailable}\n\n💡 **Tip:** Upgrade to Pro for 50 images/day, or check back later!\n\n---\n*Meanwhile, I can help you craft the perfect prompt for when your limit resets. What image would you like to create?*`,
+                content: `⏳ **Image Generation Limit Reached**\n\nYou've used your daily image generation quota (${limitStatus.dailyLimit} image${limitStatus.dailyLimit > 1 ? 's' : ''}/day for ${limitStatus.tier} tier).\n\n🕐 **Next Available:** {{NEXT_AVAILABLE:${nextAvailableISO || 'tomorrow'}}}\n\n💡 **Tip:** Upgrade to Pro for 50 images/day, or check back later!\n\n---\n*Meanwhile, I can help you craft the perfect prompt for when your limit resets. What image would you like to create?*`,
               },
               conversationId: options.conversationId,
               modeDetected: AIMode.IMAGE_GEN,
+              metadata: {
+                intent: 'image_generation',
+                formatApplied: 'limit_reached',
+                language: 'en',
+                mode: AIMode.IMAGE_GEN,
+                nextAvailableAt: nextAvailableISO,
+              },
             };
           }
           

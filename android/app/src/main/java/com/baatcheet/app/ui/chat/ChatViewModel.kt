@@ -123,10 +123,11 @@ data class ChatState(
     val generatedImage: GeneratedImage? = null,
     val isGeneratingImage: Boolean = false,
     
-    // File Upload Limits
+    // File Upload Limits (combined for files, images, camera)
     val uploadLimitReached: Boolean = false,
     val uploadsUsedToday: Int = 0,
-    val uploadDailyLimit: Int = 4,
+    val uploadDailyLimit: Int = 2,
+    val uploadNextAvailableAt: String? = null,  // ISO timestamp
     
     // Image Generation Limits
     val imageGenLimitReached: Boolean = false,
@@ -973,7 +974,8 @@ class ChatViewModel @Inject constructor(
                     _state.update { it.copy(
                         uploadsUsedToday = status.usedToday,
                         uploadDailyLimit = status.dailyLimit,
-                        uploadLimitReached = !status.canUpload
+                        uploadLimitReached = !status.canUpload,
+                        uploadNextAvailableAt = status.nextAvailableAt
                     )}
                 }
                 is ApiResult.Error -> {
@@ -992,15 +994,48 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
-     * Get remaining uploads message
+     * Get remaining uploads message with next available time
      */
     fun getRemainingUploadsMessage(): String {
         val remaining = _state.value.uploadDailyLimit - _state.value.uploadsUsedToday
         return if (remaining > 0) {
             "$remaining uploads remaining today"
         } else {
-            "Daily upload limit reached. Try again in 24 hours."
+            val nextTime = formatNextAvailableTime(_state.value.uploadNextAvailableAt)
+            "Daily upload limit reached. Next available: $nextTime"
         }
+    }
+    
+    /**
+     * Format ISO timestamp to local time for display
+     */
+    private fun formatNextAvailableTime(isoTimestamp: String?): String {
+        if (isoTimestamp == null) return "in 24 hours"
+        
+        return try {
+            val instant = java.time.Instant.parse(isoTimestamp)
+            val localDateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, h:mm a")
+            localDateTime.format(formatter)
+        } catch (e: Exception) {
+            "in 24 hours"
+        }
+    }
+    
+    /**
+     * Get formatted next available time for uploads
+     */
+    fun getUploadNextAvailableFormatted(): String {
+        return formatNextAvailableTime(_state.value.uploadNextAvailableAt)
+    }
+    
+    /**
+     * Get formatted next available time for image generation
+     */
+    fun getImageGenNextAvailableFormatted(): String {
+        // Image gen status should have its own nextAvailableAt
+        val nextTime = _state.value.imageGenStatus?.nextAvailableAt
+        return formatNextAvailableTime(nextTime)
     }
     
     /**

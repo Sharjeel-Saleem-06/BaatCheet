@@ -550,9 +550,14 @@ data class ImageGenStatusResponse(
 data class ImageGenStatusData(
     val canGenerate: Boolean?,
     val remainingToday: Int?,
+    val remainingGenerations: Int?,  // Alternative field name
     val dailyLimit: Int?,
-    val tier: String?
-)
+    val usedToday: Int?,
+    val tier: String?,
+    val nextAvailableAt: String?     // ISO timestamp
+) {
+    fun getRemainingToday(): Int = remainingToday ?: remainingGenerations ?: 0
+}
 
 data class ImageGenHistoryResponse(
     val success: Boolean,
@@ -1021,11 +1026,16 @@ data class UploadStatusResponse(
 )
 
 data class UploadStatusData(
-    val documentsUsedToday: Int,
+    val uploadsUsedToday: Int? = null,       // New field name
+    val documentsUsedToday: Int? = null,     // Old field name (backward compat)
     val dailyLimit: Int,
     val remaining: Int,
-    val canUpload: Boolean
-)
+    val canUpload: Boolean,
+    val nextAvailableAt: String? = null      // ISO timestamp for next available
+) {
+    // Get used count from either field
+    fun getUsedToday(): Int = uploadsUsedToday ?: documentsUsedToday ?: 0
+}
 
 data class UploadedFileDto(
     val id: String,
