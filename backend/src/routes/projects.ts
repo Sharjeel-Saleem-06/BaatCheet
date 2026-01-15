@@ -486,7 +486,7 @@ router.put(
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (emoji !== undefined) updateData.emoji = emoji;
-      if (instructions !== undefined) updateData.instructions = instructions;
+      if (instructions !== undefined) updateData.customInstructions = instructions;
 
       const updatedProject = await prisma.project.update({
         where: { id },
@@ -639,9 +639,10 @@ router.get(
           user: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
-              imageUrl: true,
+              avatar: true,
             },
           },
           _count: {
@@ -970,16 +971,19 @@ router.post(
         // admin: full access (edit, delete, invite, manage roles)
         // moderator: can edit and create, but not delete
         // viewer: read-only access
-        const role = invitation.role || 'viewer';
-        const isAdmin = role === 'admin';
-        const isModerator = role === 'moderator';
+        const roleStr = invitation.role || 'viewer';
+        const isAdmin = roleStr === 'admin';
+        const isModerator = roleStr === 'moderator';
+
+        // Map string to ProjectRole enum
+        const roleEnum = roleStr === 'admin' ? 'admin' : roleStr === 'moderator' ? 'moderator' : 'viewer';
 
         // Add as collaborator with role-based permissions
         await prisma.projectCollaborator.create({
           data: {
             projectId: invitation.projectId,
             userId: userId,
-            role: role,
+            role: roleEnum as any, // Cast to ProjectRole
             addedBy: invitation.inviterId,
             canEdit: isAdmin || isModerator,
             canDelete: isAdmin,

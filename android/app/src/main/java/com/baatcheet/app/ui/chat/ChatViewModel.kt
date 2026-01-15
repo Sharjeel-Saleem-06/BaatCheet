@@ -113,6 +113,7 @@ data class ChatState(
     val currentProjectId: String? = null,
     val currentProject: Project? = null, // Full project details when viewing a project
     val isLoadingProject: Boolean = false,
+    val showProjectChatInput: Boolean = false, // Show chat input when in project context
     
     // Collaborations (shared projects)
     val collaborations: List<Project> = emptyList(),
@@ -281,7 +282,8 @@ class ChatViewModel @Inject constructor(
             it.copy(
                 messages = it.messages + userMessage,
                 isLoading = true,
-                error = null
+                error = null,
+                showProjectChatInput = false // Reset since we now have messages
             )
         }
         
@@ -396,9 +398,33 @@ class ChatViewModel @Inject constructor(
             it.copy(
                 messages = emptyList(),
                 currentConversationId = null,
-                error = null
+                error = null,
+                // Clear project context for global new chat
+                currentProjectId = null,
+                currentProject = null,
+                projectConversations = emptyList()
             )
         }
+    }
+    
+    /**
+     * Start a new chat within the current project context
+     * This keeps the project context but clears messages to show chat input
+     */
+    fun startNewChatInProject() {
+        // Add a placeholder message to trigger showing the chat UI instead of project list
+        // The actual message will be sent when user types
+        _state.update { 
+            it.copy(
+                messages = emptyList(),
+                currentConversationId = null,
+                error = null
+                // Keep currentProjectId and currentProject intact
+            )
+        }
+        // Force UI to show chat screen by adding a temporary state flag
+        // We need to navigate to chat mode while keeping project context
+        _state.update { it.copy(showProjectChatInput = true) }
     }
     
     /**
@@ -896,7 +922,8 @@ class ChatViewModel @Inject constructor(
         _state.update { it.copy(
             currentProjectId = null,
             currentProject = null,
-            projectConversations = emptyList() // Clear project conversations
+            projectConversations = emptyList(), // Clear project conversations
+            showProjectChatInput = false // Reset chat input flag
         ) }
         loadConversations() // Reload global conversations
     }

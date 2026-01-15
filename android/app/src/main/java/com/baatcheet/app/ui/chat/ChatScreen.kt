@@ -394,7 +394,8 @@ fun ChatScreen(
                 }
                 
                 // Project Screen - when viewing a project (like ChatGPT Projects)
-                state.currentProject != null && state.messages.isEmpty() -> {
+                // Show project list only if not in chat input mode
+                state.currentProject != null && state.messages.isEmpty() && !state.showProjectChatInput -> {
                     ProjectChatScreen(
                         project = state.currentProject!!,
                         conversations = state.projectConversations, // Use projectConversations, not global conversations
@@ -402,8 +403,8 @@ fun ChatScreen(
                         isLoadingConversations = state.isLoadingProjectConversations,
                         onBack = { viewModel.exitProject() },
                         onNewChat = { 
-                            // Start new chat in this project
-                            viewModel.startNewChat()
+                            // Start new chat in this project - show chat input
+                            viewModel.startNewChatInProject()
                         },
                         onConversationClick = { conversationId ->
                             viewModel.loadConversation(conversationId)
