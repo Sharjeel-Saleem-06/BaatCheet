@@ -288,7 +288,7 @@ fun ImageGenScreen(
                     IconButton(
                         onClick = {
                             scope.launch {
-                                downloadImage(context, image.imageUrl, image.prompt)
+                                downloadImage(context, image.imageUrl, image.originalPrompt ?: "generated")
                             }
                         },
                         modifier = Modifier
