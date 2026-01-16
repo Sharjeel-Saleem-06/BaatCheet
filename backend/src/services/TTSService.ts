@@ -19,11 +19,14 @@
 
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
-// Edge TTS - Microsoft's FREE TTS service
+// Edge TTS - Microsoft's FREE TTS service using node-edge-tts
 // Supports 400+ voices including excellent Urdu voices
 // NO API KEY REQUIRED!
-import { tts as edgeTtsGenerate, getVoices as getEdgeVoices } from 'edge-tts';
+import { EdgeTTS } from 'node-edge-tts';
 
 // ============================================
 // Types
@@ -552,11 +555,38 @@ class TTSServiceClass {
         voiceId = requestedVoice;
       }
       
-      logger.info(`Edge TTS: Language=${detectedLang}, Voice=${voiceId}, TextLength=${text.length}`);
+      // Get language code from voice ID (e.g., 'ur-PK' from 'ur-PK-AsadNeural')
+      const langCode = voiceId.split('-').slice(0, 2).join('-');
       
-      // Generate audio using edge-tts package
-      // This is Microsoft's FREE TTS service - no API key needed!
-      const audioBuffer = await edgeTtsGenerate(text, { voice: voiceId });
+      logger.info(`Edge TTS: Language=${detectedLang}, Voice=${voiceId}, LangCode=${langCode}, TextLength=${text.length}`);
+      
+      // Create Edge TTS instance with optimal settings
+      const tts = new EdgeTTS({
+        voice: voiceId,
+        lang: langCode,
+        outputFormat: 'audio-24khz-96kbitrate-mono-mp3', // High quality MP3
+        rate: 'default',
+        pitch: 'default',
+        volume: 'default',
+        timeout: 30000, // 30 second timeout
+      });
+      
+      // Generate unique temp file path
+      const tempDir = os.tmpdir();
+      const tempFile = path.join(tempDir, `edge-tts-${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`);
+      
+      // Generate audio to temp file
+      await tts.ttsPromise(text, tempFile);
+      
+      // Read the generated audio file
+      const audioBuffer = fs.readFileSync(tempFile);
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
       
       logger.info(`✅ Edge TTS SUCCESS: ${audioBuffer.length} bytes, Voice: ${voiceId}`);
       
