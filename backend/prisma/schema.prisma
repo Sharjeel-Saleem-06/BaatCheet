@@ -781,7 +781,7 @@ model ImageGenerationQuota {
 model PendingSignup {
   id               String   @id @default(uuid())
   email            String   @unique
-  passwordHash     String   @map("password_hash") // Hashed password (empty for password reset)
+  password         String   // Hashed password (empty for password reset)
   firstName        String?  @map("first_name")
   lastName         String?  @map("last_name")
   username         String?

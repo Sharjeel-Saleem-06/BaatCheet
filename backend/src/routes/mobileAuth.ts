@@ -1040,7 +1040,7 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
       where: { email: email.toLowerCase() },
       create: {
         email: email.toLowerCase(),
-        passwordHash: '', // Not used for password reset
+        password: '', // Not used for password reset
         verificationCode: resetCode,
         codeExpiry,
         attempts: 0,
