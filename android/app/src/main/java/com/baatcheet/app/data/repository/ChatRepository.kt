@@ -367,8 +367,8 @@ class ChatRepository @Inject constructor(
      */
     suspend fun saveCustomInstructions(instructions: String): ApiResult<Boolean> {
         return try {
-            val body = mapOf("customInstructions" to instructions)
-            val response = api.updateProfileSettings(body)
+            val request = UpdateProfileRequest(customInstructions = instructions)
+            val response = api.updateProfileSettings(request)
             
             if (response.isSuccessful && response.body()?.success == true) {
                 ApiResult.Success(true)

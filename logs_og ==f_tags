@@ -1,58 +1,52 @@
 failed
 Download info
 :app:compileDebugKotlin
-BaatCheetNavHost.kt
-Cannot find a parameter with this name: onShareAnalyticsChange
-Cannot find a parameter with this name: onExportData
-Cannot find a parameter with this name: onHelpCenter
-ChatScreen.kt
+ChatRepository.kt
+Type mismatch: inferred type is Map<String, String> but UpdateProfileRequest was expected
 Incompatible Gradle JVMExecuting tasks: [:app:assembleDebug] in project /Users/muhammadsharjeel/Documents/BaatCheet/android
 
 Reusing configuration cache.
 > Task :app:preBuild UP-TO-DATE
 > Task :app:preDebugBuild UP-TO-DATE
 > Task :app:createDebugVariantModel UP-TO-DATE
-> Task :app:generateDebugBuildConfig UP-TO-DATE
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
-> Task :app:generateDebugResValues UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors
-> Task :app:generateDebugResources UP-TO-DATE
-> Task :app:extractDeepLinksDebug UP-TO-DATE
-> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
 > Task :app:mergeDebugShaders UP-TO-DATE
-> Task :app:compileDebugShaders NO-SOURCE
 > Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:packageDebugResources UP-TO-DATE
-> Task :app:parseDebugLocalResources UP-TO-DATE
-> Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :app:writeDebugAppMetadata UP-TO-DATE
-> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:validateSigningDebug UP-TO-DATE
-> Task :app:checkDebugDuplicateClasses UP-TO-DATE
-> Task :app:mergeDebugJniLibFolders UP-TO-DATE
-> Task :app:mergeLibDexDebug UP-TO-DATE
-> Task :app:mergeExtDexDebug UP-TO-DATE
-> Task :app:mergeDebugAssets UP-TO-DATE
-> Task :app:compressDebugAssets UP-TO-DATE
 > Task :app:checkDebugAarMetadata UP-TO-DATE
-> Task :app:mergeDebugNativeLibs NO-SOURCE
-> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
 > Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
 > Task :app:processDebugManifest UP-TO-DATE
 > Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
-> Task :app:kspDebugKotlin UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/data/repository/ChatRepository.kt:371:54 Type mismatch: inferred type is Map<String, String> but UpdateProfileRequest was expected
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/BaatCheetNavHost.kt:199:17 Cannot find a parameter with this name: onShareAnalyticsChange
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/BaatCheetNavHost.kt:201:17 Cannot find a parameter with this name: onExportData
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/BaatCheetNavHost.kt:204:17 Cannot find a parameter with this name: onHelpCenter
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:346:25 Cannot find a parameter with this name: onShareAnalyticsChange
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:348:25 Cannot find a parameter with this name: onExportData
-e: file:///Users/muhammadsharjeel/Documents/BaatCheet/android/app/src/main/java/com/baatcheet/app/ui/chat/ChatScreen.kt:351:25 Cannot find a parameter with this name: onHelpCenter
 
 FAILURE: Build failed with an exception.
 
@@ -254,5 +248,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 
 
 BUILD FAILED in 11s
-29 actionable tasks: 2 executed, 27 up-to-date
+29 actionable tasks: 3 executed, 26 up-to-date
 Configuration cache entry reused.

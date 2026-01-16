@@ -370,7 +370,8 @@ data class UpdateProfileRequest(
     val preferredLanguage: String? = null,
     val communicationTone: String? = null,
     val responseStyle: String? = null,
-    val primaryUseCase: String? = null
+    val primaryUseCase: String? = null,
+    val customInstructions: String? = null
 )
 
 data class ProfileSettingsResponse(
