@@ -185,6 +185,29 @@ class TTSServiceClass {
       // Then reset every 24 hours
       setInterval(() => this.resetDailyUsage(), 24 * 60 * 60 * 1000);
     }, msUntilMidnight);
+    
+    // Also reset exhausted keys every hour (they might be temporarily blocked)
+    setInterval(() => {
+      this.resetExhaustedKeys();
+    }, 60 * 60 * 1000); // Every hour
+  }
+  
+  /**
+   * Reset exhausted keys (they might be available again after some time)
+   */
+  private resetExhaustedKeys(): void {
+    let resetCount = 0;
+    for (const [index, usage] of this.keyUsage.entries()) {
+      if (usage.isExhausted && usage.charactersUsed < this.ELEVENLABS_MONTHLY_LIMIT * 0.8) {
+        // Only reset if we haven't actually hit the limit
+        usage.isExhausted = false;
+        this.keyUsage.set(index, usage);
+        resetCount++;
+      }
+    }
+    if (resetCount > 0) {
+      logger.info(`Reset ${resetCount} ElevenLabs keys (were marked exhausted but may be available)`);
+    }
   }
 
   /**
@@ -562,19 +585,35 @@ class TTSServiceClass {
         textLength,
       });
       
-      // If quota exceeded, unauthorized, or voice not found - mark key and try next
-      if (statusCode === 401 || statusCode === 429 || statusCode === 422) {
-        logger.warn(`ElevenLabs key ${index + 1} failed (${statusCode}), trying next key...`);
-        
-        // Try next key if available
+      // Handle different error types
+      if (statusCode === 429) {
+        // Rate limited - mark key as exhausted and try next
+        logger.warn(`ElevenLabs key ${index + 1} rate limited (429), marking exhausted`);
+        const usage = this.keyUsage.get(index);
+        if (usage) {
+          usage.isExhausted = true;
+          this.keyUsage.set(index, usage);
+        }
         if (this.ELEVENLABS_KEYS.length > 1) {
-          // Mark current key as exhausted
-          const usage = this.keyUsage.get(index);
-          if (usage) {
-            usage.isExhausted = true;
-            this.keyUsage.set(index, usage);
-          }
           return this.elevenLabsTTS(text, voiceId);
+        }
+      } else if (statusCode === 401) {
+        // Unauthorized - key might be invalid, mark exhausted
+        logger.warn(`ElevenLabs key ${index + 1} unauthorized (401), marking exhausted`);
+        const usage = this.keyUsage.get(index);
+        if (usage) {
+          usage.isExhausted = true;
+          this.keyUsage.set(index, usage);
+        }
+        if (this.ELEVENLABS_KEYS.length > 1) {
+          return this.elevenLabsTTS(text, voiceId);
+        }
+      } else if (statusCode === 422) {
+        // Voice not found or invalid request - DON'T mark exhausted, just try with default voice
+        logger.warn(`ElevenLabs key ${index + 1} got 422 (maybe voice issue), trying default voice...`);
+        if (selectedVoice !== '21m00Tcm4TlvDq8ikWAM') {
+          // Try with Rachel (default ElevenLabs voice that always works)
+          return this.elevenLabsTTS(text, '21m00Tcm4TlvDq8ikWAM');
         }
       }
       

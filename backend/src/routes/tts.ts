@@ -87,6 +87,41 @@ router.get('/debug', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /tts/reset-keys (PUBLIC - for debugging)
+ * Reset exhausted ElevenLabs keys
+ */
+router.post('/reset-keys', async (_req: Request, res: Response) => {
+  try {
+    // Get current status
+    const beforeStatus = ttsService.getProviderInfo();
+    
+    // Reset exhausted keys
+    const keyStats = ttsService.getElevenLabsUsageStats();
+    let resetCount = 0;
+    
+    for (const stat of keyStats) {
+      if (stat.usage.isExhausted) {
+        stat.usage.isExhausted = false;
+        stat.usage.charactersUsed = 0;
+        stat.usage.requestCount = 0;
+        resetCount++;
+      }
+    }
+    
+    const afterStatus = ttsService.getProviderInfo();
+    
+    res.json({
+      success: true,
+      message: `Reset ${resetCount} exhausted keys`,
+      before: beforeStatus,
+      after: afterStatus,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Apply authentication to all other routes
 router.use(clerkAuth);
 
