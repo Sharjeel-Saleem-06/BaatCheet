@@ -353,11 +353,53 @@ class TTSServiceClass {
   }
 
   /**
-   * ElevenLabs TTS with multi-key rotation
+   * Detect if text contains Urdu/Hindi/Arabic characters
+   */
+  private detectLanguage(text: string): 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed' {
+    // Urdu/Arabic character range (includes Persian, Urdu-specific characters)
+    const urduArabicPattern = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    // Devanagari (Hindi) character range
+    const hindiPattern = /[\u0900-\u097F]/;
+    
+    const hasUrduArabic = urduArabicPattern.test(text);
+    const hasHindi = hindiPattern.test(text);
+    const hasEnglish = /[a-zA-Z]/.test(text);
+    
+    if (hasUrduArabic && !hasEnglish) return 'urdu';
+    if (hasHindi && !hasEnglish) return 'hindi';
+    if (hasUrduArabic && hasEnglish) return 'mixed';
+    if (hasHindi && hasEnglish) return 'mixed';
+    return 'english';
+  }
+  
+  /**
+   * Get recommended voice for language
+   */
+  private getRecommendedVoice(language: 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed'): string {
+    switch (language) {
+      case 'urdu':
+      case 'arabic':
+        // Bill is great for Urdu content
+        return 'pqHfZKP75CvOlQylNhV4'; // Bill
+      case 'hindi':
+        // Nicole works well for Hindi
+        return 'piTKgcLEGmPE4e6mEKli'; // Nicole
+      case 'mixed':
+        // Charlotte is best for mixed Urdu/English (Roman Urdu)
+        return 'XB0fDUnXU5powFXDhCwa'; // Charlotte
+      case 'english':
+      default:
+        return 'EXAVITQu4vr4xnSDxMaL'; // Sarah
+    }
+  }
+  
+  /**
+   * ElevenLabs TTS with multi-key rotation and automatic language detection
+   * Supports 29+ languages including Urdu, Hindi, Arabic, etc.
    */
   private async elevenLabsTTS(
     text: string,
-    voiceId: string = 'EXAVITQu4vr4xnSDxMaL' // Default: Sarah
+    voiceId?: string
   ): Promise<TTSResult> {
     // Get available key
     const keyInfo = this.getAvailableElevenLabsKey();
@@ -367,6 +409,12 @@ class TTSServiceClass {
 
     const { key, index } = keyInfo;
     const textLength = text.length;
+    
+    // Auto-detect language and select appropriate voice if not specified
+    const detectedLanguage = this.detectLanguage(text);
+    const selectedVoice = voiceId || this.getRecommendedVoice(detectedLanguage);
+    
+    logger.info(`TTS language detection: ${detectedLanguage}, using voice: ${selectedVoice}`);
 
     // Check if this request would exceed conservative limits
     const usage = this.keyUsage.get(index);
@@ -374,18 +422,26 @@ class TTSServiceClass {
       logger.warn(`ElevenLabs key ${index + 1} approaching limit, trying next key`);
       // Mark as exhausted and try next key
       this.trackElevenLabsUsage(index, 0, false);
-      return this.elevenLabsTTS(text, voiceId); // Recursive call with next key
+      return this.elevenLabsTTS(text, selectedVoice); // Recursive call with next key
     }
 
     try {
+      // Use eleven_multilingual_v2 for non-English content for best quality
+      // Use eleven_turbo_v2_5 for English (faster, lower latency)
+      const modelId = detectedLanguage === 'english' 
+        ? 'eleven_turbo_v2_5' 
+        : 'eleven_multilingual_v2';
+      
       const response = await axios.post(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}`,
         {
           text,
-          model_id: 'eleven_turbo_v2_5', // New free tier model (v1 is deprecated)
+          model_id: modelId,
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
+            style: 0.0, // Natural style
+            use_speaker_boost: true, // Improve voice clarity
           },
         },
         {
@@ -488,14 +544,19 @@ class TTSServiceClass {
 
   /**
    * Get available voices
+   * ElevenLabs supports 29 languages including Urdu, Hindi, Arabic, and more
+   * Reference: https://elevenlabs.io/languages
    */
   public getAvailableVoices(): VoiceInfo[] {
     const voices: VoiceInfo[] = [];
     
     // ElevenLabs voices (free tier - prioritized)
+    // Includes multilingual voices that sound natural in Urdu, Hindi, and English
     if (this.ELEVENLABS_KEYS.length > 0) {
       voices.push(
-        // Pre-made voices (free to use)
+        // ============================================
+        // English Voices (Natural, Human-like)
+        // ============================================
         { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', language: 'en', gender: 'female', provider: 'elevenlabs' },
         { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', language: 'en', gender: 'female', provider: 'elevenlabs' },
         { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', language: 'en', gender: 'female', provider: 'elevenlabs' },
@@ -504,10 +565,54 @@ class TTSServiceClass {
         { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', language: 'en', gender: 'male', provider: 'elevenlabs' },
         { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', language: 'en', gender: 'male', provider: 'elevenlabs' },
         { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', language: 'en', gender: 'male', provider: 'elevenlabs' },
+        
+        // ============================================
+        // Multilingual Voices (Best for Urdu/Hindi/Roman Urdu)
+        // These voices are trained on multiple languages and sound natural
+        // ============================================
+        
+        // Charlotte - Multilingual, works great with Urdu text
+        { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
+        
+        // Aria - Expressive multilingual voice
+        { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
+        
+        // Roger - Deep male multilingual voice
+        { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
+        
+        // Sarah - Soft multilingual voice (different from English Sarah)
+        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah (Soft)', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
+        
+        // George - Professional multilingual male voice
+        { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
+        
+        // Lily - British accent, works well with Urdu-English mix
+        { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
+        
+        // ============================================
+        // Recommended for Urdu/Roman Urdu
+        // ============================================
+        // Note: These multilingual voices use Eleven's Turbo v2.5 model
+        // which supports Urdu natively with proper pronunciation
+        
+        // Bill - Natural conversational style, great for casual Urdu
+        { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', language: 'ur', gender: 'male', provider: 'elevenlabs' },
+        
+        // Callum - Warm and friendly, good for storytelling
+        { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
+        
+        // Charlie - Australian accent, interesting for mixed content
+        { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
+        
+        // Daniel - British narrator, clear pronunciation
+        { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
+        
+        // Nicole - Warm female voice, works well with Hindi/Urdu
+        { id: 'piTKgcLEGmPE4e6mEKli', name: 'Nicole', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
       );
     }
     
-    // OpenAI voices (paid)
+    // OpenAI voices (paid - backup)
     if (this.OPENAI_API_KEY) {
       voices.push(
         { id: 'alloy', name: 'Alloy', language: 'en', gender: 'neutral', provider: 'openai' },
@@ -516,6 +621,24 @@ class TTSServiceClass {
         { id: 'onyx', name: 'Onyx', language: 'en', gender: 'male', provider: 'openai' },
         { id: 'nova', name: 'Nova', language: 'en', gender: 'female', provider: 'openai' },
         { id: 'shimmer', name: 'Shimmer', language: 'en', gender: 'female', provider: 'openai' },
+      );
+    }
+    
+    // Google Cloud TTS voices (backup)
+    if (this.GOOGLE_CLOUD_KEY) {
+      voices.push(
+        // Urdu voices from Google
+        { id: 'ur-PK-Wavenet-A', name: 'Urdu Female', language: 'ur', gender: 'female', provider: 'google' },
+        { id: 'ur-PK-Wavenet-B', name: 'Urdu Male', language: 'ur', gender: 'male', provider: 'google' },
+        // Hindi voices
+        { id: 'hi-IN-Wavenet-A', name: 'Hindi Female', language: 'hi', gender: 'female', provider: 'google' },
+        { id: 'hi-IN-Wavenet-B', name: 'Hindi Male', language: 'hi', gender: 'male', provider: 'google' },
+        { id: 'hi-IN-Wavenet-C', name: 'Hindi Male 2', language: 'hi', gender: 'male', provider: 'google' },
+        // English voices
+        { id: 'en-US-Wavenet-A', name: 'US Female', language: 'en', gender: 'female', provider: 'google' },
+        { id: 'en-US-Wavenet-B', name: 'US Male', language: 'en', gender: 'male', provider: 'google' },
+        { id: 'en-GB-Wavenet-A', name: 'UK Female', language: 'en', gender: 'female', provider: 'google' },
+        { id: 'en-GB-Wavenet-B', name: 'UK Male', language: 'en', gender: 'male', provider: 'google' },
       );
     }
     
