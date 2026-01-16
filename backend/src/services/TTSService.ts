@@ -2,22 +2,28 @@
  * Text-to-Speech (TTS) Service
  * Provides voice output capabilities with multiple provider support
  * 
- * Supported Providers:
- * - OpenAI TTS (best quality, paid)
- * - ElevenLabs (free tier: 10k chars/month per account - MULTIPLE KEYS)
- * - Google Cloud TTS (free tier: 1M chars/month)
- * - Browser Web Speech API (frontend fallback)
+ * Supported Providers (in order of preference):
+ * 1. Edge TTS (Microsoft) - FREE, NO API KEY, excellent Urdu voices!
+ * 2. ElevenLabs (free tier: 10k chars/month per account)
+ * 3. Google Cloud TTS (free tier: 1M chars/month)
+ * 4. OpenAI TTS (paid, best quality)
+ * 5. Google Translate TTS (free, no API key, fallback)
  * 
  * Features:
- * - Multi-key rotation for ElevenLabs (5 free accounts)
- * - Per-key usage tracking to stay within free tier
- * - Automatic failover when quota exceeded
+ * - Edge TTS as primary (FREE, unlimited, Urdu support)
+ * - Multi-key rotation for ElevenLabs
+ * - Automatic failover between providers
  * 
  * @module TTSService
  */
 
 import axios from 'axios';
 import { logger } from '../utils/logger.js';
+
+// Edge TTS - Microsoft's FREE TTS service
+// Supports 400+ voices including excellent Urdu voices
+// NO API KEY REQUIRED!
+import { tts as edgeTtsGenerate, getVoices as getEdgeVoices } from 'edge-tts';
 
 // ============================================
 // Types
@@ -289,7 +295,7 @@ class TTSServiceClass {
 
   /**
    * Generate speech from text
-   * Priority: ElevenLabs (free, multi-key) > Google Cloud (free tier) > OpenAI (paid)
+   * Priority: Edge TTS (FREE!) > ElevenLabs > Google Cloud > OpenAI > Google Translate
    */
   public async generateSpeech(
     text: string,
@@ -297,8 +303,8 @@ class TTSServiceClass {
   ): Promise<TTSResult> {
     const { voice = 'alloy', speed = 1.0, language = 'en', format = 'mp3' } = options;
     
-    // Validate and truncate text if needed (conservative limit for free tiers)
-    const maxChars = this.CHAR_LIMITS.elevenlabs;
+    // Validate and truncate text if needed
+    const maxChars = 5000; // Edge TTS supports long text
     const truncatedText = text.length > maxChars ? text.substring(0, maxChars) : text;
     
     // Log if text was truncated
@@ -307,16 +313,28 @@ class TTSServiceClass {
     }
     
     try {
-      // Try ElevenLabs first (free tier with multi-key rotation)
+      // ============================================
+      // 🥇 PRIMARY: Edge TTS (Microsoft) - FREE, NO API KEY!
+      // Best quality for Urdu, unlimited usage
+      // ============================================
+      try {
+        logger.info('Trying Edge TTS (FREE, best for Urdu)...');
+        return await this.edgeTTS(truncatedText, voice);
+      } catch (edgeError: any) {
+        logger.warn('Edge TTS failed:', edgeError.message);
+      }
+      
+      // 🥈 SECONDARY: ElevenLabs (if configured)
       if (this.ELEVENLABS_KEYS.length > 0) {
         try {
+          logger.info('Trying ElevenLabs TTS...');
           return await this.elevenLabsTTS(truncatedText, voice);
         } catch (elevenLabsError) {
           logger.warn('ElevenLabs TTS failed, trying fallback:', elevenLabsError);
         }
       }
       
-      // Try Google Cloud TTS (free tier: 1M chars/month)
+      // 🥉 TERTIARY: Google Cloud TTS (free tier)
       if (this.GOOGLE_CLOUD_KEY) {
         try {
           return await this.googleTTS(truncatedText, language, voice);
@@ -325,7 +343,7 @@ class TTSServiceClass {
         }
       }
       
-      // Try OpenAI TTS last (paid, but best quality)
+      // OpenAI TTS (paid)
       if (this.OPENAI_API_KEY) {
         try {
           return await this.openAITTS(truncatedText, voice, speed, format);
@@ -469,6 +487,90 @@ class TTSServiceClass {
     }
   }
   
+  // ============================================
+  // EDGE TTS VOICES (Microsoft FREE)
+  // These are excellent quality, no API key needed!
+  // ============================================
+  private readonly EDGE_TTS_VOICES = {
+    // Urdu voices - EXCELLENT quality!
+    'ur-PK-AsadNeural': { name: 'Asad', language: 'ur', gender: 'male', description: 'Pakistani Urdu male - clear and natural' },
+    'ur-PK-UzmaNeural': { name: 'Uzma', language: 'ur', gender: 'female', description: 'Pakistani Urdu female - warm and friendly' },
+    'ur-IN-GulNeural': { name: 'Gul', language: 'ur', gender: 'female', description: 'Indian Urdu female' },
+    'ur-IN-SalmanNeural': { name: 'Salman', language: 'ur', gender: 'male', description: 'Indian Urdu male' },
+    // Hindi voices (good for Roman Urdu too)
+    'hi-IN-MadhurNeural': { name: 'Madhur', language: 'hi', gender: 'male', description: 'Hindi male - expressive' },
+    'hi-IN-SwaraNeural': { name: 'Swara', language: 'hi', gender: 'female', description: 'Hindi female - natural' },
+    // English voices
+    'en-US-JennyNeural': { name: 'Jenny', language: 'en', gender: 'female', description: 'American English female' },
+    'en-US-GuyNeural': { name: 'Guy', language: 'en', gender: 'male', description: 'American English male' },
+    'en-GB-SoniaNeural': { name: 'Sonia', language: 'en', gender: 'female', description: 'British English female' },
+  };
+
+  /**
+   * Get the best Edge TTS voice for the detected language
+   */
+  private getEdgeTTSVoice(language: 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed'): string {
+    switch (language) {
+      case 'urdu':
+      case 'arabic':
+        return 'ur-PK-AsadNeural'; // Best for pure Urdu
+      case 'hindi':
+        return 'hi-IN-MadhurNeural'; // Best for Hindi
+      case 'mixed':
+        // For Roman Urdu, use Hindi voice - sounds more natural
+        return 'hi-IN-MadhurNeural';
+      case 'english':
+      default:
+        return 'en-US-GuyNeural';
+    }
+  }
+
+  /**
+   * Edge TTS - Microsoft's FREE Text-to-Speech
+   * 
+   * FEATURES:
+   * - 100% FREE, no API key needed!
+   * - Excellent Urdu voices (ur-PK-AsadNeural, ur-PK-UzmaNeural)
+   * - Natural, human-like speech
+   * - Supports 400+ voices in 100+ languages
+   * - No rate limits for normal use
+   * 
+   * URDU VOICES:
+   * - ur-PK-AsadNeural (Male, Pakistani Urdu) - BEST for pure Urdu
+   * - ur-PK-UzmaNeural (Female, Pakistani Urdu) - Warm and friendly
+   * - ur-IN-GulNeural (Female, Indian Urdu)
+   * - ur-IN-SalmanNeural (Male, Indian Urdu)
+   */
+  private async edgeTTS(text: string, requestedVoice?: string): Promise<TTSResult> {
+    try {
+      // Detect language and select appropriate voice
+      const detectedLang = this.detectLanguage(text);
+      let voiceId = this.getEdgeTTSVoice(detectedLang);
+      
+      // If a specific voice was requested and it's an Edge voice, use it
+      if (requestedVoice && requestedVoice.includes('Neural')) {
+        voiceId = requestedVoice;
+      }
+      
+      logger.info(`Edge TTS: Language=${detectedLang}, Voice=${voiceId}, TextLength=${text.length}`);
+      
+      // Generate audio using edge-tts package
+      // This is Microsoft's FREE TTS service - no API key needed!
+      const audioBuffer = await edgeTtsGenerate(text, { voice: voiceId });
+      
+      logger.info(`✅ Edge TTS SUCCESS: ${audioBuffer.length} bytes, Voice: ${voiceId}`);
+      
+      return {
+        audioBuffer,
+        format: 'mp3',
+        provider: 'edge-tts',
+      };
+    } catch (error: any) {
+      logger.error('Edge TTS failed:', error.message);
+      throw new Error(`Edge TTS failed: ${error.message}`);
+    }
+  }
+
   /**
    * ElevenLabs TTS with multi-key rotation and automatic language detection
    * Supports 29+ languages including Urdu, Hindi, Arabic, etc.
@@ -790,8 +892,28 @@ class TTSServiceClass {
   public getAvailableVoices(): VoiceInfo[] {
     const voices: VoiceInfo[] = [];
     
-    // ElevenLabs voices (free tier - prioritized)
-    // Includes multilingual voices that sound natural in Urdu, Hindi, and English
+    // ============================================
+    // 🥇 EDGE TTS VOICES (Microsoft FREE - BEST QUALITY!)
+    // These are always available, no API key needed
+    // ============================================
+    voices.push(
+      // URDU VOICES - Pakistani (RECOMMENDED)
+      { id: 'ur-PK-AsadNeural', name: 'Asad (اردو)', language: 'ur', gender: 'male', provider: 'edge-tts' },
+      { id: 'ur-PK-UzmaNeural', name: 'Uzma (اردو)', language: 'ur', gender: 'female', provider: 'edge-tts' },
+      // URDU VOICES - Indian
+      { id: 'ur-IN-GulNeural', name: 'Gul (اردو)', language: 'ur', gender: 'female', provider: 'edge-tts' },
+      { id: 'ur-IN-SalmanNeural', name: 'Salman (اردو)', language: 'ur', gender: 'male', provider: 'edge-tts' },
+      // HINDI VOICES (Great for Roman Urdu too)
+      { id: 'hi-IN-MadhurNeural', name: 'Madhur (हिंदी)', language: 'hi', gender: 'male', provider: 'edge-tts' },
+      { id: 'hi-IN-SwaraNeural', name: 'Swara (हिंदी)', language: 'hi', gender: 'female', provider: 'edge-tts' },
+      // ENGLISH VOICES
+      { id: 'en-US-JennyNeural', name: 'Jenny', language: 'en', gender: 'female', provider: 'edge-tts' },
+      { id: 'en-US-GuyNeural', name: 'Guy', language: 'en', gender: 'male', provider: 'edge-tts' },
+      { id: 'en-GB-SoniaNeural', name: 'Sonia (British)', language: 'en', gender: 'female', provider: 'edge-tts' },
+      { id: 'en-GB-RyanNeural', name: 'Ryan (British)', language: 'en', gender: 'male', provider: 'edge-tts' },
+    );
+    
+    // ElevenLabs voices (if configured - as backup)
     if (this.ELEVENLABS_KEYS.length > 0) {
       voices.push(
         // ============================================
@@ -799,22 +921,11 @@ class TTSServiceClass {
         // ============================================
         { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', language: 'en', gender: 'female', provider: 'elevenlabs' },
         { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', language: 'en', gender: 'female', provider: 'elevenlabs' },
         { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', language: 'en', gender: 'male', provider: 'elevenlabs' },
-        { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', language: 'en', gender: 'male', provider: 'elevenlabs' },
         { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', language: 'en', gender: 'male', provider: 'elevenlabs' },
-        { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', language: 'en', gender: 'male', provider: 'elevenlabs' },
         
-        // ============================================
-        // URDU VOICES (Primary - Best for Urdu/Roman Urdu)
-        // ============================================
-        // These voices sound natural speaking Urdu using Eleven's multilingual model
-        
-        // Bilal - Best for pure Urdu content, natural male Urdu voice
+        // URDU VOICES (ElevenLabs multilingual)
         { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bilal (اردو)', language: 'ur', gender: 'male', provider: 'elevenlabs' },
-        
-        // Arooj - Best for Roman Urdu & English mix, conversational
         { id: 'XB0fDUnXU5powFXDhCwa', name: 'Arooj', language: 'ur', gender: 'female', provider: 'elevenlabs' },
         
         // Nadia - Warm feminine voice, great for Hindi/Urdu
