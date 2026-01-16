@@ -1,116 +1,148 @@
 /**
  * Contact Page
- * Professional contact form with modern design
+ * Professional contact form with EmailJS integration
  */
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 import {
   Mail,
-  MessageSquare,
-  MapPin,
   Phone,
+  MapPin,
   Send,
-  ArrowLeft,
-  Check,
+  CheckCircle,
+  AlertCircle,
   Loader2,
-  Twitter,
+  Globe,
   Github,
   Linkedin,
+  Twitter,
+  MessageSquare,
+  Clock,
+  Headphones,
 } from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import clsx from 'clsx';
+
+interface FormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSending(true);
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In production, send to backend
-      // await api.post('/contact', formData);
-      
-      setSuccess(true);
+      // EmailJS configuration
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_zukq4lf';
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_24gtxc6';
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'Mq2IhyUUB3uKd1WsS';
+
+      await emailjs.send(
+        serviceId,
+        templateId,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          to_name: 'Muhammad Sharjeel',
+        },
+        publicKey
+      );
+
+      setSent(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
+      
+      // Reset after 5 seconds
+      setTimeout(() => setSent(false), 5000);
     } catch (err) {
-      setError('Failed to send message. Please try again.');
+      console.error('EmailJS Error:', err);
+      setError('Failed to send message. Please try again or email directly.');
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
   const contactInfo = [
     {
       icon: Mail,
-      title: 'Email',
-      value: 'support@baatcheet.ai',
-      link: 'mailto:support@baatcheet.ai',
+      label: 'Email',
+      value: 'sharry00010@gmail.com',
+      href: 'mailto:sharry00010@gmail.com',
     },
     {
-      icon: MessageSquare,
-      title: 'Live Chat',
-      value: 'Available 24/7',
-      link: '/chat',
+      icon: Globe,
+      label: 'Portfolio',
+      value: 'muhammad-sharjeel-portfolio.netlify.app',
+      href: 'https://muhammad-sharjeel-portfolio.netlify.app/',
     },
     {
-      icon: MapPin,
-      title: 'Location',
-      value: 'Lahore, Pakistan',
-      link: null,
+      icon: Clock,
+      label: 'Response Time',
+      value: 'Within 24 hours',
+      href: null,
     },
   ];
 
   const socialLinks = [
-    { icon: Twitter, href: 'https://twitter.com/baatcheet', label: 'Twitter' },
-    { icon: Github, href: 'https://github.com/baatcheet', label: 'GitHub' },
-    { icon: Linkedin, href: 'https://linkedin.com/company/baatcheet', label: 'LinkedIn' },
+    { icon: Globe, href: 'https://muhammad-sharjeel-portfolio.netlify.app/', label: 'Portfolio', color: 'hover:text-primary-400' },
+    { icon: Github, href: 'https://github.com/Sharjeel-Saleem-06', label: 'GitHub', color: 'hover:text-gray-400' },
+    { icon: Linkedin, href: 'https://linkedin.com/in/sharjeel-saleem', label: 'LinkedIn', color: 'hover:text-blue-400' },
+    { icon: Twitter, href: 'https://twitter.com/sharjeel_dev', label: 'Twitter', color: 'hover:text-sky-400' },
+  ];
+
+  const faqItems = [
+    {
+      question: 'How do I get started with BaatCheet?',
+      answer: 'Simply sign up for a free account and start chatting! No credit card required.',
+    },
+    {
+      question: 'Is my data secure?',
+      answer: 'Yes, we use end-to-end encryption and never share your data with third parties.',
+    },
+    {
+      question: 'Can I use BaatCheet for my business?',
+      answer: 'Absolutely! Our Enterprise plan offers custom solutions for businesses of all sizes.',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900 text-dark-100">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-900/95 backdrop-blur-lg border-b border-dark-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xl">B</span>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-                BaatCheet
-              </span>
-            </Link>
-
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-dark-400 hover:text-dark-200 transition-colors"
-            >
-              <ArrowLeft size={18} />
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-dark-900">
+      {/* Header */}
+      <Header transparent={false} />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-              Get in Touch
-            </span>
+      <section className="pt-24 pb-12 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-gradient-to-bl from-primary-500/20 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
+            <Headphones size={16} />
+            <span>We're here to help</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-dark-100 mb-4">
+            Get in Touch
           </h1>
           <p className="text-xl text-dark-400 max-w-2xl mx-auto">
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
@@ -119,48 +151,150 @@ export default function Contact() {
       </section>
 
       {/* Main Content */}
-      <section className="pb-20">
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Info */}
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
-                <div className="space-y-6">
-                  {contactInfo.map((item, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="text-primary-400" size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-1">{item.title}</h3>
-                        {item.link ? (
-                          <a
-                            href={item.link}
-                            className="text-dark-400 hover:text-primary-400 transition-colors"
-                          >
-                            {item.value}
-                          </a>
-                        ) : (
-                          <p className="text-dark-400">{item.value}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Contact Form */}
+            <div className="bg-dark-800 rounded-2xl border border-dark-700 p-8">
+              <h2 className="text-2xl font-bold text-dark-100 mb-6">Send a Message</h2>
+
+              {sent && (
+                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
+                  <CheckCircle className="text-green-400" size={20} />
+                  <span className="text-green-400">Message sent successfully! We'll get back to you soon.</span>
                 </div>
+              )}
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                  <AlertCircle className="text-red-400" size={20} />
+                  <span className="text-red-400">{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-dark-300 mb-2">
+                      Your Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                      placeholder="Muhammad Sharjeel"
+                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-dark-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                      placeholder="your@email.com"
+                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-2">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    required
+                    placeholder="How can we help?"
+                    className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    required
+                    rows={5}
+                    placeholder="Tell us more about your inquiry..."
+                    className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 font-semibold disabled:opacity-70"
+                >
+                  {sending ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-6">
+              {/* Info Cards */}
+              <div className="space-y-4">
+                {contactInfo.map((info, i) => (
+                  <div
+                    key={i}
+                    className="p-6 bg-dark-800 rounded-2xl border border-dark-700 flex items-center gap-4 hover:border-dark-600 transition-colors"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                      <info.icon className="text-primary-400" size={24} />
+                    </div>
+                    <div>
+                      <p className="text-dark-500 text-sm">{info.label}</p>
+                      {info.href ? (
+                        <a
+                          href={info.href}
+                          target={info.href.startsWith('http') ? '_blank' : undefined}
+                          rel="noopener noreferrer"
+                          className="text-dark-100 hover:text-primary-400 transition-colors font-medium"
+                        >
+                          {info.value}
+                        </a>
+                      ) : (
+                        <p className="text-dark-100 font-medium">{info.value}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Social Links */}
-              <div>
-                <h3 className="font-semibold mb-4">Follow Us</h3>
-                <div className="flex gap-4">
-                  {socialLinks.map((social, index) => (
+              <div className="p-6 bg-dark-800 rounded-2xl border border-dark-700">
+                <h3 className="text-lg font-semibold text-dark-100 mb-4">Connect With Me</h3>
+                <div className="flex gap-3">
+                  {socialLinks.map((social) => (
                     <a
-                      key={index}
+                      key={social.label}
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-lg bg-dark-800 border border-dark-700 flex items-center justify-center text-dark-400 hover:text-primary-400 hover:border-primary-500/50 transition-all"
+                      className={clsx(
+                        'w-12 h-12 rounded-xl bg-dark-700 border border-dark-600 flex items-center justify-center text-dark-400 transition-all',
+                        social.color
+                      )}
                       title={social.label}
                     >
                       <social.icon size={20} />
@@ -169,151 +303,73 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* FAQ Link */}
-              <div className="p-6 bg-dark-800 rounded-2xl border border-dark-700">
-                <h3 className="font-semibold mb-2">Looking for answers?</h3>
-                <p className="text-dark-400 text-sm mb-4">
-                  Check out our FAQ section for quick answers to common questions.
-                </p>
-                <Link
-                  to="/chat"
-                  className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors"
-                >
-                  Ask our AI Assistant
-                  <MessageSquare size={16} />
-                </Link>
-              </div>
-            </div>
-
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <div className="bg-dark-800 rounded-2xl border border-dark-700 p-8">
-                {success ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                      <Check className="text-green-500" size={32} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
-                    <p className="text-dark-400 mb-6">
-                      Thank you for reaching out. We'll get back to you within 24 hours.
-                    </p>
-                    <button
-                      onClick={() => setSuccess(false)}
-                      className="px-6 py-2 bg-dark-700 text-dark-200 rounded-lg hover:bg-dark-600 transition-colors"
-                    >
-                      Send Another Message
-                    </button>
+              {/* Developer Info */}
+              <div className="p-6 bg-gradient-to-br from-primary-500/10 to-purple-500/10 rounded-2xl border border-primary-500/20">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl font-bold">
+                    MS
                   </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Your Name
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={formData.name}
-                          onChange={(e) =>
-                            setFormData({ ...formData, name: e.target.value })
-                          }
-                          className="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
-                          }
-                          className="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Subject
-                      </label>
-                      <select
-                        required
-                        value={formData.subject}
-                        onChange={(e) =>
-                          setFormData({ ...formData, subject: e.target.value })
-                        }
-                        className="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 transition-colors"
-                      >
-                        <option value="">Select a topic</option>
-                        <option value="general">General Inquiry</option>
-                        <option value="support">Technical Support</option>
-                        <option value="billing">Billing Question</option>
-                        <option value="partnership">Partnership</option>
-                        <option value="feedback">Feedback</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Message
-                      </label>
-                      <textarea
-                        required
-                        rows={6}
-                        value={formData.message}
-                        onChange={(e) =>
-                          setFormData({ ...formData, message: e.target.value })
-                        }
-                        className="w-full px-4 py-3 bg-dark-900 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
-                        placeholder="How can we help you?"
-                      />
-                    </div>
-
-                    {error && (
-                      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
-                        {error}
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="animate-spin" size={20} />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          Send Message
-                          <Send size={20} />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
+                  <div>
+                    <h3 className="text-xl font-bold text-dark-100">Muhammad Sharjeel</h3>
+                    <p className="text-dark-400">Full Stack Developer</p>
+                  </div>
+                </div>
+                <p className="text-dark-400 text-sm mb-4">
+                  Passionate developer building innovative solutions. Check out my portfolio for more projects!
+                </p>
+                <a
+                  href="https://muhammad-sharjeel-portfolio.netlify.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 rounded-lg hover:bg-primary-500/30 transition-colors text-sm font-medium"
+                >
+                  <Globe size={16} />
+                  Visit Portfolio
+                </a>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-dark-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-dark-500 text-sm">
-          © {new Date().getFullYear()} BaatCheet. All rights reserved.
+      {/* FAQ Section */}
+      <section className="py-16 bg-dark-800/30">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-dark-100 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-dark-400">
+              Quick answers to common questions
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqItems.map((item, i) => (
+              <div
+                key={i}
+                className="p-6 bg-dark-800 rounded-xl border border-dark-700"
+              >
+                <h3 className="text-lg font-semibold text-dark-100 mb-2">{item.question}</h3>
+                <p className="text-dark-400">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              to="/help"
+              className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
+            >
+              <MessageSquare size={18} />
+              View all FAQs and Help Center
+            </Link>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

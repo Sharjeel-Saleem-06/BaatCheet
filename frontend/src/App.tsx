@@ -12,6 +12,10 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Home from './pages/Home';
 import Contact from './pages/Contact';
+import Privacy from './pages/Privacy';
+import Help from './pages/Help';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import { useEffect } from 'react';
 import api from './services/api';
 
@@ -29,6 +33,153 @@ function UserSync() {
   return null;
 }
 
+// Custom Clerk appearance to hide branding and match our theme
+const clerkAppearance = {
+  elements: {
+    // Root & Card
+    rootBox: 'w-full',
+    card: 'bg-dark-800 border border-dark-700 shadow-2xl rounded-2xl',
+    
+    // Header
+    headerTitle: 'text-dark-100 text-xl font-bold',
+    headerSubtitle: 'text-dark-400',
+    
+    // Form
+    formFieldLabel: 'text-dark-300 font-medium',
+    formFieldInput: 'bg-dark-700 border-dark-600 text-dark-100 rounded-xl focus:border-primary-500 focus:ring-primary-500',
+    formFieldInputShowPasswordButton: 'text-dark-500 hover:text-dark-300',
+    formFieldSuccessText: 'text-green-400',
+    formFieldErrorText: 'text-red-400',
+    formFieldHintText: 'text-dark-500',
+    formButtonPrimary: 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-semibold rounded-xl shadow-lg shadow-primary-500/20 py-3',
+    formButtonReset: 'text-primary-400 hover:text-primary-300',
+    
+    // Footer
+    footerAction: 'text-dark-400',
+    footerActionLink: 'text-primary-400 hover:text-primary-300 font-medium',
+    
+    // Divider
+    dividerLine: 'bg-dark-700',
+    dividerText: 'text-dark-500 bg-dark-800',
+    
+    // Social buttons
+    socialButtonsBlockButton: 'bg-dark-700 border-dark-600 text-dark-200 hover:bg-dark-600 hover:border-dark-500 rounded-xl',
+    socialButtonsBlockButtonText: 'font-medium',
+    socialButtonsProviderIcon: 'w-5 h-5',
+    
+    // Identity preview
+    identityPreview: 'bg-dark-700 border-dark-600 rounded-xl',
+    identityPreviewText: 'text-dark-200',
+    identityPreviewEditButton: 'text-primary-400 hover:text-primary-300',
+    
+    // Internal elements
+    internal: 'text-dark-400',
+    
+    // Alert
+    alert: 'bg-dark-700 border-dark-600 rounded-xl',
+    alertText: 'text-dark-300',
+    
+    // OTP
+    otpCodeFieldInput: 'bg-dark-700 border-dark-600 text-dark-100 rounded-lg',
+    
+    // User button
+    userButtonBox: 'rounded-xl',
+    userButtonTrigger: 'rounded-xl',
+    userButtonPopoverCard: 'bg-dark-800 border-dark-700 rounded-xl shadow-xl',
+    userButtonPopoverActionButton: 'text-dark-300 hover:bg-dark-700 rounded-lg',
+    userButtonPopoverActionButtonText: 'text-dark-300',
+    userButtonPopoverFooter: 'hidden', // Hide "Secured by Clerk"
+    
+    // General
+    avatarBox: 'rounded-xl',
+    badge: 'bg-primary-500/20 text-primary-400 rounded-lg',
+    
+    // Hide powered by Clerk footer
+    footer: 'hidden',
+    footerPages: 'hidden',
+    footerPagesLink: 'hidden',
+  },
+  layout: {
+    socialButtonsPlacement: 'top' as const,
+    showOptionalFields: false,
+    termsPageUrl: '/terms',
+    privacyPageUrl: '/privacy',
+    helpPageUrl: '/help',
+  },
+  variables: {
+    colorPrimary: '#22c55e',
+    colorBackground: '#1a1a2e',
+    colorInputBackground: '#252538',
+    colorInputText: '#f5f5f7',
+    colorTextOnPrimaryBackground: '#ffffff',
+    colorTextSecondary: '#9ca3af',
+    borderRadius: '0.75rem',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+};
+
+// Auth page wrapper component
+function AuthPageWrapper({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle: string }) {
+  return (
+    <div className="min-h-screen bg-dark-900 flex flex-col">
+      <Header transparent={false} />
+      <div className="flex-1 flex items-center justify-center p-4 pt-24">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
+              <span className="text-white font-bold text-3xl">B</span>
+            </div>
+            <h1 className="text-2xl font-bold text-dark-100 mb-2">{title}</h1>
+            <p className="text-dark-400">{subtitle}</p>
+          </div>
+          {children}
+        </div>
+      </div>
+      {/* Hide Clerk branding with CSS */}
+      <style>{`
+        .cl-internal-b3fm6y,
+        .cl-footerPages,
+        .cl-footer,
+        [data-localization-key="footerPageLink__help"],
+        [data-localization-key="footerPageLink__privacy"],
+        [data-localization-key="footerPageLink__terms"],
+        .cl-footerPagesLink,
+        .cl-powered-by-clerk,
+        .cl-internal-1dauvt6,
+        [class*="cl-internal-"],
+        .cl-socialButtonsProviderIcon__clerk,
+        [href*="clerk.com"],
+        .cl-footerAction__signIn + .cl-footerPages,
+        .cl-footerAction__signUp + .cl-footerPages,
+        .cl-card > footer > div:last-child {
+          display: none !important;
+        }
+        .cl-card {
+          background: #1f1f35 !important;
+          border: 1px solid #2d2d4a !important;
+        }
+        .cl-formButtonPrimary {
+          background: linear-gradient(to right, #22c55e, #16a34a) !important;
+        }
+        .cl-formFieldInput {
+          background: #252538 !important;
+          border-color: #3d3d5c !important;
+        }
+        .cl-socialButtonsBlockButton {
+          background: #252538 !important;
+          border-color: #3d3d5c !important;
+        }
+        .cl-dividerLine {
+          background: #3d3d5c !important;
+        }
+        .cl-headerTitle, .cl-headerSubtitle {
+          display: none !important;
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <>
@@ -37,76 +188,39 @@ export default function App() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/terms" element={<Privacy />} /> {/* Reuse privacy for now */}
+        <Route path="/about" element={<Navigate to="/" replace />} />
+        <Route path="/cookies" element={<Privacy />} /> {/* Reuse privacy for now */}
         
         {/* Auth routes */}
         <Route
           path="/sign-in/*"
           element={
-            <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
-              <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
-                    <span className="text-white font-bold text-3xl">B</span>
-                  </div>
-                  <h1 className="text-2xl font-bold text-dark-100 mb-2">Welcome Back</h1>
-                  <p className="text-dark-400">Sign in to continue to BaatCheet</p>
-                </div>
-                <SignIn 
-                  routing="path" 
-                  path="/sign-in"
-                  appearance={{
-                    elements: {
-                      rootBox: 'w-full',
-                      card: 'bg-dark-800 border border-dark-700 shadow-xl',
-                      headerTitle: 'text-dark-100',
-                      headerSubtitle: 'text-dark-400',
-                      formFieldLabel: 'text-dark-300',
-                      formFieldInput: 'bg-dark-900 border-dark-600 text-dark-100',
-                      footerActionLink: 'text-primary-400 hover:text-primary-300',
-                      formButtonPrimary: 'bg-primary-500 hover:bg-primary-600',
-                      dividerLine: 'bg-dark-700',
-                      dividerText: 'text-dark-500',
-                      socialButtonsBlockButton: 'bg-dark-700 border-dark-600 text-dark-200 hover:bg-dark-600',
-                    },
-                  }}
-                />
-              </div>
-            </div>
+            <AuthPageWrapper title="Welcome Back" subtitle="Sign in to continue to BaatCheet">
+              <SignIn 
+                routing="path" 
+                path="/sign-in"
+                appearance={clerkAppearance}
+                afterSignInUrl="/app/chat"
+                signUpUrl="/sign-up"
+              />
+            </AuthPageWrapper>
           }
         />
         <Route
           path="/sign-up/*"
           element={
-            <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4">
-              <div className="w-full max-w-md">
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
-                    <span className="text-white font-bold text-3xl">B</span>
-                  </div>
-                  <h1 className="text-2xl font-bold text-dark-100 mb-2">Create Account</h1>
-                  <p className="text-dark-400">Start your AI journey with BaatCheet</p>
-                </div>
-                <SignUp 
-                  routing="path" 
-                  path="/sign-up"
-                  appearance={{
-                    elements: {
-                      rootBox: 'w-full',
-                      card: 'bg-dark-800 border border-dark-700 shadow-xl',
-                      headerTitle: 'text-dark-100',
-                      headerSubtitle: 'text-dark-400',
-                      formFieldLabel: 'text-dark-300',
-                      formFieldInput: 'bg-dark-900 border-dark-600 text-dark-100',
-                      footerActionLink: 'text-primary-400 hover:text-primary-300',
-                      formButtonPrimary: 'bg-primary-500 hover:bg-primary-600',
-                      dividerLine: 'bg-dark-700',
-                      dividerText: 'text-dark-500',
-                      socialButtonsBlockButton: 'bg-dark-700 border-dark-600 text-dark-200 hover:bg-dark-600',
-                    },
-                  }}
-                />
-              </div>
-            </div>
+            <AuthPageWrapper title="Create Account" subtitle="Start your AI journey with BaatCheet">
+              <SignUp 
+                routing="path" 
+                path="/sign-up"
+                appearance={clerkAppearance}
+                afterSignUpUrl="/app/chat"
+                signInUrl="/sign-in"
+              />
+            </AuthPageWrapper>
           }
         />
 

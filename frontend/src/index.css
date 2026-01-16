@@ -149,3 +149,220 @@
 .markdown-content input[type="checkbox"] {
   @apply mr-2 accent-primary-500;
 }
+
+/* ========================================
+   CLERK AUTH STYLING - HIDE BRANDING
+   ======================================== */
+
+/* Hide all Clerk branding and internal elements */
+.cl-internal-b3fm6y,
+.cl-footerPages,
+.cl-footer,
+.cl-footerPagesLink,
+.cl-powered-by-clerk,
+.cl-internal-1dauvt6,
+.cl-card > footer > div:last-child,
+[data-localization-key="footerPageLink__help"],
+[data-localization-key="footerPageLink__privacy"],
+[data-localization-key="footerPageLink__terms"],
+[href*="clerk.com"],
+.cl-logoBox,
+.cl-logoImage,
+div[class*="cl-internal"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Clerk card styling */
+.cl-card {
+  background: #1f1f35 !important;
+  border: 1px solid #2d2d4a !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.cl-headerTitle,
+.cl-headerSubtitle {
+  display: none !important;
+}
+
+/* Form styling */
+.cl-formFieldInput {
+  background: #252538 !important;
+  border-color: #3d3d5c !important;
+  border-radius: 0.75rem !important;
+  color: #f5f5f7 !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+.cl-formFieldLabel {
+  color: #a3a3a3 !important;
+}
+
+/* Primary button */
+.cl-formButtonPrimary {
+  background: linear-gradient(to right, #22c55e, #16a34a) !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cl-formButtonPrimary:hover {
+  background: linear-gradient(to right, #16a34a, #15803d) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Social buttons */
+.cl-socialButtonsBlockButton {
+  background: #252538 !important;
+  border-color: #3d3d5c !important;
+  border-radius: 0.75rem !important;
+  color: #e5e5e5 !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background: #2d2d4a !important;
+  border-color: #4d4d6a !important;
+}
+
+/* Divider */
+.cl-dividerLine {
+  background: #3d3d5c !important;
+}
+
+.cl-dividerText {
+  background: #1f1f35 !important;
+  color: #6b7280 !important;
+}
+
+/* Footer links */
+.cl-footerActionLink {
+  color: #22c55e !important;
+}
+
+.cl-footerActionLink:hover {
+  color: #4ade80 !important;
+}
+
+.cl-footerActionText {
+  color: #9ca3af !important;
+}
+
+/* Alert styling */
+.cl-alert {
+  background: #252538 !important;
+  border-color: #3d3d5c !important;
+  border-radius: 0.75rem !important;
+}
+
+/* OTP input */
+.cl-otpCodeFieldInput {
+  background: #252538 !important;
+  border-color: #3d3d5c !important;
+  color: #f5f5f7 !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Development mode banner - make it subtle */
+[data-testid="sign-up-create-account-development-mode-warning"],
+.cl-devModeNotice {
+  background: rgba(251, 191, 36, 0.1) !important;
+  border-color: rgba(251, 191, 36, 0.2) !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.75rem !important;
+  padding: 0.5rem !important;
+}
+
+/* ========================================
+   ADDITIONAL ANIMATIONS
+   ======================================== */
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(to right, #22c55e, #16a34a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glow effect */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3),
+              0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #1a1a2e, 0 0 0 4px rgba(34, 197, 94, 0.5);
+}

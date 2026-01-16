@@ -195,6 +195,12 @@ export default function Chat() {
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [conversationTags, setConversationTags] = useState<string[]>([]);
   
+  // Share
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  
   // Language metadata for voice input
   const [voiceInputMetadata, setVoiceInputMetadata] = useState<{
     isRomanUrdu: boolean;
@@ -584,6 +590,48 @@ export default function Chat() {
       console.error('Feedback error:', error);
     } finally {
       setFeedbackLoading(null);
+    }
+  };
+
+  // Share conversation
+  const handleShare = async () => {
+    if (!conversationId && !conversation?.id) return;
+    
+    setShareLoading(true);
+    setShowShareModal(true);
+    
+    try {
+      const token = await getClerkToken();
+      const response = await fetch(`/api/v1/share/${conversationId || conversation?.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ expiresInDays: 7 }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const shareUrl = `${window.location.origin}/shared/${data.data?.shareId || data.shareId}`;
+        setShareLink(shareUrl);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to create share link');
+      }
+    } catch (err) {
+      console.error('Share error:', err);
+      setError('Failed to create share link');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const copyShareLink = () => {
+    if (shareLink) {
+      navigator.clipboard.writeText(shareLink);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
     }
   };
 
@@ -1180,6 +1228,32 @@ export default function Chat() {
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Chat header with share button */}
+        {conversationId && conversation && (
+          <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700 bg-dark-800/50">
+            <div className="flex items-center gap-3 min-w-0">
+              <h2 className="text-dark-200 font-medium truncate">
+                {conversation.title || 'New Conversation'}
+              </h2>
+              {selectedModeData && (
+                <span className="px-2 py-1 bg-primary-500/10 text-primary-400 rounded-lg text-xs">
+                  {selectedModeData.name}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 px-3 py-1.5 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
+                title="Share conversation"
+              >
+                <Share2 size={16} />
+                <span className="hidden sm:inline text-sm">Share</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && !streaming && (
@@ -1666,6 +1740,95 @@ export default function Chat() {
           )}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-dark-700">
+              <div className="flex items-center gap-2">
+                <Share2 className="text-primary-400" size={20} />
+                <h2 className="text-lg font-semibold text-dark-100">Share Conversation</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowShareModal(false);
+                  setShareLink(null);
+                }}
+                className="text-dark-500 hover:text-dark-300 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {shareLoading ? (
+                <div className="flex flex-col items-center py-8">
+                  <Loader2 className="animate-spin text-primary-400 mb-3" size={32} />
+                  <p className="text-dark-400">Creating share link...</p>
+                </div>
+              ) : shareLink ? (
+                <div className="space-y-4">
+                  <p className="text-dark-400 text-sm">
+                    Anyone with this link can view this conversation. The link expires in 7 days.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={shareLink}
+                      readOnly
+                      className="flex-1 px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-200 text-sm focus:outline-none"
+                    />
+                    <button
+                      onClick={copyShareLink}
+                      className={clsx(
+                        'px-4 py-3 rounded-xl transition-all flex items-center gap-2',
+                        shareCopied
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-primary-500/20 text-primary-400 hover:bg-primary-500/30'
+                      )}
+                    >
+                      {shareCopied ? (
+                        <>
+                          <Check size={18} />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={18} />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent('Check out my AI conversation on BaatCheet!')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-300 rounded-xl transition-colors text-center text-sm"
+                    >
+                      Share on Twitter
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareLink)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-300 rounded-xl transition-colors text-center text-sm"
+                    >
+                      Share on LinkedIn
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-red-400">Failed to create share link. Please try again.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
