@@ -32,7 +32,8 @@ data class ChatRequest(
     val maxTokens: Int? = null, // Limit response length (useful for voice chat)
     val temperature: Float? = null,
     val mode: String? = null, // Explicit mode selection: "image-generation", "code", "web-search", "research", etc.
-    val projectId: String? = null // Project ID to associate conversation with and use project context
+    val projectId: String? = null, // Project ID to associate conversation with and use project context
+    val isVoiceChat: Boolean = false // If true, AI responds in Urdu script (not Roman Urdu) for better TTS
 )
 
 data class ChatResponse(

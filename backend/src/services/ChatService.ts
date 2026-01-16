@@ -44,6 +44,7 @@ export interface ChatOptions {
   imageIds?: string[]; // Attached image IDs
   explicitMode?: string; // Explicit mode selection from frontend (e.g., "image-generation", "code", "web-search")
   projectId?: string; // Project ID to associate conversation with and get project context
+  isVoiceChat?: boolean; // If true, AI will respond in Urdu script instead of Roman Urdu for better TTS
 }
 
 export interface ChatResult {
@@ -413,7 +414,7 @@ class ChatServiceClass {
       const effectiveTemperature = options.temperature ?? modeConfig.temperature;
       const effectiveMaxTokens = options.maxTokens ?? modeConfig.maxTokens;
       
-      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
+      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis, options.isVoiceChat);
       
       // Add formatting hints based on prompt analysis
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
@@ -754,7 +755,7 @@ class ChatServiceClass {
       // Step 4: Build enhanced system prompt with user profile context
       const userContext = await profileLearning.getUserContext(options.userId, conversationId);
       
-      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis);
+      const baseSystemPrompt = options.systemPrompt || conversation.systemPrompt || this.getAdvancedSystemPrompt(promptAnalysis, options.isVoiceChat);
       const formattingHints = promptAnalyzer.generateFormattingHints(promptAnalysis);
       
       // Combine: base prompt + project context + profile context + recent conversations + web search + formatting hints
@@ -955,8 +956,10 @@ class ChatServiceClass {
 
   /**
    * Get advanced system prompt based on prompt analysis
+   * @param analysis - Prompt analysis result
+   * @param isVoiceChat - If true, use Urdu script instead of Roman Urdu for TTS compatibility
    */
-  private getAdvancedSystemPrompt(analysis: PromptAnalysis): string {
+  private getAdvancedSystemPrompt(analysis: PromptAnalysis, isVoiceChat: boolean = false): string {
     // Build system prompt with relevant enhancements
     const includeRomanUrdu = analysis.language === 'urdu' || 
                              analysis.language === 'mixed' ||
@@ -965,6 +968,7 @@ class ChatServiceClass {
     let prompt = getSystemPrompt({
       includeFormatting: analysis.requiresStructuring,
       includeRomanUrdu,
+      isVoiceChat, // For voice chat, AI will respond in Urdu script instead of Roman Urdu
       intentHint: analysis.intent !== 'general_query' ? analysis.intent : undefined,
     });
     

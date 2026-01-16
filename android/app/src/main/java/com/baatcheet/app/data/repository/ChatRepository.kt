@@ -109,6 +109,7 @@ class ChatRepository @Inject constructor(
      * Send voice message with optimized settings for voice chat
      * - Shorter maxTokens for concise responses (saves tokens & TTS costs)
      * - Voice-optimized system prompt for natural conversation
+     * - isVoiceChat=true tells AI to respond in Urdu script (not Roman Urdu) for better TTS pronunciation
      */
     suspend fun sendVoiceMessage(
         message: String,
@@ -123,7 +124,8 @@ class ChatRepository @Inject constructor(
                 stream = false,
                 maxTokens = maxTokens,
                 // Add voice-specific system prompt instruction
-                systemPrompt = "You are in a voice conversation. Keep responses SHORT, NATURAL, and CONVERSATIONAL. Limit to 1-2 sentences when possible. Avoid lists, code, and long explanations - this is a spoken chat."
+                systemPrompt = "You are in a voice conversation. Keep responses SHORT, NATURAL, and CONVERSATIONAL. Limit to 1-2 sentences when possible. Avoid lists, code, and long explanations - this is a spoken chat.",
+                isVoiceChat = true // AI will respond in Urdu script (not Roman Urdu) for proper TTS pronunciation
             )
             
             val response = api.sendMessage(request)

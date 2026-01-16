@@ -396,6 +396,65 @@ For code-mixing: "React mein component banana hai" → Mix both languages natura
 `;
 
 // ============================================
+// Voice Chat Enhancement - Real Urdu Script
+// ============================================
+
+export const VOICE_CHAT_URDU_ENHANCEMENT = `
+# VOICE CHAT MODE - URDU SCRIPT RESPONSE
+
+**CRITICAL INSTRUCTION FOR VOICE RESPONSES:**
+
+When responding to Urdu speakers (Roman Urdu or Urdu script input), you MUST respond in **REAL URDU SCRIPT (نستعلیق)**, NOT Roman Urdu.
+
+## Why This Matters
+- Text-to-Speech (TTS) systems pronounce Urdu script correctly
+- Roman Urdu gets mispronounced as Hindi or gibberish
+- Users expect natural Urdu speech in voice chat
+
+## Response Rules for Voice Chat
+
+1. **If user writes in Roman Urdu** (like "aap kaise hain"):
+   - Respond in REAL Urdu script: "میں ٹھیک ہوں، آپ کیسے ہیں؟"
+   - NOT: "Main theek hoon, aap kaise hain?"
+
+2. **If user writes in Urdu script** (like "آپ کیسے ہیں"):
+   - Respond in Urdu script: "میں بہت اچھا ہوں، شکریہ!"
+
+3. **For mixed language (English + Urdu)**:
+   - Technical terms stay in English
+   - Urdu parts in Urdu script
+   - Example: "React component بنانے کے لیے، آپ کو یہ کرنا ہے..."
+
+4. **Keep responses concise for voice**:
+   - Short sentences work better for TTS
+   - Avoid very long paragraphs
+   - Natural conversational flow
+
+## Common Urdu Phrases (Use These):
+- Hello: السلام علیکم / ہیلو
+- How are you: آپ کیسے ہیں؟
+- I'm fine: میں ٹھیک ہوں
+- Thank you: شکریہ
+- Yes: جی ہاں / ہاں
+- No: نہیں
+- Please: براہ کرم
+- Help: مدد
+- What: کیا
+- How: کیسے
+- Why: کیوں
+- Good: اچھا
+- Bad: برا
+- OK: ٹھیک ہے
+
+## Example Transformations:
+- Roman: "Main aapki madad karta hoon" → Urdu: "میں آپ کی مدد کرتا ہوں"
+- Roman: "Yeh bahut acha hai" → Urdu: "یہ بہت اچھا ہے"
+- Roman: "Kya aap mujhe bata sakte hain?" → Urdu: "کیا آپ مجھے بتا سکتے ہیں؟"
+
+REMEMBER: For voice chat, ALWAYS use Urdu script (اردو) for Urdu responses!
+`;
+
+// ============================================
 // Helper Functions
 // ============================================
 
@@ -405,6 +464,7 @@ For code-mixing: "React mein component banana hai" → Mix both languages natura
 export function getSystemPrompt(options?: {
   includeFormatting?: boolean;
   includeRomanUrdu?: boolean;
+  isVoiceChat?: boolean;
   intentHint?: string;
 }): string {
   let prompt = ADVANCED_SYSTEM_PROMPT;
@@ -413,7 +473,10 @@ export function getSystemPrompt(options?: {
     prompt += '\n\n' + FORMATTING_GUIDELINES;
   }
   
-  if (options?.includeRomanUrdu) {
+  // For voice chat, use Urdu script enhancement instead of Roman Urdu
+  if (options?.isVoiceChat && options?.includeRomanUrdu) {
+    prompt += '\n\n' + VOICE_CHAT_URDU_ENHANCEMENT;
+  } else if (options?.includeRomanUrdu) {
     prompt += '\n\n' + ROMAN_URDU_ENHANCEMENT;
   }
   
@@ -435,6 +498,7 @@ export default {
   ADVANCED_SYSTEM_PROMPT,
   FORMATTING_GUIDELINES,
   ROMAN_URDU_ENHANCEMENT,
+  VOICE_CHAT_URDU_ENHANCEMENT,
   INTENT_PROMPTS,
   getSystemPrompt,
   getIntentPrompt,

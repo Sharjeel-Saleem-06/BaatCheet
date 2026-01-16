@@ -232,20 +232,22 @@ router.post(
           audioId: voiceResult.audioId,
         })}\n\n`);
 
-        // Then stream AI response
+        // Then stream AI response - use isVoiceChat to get Urdu script responses for TTS
         await chatService.streamMessage(res, voiceResult.transcription, {
           userId,
           conversationId,
           model,
           systemPrompt,
+          isVoiceChat: true, // AI will respond in Urdu script for better TTS pronunciation
         });
       } else {
-        // Non-streaming: process and return
+        // Non-streaming: process and return - use isVoiceChat to get Urdu script responses for TTS
         const chatResult = await chatService.processMessage(voiceResult.transcription, {
           userId,
           conversationId,
           model,
           systemPrompt,
+          isVoiceChat: true, // AI will respond in Urdu script for better TTS pronunciation
         });
 
         res.json({

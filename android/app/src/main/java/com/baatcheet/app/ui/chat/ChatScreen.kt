@@ -6010,8 +6010,10 @@ private fun CollaboratorsManagementDialog(
                         Surface(
                             onClick = {
                                 if (!isSelected) {
-                                    selectedCollaborator?.id?.let { id ->
-                                        onChangeRole(id, role)
+                                    // IMPORTANT: Use userId, not id (collaborator record ID)
+                                    // Backend expects userId to find the collaborator
+                                    selectedCollaborator?.userId?.let { userId ->
+                                        onChangeRole(userId, role)
                                     }
                                 }
                                 showRoleMenu = false
@@ -6109,8 +6111,10 @@ private fun CollaboratorsManagementDialog(
             confirmButton = {
                 Button(
                     onClick = {
-                        selectedCollaborator?.id?.let { id ->
-                            onRemoveCollaborator(id)
+                        // IMPORTANT: Use userId, not id (collaborator record ID)
+                        // Backend expects userId to find the collaborator
+                        selectedCollaborator?.userId?.let { userId ->
+                            onRemoveCollaborator(userId)
                         }
                         showRemoveConfirmation = false
                         selectedCollaborator = null
