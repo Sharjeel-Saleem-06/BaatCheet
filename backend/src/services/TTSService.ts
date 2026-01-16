@@ -404,7 +404,8 @@ class TTSServiceClass {
   }
 
   /**
-   * Detect if text contains Urdu/Hindi/Arabic characters
+   * Detect if text contains Urdu/Hindi/Arabic characters or Roman Urdu
+   * Roman Urdu is written in Latin script but uses Urdu/Hindi words
    */
   private detectLanguage(text: string): 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed' {
     // Urdu/Arabic character range (includes Persian, Urdu-specific characters)
@@ -416,10 +417,34 @@ class TTSServiceClass {
     const hasHindi = hindiPattern.test(text);
     const hasEnglish = /[a-zA-Z]/.test(text);
     
+    // Check for pure script
     if (hasUrduArabic && !hasEnglish) return 'urdu';
     if (hasHindi && !hasEnglish) return 'hindi';
     if (hasUrduArabic && hasEnglish) return 'mixed';
     if (hasHindi && hasEnglish) return 'mixed';
+    
+    // Check for Roman Urdu (Latin script but Urdu/Hindi words)
+    // Common Roman Urdu words/phrases
+    const romanUrduPatterns = [
+      /\b(kya|hai|hain|nahi|aap|app|mein|main|tera|mera|kaise|kaisa|theek|thik|ho|haan|ji|yaar|bhai|sunao|sab|accha|acha|bohut|bahut|baat|chal|chalo|raha|rahi|kar|karo|dekh|dekho|chal|haal|kiya|karo|abhi|phir|lekin|aur|se|ko|pe|par|wala|wali|hoga|hogi|hein|aisa|waisa|jaldi|tum|tumhara)\b/gi,
+    ];
+    
+    const textLower = text.toLowerCase();
+    let romanUrduScore = 0;
+    
+    // Count Roman Urdu words
+    for (const pattern of romanUrduPatterns) {
+      const matches = textLower.match(pattern);
+      if (matches) {
+        romanUrduScore += matches.length;
+      }
+    }
+    
+    // If we found multiple Roman Urdu words, treat as mixed
+    if (romanUrduScore >= 2) {
+      return 'mixed';
+    }
+    
     return 'english';
   }
   
@@ -687,17 +712,21 @@ class TTSServiceClass {
       const detectedLang = this.detectLanguage(text);
       let langCode = 'en';
       
+      // For Roman Urdu (text like "kya haal hai"), use Hindi which sounds better
+      // than English or pure Urdu for romanized text
       switch (detectedLang) {
         case 'urdu':
         case 'arabic':
-          langCode = 'ur'; // Urdu
+          langCode = 'ur'; // Pure Urdu script
           break;
         case 'hindi':
           langCode = 'hi'; // Hindi
           break;
         case 'mixed':
-          // For Roman Urdu (mix of English and Urdu), use English pronunciation
-          langCode = 'en';
+          // For Roman Urdu (mix of English and Urdu in Latin script)
+          // Use Hindi 'hi' instead of English - sounds MUCH more natural
+          // for words like "sab theek hai", "aapke internship kaisa"
+          langCode = 'hi';
           break;
         default:
           langCode = 'en';
