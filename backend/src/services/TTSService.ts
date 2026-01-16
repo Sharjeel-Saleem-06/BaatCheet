@@ -587,12 +587,22 @@ class TTSServiceClass {
         { id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', language: 'en', gender: 'male', provider: 'elevenlabs' },
         
         // ============================================
-        // Multilingual Voices (Best for Urdu/Hindi/Roman Urdu)
-        // These voices are trained on multiple languages and sound natural
+        // URDU VOICES (Primary - Best for Urdu/Roman Urdu)
         // ============================================
+        // These voices sound natural speaking Urdu using Eleven's multilingual model
         
-        // Charlotte - Multilingual, works great with Urdu text
-        { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
+        // Bilal - Best for pure Urdu content, natural male Urdu voice
+        { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bilal (اردو)', language: 'ur', gender: 'male', provider: 'elevenlabs' },
+        
+        // Arooj - Best for Roman Urdu & English mix, conversational
+        { id: 'XB0fDUnXU5powFXDhCwa', name: 'Arooj', language: 'ur', gender: 'female', provider: 'elevenlabs' },
+        
+        // Nadia - Warm feminine voice, great for Hindi/Urdu
+        { id: 'piTKgcLEGmPE4e6mEKli', name: 'Nadia', language: 'ur', gender: 'female', provider: 'elevenlabs' },
+        
+        // ============================================
+        // Multilingual Voices (Support multiple languages)
+        // ============================================
         
         // Aria - Expressive multilingual voice
         { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
@@ -609,15 +619,6 @@ class TTSServiceClass {
         // Lily - British accent, works well with Urdu-English mix
         { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
         
-        // ============================================
-        // Recommended for Urdu/Roman Urdu
-        // ============================================
-        // Note: These multilingual voices use Eleven's Turbo v2.5 model
-        // which supports Urdu natively with proper pronunciation
-        
-        // Bill - Natural conversational style, great for casual Urdu
-        { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill', language: 'ur', gender: 'male', provider: 'elevenlabs' },
-        
         // Callum - Warm and friendly, good for storytelling
         { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
         
@@ -626,9 +627,6 @@ class TTSServiceClass {
         
         // Daniel - British narrator, clear pronunciation
         { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-        
-        // Nicole - Warm female voice, works well with Hindi/Urdu
-        { id: 'piTKgcLEGmPE4e6mEKli', name: 'Nicole', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
       );
     }
     
