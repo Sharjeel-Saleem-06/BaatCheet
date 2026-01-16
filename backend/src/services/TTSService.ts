@@ -429,17 +429,26 @@ class TTSServiceClass {
     text: string,
     voiceId?: string
   ): Promise<TTSResult> {
+    // Log the number of available keys for debugging
+    logger.info(`ElevenLabs: Attempting TTS with ${this.ELEVENLABS_KEYS.length} available keys`);
+    
     // Get available key
     const keyInfo = this.getAvailableElevenLabsKey();
     if (!keyInfo) {
-      throw new Error('No ElevenLabs API keys available (quota exhausted)');
+      logger.error('ElevenLabs: No API keys available - all exhausted or none configured');
+      throw new Error('No ElevenLabs API keys available (quota exhausted or not configured)');
     }
 
     const { key, index } = keyInfo;
     const textLength = text.length;
     
+    logger.info(`ElevenLabs: Using key ${index + 1}, key starts with: ${key.substring(0, 8)}...`);
+    
     // Auto-detect language and select appropriate voice if not specified
     const detectedLanguage = this.detectLanguage(text);
+    
+    // Use OFFICIAL FREE voices that are guaranteed to work
+    // These are the pre-made voices available on all ElevenLabs accounts
     const selectedVoice = voiceId || this.getRecommendedVoice(detectedLanguage);
     
     logger.info(`TTS language detection: ${detectedLanguage}, using voice: ${selectedVoice}`);
@@ -523,23 +532,53 @@ class TTSServiceClass {
       // Track failed usage
       this.trackElevenLabsUsage(index, textLength, false);
       
-      // If quota exceeded or unauthorized, mark key and try next
-      if (error.response?.status === 401 || error.response?.status === 429) {
-        logger.warn(`ElevenLabs key ${index + 1} quota exceeded or invalid, trying next key`);
+      // Detailed error logging
+      const statusCode = error.response?.status;
+      const errorData = error.response?.data;
+      let errorMsg = '';
+      
+      // Parse error message from various formats
+      if (Buffer.isBuffer(errorData)) {
+        try {
+          const jsonStr = errorData.toString('utf-8');
+          const parsed = JSON.parse(jsonStr);
+          errorMsg = parsed?.detail?.message || parsed?.detail || parsed?.error || jsonStr;
+        } catch {
+          errorMsg = errorData.toString('utf-8').substring(0, 200);
+        }
+      } else if (typeof errorData === 'string') {
+        errorMsg = errorData;
+      } else if (errorData?.detail) {
+        errorMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+      } else {
+        errorMsg = error.message;
+      }
+      
+      logger.error(`❌ ElevenLabs TTS FAILED [Key ${index + 1}]:`, {
+        status: statusCode,
+        error: errorMsg,
+        keyPrefix: key.substring(0, 10),
+        voice: selectedVoice,
+        textLength,
+      });
+      
+      // If quota exceeded, unauthorized, or voice not found - mark key and try next
+      if (statusCode === 401 || statusCode === 429 || statusCode === 422) {
+        logger.warn(`ElevenLabs key ${index + 1} failed (${statusCode}), trying next key...`);
         
         // Try next key if available
         if (this.ELEVENLABS_KEYS.length > 1) {
+          // Mark current key as exhausted
+          const usage = this.keyUsage.get(index);
+          if (usage) {
+            usage.isExhausted = true;
+            this.keyUsage.set(index, usage);
+          }
           return this.elevenLabsTTS(text, voiceId);
         }
       }
       
-      // Log the actual error for debugging
-      const errorData = error.response?.data;
-      const errorMsg = typeof errorData === 'string' ? errorData : 
-        errorData?.detail?.message || errorData?.detail?.status || JSON.stringify(errorData) || error.message;
-      
-      logger.error('ElevenLabs TTS failed:', { status: error.response?.status, error: errorMsg });
-      throw new Error(`ElevenLabs TTS failed: ${errorMsg}`);
+      throw new Error(`ElevenLabs TTS failed (${statusCode}): ${errorMsg}`);
     }
   }
 

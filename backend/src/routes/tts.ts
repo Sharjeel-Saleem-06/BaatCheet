@@ -119,28 +119,40 @@ router.get('/status', async (req: Request, res: Response) => {
 
 /**
  * GET /tts/debug
- * Debug endpoint
+ * Debug endpoint - shows detailed TTS status and tests each provider
  */
 router.get('/debug', async (req: Request, res: Response) => {
   try {
     const status = ttsService.getProviderInfo();
     
-    // Try a test generation
+    // Test with a simple Urdu phrase
+    const testText = 'السلام علیکم، آپ کیسے ہیں؟';
     let testResult = 'not attempted';
+    let testProvider = 'none';
     let testError: string | null = null;
     
     try {
-      const result = await ttsService.generateSpeech('Hello', { voice: '21m00Tcm4TlvDq8ikWAM' });
+      const result = await ttsService.generateSpeech(testText, { voice: 'pqHfZKP75CvOlQylNhV4' });
       testResult = `success - ${result.audioBuffer.length} bytes`;
+      testProvider = result.provider;
     } catch (error: any) {
       testResult = 'failed';
       testError = error.message;
     }
     
+    // Get environment variable info (without exposing actual keys)
+    const envCheck = {
+      elevenLabsVars: Object.keys(process.env).filter(k => k.toLowerCase().includes('eleven')),
+      hasGoogleKey: !!process.env.GOOGLE_CLOUD_TTS_KEY,
+      hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    };
+    
     res.json({
       status,
       testResult,
+      testProvider,
       testError,
+      envCheck,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
