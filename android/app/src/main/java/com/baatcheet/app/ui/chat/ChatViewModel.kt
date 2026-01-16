@@ -147,6 +147,7 @@ data class ChatState(
     val isTranscribing: Boolean = false,
     val transcribedText: String? = null,
     val isSpeaking: Boolean = false,
+    val speakingMessageId: String? = null, // Track which message is being spoken
     
     // Analytics
     val analyticsDashboard: AnalyticsDashboard? = null,
@@ -1816,22 +1817,40 @@ class ChatViewModel @Inject constructor(
         }
     }
     
-    fun speakText(text: String, voice: String = "alloy", onAudioReady: ((ByteArray) -> Unit)? = null) {
+    /**
+     * Speak text with toggle support
+     * If the same message is already being spoken, stop it
+     * If a different message is being spoken, stop it and start the new one
+     * 
+     * @param text The text to speak
+     * @param messageId Optional message ID to track which message is speaking
+     * @param voice Voice to use (default: alloy)
+     */
+    fun speakText(text: String, messageId: String? = null, voice: String = "alloy", onAudioReady: ((ByteArray) -> Unit)? = null) {
+        // TOGGLE: If same message is already speaking, stop it
+        if (_state.value.isSpeaking && _state.value.speakingMessageId == messageId && messageId != null) {
+            stopSpeaking()
+            return
+        }
+        
+        // Stop any current speech first
+        tts?.stop()
+        
         // Use Android's built-in TTS for immediate response
         if (ttsInitialized && tts != null) {
-            _state.update { it.copy(isSpeaking = true) }
+            _state.update { it.copy(isSpeaking = true, speakingMessageId = messageId) }
             
             // Set utterance listener to know when speech is done
             tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) {
                     viewModelScope.launch {
-                        _state.update { it.copy(isSpeaking = false) }
+                        _state.update { it.copy(isSpeaking = false, speakingMessageId = null) }
                     }
                 }
                 override fun onError(utteranceId: String?) {
                     viewModelScope.launch {
-                        _state.update { it.copy(isSpeaking = false, error = "Speech failed") }
+                        _state.update { it.copy(isSpeaking = false, speakingMessageId = null, error = "Speech failed") }
                     }
                 }
             })
@@ -1856,7 +1875,7 @@ class ChatViewModel @Inject constructor(
     
     fun stopSpeaking() {
         tts?.stop()
-        _state.update { it.copy(isSpeaking = false) }
+        _state.update { it.copy(isSpeaking = false, speakingMessageId = null) }
     }
     
     override fun onCleared() {

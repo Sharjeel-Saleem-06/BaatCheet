@@ -541,9 +541,10 @@ fun ChatScreen(
                                 onRegenerate = if (isLastAssistantMessage && state.currentConversationId != null) {
                                     { viewModel.regenerateResponse() }
                                 } else null,
-                                onSpeak = { text ->
-                                    viewModel.speakText(text)
+                                onSpeak = { text, msgId ->
+                                    viewModel.speakText(text, msgId)
                                 },
+                                isSpeakingThisMessage = state.isSpeaking && state.speakingMessageId == message.id,
                                 onLike = { messageId, isLike ->
                                     viewModel.submitFeedback(messageId, isLike)
                                 }
@@ -2016,7 +2017,8 @@ private fun MessageBubble(
     message: ChatMessage,
     onCopy: (String) -> Unit = {},
     onRegenerate: (() -> Unit)? = null,
-    onSpeak: ((String) -> Unit)? = null,
+    onSpeak: ((String, String) -> Unit)? = null, // (text, messageId) -> Unit, supports toggle
+    isSpeakingThisMessage: Boolean = false, // Is THIS message currently being spoken?
     onLike: ((String, Boolean) -> Unit)? = null
 ) {
     var showActions by remember { mutableStateOf(false) }
@@ -2151,12 +2153,13 @@ private fun MessageBubble(
                         )
                     }
                     
-                    // Speak button
+                    // Speak button (toggles between play/stop)
                     onSpeak?.let { speak ->
                         SmallActionButton(
-                            icon = Icons.Outlined.VolumeUp,
-                            contentDescription = "Speak",
-                            onClick = { speak(message.content) }
+                            icon = if (isSpeakingThisMessage) Icons.Outlined.VolumeOff else Icons.Outlined.VolumeUp,
+                            contentDescription = if (isSpeakingThisMessage) "Stop" else "Speak",
+                            tint = if (isSpeakingThisMessage) GreenAccent else GrayText,
+                            onClick = { speak(message.content, message.id) }
                         )
                     }
                     

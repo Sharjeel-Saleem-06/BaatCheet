@@ -628,27 +628,53 @@ class TTSServiceClass {
    * - Supports 400+ voices in 100+ languages
    * - No rate limits for normal use
    * 
+   * CRITICAL: Voice must match text language!
+   * - Urdu text → Urdu voice (ur-PK-AsadNeural)
+   * - English text → English voice (en-US-GuyNeural)
+   * - Mixed text → Match based on dominant language
+   * 
    * URDU VOICES:
    * - ur-PK-AsadNeural (Male, Pakistani Urdu) - BEST for pure Urdu
    * - ur-PK-UzmaNeural (Female, Pakistani Urdu) - Warm and friendly
-   * - ur-IN-GulNeural (Female, Indian Urdu)
-   * - ur-IN-SalmanNeural (Male, Indian Urdu)
+   * 
+   * ENGLISH VOICES:
+   * - en-US-GuyNeural (Male, American) - Clear and natural
+   * - en-US-JennyNeural (Female, American) - Friendly
    */
   private async edgeTTS(text: string, requestedVoice?: string): Promise<TTSResult> {
     try {
-      // Detect language and select appropriate voice
+      // Detect language of the TEXT (not the requested voice)
       const detectedLang = this.detectLanguage(text);
-      let voiceId = this.getEdgeTTSVoice(detectedLang);
       
-      // If a specific voice was requested and it's an Edge voice, use it
+      // CRITICAL FIX: Voice MUST match text language!
+      // If user selected English voice but text is Urdu, override to Urdu voice
+      // If user selected Urdu voice but text is English, override to English voice
+      let voiceId: string;
+      
       if (requestedVoice && requestedVoice.includes('Neural')) {
-        voiceId = requestedVoice;
+        // Check if requested voice language matches text language
+        const voiceLang = this.getVoiceLanguage(requestedVoice);
+        const textLang = detectedLang === 'urdu' || detectedLang === 'mixed' || detectedLang === 'arabic' ? 'urdu' : 
+                        detectedLang === 'hindi' ? 'hindi' : 'english';
+        
+        if (this.isVoiceCompatibleWithLanguage(voiceLang, textLang)) {
+          // Voice matches text language - use requested voice
+          voiceId = requestedVoice;
+          logger.info(`Voice ${requestedVoice} (${voiceLang}) compatible with text language (${textLang})`);
+        } else {
+          // Voice doesn't match - OVERRIDE to appropriate voice
+          voiceId = this.getEdgeTTSVoice(detectedLang);
+          logger.warn(`Voice mismatch! Requested ${requestedVoice} (${voiceLang}) but text is ${textLang}. Overriding to ${voiceId}`);
+        }
+      } else {
+        // No specific voice requested - auto-detect
+        voiceId = this.getEdgeTTSVoice(detectedLang);
       }
       
       // Get language code from voice ID (e.g., 'ur-PK' from 'ur-PK-AsadNeural')
       const langCode = voiceId.split('-').slice(0, 2).join('-');
       
-      logger.info(`Edge TTS: Language=${detectedLang}, Voice=${voiceId}, LangCode=${langCode}, TextLength=${text.length}`);
+      logger.info(`Edge TTS: TextLang=${detectedLang}, Voice=${voiceId}, LangCode=${langCode}, TextLength=${text.length}`);
       
       // Create Edge TTS instance with optimal settings
       const tts = new EdgeTTS({
@@ -678,6 +704,12 @@ class TTSServiceClass {
         // Ignore cleanup errors
       }
       
+      // CRITICAL: Check if audio was actually generated
+      if (audioBuffer.length < 1000) {
+        logger.warn(`Edge TTS generated very small audio (${audioBuffer.length} bytes), may be empty/failed`);
+        throw new Error('Edge TTS generated empty or invalid audio');
+      }
+      
       logger.info(`✅ Edge TTS SUCCESS: ${audioBuffer.length} bytes, Voice: ${voiceId}`);
       
       return {
@@ -689,6 +721,32 @@ class TTSServiceClass {
       logger.error('Edge TTS failed:', error.message);
       throw new Error(`Edge TTS failed: ${error.message}`);
     }
+  }
+  
+  /**
+   * Get the language of a voice ID
+   */
+  private getVoiceLanguage(voiceId: string): 'urdu' | 'hindi' | 'english' {
+    if (voiceId.startsWith('ur-')) return 'urdu';
+    if (voiceId.startsWith('hi-')) return 'hindi';
+    return 'english';
+  }
+  
+  /**
+   * Check if voice language is compatible with text language
+   * Urdu voices can speak: Urdu, Mixed (Roman Urdu)
+   * Hindi voices can speak: Hindi, Mixed (Roman Urdu - sounds similar)
+   * English voices can ONLY speak: English
+   */
+  private isVoiceCompatibleWithLanguage(voiceLang: 'urdu' | 'hindi' | 'english', textLang: 'urdu' | 'hindi' | 'english'): boolean {
+    // Urdu voice can speak Urdu text
+    if (voiceLang === 'urdu' && (textLang === 'urdu' || textLang === 'hindi')) return true;
+    // Hindi voice can speak Hindi and Urdu (similar phonetics)
+    if (voiceLang === 'hindi' && (textLang === 'urdu' || textLang === 'hindi')) return true;
+    // English voice can ONLY speak English
+    if (voiceLang === 'english' && textLang === 'english') return true;
+    
+    return false;
   }
 
   /**
@@ -1005,109 +1063,83 @@ class TTSServiceClass {
   }
 
   /**
-   * Get available voices
-   * ElevenLabs supports 29 languages including Urdu, Hindi, Arabic, and more
-   * Reference: https://elevenlabs.io/languages
+   * Get available voices - SIMPLIFIED for reliability
+   * 
+   * DESIGN PRINCIPLE: Fewer, better voices that ALWAYS work
+   * - 2 Urdu voices (male + female) - for Urdu/Roman Urdu text
+   * - 2 English voices (male + female) - for English text
+   * 
+   * IMPORTANT: Voice MUST match text language!
+   * - Urdu text → Urdu voice (auto-selected)
+   * - English text → English voice (auto-selected)
    */
   public getAvailableVoices(): VoiceInfo[] {
     const voices: VoiceInfo[] = [];
     
     // ============================================
-    // 🥇 EDGE TTS VOICES (Microsoft FREE - BEST QUALITY!)
-    // These are always available, no API key needed
+    // 🇵🇰 URDU VOICES (Edge TTS - FREE, Best Quality!)
+    // Use these for: Urdu script, Roman Urdu, Mixed text
     // ============================================
     voices.push(
-      // URDU VOICES - Pakistani (RECOMMENDED)
-      { id: 'ur-PK-AsadNeural', name: 'Asad (اردو)', language: 'ur', gender: 'male', provider: 'edge-tts' },
-      { id: 'ur-PK-UzmaNeural', name: 'Uzma (اردو)', language: 'ur', gender: 'female', provider: 'edge-tts' },
-      // URDU VOICES - Indian
-      { id: 'ur-IN-GulNeural', name: 'Gul (اردو)', language: 'ur', gender: 'female', provider: 'edge-tts' },
-      { id: 'ur-IN-SalmanNeural', name: 'Salman (اردو)', language: 'ur', gender: 'male', provider: 'edge-tts' },
-      // HINDI VOICES (Great for Roman Urdu too)
-      { id: 'hi-IN-MadhurNeural', name: 'Madhur (हिंदी)', language: 'hi', gender: 'male', provider: 'edge-tts' },
-      { id: 'hi-IN-SwaraNeural', name: 'Swara (हिंदी)', language: 'hi', gender: 'female', provider: 'edge-tts' },
-      // ENGLISH VOICES
-      { id: 'en-US-JennyNeural', name: 'Jenny', language: 'en', gender: 'female', provider: 'edge-tts' },
-      { id: 'en-US-GuyNeural', name: 'Guy', language: 'en', gender: 'male', provider: 'edge-tts' },
-      { id: 'en-GB-SoniaNeural', name: 'Sonia (British)', language: 'en', gender: 'female', provider: 'edge-tts' },
-      { id: 'en-GB-RyanNeural', name: 'Ryan (British)', language: 'en', gender: 'male', provider: 'edge-tts' },
+      { 
+        id: 'ur-PK-AsadNeural', 
+        name: 'Asad (اردو)', 
+        language: 'ur', 
+        gender: 'male', 
+        provider: 'edge-tts' 
+      },
+      { 
+        id: 'ur-PK-UzmaNeural', 
+        name: 'Uzma (اردو)', 
+        language: 'ur', 
+        gender: 'female', 
+        provider: 'edge-tts' 
+      },
     );
     
-    // ElevenLabs voices (if configured - as backup)
+    // ============================================
+    // 🇺🇸 ENGLISH VOICES (Edge TTS - FREE, Best Quality!)
+    // Use these for: Pure English text ONLY
+    // ============================================
+    voices.push(
+      { 
+        id: 'en-US-GuyNeural', 
+        name: 'Guy (English)', 
+        language: 'en', 
+        gender: 'male', 
+        provider: 'edge-tts' 
+      },
+      { 
+        id: 'en-US-JennyNeural', 
+        name: 'Jenny (English)', 
+        language: 'en', 
+        gender: 'female', 
+        provider: 'edge-tts' 
+      },
+    );
+    
+    // ============================================
+    // 🌍 ELEVENLABS VOICES (Premium backup - if configured)
+    // These are multilingual and work with any text
+    // ============================================
     if (this.ELEVENLABS_KEYS.length > 0) {
       voices.push(
-        // ============================================
-        // English Voices (Natural, Human-like)
-        // ============================================
-        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', language: 'en', gender: 'female', provider: 'elevenlabs' },
-        { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', language: 'en', gender: 'male', provider: 'elevenlabs' },
-        { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', language: 'en', gender: 'male', provider: 'elevenlabs' },
-        
-        // URDU VOICES (ElevenLabs multilingual)
-        { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bilal (اردو)', language: 'ur', gender: 'male', provider: 'elevenlabs' },
-        { id: 'XB0fDUnXU5powFXDhCwa', name: 'Arooj', language: 'ur', gender: 'female', provider: 'elevenlabs' },
-        
-        // Nadia - Warm feminine voice, great for Hindi/Urdu
-        { id: 'piTKgcLEGmPE4e6mEKli', name: 'Nadia', language: 'ur', gender: 'female', provider: 'elevenlabs' },
-        
-        // ============================================
-        // Multilingual Voices (Support multiple languages)
-        // ============================================
-        
-        // Aria - Expressive multilingual voice
-        { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
-        
-        // Roger - Deep male multilingual voice
-        { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-        
-        // Sarah - Soft multilingual voice (different from English Sarah)
-        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah (Soft)', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
-        
-        // George - Professional multilingual male voice
-        { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-        
-        // Lily - British accent, works well with Urdu-English mix
-        { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', language: 'multilingual', gender: 'female', provider: 'elevenlabs' },
-        
-        // Callum - Warm and friendly, good for storytelling
-        { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-        
-        // Charlie - Australian accent, interesting for mixed content
-        { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-        
-        // Daniel - British narrator, clear pronunciation
-        { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', language: 'multilingual', gender: 'male', provider: 'elevenlabs' },
-      );
-    }
-    
-    // OpenAI voices (paid - backup)
-    if (this.OPENAI_API_KEY) {
-      voices.push(
-        { id: 'alloy', name: 'Alloy', language: 'en', gender: 'neutral', provider: 'openai' },
-        { id: 'echo', name: 'Echo', language: 'en', gender: 'male', provider: 'openai' },
-        { id: 'fable', name: 'Fable', language: 'en', gender: 'neutral', provider: 'openai' },
-        { id: 'onyx', name: 'Onyx', language: 'en', gender: 'male', provider: 'openai' },
-        { id: 'nova', name: 'Nova', language: 'en', gender: 'female', provider: 'openai' },
-        { id: 'shimmer', name: 'Shimmer', language: 'en', gender: 'female', provider: 'openai' },
-      );
-    }
-    
-    // Google Cloud TTS voices (backup)
-    if (this.GOOGLE_CLOUD_KEY) {
-      voices.push(
-        // Urdu voices from Google
-        { id: 'ur-PK-Wavenet-A', name: 'Urdu Female', language: 'ur', gender: 'female', provider: 'google' },
-        { id: 'ur-PK-Wavenet-B', name: 'Urdu Male', language: 'ur', gender: 'male', provider: 'google' },
-        // Hindi voices
-        { id: 'hi-IN-Wavenet-A', name: 'Hindi Female', language: 'hi', gender: 'female', provider: 'google' },
-        { id: 'hi-IN-Wavenet-B', name: 'Hindi Male', language: 'hi', gender: 'male', provider: 'google' },
-        { id: 'hi-IN-Wavenet-C', name: 'Hindi Male 2', language: 'hi', gender: 'male', provider: 'google' },
-        // English voices
-        { id: 'en-US-Wavenet-A', name: 'US Female', language: 'en', gender: 'female', provider: 'google' },
-        { id: 'en-US-Wavenet-B', name: 'US Male', language: 'en', gender: 'male', provider: 'google' },
-        { id: 'en-GB-Wavenet-A', name: 'UK Female', language: 'en', gender: 'female', provider: 'google' },
-        { id: 'en-GB-Wavenet-B', name: 'UK Male', language: 'en', gender: 'male', provider: 'google' },
+        // Bilal - Best for Urdu content (ElevenLabs multilingual)
+        { 
+          id: 'pqHfZKP75CvOlQylNhV4', 
+          name: 'Bilal (Premium اردو)', 
+          language: 'ur', 
+          gender: 'male', 
+          provider: 'elevenlabs' 
+        },
+        // Sarah - Best for English content (ElevenLabs)
+        { 
+          id: 'EXAVITQu4vr4xnSDxMaL', 
+          name: 'Sarah (Premium English)', 
+          language: 'en', 
+          gender: 'female', 
+          provider: 'elevenlabs' 
+        },
       );
     }
     
