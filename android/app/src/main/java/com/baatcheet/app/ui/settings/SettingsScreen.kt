@@ -61,13 +61,16 @@ fun SettingsScreen(
     onContactSupport: () -> Unit = {},
     onUpgrade: () -> Unit = {},
     onChangePassword: (currentPassword: String, newPassword: String) -> Unit = { _, _ -> },
-    onSaveCustomInstructions: (String) -> Unit = {}
+    onSaveCustomInstructions: (String) -> Unit = {},
+    onUpdateProfilePicture: () -> Unit = {},
+    onUpdateDisplayName: (String) -> Unit = {}
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showCustomInstructionsDialog by remember { mutableStateOf(false) }
+    var showEditProfileDialog by remember { mutableStateOf(false) }
     var expandedSection by remember { mutableStateOf<String?>(null) }
     
     // Logout Confirmation Dialog
@@ -198,6 +201,22 @@ fun SettingsScreen(
         )
     }
     
+    // Edit Profile Dialog
+    if (showEditProfileDialog) {
+        EditProfileDialog(
+            currentName = userSettings.displayName,
+            onDismiss = { showEditProfileDialog = false },
+            onUpdateName = { newName ->
+                showEditProfileDialog = false
+                onUpdateDisplayName(newName)
+            },
+            onUpdatePicture = {
+                showEditProfileDialog = false
+                onUpdateProfilePicture()
+            }
+        )
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -230,7 +249,8 @@ fun SettingsScreen(
                         email = userSettings.email,
                         tier = userSettings.tier,
                         memberSince = userSettings.memberSince,
-                        onUpgrade = onUpgrade
+                        onUpgrade = onUpgrade,
+                        onEditProfile = { showEditProfileDialog = true }
                     )
                 }
             }
@@ -492,7 +512,8 @@ private fun ProfileSection(
     email: String,
     tier: String,
     memberSince: String,
-    onUpgrade: () -> Unit
+    onUpgrade: () -> Unit,
+    onEditProfile: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -502,11 +523,12 @@ private fun ProfileSection(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar
+            // Avatar - Clickable to edit profile picture
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .background(PurpleColor, CircleShape),
+                    .background(PurpleColor, CircleShape)
+                    .clickable { onEditProfile() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -515,23 +537,59 @@ private fun ProfileSection(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
+                // Edit overlay indicator
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .background(GreenAccent, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Profile",
+                        tint = Color.White,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = displayName.ifEmpty { "User" },
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = DarkText
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = displayName.ifEmpty { "User" },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DarkText
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Edit button for name
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Name",
+                        tint = GrayText,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable { onEditProfile() }
+                    )
+                }
                 Text(
                     text = email,
                     fontSize = 14.sp,
                     color = GrayText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+                // Hint text
+                Text(
+                    text = "Tap avatar to edit profile",
+                    fontSize = 12.sp,
+                    color = GreenAccent,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
         }
@@ -1027,6 +1085,148 @@ private fun ChangePasswordDialog(
                         )
                     ) {
                         Text("Update")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Edit Profile Dialog - Update profile picture and display name
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditProfileDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onUpdateName: (String) -> Unit,
+    onUpdatePicture: () -> Unit
+) {
+    var displayName by remember { mutableStateOf(currentName) }
+    
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteBackground)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Edit Profile",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "Close", tint = GrayText)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Profile Picture Section
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(PurpleColor, CircleShape)
+                        .clickable { onUpdatePicture() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = displayName.take(2).uppercase(),
+                        color = Color.White,
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // Camera icon overlay
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(32.dp)
+                            .background(GreenAccent, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = "Change Photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Tap to change photo",
+                    fontSize = 13.sp,
+                    color = GrayText
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Display Name Input
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = { displayName = it },
+                    label = { Text("Display Name") },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = GrayText)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                    ) {
+                        Text("Cancel", color = GrayText)
+                    }
+                    
+                    Button(
+                        onClick = { 
+                            if (displayName.isNotBlank()) {
+                                onUpdateName(displayName) 
+                            }
+                        },
+                        enabled = displayName.isNotBlank() && displayName != currentName,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GreenAccent,
+                            disabledContainerColor = GreenAccent.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Text("Save")
                     }
                 }
             }

@@ -426,11 +426,31 @@ class TTSServiceClass {
     }
 
     try {
-      // Use eleven_multilingual_v2 for non-English content for best quality
-      // Use eleven_turbo_v2_5 for English (faster, lower latency)
-      const modelId = detectedLanguage === 'english' 
-        ? 'eleven_turbo_v2_5' 
-        : 'eleven_multilingual_v2';
+      // Use eleven_multilingual_v2 for ALL languages - best quality and most human-like
+      // Multilingual v2 supports 29 languages including Urdu, Hindi, Arabic
+      // Reference: https://elevenlabs.io/docs/developer-guides/models
+      const modelId = 'eleven_multilingual_v2';
+      
+      // ============================================
+      // OPTIMAL VOICE SETTINGS FOR HUMAN-LIKE SPEECH
+      // ============================================
+      // These settings are tuned for natural, conversational speech
+      // Based on ElevenLabs best practices and community testing
+      
+      // Stability: Lower = more expressive variations (like real humans)
+      // 0.30-0.45 is ideal for natural conversation
+      const stability = 0.35;
+      
+      // Similarity Boost: How close to the original voice
+      // 0.75-0.85 maintains voice identity while allowing natural variation
+      const similarityBoost = 0.80;
+      
+      // Style: Expressiveness exaggeration (only for v2 models)
+      // 0.20-0.40 adds natural emphasis and intonation
+      const style = 0.30;
+      
+      // Speaker Boost: Enhances voice clarity and presence
+      const useSpeakerBoost = true;
       
       const response = await axios.post(
         `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}`,
@@ -438,10 +458,10 @@ class TTSServiceClass {
           text,
           model_id: modelId,
           voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.0, // Natural style
-            use_speaker_boost: true, // Improve voice clarity
+            stability,
+            similarity_boost: similarityBoost,
+            style,
+            use_speaker_boost: useSpeakerBoost,
           },
         },
         {

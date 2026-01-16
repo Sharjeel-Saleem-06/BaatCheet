@@ -172,48 +172,73 @@ class VoiceChatViewModel @Inject constructor(
         }
     }
     
+    /**
+     * Default voices - Human-like, natural sounding
+     * ElevenLabs multilingual voices for Urdu/Hindi/English
+     */
     private fun getDefaultVoices(): List<AIVoice> = listOf(
+        // ============================================
+        // URDU / MULTILINGUAL VOICES (Most Human-like)
+        // ============================================
         AIVoice(
-            id = "alloy",
-            name = "Alloy",
-            description = "Versatile and balanced",
+            id = "pqHfZKP75CvOlQylNhV4", // Bill
+            name = "Bilal (اردو)",
+            description = "Natural Urdu speaker • Perfect for Urdu conversations",
             color = VoiceAccent,
+            icon = "🇵🇰"
+        ),
+        AIVoice(
+            id = "XB0fDUnXU5powFXDhCwa", // Charlotte
+            name = "Arooj",
+            description = "Roman Urdu & English mix • Conversational",
+            color = VoicePink,
+            icon = "💬"
+        ),
+        AIVoice(
+            id = "piTKgcLEGmPE4e6mEKli", // Nicole
+            name = "Nadia",
+            description = "Warm feminine voice • Hindi/Urdu friendly",
+            color = VoicePurple,
+            icon = "🌸"
+        ),
+        
+        // ============================================
+        // ENGLISH VOICES (Natural, Human-like)
+        // ============================================
+        AIVoice(
+            id = "EXAVITQu4vr4xnSDxMaL", // Sarah
+            name = "Sarah",
+            description = "Natural & warm • Best for English",
+            color = VoiceBlue,
             icon = "🎙️"
         ),
         AIVoice(
-            id = "echo",
-            name = "Echo",
-            description = "Warm and conversational",
-            color = VoiceBlue,
-            icon = "🔊"
-        ),
-        AIVoice(
-            id = "fable",
-            name = "Fable",
-            description = "Expressive and dynamic",
-            color = VoicePurple,
-            icon = "📖"
-        ),
-        AIVoice(
-            id = "onyx",
-            name = "Onyx",
-            description = "Deep and authoritative",
-            color = VoiceOrange,
-            icon = "💎"
-        ),
-        AIVoice(
-            id = "nova",
-            name = "Nova",
-            description = "Friendly and upbeat",
-            color = VoicePink,
+            id = "21m00Tcm4TlvDq8ikWAM", // Rachel
+            name = "Rachel",
+            description = "Friendly & clear • American English",
+            color = Color(0xFF00C7BE),
             icon = "✨"
         ),
         AIVoice(
-            id = "shimmer",
-            name = "Shimmer",
-            description = "Clear and professional",
-            color = Color(0xFF00C7BE),
-            icon = "💫"
+            id = "TxGEqnHWrfWFTfGW9XjX", // Josh
+            name = "Josh",
+            description = "Deep & confident • Male voice",
+            color = VoiceOrange,
+            icon = "🔊"
+        ),
+        AIVoice(
+            id = "onwK4e9ZLuTAKqWW03F9", // Daniel
+            name = "Daniel",
+            description = "British narrator • Clear pronunciation",
+            color = Color(0xFF6366F1),
+            icon = "🇬🇧"
+        ),
+        AIVoice(
+            id = "N2lVS1w4EtoT3dr4eOWO", // Callum
+            name = "Callum",
+            description = "Storyteller • Warm & engaging",
+            color = Color(0xFFEC4899),
+            icon = "📖"
         )
     )
     
@@ -543,10 +568,13 @@ class VoiceChatViewModel @Inject constructor(
     
     /**
      * Play audio data
+     * FIXED: Now properly resets isAISpeaking on completion and errors
      */
     private fun playAudio(audioData: ByteArray, onComplete: (() -> Unit)? = null) {
         try {
+            // Release any previous player
             mediaPlayer?.release()
+            mediaPlayer = null
             
             // Save to temp file
             val tempFile = File(context.cacheDir, "tts_${System.currentTimeMillis()}.mp3")
@@ -554,26 +582,53 @@ class VoiceChatViewModel @Inject constructor(
             
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(tempFile.absolutePath)
-                setOnCompletionListener {
-                    _state.update { it.copy(isPlayingPreview = false, playingVoiceId = null) }
+                
+                // CRITICAL: Handle completion to reset speaking state
+                setOnCompletionListener { mp ->
+                    _state.update { 
+                        it.copy(
+                            isPlayingPreview = false, 
+                            playingVoiceId = null,
+                            isAISpeaking = false  // FIXED: Reset speaking state
+                        )
+                    }
                     tempFile.delete()
+                    mp.release()
+                    mediaPlayer = null
                     onComplete?.invoke()
                 }
-                setOnErrorListener { _, _, _ ->
-                    _state.update { it.copy(isPlayingPreview = false, playingVoiceId = null) }
-                    false
+                
+                // CRITICAL: Handle errors to reset speaking state
+                setOnErrorListener { mp, what, extra ->
+                    _state.update { 
+                        it.copy(
+                            isPlayingPreview = false, 
+                            playingVoiceId = null,
+                            isAISpeaking = false  // FIXED: Reset speaking state on error
+                        )
+                    }
+                    tempFile.delete()
+                    mp.release()
+                    mediaPlayer = null
+                    onComplete?.invoke()
+                    true  // Return true to indicate we handled the error
                 }
+                
                 prepare()
                 start()
             }
         } catch (e: Exception) {
+            // FIXED: Always reset speaking state on exception
             _state.update { 
                 it.copy(
                     isPlayingPreview = false,
                     playingVoiceId = null,
+                    isAISpeaking = false,  // FIXED: Reset speaking state
                     error = e.message
                 )
             }
+            mediaPlayer?.release()
+            mediaPlayer = null
         }
     }
     
