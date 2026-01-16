@@ -78,6 +78,7 @@ fun EmailAuthScreen(
     var isPasswordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showVerificationScreen by remember { mutableStateOf(false) }
+    var showForgotPasswordScreen by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val uriHandler = LocalUriHandler.current
@@ -106,7 +107,17 @@ fun EmailAuthScreen(
 
     val scrollState = rememberScrollState()
     
-    if (showVerificationScreen) {
+    if (showForgotPasswordScreen) {
+        ForgotPasswordScreen(
+            initialEmail = email,
+            onBack = { showForgotPasswordScreen = false },
+            onPasswordResetSuccess = {
+                showForgotPasswordScreen = false
+                // Optionally show a success message
+            },
+            clerkAuthService = clerkAuthService
+        )
+    } else if (showVerificationScreen) {
         EmailVerificationScreen(
             email = email,
             onVerificationSuccess = {
@@ -331,6 +342,25 @@ fun EmailAuthScreen(
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
+                    
+                    // Forgot Password (only show for sign in mode)
+                    if (authMode == AuthMode.SIGN_IN) {
+                        Text(
+                            text = "Forgot Password?",
+                            fontSize = 14.sp,
+                            color = Color(0xFF007AFF),
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(top = 8.dp)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    showForgotPasswordScreen = true
+                                }
+                        )
+                    }
                 }
 
                 // Error message
@@ -830,6 +860,403 @@ fun EmailVerificationScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}
+
+/**
+ * ForgotPasswordScreen - Password reset flow
+ * 
+ * Steps:
+ * 1. Enter email to receive reset code
+ * 2. Enter verification code
+ * 3. Enter new password
+ */
+@Composable
+fun ForgotPasswordScreen(
+    initialEmail: String = "",
+    onBack: () -> Unit,
+    onPasswordResetSuccess: () -> Unit,
+    clerkAuthService: ClerkAuthService = hiltViewModel()
+) {
+    var email by remember { mutableStateOf(initialEmail) }
+    var resetCode by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+    var currentStep by remember { mutableIntStateOf(1) } // 1: Email, 2: Code, 3: New Password
+    var resendCountdown by remember { mutableIntStateOf(0) }
+    var canResend by remember { mutableStateOf(true) }
+    
+    val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    
+    val isEmailValid = remember(email) {
+        android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    
+    val isPasswordValid = remember(newPassword) {
+        newPassword.length >= 8
+    }
+    
+    val passwordsMatch = remember(newPassword, confirmPassword) {
+        newPassword == confirmPassword && confirmPassword.isNotEmpty()
+    }
+
+    // Countdown timer for resend
+    LaunchedEffect(resendCountdown) {
+        if (resendCountdown > 0) {
+            delay(1000)
+            resendCountdown--
+            if (resendCountdown == 0) {
+                canResend = true
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { focusManager.clearFocus() }
+            )
+            .imePadding()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Back button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                IconButton(
+                    onClick = {
+                        if (currentStep > 1) {
+                            currentStep--
+                            errorMessage = null
+                            successMessage = null
+                        } else {
+                            onBack()
+                        }
+                    },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = Color.Gray.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.Black
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(40.dp))
+            
+            // Title
+            Text(
+                text = when (currentStep) {
+                    1 -> "Reset Password"
+                    2 -> "Enter Code"
+                    else -> "New Password"
+                },
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Subtitle
+            Text(
+                text = when (currentStep) {
+                    1 -> "Enter your email address and we'll send you a code to reset your password."
+                    2 -> "We sent a 6-digit code to $email. Enter it below."
+                    else -> "Create a new password for your account."
+                },
+                fontSize = 15.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(40.dp))
+            
+            when (currentStep) {
+                1 -> {
+                    // Email input
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it; errorMessage = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Email Address") },
+                        placeholder = { Text("Enter your email") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Done
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+                2 -> {
+                    // Verification code input
+                    OutlinedTextField(
+                        value = resetCode,
+                        onValueChange = { 
+                            if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                                resetCode = it
+                                errorMessage = null
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Verification Code") },
+                        placeholder = { Text("Enter 6-digit code") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Resend code option
+                    if (canResend) {
+                        TextButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    canResend = false
+                                    resendCountdown = 60
+                                    clerkAuthService.forgotPassword(email)
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = "Resend code",
+                                fontSize = 14.sp,
+                                color = Color(0xFF007AFF)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Resend code in ${resendCountdown}s",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+                3 -> {
+                    // New password input
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it; errorMessage = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("New Password") },
+                        placeholder = { Text("Enter new password") },
+                        singleLine = true,
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (isPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    contentDescription = null,
+                                    tint = Color.Gray
+                                )
+                            }
+                        },
+                        supportingText = {
+                            if (newPassword.isNotEmpty() && !isPasswordValid) {
+                                Text("Password must be at least 8 characters", color = Color.Red)
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Confirm password input
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it; errorMessage = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Confirm Password") },
+                        placeholder = { Text("Confirm new password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        isError = confirmPassword.isNotEmpty() && !passwordsMatch,
+                        supportingText = {
+                            if (confirmPassword.isNotEmpty() && !passwordsMatch) {
+                                Text("Passwords don't match", color = Color.Red)
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Black,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f),
+                            errorBorderColor = Color.Red
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
+            
+            // Error message
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            // Success message
+            successMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = Color(0xFF34C759),
+                    fontSize = 13.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Action button
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        
+                        when (currentStep) {
+                            1 -> {
+                                // Send reset code
+                                when (val result = clerkAuthService.forgotPassword(email)) {
+                                    is ClerkAuthResult.Success -> {
+                                        isLoading = false
+                                        currentStep = 2
+                                        canResend = false
+                                        resendCountdown = 60
+                                    }
+                                    is ClerkAuthResult.Failure -> {
+                                        isLoading = false
+                                        errorMessage = result.error.message ?: "Failed to send reset code"
+                                    }
+                                    else -> {
+                                        isLoading = false
+                                        currentStep = 2 // Proceed anyway as backend always returns success
+                                        canResend = false
+                                        resendCountdown = 60
+                                    }
+                                }
+                            }
+                            2 -> {
+                                // Verify code - move to password step
+                                if (resetCode.length == 6) {
+                                    isLoading = false
+                                    currentStep = 3
+                                } else {
+                                    isLoading = false
+                                    errorMessage = "Please enter a 6-digit code"
+                                }
+                            }
+                            3 -> {
+                                // Reset password
+                                when (val result = clerkAuthService.resetPassword(email, resetCode, newPassword)) {
+                                    is ClerkAuthResult.Success -> {
+                                        isLoading = false
+                                        successMessage = "Password reset successfully! You can now sign in."
+                                        delay(2000)
+                                        onPasswordResetSuccess()
+                                    }
+                                    is ClerkAuthResult.Failure -> {
+                                        isLoading = false
+                                        errorMessage = result.error.message ?: "Failed to reset password"
+                                    }
+                                    else -> {
+                                        isLoading = false
+                                        errorMessage = "Failed to reset password"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                enabled = when (currentStep) {
+                    1 -> isEmailValid && !isLoading
+                    2 -> resetCode.length == 6 && !isLoading
+                    else -> isPasswordValid && passwordsMatch && !isLoading
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black,
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = when (currentStep) {
+                            1 -> "Send Reset Code"
+                            2 -> "Continue"
+                            else -> "Reset Password"
+                        },
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            
             Spacer(modifier = Modifier.height(40.dp))
         }
     }

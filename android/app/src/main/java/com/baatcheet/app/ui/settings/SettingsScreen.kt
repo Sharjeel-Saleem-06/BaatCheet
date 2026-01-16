@@ -67,24 +67,20 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit,
-    onThemeChange: (String) -> Unit,
-    onLanguageChange: (String) -> Unit,
-    onVoiceEnabledChange: (Boolean) -> Unit,
-    onAutoPlayVoiceChange: (Boolean) -> Unit,
-    onStreamingEnabledChange: (Boolean) -> Unit,
-    onHapticFeedbackChange: (Boolean) -> Unit,
-    onNotificationsChange: (Boolean) -> Unit,
-    onSaveHistoryChange: (Boolean) -> Unit,
-    onShareAnalyticsChange: (Boolean) -> Unit,
-    onClearHistory: () -> Unit,
-    onExportData: () -> Unit,
-    onPrivacyPolicy: () -> Unit,
-    onTermsOfService: () -> Unit,
-    onHelpCenter: () -> Unit,
-    onContactSupport: () -> Unit,
-    onUpgrade: () -> Unit,
-    onChangePassword: () -> Unit = {},
-    onEditProfile: () -> Unit = {}
+    onThemeChange: (String) -> Unit = {},
+    onLanguageChange: (String) -> Unit = {},
+    onVoiceEnabledChange: (Boolean) -> Unit = {},
+    onAutoPlayVoiceChange: (Boolean) -> Unit = {},
+    onStreamingEnabledChange: (Boolean) -> Unit = {},
+    onHapticFeedbackChange: (Boolean) -> Unit = {},
+    onNotificationsChange: (Boolean) -> Unit = {},
+    onSaveHistoryChange: (Boolean) -> Unit = {},
+    onClearHistory: () -> Unit = {},
+    onPrivacyPolicy: () -> Unit = {},
+    onTermsOfService: () -> Unit = {},
+    onContactSupport: () -> Unit = {},
+    onUpgrade: () -> Unit = {},
+    onChangePassword: () -> Unit = {}
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
@@ -422,39 +418,24 @@ fun SettingsScreen(
                 }
             }
             
-            // Privacy & Data
+            // About & Legal
             item {
                 SettingsCard {
                     Column {
                         SettingsSectionHeader(
-                            icon = Icons.Outlined.Security,
-                            title = "Privacy & Data",
-                            isExpanded = expandedSection == "privacy",
-                            onClick = { expandedSection = if (expandedSection == "privacy") null else "privacy" }
+                            icon = Icons.Outlined.Info,
+                            title = "About & Legal",
+                            isExpanded = expandedSection == "about",
+                            onClick = { expandedSection = if (expandedSection == "about") null else "about" }
                         )
                         
                         AnimatedVisibility(
-                            visible = expandedSection == "privacy",
+                            visible = expandedSection == "about",
                             enter = expandVertically(),
                             exit = shrinkVertically()
                         ) {
                             Column {
                                 HorizontalDivider(color = InputBorder)
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.Analytics,
-                                    title = "Share Analytics",
-                                    subtitle = "Help improve BaatCheet",
-                                    checked = userSettings.shareAnalytics,
-                                    onCheckedChange = onShareAnalyticsChange
-                                )
-                                
-                                SettingsClickableItem(
-                                    icon = Icons.Outlined.FileDownload,
-                                    title = "Export Data",
-                                    subtitle = "Download your data",
-                                    onClick = onExportData
-                                )
                                 
                                 SettingsClickableItem(
                                     icon = Icons.Outlined.Policy,
@@ -467,42 +448,11 @@ fun SettingsScreen(
                                     title = "Terms of Service",
                                     onClick = onTermsOfService
                                 )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Help & Support
-            item {
-                SettingsCard {
-                    Column {
-                        SettingsSectionHeader(
-                            icon = Icons.Outlined.Help,
-                            title = "Help & Support",
-                            isExpanded = expandedSection == "help",
-                            onClick = { expandedSection = if (expandedSection == "help") null else "help" }
-                        )
-                        
-                        AnimatedVisibility(
-                            visible = expandedSection == "help",
-                            enter = expandVertically(),
-                            exit = shrinkVertically()
-                        ) {
-                            Column {
-                                HorizontalDivider(color = InputBorder)
-                                
-                                SettingsClickableItem(
-                                    icon = Icons.Outlined.MenuBook,
-                                    title = "Help Center",
-                                    subtitle = "FAQs and guides",
-                                    onClick = onHelpCenter
-                                )
                                 
                                 SettingsClickableItem(
                                     icon = Icons.Outlined.Mail,
                                     title = "Contact Support",
-                                    subtitle = "Get help from our team",
+                                    subtitle = "support@baatcheet.app",
                                     onClick = onContactSupport
                                 )
                             }
@@ -575,12 +525,6 @@ fun SettingsScreen(
                     )
                     Text(
                         text = "Version 1.0.0",
-                        fontSize = 12.sp,
-                        color = GrayText.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Made with ❤️ in Pakistan",
                         fontSize = 12.sp,
                         color = GrayText.copy(alpha = 0.7f)
                     )

@@ -322,6 +322,79 @@ class ClerkAuthService @Inject constructor(
         return pendingEmail
     }
 
+    // MARK: - Forgot Password
+    suspend fun forgotPassword(email: String): ClerkAuthResult = withContext(Dispatchers.IO) {
+        val url = "${APIConfig.MOBILE_AUTH_URL}/forgot-password"
+        
+        val body = mapOf("email" to email)
+        val requestBody = gson.toJson(body).toRequestBody("application/json".toMediaType())
+        
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+        
+        try {
+            val response = okHttpClient.newCall(request).execute()
+            val responseBody = response.body?.string()
+            
+            if (responseBody != null) {
+                val authResponse = gson.fromJson(responseBody, AuthResponse::class.java)
+                if (authResponse.success) {
+                    setPendingEmail(email)
+                    ClerkAuthResult.Success(token = "", userId = "", user = null)
+                } else {
+                    ClerkAuthResult.Failure(Exception(authResponse.error ?: "Failed to send reset code"))
+                }
+            } else {
+                // Even if response is null, we assume success (backend returns success to prevent email enumeration)
+                setPendingEmail(email)
+                ClerkAuthResult.Success(token = "", userId = "", user = null)
+            }
+        } catch (e: IOException) {
+            ClerkAuthResult.Failure(Exception("Network error. Please check your connection."))
+        } catch (e: Exception) {
+            ClerkAuthResult.Failure(Exception("Failed to send reset code: ${e.message}"))
+        }
+    }
+
+    // MARK: - Reset Password
+    suspend fun resetPassword(email: String, code: String, newPassword: String): ClerkAuthResult = withContext(Dispatchers.IO) {
+        val url = "${APIConfig.MOBILE_AUTH_URL}/reset-password"
+        
+        val body = mapOf(
+            "email" to email,
+            "code" to code,
+            "newPassword" to newPassword
+        )
+        val requestBody = gson.toJson(body).toRequestBody("application/json".toMediaType())
+        
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+        
+        try {
+            val response = okHttpClient.newCall(request).execute()
+            val responseBody = response.body?.string()
+            
+            if (responseBody != null) {
+                val authResponse = gson.fromJson(responseBody, AuthResponse::class.java)
+                if (authResponse.success) {
+                    ClerkAuthResult.Success(token = "", userId = "", user = null)
+                } else {
+                    ClerkAuthResult.Failure(Exception(authResponse.error ?: "Failed to reset password"))
+                }
+            } else {
+                ClerkAuthResult.Failure(Exception("Failed to reset password"))
+            }
+        } catch (e: IOException) {
+            ClerkAuthResult.Failure(Exception("Network error. Please check your connection."))
+        } catch (e: Exception) {
+            ClerkAuthResult.Failure(Exception("Failed to reset password: ${e.message}"))
+        }
+    }
+
     // MARK: - Logout
     suspend fun logout(): Boolean = withContext(Dispatchers.IO) {
         val token = getAuthToken()
