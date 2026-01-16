@@ -935,16 +935,19 @@ router.post('/change-password', async (req: Request, res: Response): Promise<voi
         email: string;
       };
 
-      // Verify current password with Clerk
+      // Verify user exists in Clerk
       const clerkUser = await clerkClient.users.getUser(decoded.clerkId);
       
-      // Try to verify using Clerk's password verification
-      try {
-        const signInAttempt = await clerkClient.signInTokens.createSignInToken({
-          userId: decoded.clerkId,
+      if (!clerkUser) {
+        res.status(404).json({
+          success: false,
+          error: 'User not found',
         });
-        
-        // If we get here, user exists - update password via Clerk
+        return;
+      }
+      
+      // Update password via Clerk
+      try {
         await clerkClient.users.updateUser(decoded.clerkId, {
           password: newPassword,
         });
