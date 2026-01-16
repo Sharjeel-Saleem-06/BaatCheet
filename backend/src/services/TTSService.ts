@@ -90,51 +90,66 @@ class TTSServiceClass {
 
   /**
    * Load ElevenLabs API keys from environment
+   * Supports multiple naming patterns for maximum flexibility
    */
   private loadElevenLabsKeys(): void {
-    // Support multiple naming conventions for flexibility
+    // Support ALL possible naming conventions
     const keyPatterns = [
       'ELEVENLABS_API_KEY_',    // Standard: ELEVENLABS_API_KEY_1
-      'ElevenLabs_API_',        // Alt: ElevenLabs_API_1
+      'ElevenLabs_API_',        // Alt: ElevenLabs_API_1 (HuggingFace format)
       'ELEVENLABS_API_',        // Alt: ELEVENLABS_API_1
       'ELEVEN_LABS_KEY_',       // Alt: ELEVEN_LABS_KEY_1
+      'ELEVENLABS_KEY_',        // Alt: ELEVENLABS_KEY_1
+      'ElevenLabs_API_KEY_',    // Alt: ElevenLabs_API_KEY_1
+      'elevenlabs_api_key_',    // Alt: lowercase
+      'elevenlabs_api_',        // Alt: lowercase
     ];
     
-    // Debug: Log all environment variables that might contain API keys
+    // Debug: Log all environment variables that might contain ElevenLabs keys
     const allEnvKeys = Object.keys(process.env).filter(k => 
-      k.toLowerCase().includes('eleven') || k.toLowerCase().includes('api')
+      k.toLowerCase().includes('eleven')
     );
-    logger.info(`Found ${allEnvKeys.length} potential API env vars: ${allEnvKeys.join(', ')}`);
+    logger.info(`Found ${allEnvKeys.length} ElevenLabs env vars: ${allEnvKeys.join(', ')}`);
     
+    // Try each env var that contains 'eleven' directly
+    for (const envKey of allEnvKeys) {
+      const key = process.env[envKey];
+      if (key) {
+        logger.info(`Checking ${envKey}: ${key.substring(0, 8)}...`);
+        // Accept any key that looks like an API key (not just sk_ prefix)
+        // Some ElevenLabs keys may have different prefixes
+        if (key.length > 10 && !this.ELEVENLABS_KEYS.includes(key)) {
+          this.ELEVENLABS_KEYS.push(key);
+          logger.info(`✅ Loaded ElevenLabs key from ${envKey}`);
+        }
+      }
+    }
+    
+    // Also try numbered patterns explicitly
     for (let i = 1; i <= 10; i++) {
       for (const pattern of keyPatterns) {
         const envKey = `${pattern}${i}`;
         const key = process.env[envKey];
-        if (key) {
-          logger.info(`Found env ${envKey}: ${key.substring(0, 5)}...${key.substring(key.length - 3)}`);
-        }
-        if (key && key.startsWith('sk_') && !this.ELEVENLABS_KEYS.includes(key)) {
+        if (key && key.length > 10 && !this.ELEVENLABS_KEYS.includes(key)) {
           this.ELEVENLABS_KEYS.push(key);
-          logger.info(`ElevenLabs key ${i} loaded from ${envKey} (${key.substring(0, 10)}...)`);
-          break; // Found key for this index, move to next
+          logger.info(`✅ Loaded ElevenLabs key from ${envKey}`);
+          break;
         }
       }
     }
     
     // Also support single key format
     const singleKey = process.env.ELEVENLABS_API_KEY;
-    if (singleKey && singleKey.startsWith('sk_') && !this.ELEVENLABS_KEYS.includes(singleKey)) {
+    if (singleKey && singleKey.length > 10 && !this.ELEVENLABS_KEYS.includes(singleKey)) {
       this.ELEVENLABS_KEYS.push(singleKey);
+      logger.info('✅ Loaded single ELEVENLABS_API_KEY');
     }
     
-    logger.info(`ElevenLabs TTS initialized with ${this.ELEVENLABS_KEYS.length} API keys`);
+    logger.info(`🎤 ElevenLabs TTS initialized with ${this.ELEVENLABS_KEYS.length} API keys`);
     
-    // If no keys loaded, log environment variable check (for debugging)
     if (this.ELEVENLABS_KEYS.length === 0) {
-      logger.warn('No ElevenLabs API keys found. Supported patterns: ELEVENLABS_API_KEY_1, ElevenLabs_API_1, etc.');
-      // Log a sample of all env vars for debugging
-      const sampleEnv = Object.keys(process.env).slice(0, 20).join(', ');
-      logger.warn(`Sample env vars: ${sampleEnv}`);
+      logger.warn('⚠️ No ElevenLabs API keys found!');
+      logger.warn('Expected patterns: ElevenLabs_API_1, ELEVENLABS_API_KEY_1, etc.');
     }
   }
 
@@ -289,10 +304,23 @@ class TTSServiceClass {
       
       // Try OpenAI TTS last (paid, but best quality)
       if (this.OPENAI_API_KEY) {
-        return await this.openAITTS(truncatedText, voice, speed, format);
+        try {
+          return await this.openAITTS(truncatedText, voice, speed, format);
+        } catch (openaiError) {
+          logger.warn('OpenAI TTS failed, trying free fallback:', openaiError);
+        }
       }
       
-      throw new Error('No TTS service available. Please configure ELEVENLABS_API_KEY_1, GOOGLE_CLOUD_TTS_KEY, or OPENAI_API_KEY.');
+      // FINAL FALLBACK: Google Translate TTS (completely FREE, no API key needed!)
+      // This uses the same TTS as Google Translate - works for Urdu, Hindi, English
+      try {
+        logger.info('Using free Google Translate TTS as final fallback');
+        return await this.googleTranslateTTS(truncatedText, language);
+      } catch (gttsFallbackError) {
+        logger.error('All TTS providers failed including free fallback:', gttsFallbackError);
+      }
+      
+      throw new Error('All TTS services failed. ElevenLabs keys may be exhausted or blocked.');
       
     } catch (error) {
       logger.error('TTS generation failed:', error);
@@ -559,6 +587,91 @@ class TTSServiceClass {
     } catch (error: any) {
       logger.error('Google TTS failed:', error.response?.data || error.message);
       throw new Error('Google TTS failed');
+    }
+  }
+
+  /**
+   * Google Translate TTS - COMPLETELY FREE, NO API KEY NEEDED!
+   * Uses the same TTS engine as Google Translate
+   * Supports 100+ languages including Urdu (ur), Hindi (hi), Arabic (ar)
+   * 
+   * Limitations:
+   * - Max ~200 characters per request
+   * - Slightly robotic voice quality
+   * - Rate limited (but generous for normal use)
+   */
+  private async googleTranslateTTS(
+    text: string,
+    languageHint: string = 'en'
+  ): Promise<TTSResult> {
+    try {
+      // Detect language for proper TTS
+      const detectedLang = this.detectLanguage(text);
+      let langCode = 'en';
+      
+      switch (detectedLang) {
+        case 'urdu':
+        case 'arabic':
+          langCode = 'ur'; // Urdu
+          break;
+        case 'hindi':
+          langCode = 'hi'; // Hindi
+          break;
+        case 'mixed':
+          // For Roman Urdu (mix of English and Urdu), use English pronunciation
+          langCode = 'en';
+          break;
+        default:
+          langCode = 'en';
+      }
+      
+      // Split text into chunks of ~200 chars (Google Translate limit)
+      const maxChunkSize = 200;
+      const chunks: string[] = [];
+      
+      for (let i = 0; i < text.length; i += maxChunkSize) {
+        chunks.push(text.slice(i, i + maxChunkSize));
+      }
+      
+      // Fetch audio for each chunk
+      const audioChunks: Buffer[] = [];
+      
+      for (const chunk of chunks) {
+        // URL encode the text
+        const encodedText = encodeURIComponent(chunk);
+        
+        // Google Translate TTS URL (no API key needed!)
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=${langCode}&client=tw-ob`;
+        
+        const response = await axios.get(url, {
+          responseType: 'arraybuffer',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Referer': 'https://translate.google.com/',
+          },
+          timeout: 15000,
+        });
+        
+        audioChunks.push(Buffer.from(response.data));
+      }
+      
+      // Combine all audio chunks
+      const combinedAudio = Buffer.concat(audioChunks);
+      
+      logger.info('Google Translate TTS completed (free fallback)', { 
+        textLength: text.length, 
+        langCode,
+        chunks: chunks.length 
+      });
+      
+      return {
+        audioBuffer: combinedAudio,
+        format: 'mp3',
+        provider: 'google-translate-free',
+      };
+    } catch (error: any) {
+      logger.error('Google Translate TTS failed:', error.message);
+      throw new Error('Google Translate TTS failed');
     }
   }
 
