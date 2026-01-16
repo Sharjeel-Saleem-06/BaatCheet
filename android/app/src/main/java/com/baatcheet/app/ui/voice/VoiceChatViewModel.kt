@@ -173,99 +173,124 @@ class VoiceChatViewModel @Inject constructor(
     }
     
     /**
-     * Default voices - Human-like, natural sounding
-     * ElevenLabs multilingual voices for Urdu/Hindi/English
+     * Default voices - Microsoft Edge TTS (FREE!) + ElevenLabs
+     * Edge TTS has excellent Urdu voices with natural pronunciation
      */
     private fun getDefaultVoices(): List<AIVoice> = listOf(
         // ============================================
-        // URDU / MULTILINGUAL VOICES (Most Human-like)
+        // 🥇 EDGE TTS - URDU VOICES (FREE, Best Quality!)
         // ============================================
         AIVoice(
-            id = "pqHfZKP75CvOlQylNhV4", // Bill
-            name = "Bilal (اردو)",
-            description = "Natural Urdu speaker • Perfect for Urdu conversations",
+            id = "ur-PK-AsadNeural",
+            name = "Asad (اردو)",
+            description = "Pakistani Urdu • Clear & natural male voice",
             color = VoiceAccent,
             icon = "🇵🇰"
         ),
         AIVoice(
-            id = "XB0fDUnXU5powFXDhCwa", // Charlotte
-            name = "Arooj",
-            description = "Roman Urdu & English mix • Conversational",
+            id = "ur-PK-UzmaNeural",
+            name = "Uzma (اردو)",
+            description = "Pakistani Urdu • Warm feminine voice",
             color = VoicePink,
-            icon = "💬"
+            icon = "🇵🇰"
         ),
         AIVoice(
-            id = "piTKgcLEGmPE4e6mEKli", // Nicole
-            name = "Nadia",
-            description = "Warm feminine voice • Hindi/Urdu friendly",
+            id = "ur-IN-SalmanNeural",
+            name = "Salman (اردو)",
+            description = "Indian Urdu • Natural male voice",
             color = VoicePurple,
-            icon = "🌸"
+            icon = "🇮🇳"
+        ),
+        AIVoice(
+            id = "ur-IN-GulNeural",
+            name = "Gul (اردو)",
+            description = "Indian Urdu • Soft feminine voice",
+            color = Color(0xFFEC4899),
+            icon = "🇮🇳"
         ),
         
         // ============================================
-        // ENGLISH VOICES (Natural, Human-like)
+        // 🥇 EDGE TTS - HINDI VOICES (Great for Roman Urdu)
         // ============================================
         AIVoice(
-            id = "EXAVITQu4vr4xnSDxMaL", // Sarah
-            name = "Sarah",
-            description = "Natural & warm • Best for English",
-            color = VoiceBlue,
-            icon = "🎙️"
-        ),
-        AIVoice(
-            id = "21m00Tcm4TlvDq8ikWAM", // Rachel
-            name = "Rachel",
-            description = "Friendly & clear • American English",
-            color = Color(0xFF00C7BE),
-            icon = "✨"
-        ),
-        AIVoice(
-            id = "TxGEqnHWrfWFTfGW9XjX", // Josh
-            name = "Josh",
-            description = "Deep & confident • Male voice",
+            id = "hi-IN-MadhurNeural",
+            name = "Madhur (हिंदी)",
+            description = "Hindi • Perfect for Roman Urdu text",
             color = VoiceOrange,
-            icon = "🔊"
+            icon = "🇮🇳"
         ),
         AIVoice(
-            id = "onwK4e9ZLuTAKqWW03F9", // Daniel
-            name = "Daniel",
-            description = "British narrator • Clear pronunciation",
+            id = "hi-IN-SwaraNeural",
+            name = "Swara (हिंदी)",
+            description = "Hindi • Natural feminine voice",
+            color = Color(0xFF00C7BE),
+            icon = "🇮🇳"
+        ),
+        
+        // ============================================
+        // 🥇 EDGE TTS - ENGLISH VOICES
+        // ============================================
+        AIVoice(
+            id = "en-US-GuyNeural",
+            name = "Guy",
+            description = "American English • Clear male voice",
+            color = VoiceBlue,
+            icon = "🇺🇸"
+        ),
+        AIVoice(
+            id = "en-US-JennyNeural",
+            name = "Jenny",
+            description = "American English • Friendly female voice",
             color = Color(0xFF6366F1),
+            icon = "🇺🇸"
+        ),
+        AIVoice(
+            id = "en-GB-SoniaNeural",
+            name = "Sonia",
+            description = "British English • Professional female voice",
+            color = VoicePurple,
             icon = "🇬🇧"
         ),
         AIVoice(
-            id = "N2lVS1w4EtoT3dr4eOWO", // Callum
-            name = "Callum",
-            description = "Storyteller • Warm & engaging",
-            color = Color(0xFFEC4899),
-            icon = "📖"
+            id = "en-GB-RyanNeural",
+            name = "Ryan",
+            description = "British English • Natural male voice",
+            color = VoiceOrange,
+            icon = "🇬🇧"
         )
     )
     
     /**
      * Get voice color based on voice ID
-     * Supports both ElevenLabs IDs and legacy OpenAI voice names
+     * Supports Edge TTS, ElevenLabs IDs and legacy OpenAI voice names
      */
     private fun getVoiceColor(voiceId: String): Color = when (voiceId) {
         // ============================================
-        // ElevenLabs Voice IDs (Primary)
+        // Edge TTS Voice IDs (PRIMARY - FREE!)
         // ============================================
-        // Urdu / Multilingual voices
-        "pqHfZKP75CvOlQylNhV4" -> VoiceAccent        // Bilal - Urdu (Green)
+        // Urdu voices
+        "ur-PK-AsadNeural" -> VoiceAccent           // Pakistani Urdu Male
+        "ur-PK-UzmaNeural" -> VoicePink             // Pakistani Urdu Female
+        "ur-IN-SalmanNeural" -> VoicePurple         // Indian Urdu Male
+        "ur-IN-GulNeural" -> Color(0xFFEC4899)      // Indian Urdu Female
+        // Hindi voices
+        "hi-IN-MadhurNeural" -> VoiceOrange         // Hindi Male
+        "hi-IN-SwaraNeural" -> Color(0xFF00C7BE)    // Hindi Female
+        // English voices
+        "en-US-GuyNeural" -> VoiceBlue              // American Male
+        "en-US-JennyNeural" -> Color(0xFF6366F1)    // American Female
+        "en-GB-SoniaNeural" -> VoicePurple          // British Female
+        "en-GB-RyanNeural" -> VoiceOrange           // British Male
+        
+        // ============================================
+        // ElevenLabs Voice IDs (Backup)
+        // ============================================
+        "pqHfZKP75CvOlQylNhV4" -> VoiceAccent        // Bilal - Urdu
         "XB0fDUnXU5powFXDhCwa" -> VoicePink          // Arooj - Roman Urdu
         "piTKgcLEGmPE4e6mEKli" -> VoicePurple        // Nadia - Hindi/Urdu
-        
-        // English voices
         "EXAVITQu4vr4xnSDxMaL" -> VoiceBlue          // Sarah
-        "21m00Tcm4TlvDq8ikWAM" -> Color(0xFF00C7BE)  // Rachel - Teal
+        "21m00Tcm4TlvDq8ikWAM" -> Color(0xFF00C7BE)  // Rachel
         "TxGEqnHWrfWFTfGW9XjX" -> VoiceOrange        // Josh
-        "onwK4e9ZLuTAKqWW03F9" -> Color(0xFF6366F1)  // Daniel - Indigo
-        "N2lVS1w4EtoT3dr4eOWO" -> Color(0xFFEC4899)  // Callum - Pink
-        "VR6AewLTigWG4xSOukaG" -> VoiceOrange        // Arnold
-        "pNInz6obpgDQGcFmaJgB" -> VoiceBlue          // Adam
-        "yoZ06aMxZJJ28mfd3POQ" -> VoicePurple        // Sam
-        "AZnzlk1XvdvUeBnXmlld" -> VoicePink          // Domi
-        "MF3mGyEYCl7XYWbV9V6O" -> Color(0xFF00C7BE)  // Elli
         
         // ============================================
         // Legacy OpenAI Voice Names (Fallback)
@@ -282,28 +307,35 @@ class VoiceChatViewModel @Inject constructor(
     
     /**
      * Get voice icon based on voice ID
-     * Supports both ElevenLabs IDs and legacy OpenAI voice names
+     * Supports Edge TTS, ElevenLabs IDs and legacy OpenAI voice names
      */
     private fun getVoiceIcon(voiceId: String): String = when (voiceId) {
         // ============================================
-        // ElevenLabs Voice IDs (Primary)
+        // Edge TTS Voice IDs (PRIMARY - FREE!)
         // ============================================
-        // Urdu / Multilingual voices
-        "pqHfZKP75CvOlQylNhV4" -> "🇵🇰"  // Bilal - Urdu flag
-        "XB0fDUnXU5powFXDhCwa" -> "💬"    // Arooj - Speech bubble (Roman Urdu)
-        "piTKgcLEGmPE4e6mEKli" -> "🌸"    // Nadia - Flower (Hindi/Urdu feminine)
-        
+        // Urdu voices
+        "ur-PK-AsadNeural" -> "🇵🇰"      // Pakistani Urdu Male
+        "ur-PK-UzmaNeural" -> "🇵🇰"      // Pakistani Urdu Female
+        "ur-IN-SalmanNeural" -> "🇮🇳"    // Indian Urdu Male
+        "ur-IN-GulNeural" -> "🇮🇳"       // Indian Urdu Female
+        // Hindi voices
+        "hi-IN-MadhurNeural" -> "🇮🇳"    // Hindi Male
+        "hi-IN-SwaraNeural" -> "🇮🇳"     // Hindi Female
         // English voices
-        "EXAVITQu4vr4xnSDxMaL" -> "🎙️"    // Sarah - Microphone
-        "21m00Tcm4TlvDq8ikWAM" -> "✨"     // Rachel - Sparkle
-        "TxGEqnHWrfWFTfGW9XjX" -> "🔊"    // Josh - Speaker
-        "onwK4e9ZLuTAKqWW03F9" -> "🇬🇧"   // Daniel - UK flag
-        "N2lVS1w4EtoT3dr4eOWO" -> "📖"    // Callum - Book (storyteller)
-        "VR6AewLTigWG4xSOukaG" -> "💪"    // Arnold - Strong
-        "pNInz6obpgDQGcFmaJgB" -> "🎤"    // Adam - Microphone
-        "yoZ06aMxZJJ28mfd3POQ" -> "🎵"    // Sam - Music note
-        "AZnzlk1XvdvUeBnXmlld" -> "🌟"    // Domi - Star
-        "MF3mGyEYCl7XYWbV9V6O" -> "💫"    // Elli - Dizzy star
+        "en-US-GuyNeural" -> "🇺🇸"       // American Male
+        "en-US-JennyNeural" -> "🇺🇸"     // American Female
+        "en-GB-SoniaNeural" -> "🇬🇧"     // British Female
+        "en-GB-RyanNeural" -> "🇬🇧"      // British Male
+        
+        // ============================================
+        // ElevenLabs Voice IDs (Backup)
+        // ============================================
+        "pqHfZKP75CvOlQylNhV4" -> "🇵🇰"  // Bilal - Urdu flag
+        "XB0fDUnXU5powFXDhCwa" -> "💬"    // Arooj - Speech bubble
+        "piTKgcLEGmPE4e6mEKli" -> "🌸"    // Nadia - Flower
+        "EXAVITQu4vr4xnSDxMaL" -> "🎙️"    // Sarah
+        "21m00Tcm4TlvDq8ikWAM" -> "✨"     // Rachel
+        "TxGEqnHWrfWFTfGW9XjX" -> "🔊"    // Josh
         
         // ============================================
         // Legacy OpenAI Voice Names (Fallback)
