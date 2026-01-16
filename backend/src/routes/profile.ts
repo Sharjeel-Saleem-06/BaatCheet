@@ -188,7 +188,7 @@ router.post('/ask', async (req: Request, res: Response) => {
 
 /**
  * PATCH /profile/settings
- * Update profile settings (communication preferences)
+ * Update profile settings (communication preferences & custom instructions)
  */
 router.patch('/settings', async (req: Request, res: Response) => {
   try {
@@ -202,6 +202,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
       communicationTone,
       responseStyle,
       primaryUseCase,
+      customInstructions,
     } = req.body;
 
     // Validate inputs
@@ -222,6 +223,11 @@ router.patch('/settings', async (req: Request, res: Response) => {
     if (primaryUseCase && !validUseCases.includes(primaryUseCase)) {
       return res.status(400).json({ error: `Invalid use case. Must be one of: ${validUseCases.join(', ')}` });
     }
+    
+    // Validate custom instructions length (max 1500 characters)
+    if (customInstructions && customInstructions.length > 1500) {
+      return res.status(400).json({ error: 'Custom instructions must be 1500 characters or less' });
+    }
 
     const profile = await prisma.userProfile.upsert({
       where: { userId },
@@ -230,6 +236,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
         ...(communicationTone && { communicationTone }),
         ...(responseStyle && { responseStyle }),
         ...(primaryUseCase && { primaryUseCase }),
+        ...(customInstructions !== undefined && { customInstructions }),
       },
       create: {
         userId,
@@ -237,6 +244,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
         communicationTone: communicationTone || 'friendly',
         responseStyle: responseStyle || 'balanced',
         primaryUseCase: primaryUseCase || null,
+        customInstructions: customInstructions || null,
       },
     });
 

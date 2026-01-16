@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -41,18 +40,7 @@ data class UserSettings(
     val email: String = "",
     val avatar: String? = null,
     val tier: String = "free",
-    val theme: String = "system",
-    val language: String = "English",
-    val voiceEnabled: Boolean = true,
-    val autoPlayVoice: Boolean = false,
-    val streamingEnabled: Boolean = true,
-    val hapticFeedback: Boolean = true,
-    val notificationsEnabled: Boolean = true,
-    val saveHistory: Boolean = true,
-    val shareAnalytics: Boolean = false,
-    val defaultModel: String = "auto",
-    val maxTokens: Int = 4096,
-    val temperature: Float = 0.7f,
+    val customInstructions: String = "",
     val imageGenerationsToday: Int = 0,
     val imageGenerationsLimit: Int = 2,
     val totalMessages: Int = 0,
@@ -67,25 +55,19 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit,
-    onThemeChange: (String) -> Unit = {},
-    onLanguageChange: (String) -> Unit = {},
-    onVoiceEnabledChange: (Boolean) -> Unit = {},
-    onAutoPlayVoiceChange: (Boolean) -> Unit = {},
-    onStreamingEnabledChange: (Boolean) -> Unit = {},
-    onHapticFeedbackChange: (Boolean) -> Unit = {},
-    onNotificationsChange: (Boolean) -> Unit = {},
-    onSaveHistoryChange: (Boolean) -> Unit = {},
     onClearHistory: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onTermsOfService: () -> Unit = {},
     onContactSupport: () -> Unit = {},
     onUpgrade: () -> Unit = {},
-    onChangePassword: (currentPassword: String, newPassword: String) -> Unit = { _, _ -> }
+    onChangePassword: (currentPassword: String, newPassword: String) -> Unit = { _, _ -> },
+    onSaveCustomInstructions: (String) -> Unit = {}
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showCustomInstructionsDialog by remember { mutableStateOf(false) }
     var expandedSection by remember { mutableStateOf<String?>(null) }
     
     // Logout Confirmation Dialog
@@ -204,6 +186,18 @@ fun SettingsScreen(
         )
     }
     
+    // Custom Instructions Dialog
+    if (showCustomInstructionsDialog) {
+        CustomInstructionsDialog(
+            currentInstructions = userSettings.customInstructions,
+            onDismiss = { showCustomInstructionsDialog = false },
+            onSave = { instructions ->
+                showCustomInstructionsDialog = false
+                onSaveCustomInstructions(instructions)
+            }
+        )
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -274,96 +268,80 @@ fun SettingsScreen(
                 }
             }
             
-            // General Settings
+            // 🆕 Personalization - Custom Instructions (like ChatGPT)
             item {
                 SettingsCard {
                     Column {
                         SettingsSectionHeader(
-                            icon = Icons.Outlined.Settings,
-                            title = "General",
-                            isExpanded = expandedSection == "general",
-                            onClick = { expandedSection = if (expandedSection == "general") null else "general" }
+                            icon = Icons.Outlined.AutoAwesome,
+                            title = "Personalization",
+                            isExpanded = expandedSection == "personalization",
+                            onClick = { expandedSection = if (expandedSection == "personalization") null else "personalization" }
                         )
                         
                         AnimatedVisibility(
-                            visible = expandedSection == "general",
+                            visible = expandedSection == "personalization",
                             enter = expandVertically(),
                             exit = shrinkVertically()
                         ) {
                             Column {
                                 HorizontalDivider(color = InputBorder)
                                 
-                                SettingsDropdownItem(
-                                    icon = Icons.Outlined.Palette,
-                                    title = "Theme",
-                                    value = userSettings.theme.replaceFirstChar { it.uppercase() },
-                                    options = listOf("System", "Light", "Dark"),
-                                    onSelect = { onThemeChange(it.lowercase()) }
+                                SettingsClickableItem(
+                                    icon = Icons.Outlined.EditNote,
+                                    title = "Custom Instructions",
+                                    subtitle = if (userSettings.customInstructions.isNotBlank()) 
+                                        "Personalized responses enabled" 
+                                    else 
+                                        "Tell AI how to respond to you",
+                                    onClick = { showCustomInstructionsDialog = true }
                                 )
                                 
-                                SettingsDropdownItem(
-                                    icon = Icons.Outlined.Language,
-                                    title = "Language",
-                                    value = userSettings.language,
-                                    options = listOf("English", "Urdu", "Roman Urdu", "Hindi"),
-                                    onSelect = onLanguageChange
-                                )
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.Vibration,
-                                    title = "Haptic Feedback",
-                                    subtitle = "Vibrate on interactions",
-                                    checked = userSettings.hapticFeedback,
-                                    onCheckedChange = onHapticFeedbackChange
-                                )
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.Notifications,
-                                    title = "Notifications",
-                                    subtitle = "Receive push notifications",
-                                    checked = userSettings.notificationsEnabled,
-                                    onCheckedChange = onNotificationsChange
-                                )
+                                // Info text
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Info,
+                                        contentDescription = null,
+                                        tint = BlueColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Custom instructions are applied to all new conversations (not project chats). Example: \"Always respond in bullet points\" or \"I'm a software developer, prefer technical responses\"",
+                                        fontSize = 12.sp,
+                                        color = GrayText,
+                                        lineHeight = 16.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
             
-            // Chat Settings
+            // Data Management
             item {
                 SettingsCard {
                     Column {
                         SettingsSectionHeader(
-                            icon = Icons.Outlined.Chat,
-                            title = "Chat",
-                            isExpanded = expandedSection == "chat",
-                            onClick = { expandedSection = if (expandedSection == "chat") null else "chat" }
+                            icon = Icons.Outlined.Storage,
+                            title = "Data Management",
+                            isExpanded = expandedSection == "data",
+                            onClick = { expandedSection = if (expandedSection == "data") null else "data" }
                         )
                         
                         AnimatedVisibility(
-                            visible = expandedSection == "chat",
+                            visible = expandedSection == "data",
                             enter = expandVertically(),
                             exit = shrinkVertically()
                         ) {
                             Column {
                                 HorizontalDivider(color = InputBorder)
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.Stream,
-                                    title = "Streaming Responses",
-                                    subtitle = "Show responses as they're generated",
-                                    checked = userSettings.streamingEnabled,
-                                    onCheckedChange = onStreamingEnabledChange
-                                )
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.History,
-                                    title = "Save Chat History",
-                                    subtitle = "Keep your conversations",
-                                    checked = userSettings.saveHistory,
-                                    onCheckedChange = onSaveHistoryChange
-                                )
                                 
                                 SettingsClickableItem(
                                     icon = Icons.Outlined.DeleteSweep,
@@ -371,46 +349,6 @@ fun SettingsScreen(
                                     subtitle = "Delete all conversations",
                                     onClick = { showClearHistoryDialog = true },
                                     textColor = OrangeColor
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Voice Settings
-            item {
-                SettingsCard {
-                    Column {
-                        SettingsSectionHeader(
-                            icon = Icons.Outlined.RecordVoiceOver,
-                            title = "Voice",
-                            isExpanded = expandedSection == "voice",
-                            onClick = { expandedSection = if (expandedSection == "voice") null else "voice" }
-                        )
-                        
-                        AnimatedVisibility(
-                            visible = expandedSection == "voice",
-                            enter = expandVertically(),
-                            exit = shrinkVertically()
-                        ) {
-                            Column {
-                                HorizontalDivider(color = InputBorder)
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.Mic,
-                                    title = "Voice Input",
-                                    subtitle = "Enable voice commands",
-                                    checked = userSettings.voiceEnabled,
-                                    onCheckedChange = onVoiceEnabledChange
-                                )
-                                
-                                SettingsSwitchItem(
-                                    icon = Icons.Outlined.VolumeUp,
-                                    title = "Auto-Play Responses",
-                                    subtitle = "Read AI responses aloud",
-                                    checked = userSettings.autoPlayVoice,
-                                    onCheckedChange = onAutoPlayVoiceChange
                                 )
                             }
                         }
@@ -595,13 +533,6 @@ private fun ProfileSection(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (memberSince.isNotEmpty()) {
-                    Text(
-                        text = "Member since $memberSince",
-                        fontSize = 12.sp,
-                        color = GrayText.copy(alpha = 0.7f)
-                    )
-                }
             }
         }
         
@@ -726,55 +657,6 @@ private fun SettingsSectionHeader(
 }
 
 @Composable
-private fun SettingsSwitchItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String? = null,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = GrayText,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                color = DarkText
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    fontSize = 12.sp,
-                    color = GrayText
-                )
-            }
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = GreenAccent,
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = InputBorder
-            )
-        )
-    }
-}
-
-@Composable
 private fun SettingsClickableItem(
     icon: ImageVector,
     title: String,
@@ -819,70 +701,124 @@ private fun SettingsClickableItem(
     }
 }
 
+/**
+ * Custom Instructions Dialog - Like ChatGPT's personalization feature
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsDropdownItem(
-    icon: ImageVector,
-    title: String,
-    value: String,
-    options: List<String>,
-    onSelect: (String) -> Unit
+private fun CustomInstructionsDialog(
+    currentInstructions: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var instructions by remember { mutableStateOf(currentInstructions) }
     
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = true }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = GrayText,
-            modifier = Modifier.size(22.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = title,
-            fontSize = 15.sp,
-            color = DarkText,
-            modifier = Modifier.weight(1f)
-        )
-        
-        Box {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.8f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteBackground)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
             ) {
-                Text(
-                    text = value,
-                    fontSize = 14.sp,
-                    color = GrayText
-                )
-                Icon(
-                    Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = GrayText,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            onSelect(option)
-                            expanded = false
-                        },
-                        trailingIcon = if (option == value) {
-                            { Icon(Icons.Default.Check, null, tint = GreenAccent) }
-                        } else null
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Custom Instructions",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
                     )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, "Close", tint = GrayText)
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "What would you like BaatCheet to know about you to provide better responses?",
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    lineHeight = 20.sp
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Instructions TextField
+                OutlinedTextField(
+                    value = instructions,
+                    onValueChange = { instructions = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    placeholder = { 
+                        Text(
+                            "Example instructions:\n\n" +
+                            "• I'm a software developer working with Python and React\n" +
+                            "• Always respond in bullet points\n" +
+                            "• Keep explanations concise and technical\n" +
+                            "• Prefer code examples over theoretical explanations\n" +
+                            "• I prefer Roman Urdu for casual conversations",
+                            color = GrayText.copy(alpha = 0.6f),
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Character count
+                Text(
+                    text = "${instructions.length}/1500 characters",
+                    fontSize = 12.sp,
+                    color = if (instructions.length > 1500) RedColor else GrayText,
+                    modifier = Modifier.align(Alignment.End)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (instructions.isNotBlank()) {
+                        OutlinedButton(
+                            onClick = { instructions = "" },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, RedColor.copy(alpha = 0.5f))
+                        ) {
+                            Text("Clear", color = RedColor)
+                        }
+                    }
+                    
+                    Button(
+                        onClick = { onSave(instructions.take(1500)) },
+                        modifier = Modifier.weight(if (instructions.isNotBlank()) 1f else 2f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenAccent)
+                    ) {
+                        Text("Save Instructions")
+                    }
                 }
             }
         }

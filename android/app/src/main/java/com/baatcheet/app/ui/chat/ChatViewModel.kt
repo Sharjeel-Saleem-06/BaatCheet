@@ -2111,6 +2111,24 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Save custom instructions for personalized AI responses
+     */
+    fun saveCustomInstructions(instructions: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.saveCustomInstructions(instructions)) {
+                is ApiResult.Success -> {
+                    // Success - instructions saved
+                    android.util.Log.d("ChatViewModel", "Custom instructions saved")
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
      * Clear all conversations (for Settings)
      */
     fun clearAllConversations() {

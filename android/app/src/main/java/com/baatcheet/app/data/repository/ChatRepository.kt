@@ -362,6 +362,24 @@ class ChatRepository @Inject constructor(
         }
     }
     
+    /**
+     * Save custom instructions for personalized AI responses
+     */
+    suspend fun saveCustomInstructions(instructions: String): ApiResult<Boolean> {
+        return try {
+            val body = mapOf("customInstructions" to instructions)
+            val response = api.updateProfileSettings(body)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                ApiResult.Error("Failed to save custom instructions", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
     // ============================================
     // Project Operations
     // ============================================

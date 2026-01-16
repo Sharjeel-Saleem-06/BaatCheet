@@ -646,6 +646,9 @@ model UserProfile {
   primaryUseCase    String?  @map("primary_use_case")  // "coding", "learning", "business", "creative"
   typicalQuestions  Json     @default("[]") @map("typical_questions")
   
+  // Custom Instructions (like ChatGPT) - applies to all non-project chats
+  customInstructions String? @db.Text @map("custom_instructions")
+  
   // Metadata
   factCount      Int      @default(0) @map("fact_count")
   lastUpdated    DateTime @updatedAt @map("last_updated")

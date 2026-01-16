@@ -188,20 +188,13 @@ fun BaatCheetNavHost() {
                     }
                 },
                 onDeleteAccount = { /* TODO: Implement delete account */ },
-                onThemeChange = { /* TODO: Implement theme change */ },
-                onLanguageChange = { /* TODO: Implement language change */ },
-                onVoiceEnabledChange = { /* TODO: Implement voice toggle */ },
-                onAutoPlayVoiceChange = { /* TODO: Implement auto-play toggle */ },
-                onStreamingEnabledChange = { /* TODO: Implement streaming toggle */ },
-                onHapticFeedbackChange = { /* TODO: Implement haptic toggle */ },
-                onNotificationsChange = { /* TODO: Implement notifications toggle */ },
-                onSaveHistoryChange = { /* TODO: Implement save history toggle */ },
                 onClearHistory = { /* TODO: Implement clear history */ },
                 onPrivacyPolicy = { /* TODO: Open privacy policy */ },
                 onTermsOfService = { /* TODO: Open terms of service */ },
                 onContactSupport = { /* TODO: Open contact support */ },
                 onUpgrade = { /* TODO: Implement upgrade */ },
-                onChangePassword = { _, _ -> /* TODO: Implement change password */ }
+                onChangePassword = { _, _ -> /* TODO: Implement change password */ },
+                onSaveCustomInstructions = { /* TODO: Save custom instructions */ }
             )
         }
         

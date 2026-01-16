@@ -324,10 +324,11 @@ fun ChatScreen(
                             displayName = state.userProfile?.displayName ?: "",
                             email = state.userProfile?.email ?: "",
                             tier = "free",
+                            customInstructions = "", // TODO: Get from user profile
                             totalMessages = state.analyticsDashboard?.totalMessages ?: 0,
                             totalConversations = state.conversations.size,
-                            imageGenerationsToday = 0,
-                            imageGenerationsLimit = 2
+                            imageGenerationsToday = state.usageInfo.imagesUsed,
+                            imageGenerationsLimit = state.usageInfo.imagesLimit
                         ),
                         onBack = { showSettingsScreen = false },
                         onLogout = {
@@ -335,20 +336,16 @@ fun ChatScreen(
                             onLogout()
                         },
                         onDeleteAccount = { /* TODO: Implement */ },
-                        onThemeChange = { /* TODO: Implement */ },
-                        onLanguageChange = { /* TODO: Implement */ },
-                        onVoiceEnabledChange = { /* TODO: Implement */ },
-                        onAutoPlayVoiceChange = { /* TODO: Implement */ },
-                        onStreamingEnabledChange = { /* TODO: Implement */ },
-                        onHapticFeedbackChange = { /* TODO: Implement */ },
-                        onNotificationsChange = { /* TODO: Implement */ },
-                        onSaveHistoryChange = { /* TODO: Implement */ },
                         onClearHistory = { viewModel.clearAllConversations() },
                         onPrivacyPolicy = { /* TODO: Open URL */ },
                         onTermsOfService = { /* TODO: Open URL */ },
                         onContactSupport = { /* TODO: Open email */ },
                         onUpgrade = { /* TODO: Implement */ },
-                        onChangePassword = { _, _ -> /* TODO: Implement */ }
+                        onChangePassword = { _, _ -> /* TODO: Implement change password */ },
+                        onSaveCustomInstructions = { instructions ->
+                            // TODO: Save custom instructions to backend
+                            viewModel.saveCustomInstructions(instructions)
+                        }
                     )
                 }
                 
