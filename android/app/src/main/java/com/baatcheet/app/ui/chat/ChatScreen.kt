@@ -343,14 +343,12 @@ fun ChatScreen(
                         onHapticFeedbackChange = { /* TODO: Implement */ },
                         onNotificationsChange = { /* TODO: Implement */ },
                         onSaveHistoryChange = { /* TODO: Implement */ },
-                        onShareAnalyticsChange = { /* TODO: Implement */ },
                         onClearHistory = { viewModel.clearAllConversations() },
-                        onExportData = { /* TODO: Implement */ },
                         onPrivacyPolicy = { /* TODO: Open URL */ },
                         onTermsOfService = { /* TODO: Open URL */ },
-                        onHelpCenter = { /* TODO: Open URL */ },
                         onContactSupport = { /* TODO: Open email */ },
-                        onUpgrade = { /* TODO: Implement */ }
+                        onUpgrade = { /* TODO: Implement */ },
+                        onChangePassword = { _, _ -> /* TODO: Implement */ }
                     )
                 }
                 

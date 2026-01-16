@@ -634,56 +634,6 @@ router.post('/signin', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * POST /api/v1/mobile/auth/forgot-password
- * Request password reset
- */
-router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email } = req.body;
-
-    if (!email || !isValidEmail(email)) {
-      res.status(400).json({
-        success: false,
-        error: 'Valid email is required',
-      });
-      return;
-    }
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-
-    // Always return success for security (don't reveal if email exists)
-    if (!user) {
-      res.json({
-        success: true,
-        data: {
-          message: 'If an account exists with this email, a password reset link will be sent.',
-        },
-      });
-      return;
-    }
-
-    // In production, use Clerk's password reset or a proper email service
-    logger.info(`Password reset requested for: ${email}`);
-
-    res.json({
-      success: true,
-      data: {
-        message: 'If an account exists with this email, a password reset link will be sent.',
-      },
-    });
-  } catch (error) {
-    logger.error('Mobile forgot-password error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to process request',
-    });
-  }
-});
-
-/**
  * GET /api/v1/mobile/auth/me
  * Get current user info (requires JWT)
  */

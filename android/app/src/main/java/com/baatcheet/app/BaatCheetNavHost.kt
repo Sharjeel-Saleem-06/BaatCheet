@@ -196,14 +196,12 @@ fun BaatCheetNavHost() {
                 onHapticFeedbackChange = { /* TODO: Implement haptic toggle */ },
                 onNotificationsChange = { /* TODO: Implement notifications toggle */ },
                 onSaveHistoryChange = { /* TODO: Implement save history toggle */ },
-                onShareAnalyticsChange = { /* TODO: Implement analytics toggle */ },
                 onClearHistory = { /* TODO: Implement clear history */ },
-                onExportData = { /* TODO: Implement export data */ },
                 onPrivacyPolicy = { /* TODO: Open privacy policy */ },
                 onTermsOfService = { /* TODO: Open terms of service */ },
-                onHelpCenter = { /* TODO: Open help center */ },
                 onContactSupport = { /* TODO: Open contact support */ },
-                onUpgrade = { /* TODO: Implement upgrade */ }
+                onUpgrade = { /* TODO: Implement upgrade */ },
+                onChangePassword = { _, _ -> /* TODO: Implement change password */ }
             )
         }
         

@@ -395,6 +395,50 @@ class ClerkAuthService @Inject constructor(
         }
     }
 
+    // MARK: - Change Password (for logged in users)
+    suspend fun changePassword(currentPassword: String, newPassword: String): ClerkAuthResult = withContext(Dispatchers.IO) {
+        val token = getAuthToken() ?: return@withContext ClerkAuthResult.Failure(
+            Exception("Not logged in. Please sign in again.")
+        )
+        
+        val url = "${APIConfig.MOBILE_AUTH_URL}/change-password"
+        
+        val body = mapOf(
+            "currentPassword" to currentPassword,
+            "newPassword" to newPassword
+        )
+        val requestBody = gson.toJson(body).toRequestBody("application/json".toMediaType())
+        
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .header("Authorization", "Bearer $token")
+            .header("Content-Type", "application/json")
+            .build()
+        
+        try {
+            val response = okHttpClient.newCall(request).execute()
+            val responseBody = response.body?.string()
+            
+            android.util.Log.d("ClerkAuth", "Change password response: $responseBody")
+            
+            if (responseBody != null) {
+                val authResponse = gson.fromJson(responseBody, AuthResponse::class.java)
+                if (authResponse.success) {
+                    ClerkAuthResult.Success(token = "", userId = "", user = null)
+                } else {
+                    ClerkAuthResult.Failure(Exception(authResponse.error ?: "Failed to change password"))
+                }
+            } else {
+                ClerkAuthResult.Failure(Exception("Failed to change password"))
+            }
+        } catch (e: IOException) {
+            ClerkAuthResult.Failure(Exception("Network error. Please check your connection."))
+        } catch (e: Exception) {
+            ClerkAuthResult.Failure(Exception("Failed to change password: ${e.message}"))
+        }
+    }
+
     // MARK: - Logout
     suspend fun logout(): Boolean = withContext(Dispatchers.IO) {
         val token = getAuthToken()

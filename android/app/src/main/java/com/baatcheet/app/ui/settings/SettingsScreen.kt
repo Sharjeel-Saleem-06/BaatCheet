@@ -80,7 +80,7 @@ fun SettingsScreen(
     onTermsOfService: () -> Unit = {},
     onContactSupport: () -> Unit = {},
     onUpgrade: () -> Unit = {},
-    onChangePassword: () -> Unit = {}
+    onChangePassword: (currentPassword: String, newPassword: String) -> Unit = { _, _ -> }
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
@@ -197,9 +197,9 @@ fun SettingsScreen(
     if (showChangePasswordDialog) {
         ChangePasswordDialog(
             onDismiss = { showChangePasswordDialog = false },
-            onChangePassword = { 
+            onChangePassword = { currentPass, newPass ->
                 showChangePasswordDialog = false
-                onChangePassword()
+                onChangePassword(currentPass, newPass)
             }
         )
     }
@@ -896,7 +896,7 @@ private fun SettingsDropdownItem(
 @Composable
 private fun ChangePasswordDialog(
     onDismiss: () -> Unit,
-    onChangePassword: () -> Unit
+    onChangePassword: (currentPassword: String, newPassword: String) -> Unit
 ) {
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
@@ -1077,7 +1077,7 @@ private fun ChangePasswordDialog(
                     Button(
                         onClick = {
                             if (isValid) {
-                                onChangePassword()
+                                onChangePassword(currentPassword, newPassword)
                             } else {
                                 errorMessage = "Please fill all fields correctly"
                             }
