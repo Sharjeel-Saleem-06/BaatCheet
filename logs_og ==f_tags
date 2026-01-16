@@ -1,37 +1,43 @@
-2026-01-16 09:16:06.447   976-2008  BufferQueueDebug        surfaceflinger                       E  [ActivityRecord{dcf809d u0 com.baatcheet.app/.MainActivity t10376}#10550](this:0xb400007cba8aea80,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'ActivityRecord{dcf809d u0 com.baatcheet.app/.MainActivity t10376}#10550'
-2026-01-16 09:16:06.483   976-2008  BufferQueueDebug        surfaceflinger                       E  [6f2655 Splash Screen com.baatcheet.app#10551](this:0xb400007cba806a50,id:-1,api:0,p:-1,c:-1) id info cannot be read from '6f2655 Splash Screen com.baatcheet.app#10551'
-2026-01-16 09:16:06.491   976-2008  BufferQueueDebug        surfaceflinger                       E  [Splash Screen com.baatcheet.app#10552](this:0xb400007cba8d6860,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Splash Screen com.baatcheet.app#10552'
-2026-01-16 09:16:06.538   976-1048  BufferQueueDebug        surfaceflinger                       E  [1da8374 ActivityRecordInputSink com.baatcheet.app/.MainActivity#10557](this:0xb400007cba8cb220,id:-1,api:0,p:-1,c:-1) id info cannot be read from '1da8374 ActivityRecordInputSink com.baatcheet.app/.MainActivity#10557'
----------------------------- PROCESS STARTED (25239) for package com.baatcheet.app ----------------------------
-2026-01-16 09:16:06.767 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.graphics.TranGraphicImpl@e7c6aa5 from com.transsion.hubcore.graphics.ITranGraphic
-2026-01-16 09:16:06.768 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.typeface.v1.TypefaceLice@ff6acf3 from android.graphics.IGraphicLice
-2026-01-16 09:16:06.768 25239-25239 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.graphics.GraphicLice@415de7a from android.graphics.IGraphicLice
-2026-01-16 09:16:07.290 25239-25239 nativeloader            com.baatcheet.app                    D  Configuring clns-4 for other apk /data/app/~~YEXZpesI8KyHGk6y681rGA==/com.baatcheet.app-Gho2w4UXWcDjR1YgbfRE_A==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~YEXZpesI8KyHGk6y681rGA==/com.baatcheet.app-Gho2w4UXWcDjR1YgbfRE_A==/lib/arm64, permitted_path=/data:/mnt/expand:/data/user/0/com.baatcheet.app
-2026-01-16 09:16:07.298 25239-25239 nativeloader            com.baatcheet.app                    D  Load libframework-connectivity-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity.jar: ok
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V  Currently set values for:
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_pkgs=[]
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_values=[]
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V  ANGLE GameManagerService for com.baatcheet.app: false
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V  com.baatcheet.app is not listed in per-application setting
-2026-01-16 09:16:07.306 25239-25239 GraphicsEnvironment     com.baatcheet.app                    V  Neither updatable production driver nor prerelease driver is supported.
-2026-01-16 09:16:07.310 25239-25239 LoadedApk               com.baatcheet.app                    I  No resource references to update in package com.transsion.theme.icon
-2026-01-16 09:16:07.315 25239-25239 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 183155436; UID 10639; state: ENABLED
-2026-01-16 09:16:07.319 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  using android.app.IActivityThreadLice$DefaultImpl@a15e3ae instead of com.transsion.activityembedding.ActivityEmbeddingLiceFactory  from android.app.IActivityThreadLice
-2026-01-16 09:16:07.340 25239-25239 MbrainDebugManagerImpl  com.baatcheet.app                    D  getService failed
-2026-01-16 09:16:07.350 25239-25239 M-ProMotion             com.baatcheet.app                    I  M-ProMotion is disabled
-2026-01-16 09:16:07.352 25239-25239 TranVersion             com.baatcheet.app                    I  TranVersion static initializer: default = 34.3.1.1
+2026-01-16 09:21:53.674   976-1049  BufferQueueDebug        surfaceflinger                       E  [ActivityRecord{fda9857 u0 com.baatcheet.app/.MainActivity t10384}#10792](this:0xb400007cba883f10,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'ActivityRecord{fda9857 u0 com.baatcheet.app/.MainActivity t10384}#10792'
+2026-01-16 09:21:53.695   976-1049  BufferQueueDebug        surfaceflinger                       E  [fcc4712 Splash Screen com.baatcheet.app#10793](this:0xb400007cba85c130,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'fcc4712 Splash Screen com.baatcheet.app#10793'
+2026-01-16 09:21:53.718   976-2963  BufferQueueDebug        surfaceflinger                       E  [Splash Screen com.baatcheet.app#10794](this:0xb400007cba8315c0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Splash Screen com.baatcheet.app#10794'
+2026-01-16 09:21:53.798   976-2963  BufferQueueDebug        surfaceflinger                       E  [6c9dd6 ActivityRecordInputSink com.baatcheet.app/.MainActivity#10798](this:0xb400007cba839e70,id:-1,api:0,p:-1,c:-1) id info cannot be read from '6c9dd6 ActivityRecordInputSink com.baatcheet.app/.MainActivity#10798'
+---------------------------- PROCESS STARTED (30235) for package com.baatcheet.app ----------------------------
+2026-01-16 09:21:54.039 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.graphics.TranGraphicImpl@e7c6aa5 from com.transsion.hubcore.graphics.ITranGraphic
+2026-01-16 09:21:54.040 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.typeface.v1.TypefaceLice@ff6acf3 from android.graphics.IGraphicLice
+2026-01-16 09:21:54.041 30235-30235 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.graphics.GraphicLice@415de7a from android.graphics.IGraphicLice
+2026-01-16 09:21:54.612 30235-30235 nativeloader            com.baatcheet.app                    D  Configuring clns-4 for other apk /data/app/~~YEXZpesI8KyHGk6y681rGA==/com.baatcheet.app-Gho2w4UXWcDjR1YgbfRE_A==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~YEXZpesI8KyHGk6y681rGA==/com.baatcheet.app-Gho2w4UXWcDjR1YgbfRE_A==/lib/arm64, permitted_path=/data:/mnt/expand:/data/user/0/com.baatcheet.app
+2026-01-16 09:21:54.623 30235-30235 nativeloader            com.baatcheet.app                    D  Load libframework-connectivity-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity.jar: ok
+2026-01-16 09:21:54.626 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V  Currently set values for:
+2026-01-16 09:21:54.626 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_pkgs=[]
+2026-01-16 09:21:54.626 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V    angle_gl_driver_selection_values=[]
+2026-01-16 09:21:54.626 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V  ANGLE GameManagerService for com.baatcheet.app: false
+2026-01-16 09:21:54.626 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V  com.baatcheet.app is not listed in per-application setting
+2026-01-16 09:21:54.627 30235-30235 GraphicsEnvironment     com.baatcheet.app                    V  Neither updatable production driver nor prerelease driver is supported.
+2026-01-16 09:21:54.636 30235-30235 LoadedApk               com.baatcheet.app                    I  No resource references to update in package com.transsion.theme.icon
+2026-01-16 09:21:54.654 30235-30235 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 183155436; UID 10639; state: ENABLED
+2026-01-16 09:21:54.698 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  using android.app.IActivityThreadLice$DefaultImpl@a15e3ae instead of com.transsion.activityembedding.ActivityEmbeddingLiceFactory  from android.app.IActivityThreadLice
+2026-01-16 09:21:54.725 30235-30235 MbrainDebugManagerImpl  com.baatcheet.app                    D  getService failed
+2026-01-16 09:21:54.741 30235-30235 M-ProMotion             com.baatcheet.app                    I  M-ProMotion is disabled
+2026-01-16 09:21:54.744 30235-30235 TranVersion             com.baatcheet.app                    I  TranVersion static initializer: default = 34.3.1.1
                                                                                                      debug = false, debug_version = 34.3.1.1
-2026-01-16 09:16:07.361 25239-27373 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb4000078902af0e0
-2026-01-16 09:16:07.385 25239-25239 ActivityThread          com.baatcheet.app                    D  ++ activityComponent:com.baatcheet.app/com.baatcheet.app.MainActivity counts:1 ALEAK_CLEAR_SUPPORT:true
-2026-01-16 09:16:07.392 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranActivityImpl@19e4a30 from com.transsion.hubcore.app.ITranActivity
-2026-01-16 09:16:07.392 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanActivityComponentImpl@c2066a9 from com.transsion.hubcore.magellan.ITranMagellanActivityComponent
-2026-01-16 09:16:07.393 25239-25239 System                  com.baatcheet.app                    W  ClassLoader referenced unknown path: /system_ext/framework/multidisplay.jar
-2026-01-16 09:16:07.394 25239-27373 libMEOW                 com.baatcheet.app                    D  meow reload base cfg path: na
-2026-01-16 09:16:07.394 25239-27373 libMEOW                 com.baatcheet.app                    D  meow reload overlay cfg path: na
-2026-01-16 09:16:07.394 25239-27373 QT                      com.baatcheet.app                    W  qt_process_init() called
-2026-01-16 09:16:07.394 25239-27373 QT                      com.baatcheet.app                    E  [QT]file does not exist
-2026-01-16 09:16:07.394 25239-27373 QT                      com.baatcheet.app                    W  Support!!
-2026-01-16 09:16:07.395 25239-25239 TranClassInfo           com.baatcheet.app                    W  instance failed. com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent (Explain with AI)
+2026-01-16 09:21:54.762 30235-31266 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789025f090
+2026-01-16 09:21:54.762 30235-31266 libMEOW                 com.baatcheet.app                    D  meow reload base cfg path: na
+2026-01-16 09:21:54.763 30235-31266 libMEOW                 com.baatcheet.app                    D  meow reload overlay cfg path: na
+2026-01-16 09:21:54.763 30235-31266 QT                      com.baatcheet.app                    W  qt_process_init() called
+2026-01-16 09:21:54.763 30235-31266 QT                      com.baatcheet.app                    E  [QT]file does not exist
+2026-01-16 09:21:54.763 30235-31266 QT                      com.baatcheet.app                    W  Support!!
+2026-01-16 09:21:54.766 30235-31266 libMEOW_gift            com.baatcheet.app                    I  open /data/performance/gift/arc.ini
+2026-01-16 09:21:54.766 30235-31266 QT                      com.baatcheet.app                    E  [QT]file does not exist
+2026-01-16 09:21:54.766 30235-31266 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
+2026-01-16 09:21:54.766 30235-31266 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
+2026-01-16 09:21:54.766 30235-31266 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789027f0b0
+2026-01-16 09:21:54.766 30235-31266 libMEOW                 com.baatcheet.app                    D  meow delete tls: 0xb40000789025f090
+2026-01-16 09:21:54.811 30235-30235 ActivityThread          com.baatcheet.app                    D  ++ activityComponent:com.baatcheet.app/com.baatcheet.app.MainActivity counts:1 ALEAK_CLEAR_SUPPORT:true
+2026-01-16 09:21:54.824 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranActivityImpl@19e4a30 from com.transsion.hubcore.app.ITranActivity
+2026-01-16 09:21:54.824 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanActivityComponentImpl@c2066a9 from com.transsion.hubcore.magellan.ITranMagellanActivityComponent
+2026-01-16 09:21:54.825 30235-30235 System                  com.baatcheet.app                    W  ClassLoader referenced unknown path: /system_ext/framework/multidisplay.jar
+2026-01-16 09:21:54.827 30235-30235 TranClassInfo           com.baatcheet.app                    W  instance failed. com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent (Explain with AI)
                                                                                                     java.lang.ClassNotFoundException: com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl
                                                                                                     	at java.lang.Class.classForName(Native Method)
                                                                                                     	at java.lang.Class.forName(Class.java:591)
@@ -75,217 +81,217 @@
                                                                                                     	at java.lang.reflect.Method.invoke(Native Method) 
                                                                                                     	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:602) 
                                                                                                     	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1064) 
-2026-01-16 09:16:07.395 25239-25239 TranClassInfo           com.baatcheet.app                    D  using com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent$1@5d5d95c instead of [com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl] from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent
-2026-01-16 09:16:07.400 25239-27373 libMEOW_gift            com.baatcheet.app                    I  open /data/performance/gift/arc.ini
-2026-01-16 09:16:07.400 25239-27373 QT                      com.baatcheet.app                    E  [QT]file does not exist
-2026-01-16 09:16:07.401 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranViewImpl@18b953a from com.transsion.hubcore.view.ITranView
-2026-01-16 09:16:07.401 25239-27373 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-16 09:16:07.401 25239-27373 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-16 09:16:07.402 25239-27373 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789027f0b0
-2026-01-16 09:16:07.402 25239-27373 libMEOW                 com.baatcheet.app                    D  meow delete tls: 0xb4000078902af0e0
-2026-01-16 09:16:07.405 25239-25239 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from com.transsion.dragdrop.DragDropLiceFactory
-2026-01-16 09:16:07.405 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from android.view.IViewLice
-2026-01-16 09:16:07.405 25239-25239 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.view.ViewLice@952f48 from android.view.IViewLice
-2026-01-16 09:16:07.405 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanViewComponentImpl@d9d41e1 from com.transsion.hubcore.magellan.ITranMagellanViewComponent
-2026-01-16 09:16:07.409 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.TranInternalViewImpl@acb1b1d from com.transsion.hubcore.internal.ITranInternalView
-2026-01-16 09:16:07.410 25239-25239 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.transsion.whitenavigation.WhiteNavigationLiceFactory
-2026-01-16 09:16:07.410 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.android.internal.IInternalViewLice
-2026-01-16 09:16:07.410 25239-25239 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.transsion.screenshothelper.ScreenShotHelperImplLiceFactory
-2026-01-16 09:16:07.410 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.android.internal.IInternalViewLice
-2026-01-16 09:16:07.410 25239-25239 os.SingleLiceFactory    com.baatcheet.app                    D  using com.android.internal.IInternalViewLice$DefaultImpl@db09f60 instead of com.transsion.flamboyant.FlamboyantLiceFactory  from com.android.internal.IInternalViewLice
-2026-01-16 09:16:07.410 25239-25239 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.internal.InternalViewLice@9034c19 from com.android.internal.IInternalViewLice
-2026-01-16 09:16:07.445 25239-27365 ActivityThreadLice      com.baatcheet.app                    D  received OSMessage 110001
-2026-01-16 09:16:07.445 25239-27365 ActivityThreadLice      com.baatcheet.app                    D  send OSMessage 110001 to [-1]
-2026-01-16 09:16:07.448 25239-27365 OSServiceManager        com.baatcheet.app                    D  update local os service os.activity from null to android.os.BinderProxy@d6501b6
-2026-01-16 09:16:07.458 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowManagerGlobalImpl@e516daf from com.transsion.hubcore.view.ITranWindowManagerGlobal
-2026-01-16 09:16:07.460 25239-27370 nativeloader            com.baatcheet.app                    D  Load libpowerhalwrap_jni.so using system ns (caller=/system_ext/framework/mediatek-framework.jar): ok
-2026-01-16 09:16:07.461 25239-27370 PowerHalWrapper         com.baatcheet.app                    I  PowerHalWrapper.getInstance 
-2026-01-16 09:16:07.463 25239-25239 SurfaceFactory          com.baatcheet.app                    I  [static] sSurfaceFactory = com.transsion.rt.SurfaceFactoryImpl@c7135bc
-2026-01-16 09:16:07.465 25239-25239 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 237531167; UID 10639; state: DISABLED
-2026-01-16 09:16:07.475 25239-25239 VRI[MainActivity]       com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-16 09:16:07.475 25239-25239 VRInsetsControllerHost  com.baatcheet.app                    D  setSystemBarsAppearance appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1024
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:2048
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:4096
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:8
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:16
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:32
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:64
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:128
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:256
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:8192
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:3
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:5
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:6
-2026-01-16 09:16:07.476 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:7
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:8
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:9
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:10
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:11
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:12
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:13
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1001
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:2
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:4
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:0
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:1
-2026-01-16 09:16:07.477 25239-25239 TranWindow...rationImpl com.baatcheet.app                    I  field:com.transsion.multiwindow.showcaption
-2026-01-16 09:16:07.477 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranWindowConfigurationImpl@df9f1a8 from com.transsion.hubcore.server.app.ITranWindowConfiguration
-2026-01-16 09:16:07.477 25239-25239 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: false
-2026-01-16 09:16:07.477 25239-25239 ViewRootImpl            com.baatcheet.app                    D  setView appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-16 09:16:07.480   976-3002  BufferQueueDebug        surfaceflinger                       E  [b70a70 com.baatcheet.app/com.baatcheet.app.MainActivity#10558](this:0xb400007cba904160,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'b70a70 com.baatcheet.app/com.baatcheet.app.MainActivity#10558'
-2026-01-16 09:16:07.484 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowLayoutImpl@afd44c1 from com.transsion.hubcore.view.ITranWindowLayout
-2026-01-16 09:16:07.484 25239-25239 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789029f0d0
-2026-01-16 09:16:07.485 25239-25239 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-16 09:16:07.485 25239-25239 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-16 09:16:07.485 25239-25239 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789028f0c0
-2026-01-16 09:16:07.486 25239-25239 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb4000078f0227e70
-2026-01-16 09:16:07.486 25239-25239 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-16 09:16:07.486 25239-25239 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-16 09:16:07.762 25239-25239 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
+2026-01-16 09:21:54.827 30235-30235 TranClassInfo           com.baatcheet.app                    D  using com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent$1@5d5d95c instead of [com.transsion.display.multidisplay.core.MultiDisplayCoreComponentImpl] from com.transsion.hubcore.multidisplay.ITranMultiDisplayCoreComponent
+2026-01-16 09:21:54.834 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranViewImpl@18b953a from com.transsion.hubcore.view.ITranView
+2026-01-16 09:21:54.848 30235-30235 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from com.transsion.dragdrop.DragDropLiceFactory
+2026-01-16 09:21:54.848 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.dragdrop.v1.DragDropLice@4c265eb from android.view.IViewLice
+2026-01-16 09:21:54.849 30235-30235 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.view.ViewLice@952f48 from android.view.IViewLice
+2026-01-16 09:21:54.849 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.magellan.implement.TranMagellanViewComponentImpl@d9d41e1 from com.transsion.hubcore.magellan.ITranMagellanViewComponent
+2026-01-16 09:21:54.865 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.TranInternalViewImpl@acb1b1d from com.transsion.hubcore.internal.ITranInternalView
+2026-01-16 09:21:54.866 30235-30235 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.transsion.whitenavigation.WhiteNavigationLiceFactory
+2026-01-16 09:21:54.866 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.whitenavigation.v1.WhiteNavigationLice@2b9192 from com.android.internal.IInternalViewLice
+2026-01-16 09:21:54.867 30235-30235 os.SingleLice           com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.transsion.screenshothelper.ScreenShotHelperImplLiceFactory
+2026-01-16 09:21:54.867 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  instance successfully. com.transsion.screenshothelper.v1.ScreenShotHelperImplLice@1d3a763 from com.android.internal.IInternalViewLice
+2026-01-16 09:21:54.867 30235-30235 os.SingleLiceFactory    com.baatcheet.app                    D  using com.android.internal.IInternalViewLice$DefaultImpl@db09f60 instead of com.transsion.flamboyant.FlamboyantLiceFactory  from com.android.internal.IInternalViewLice
+2026-01-16 09:21:54.867 30235-30235 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.internal.InternalViewLice@9034c19 from com.android.internal.IInternalViewLice
+2026-01-16 09:21:54.911 30235-31251 ActivityThreadLice      com.baatcheet.app                    D  received OSMessage 110001
+2026-01-16 09:21:54.914 30235-31251 ActivityThreadLice      com.baatcheet.app                    D  send OSMessage 110001 to [-1]
+2026-01-16 09:21:54.924 30235-31251 OSServiceManager        com.baatcheet.app                    D  update local os service os.activity from null to android.os.BinderProxy@75aa090
+2026-01-16 09:21:54.934 30235-31262 nativeloader            com.baatcheet.app                    D  Load libpowerhalwrap_jni.so using system ns (caller=/system_ext/framework/mediatek-framework.jar): ok
+2026-01-16 09:21:54.935 30235-31262 PowerHalWrapper         com.baatcheet.app                    I  PowerHalWrapper.getInstance 
+2026-01-16 09:21:54.942 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowManagerGlobalImpl@e516daf from com.transsion.hubcore.view.ITranWindowManagerGlobal
+2026-01-16 09:21:54.953 30235-30235 SurfaceFactory          com.baatcheet.app                    I  [static] sSurfaceFactory = com.transsion.rt.SurfaceFactoryImpl@c7135bc
+2026-01-16 09:21:54.957 30235-30235 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 237531167; UID 10639; state: DISABLED
+2026-01-16 09:21:54.978 30235-30235 VRI[MainActivity]       com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
+2026-01-16 09:21:54.979 30235-30235 VRInsetsControllerHost  com.baatcheet.app                    D  setSystemBarsAppearance appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1024
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:2048
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:0
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:4096
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:2
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:4
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:8
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:16
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:32
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:64
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:128
+2026-01-16 09:21:54.981 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:256
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:-1
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:8192
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:0
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:2
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:3
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:4
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:5
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:6
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:7
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:8
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:9
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:10
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:11
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:12
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:13
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1001
+2026-01-16 09:21:54.982 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:0
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:2
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:4
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:0
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:0
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:1
+2026-01-16 09:21:54.983 30235-30235 TranWindow...rationImpl com.baatcheet.app                    I  field:com.transsion.multiwindow.showcaption
+2026-01-16 09:21:54.983 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.app.TranWindowConfigurationImpl@df9f1a8 from com.transsion.hubcore.server.app.ITranWindowConfiguration
+2026-01-16 09:21:54.983 30235-30235 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: false
+2026-01-16 09:21:54.984 30235-30235 ViewRootImpl            com.baatcheet.app                    D  setView appearance:24 com.baatcheet.app/com.baatcheet.app.MainActivity
+2026-01-16 09:21:54.988   976-1049  BufferQueueDebug        surfaceflinger                       E  [c0c542f com.baatcheet.app/com.baatcheet.app.MainActivity#10799](this:0xb400007cba88f550,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'c0c542f com.baatcheet.app/com.baatcheet.app.MainActivity#10799'
+2026-01-16 09:21:54.991 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranWindowLayoutImpl@afd44c1 from com.transsion.hubcore.view.ITranWindowLayout
+2026-01-16 09:21:54.992 30235-30235 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789026f0a0
+2026-01-16 09:21:54.992 30235-30235 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
+2026-01-16 09:21:54.992 30235-30235 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
+2026-01-16 09:21:54.992 30235-30235 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb4000078902af0e0
+2026-01-16 09:21:54.993 30235-30235 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb4000078f0223df0
+2026-01-16 09:21:54.993 30235-30235 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
+2026-01-16 09:21:54.993 30235-30235 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
+2026-01-16 09:21:55.352 30235-30235 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
                                                                                                     Common causes for lock verification issues are non-optimized dex code
                                                                                                     and incorrect proguard optimizations.
-2026-01-16 09:16:07.762 25239-25239 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
-2026-01-16 09:16:07.762 25239-25239 m.baatcheet.app         com.baatcheet.app                    W  Method java.lang.Object androidx.compose.runtime.snapshots.SnapshotStateList.mutate(kotlin.jvm.functions.Function1) failed lock verification and will run slower.
-2026-01-16 09:16:07.762 25239-25239 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
-2026-01-16 09:16:07.762 25239-25239 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
-2026-01-16 09:16:07.831 25239-27358 m.baatcheet.app         com.baatcheet.app                    I  Compiler allocated 6110KB to compile void android.view.ViewRootImpl.performTraversals()
-2026-01-16 09:16:07.837 25239-25239 m.baatcheet.app         com.baatcheet.app                    I  hiddenapi: Accessing hidden method Ljava/lang/invoke/MethodHandles$Lookup;-><init>(Ljava/lang/Class;I)V (runtime_flags=0, domain=core-platform, api=unsupported) from Lretrofit2/Platform; (domain=app, TargetSdkVersion=34) using reflection: allowed
-2026-01-16 09:16:07.885 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0
-2026-01-16 09:16:07.885 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects
-2026-01-16 09:16:07.885 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:07.885 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:07.885 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:07.885 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:07.885 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:07.885 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:07.895 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/modes
-2026-01-16 09:16:07.895 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:07.895 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:07.896 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:07.898 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/usage
-2026-01-16 09:16:07.899 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:07.899 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:07.899 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:07.902 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/files/upload-status
-2026-01-16 09:16:07.903 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:07.903 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:07.903 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:08.083 25239-25239 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 289878283; UID 10639; state: ENABLED
-2026-01-16 09:16:08.501   976-3002  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#10559](this:0xb400007cba856610,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#10559'
-2026-01-16 09:16:08.511 25239-25239 BufferQueueConsumer     com.baatcheet.app                    D  [](id:629700000000,api:0,p:-1,c:25239) connect: controlledByApp=false
-2026-01-16 09:16:08.513 25239-25239 FBI                     com.baatcheet.app                    E  fbcNotifyBufferUX is NULL: undefined symbol: fbcNotifyBufferUX
-2026-01-16 09:16:08.517 25239-25239 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: true
-2026-01-16 09:16:08.519 25239-27371 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb4000078902af0e0
-2026-01-16 09:16:08.519 25239-27371 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
-2026-01-16 09:16:08.519 25239-27371 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
-2026-01-16 09:16:08.520 25239-27371 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789027f0b0
-2026-01-16 09:16:08.546 25239-27371 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-16 09:16:08.612 25239-25239 TextToSpeech            com.baatcheet.app                    I  Sucessfully bound to com.google.android.tts
-2026-01-16 09:16:08.620 25239-25239 Choreographer           com.baatcheet.app                    I  Skipped 64 frames!  The application may be doing too much work on its main thread.
-2026-01-16 09:16:08.621 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.flingmanager.implement.TranFlingManagerImpl@6cd63d from com.transsion.hubcore.flingmanager.ITranFlingManager
-2026-01-16 09:16:08.621 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranChoreographerImpl@7cbfe32 from com.transsion.hubcore.view.ITranChoreographer
-2026-01-16 09:16:08.621 25239-25239 TranChoreographerImpl   com.baatcheet.app                    E  skippedFrames: 64
-2026-01-16 09:16:08.765 25239-27371 MAGT_SYNC_FRAME         com.baatcheet.app                    D  MAGT Sync: MAGT is not supported. Disabling Sync.
-2026-01-16 09:16:08.824 25239-27371 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=20822951788086(auto) mPendingTransactions.size=0 graphicBufferId=108400679583750 transform=0
-2026-01-16 09:16:08.828   976-3002  BufferQueueDebug        surfaceflinger                       E  [Surface(name=b70a70 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0x4f16893 - animation-leash of starting_reveal#10562](this:0xb400007cba8e79c0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=b70a70 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0x4f16893 - animation-leash of starting_reveal#10562'
-2026-01-16 09:16:09.146 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/chat/modes (1250ms)
-2026-01-16 09:16:09.147 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:09 GMT
-2026-01-16 09:16:09.147 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.147 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.147 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.148 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: mNoIiK
-2026-01-16 09:16:09.148 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.148 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.150 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.150 25239-27380 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.152 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects (1266ms)
-2026-01-16 09:16:09.152 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:09 GMT
-2026-01-16 09:16:09.153 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.153 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.153 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.154 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: yhN4FF
-2026-01-16 09:16:09.154 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.154 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.156 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.156 25239-27378 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.161 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/chat/usage (1261ms)
-2026-01-16 09:16:09.161 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:09 GMT
-2026-01-16 09:16:09.162 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.163 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.163 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.164 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: glogSX
-2026-01-16 09:16:09.164 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.164 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.170 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.170 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.175 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/files/upload-status (1271ms)
-2026-01-16 09:16:09.175 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:09 GMT
-2026-01-16 09:16:09.176 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.176 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.176 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.177 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: 6jdc1E
-2026-01-16 09:16:09.177 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.177 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.179 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.180 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.184 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0 (1298ms)
-2026-01-16 09:16:09.184 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:09 GMT
-2026-01-16 09:16:09.184 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.185 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.185 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.185 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: pnyA3X
-2026-01-16 09:16:09.185 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.185 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.200   976-2008  BufferQueueDebug        surfaceflinger                       E  [Surface(name=6f2655 Splash Screen com.baatcheet.app)/@0xd34a730 - animation-leash of window_animation#10564](this:0xb400007cba8fe640,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=6f2655 Splash Screen com.baatcheet.app)/@0xd34a730 - animation-leash of window_animation#10564'
-2026-01-16 09:16:09.273 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects/collaborations
-2026-01-16 09:16:09.273 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:09.273 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:09.273 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:09.277 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects/invitations/pending
-2026-01-16 09:16:09.277 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
-2026-01-16 09:16:09.278 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-16 09:16:09.278 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
-2026-01-16 09:16:09.347 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.348 25239-27377 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.507 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects/collaborations (233ms)
-2026-01-16 09:16:09.507 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:10 GMT
-2026-01-16 09:16:09.507 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.508 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.508 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.508 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: LedMQT
-2026-01-16 09:16:09.508 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.508 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.509 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.509 25239-27397 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:09.716 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects/invitations/pending (438ms)
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:16:10 GMT
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: bBEn4f
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-16 09:16:09.717 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-16 09:16:09.718 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
-2026-01-16 09:16:09.718 25239-27396 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
-2026-01-16 09:16:10.135 25239-27366 TextToSpeech            com.baatcheet.app                    I  Connected to TTS engine
-2026-01-16 09:16:10.202 25239-25239 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.message.bank.v1.MessageBankLice@d63d12b from com.transsion.message.bank.IMessageBankLice
-2026-01-16 09:16:10.210 25239-25239 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.policy.TranDecorViewImpl@d6bf21 from com.transsion.hubcore.internal.policy.ITranDecorView
-2026-01-16 09:16:10.476 25239-27441 TextToSpeech            com.baatcheet.app                    I  Setting up the connection to TTS engine...
-2026-01-16 09:16:10.643 25239-25239 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
+2026-01-16 09:21:55.352 30235-30235 m.baatcheet.app         com.baatcheet.app                    W  Method boolean androidx.compose.runtime.snapshots.SnapshotStateList.conditionalUpdate$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
+2026-01-16 09:21:55.352 30235-30235 m.baatcheet.app         com.baatcheet.app                    W  Method java.lang.Object androidx.compose.runtime.snapshots.SnapshotStateList.mutate(kotlin.jvm.functions.Function1) failed lock verification and will run slower.
+2026-01-16 09:21:55.352 30235-30235 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update(boolean, kotlin.jvm.functions.Function1) failed lock verification and will run slower.
+2026-01-16 09:21:55.352 30235-30235 m.baatcheet.app         com.baatcheet.app                    W  Method void androidx.compose.runtime.snapshots.SnapshotStateList.update$default(androidx.compose.runtime.snapshots.SnapshotStateList, boolean, kotlin.jvm.functions.Function1, int, java.lang.Object) failed lock verification and will run slower.
+2026-01-16 09:21:55.455 30235-30235 m.baatcheet.app         com.baatcheet.app                    I  hiddenapi: Accessing hidden method Ljava/lang/invoke/MethodHandles$Lookup;-><init>(Ljava/lang/Class;I)V (runtime_flags=0, domain=core-platform, api=unsupported) from Lretrofit2/Platform; (domain=app, TargetSdkVersion=34) using reflection: allowed
+2026-01-16 09:21:55.546 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0
+2026-01-16 09:21:55.546 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:55.546 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:55.546 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:55.557 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/modes
+2026-01-16 09:21:55.557 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:55.557 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:55.557 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:55.561 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/chat/usage
+2026-01-16 09:21:55.561 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:55.561 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:55.561 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:55.568 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/files/upload-status
+2026-01-16 09:21:55.568 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:55.568 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:55.568 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:55.585 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects
+2026-01-16 09:21:55.585 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:55.585 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:55.585 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:55.775 30235-30235 Compatibil...geReporter com.baatcheet.app                    D  Compat change id reported: 289878283; UID 10639; state: ENABLED
+2026-01-16 09:21:56.340   976-1048  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#10800](this:0xb400007cba881180,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#10800'
+2026-01-16 09:21:56.354 30235-30235 BufferQueueConsumer     com.baatcheet.app                    D  [](id:761b00000000,api:0,p:-1,c:30235) connect: controlledByApp=false
+2026-01-16 09:21:56.356 30235-30235 FBI                     com.baatcheet.app                    E  fbcNotifyBufferUX is NULL: undefined symbol: fbcNotifyBufferUX
+2026-01-16 09:21:56.358 30235-30235 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: true
+2026-01-16 09:21:56.359 30235-31263 libMEOW                 com.baatcheet.app                    D  meow new tls: 0xb40000789029f0d0
+2026-01-16 09:21:56.360 30235-31263 libMEOW                 com.baatcheet.app                    D  applied 1 plugins for [com.baatcheet.app]:
+2026-01-16 09:21:56.360 30235-31263 libMEOW                 com.baatcheet.app                    D    plugin 1: [libMEOW_gift.so]: 0xb4000077601f2030
+2026-01-16 09:21:56.360 30235-31263 libMEOW                 com.baatcheet.app                    D  rebuild call chain: 0xb40000789028f0c0
+2026-01-16 09:21:56.384 30235-31263 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
+2026-01-16 09:21:56.462 30235-30235 TextToSpeech            com.baatcheet.app                    I  Sucessfully bound to com.google.android.tts
+2026-01-16 09:21:56.473 30235-30235 Choreographer           com.baatcheet.app                    I  Skipped 83 frames!  The application may be doing too much work on its main thread.
+2026-01-16 09:21:56.473 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.spdopts.flingmanager.implement.TranFlingManagerImpl@6cd63d from com.transsion.hubcore.flingmanager.ITranFlingManager
+2026-01-16 09:21:56.473 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.view.TranChoreographerImpl@7cbfe32 from com.transsion.hubcore.view.ITranChoreographer
+2026-01-16 09:21:56.473 30235-30235 TranChoreographerImpl   com.baatcheet.app                    E  skippedFrames: 83
+2026-01-16 09:21:56.517 30235-31244 m.baatcheet.app         com.baatcheet.app                    I  Compiler allocated 6110KB to compile void android.view.ViewRootImpl.performTraversals()
+2026-01-16 09:21:56.686 30235-31263 MAGT_SYNC_FRAME         com.baatcheet.app                    D  MAGT Sync: MAGT is not supported. Disabling Sync.
+2026-01-16 09:21:56.719 30235-31263 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=21170847496646(auto) mPendingTransactions.size=0 graphicBufferId=129858336194566 transform=0
+2026-01-16 09:21:56.724   976-2963  BufferQueueDebug        surfaceflinger                       E  [Surface(name=c0c542f com.baatcheet.app/com.baatcheet.app.MainActivity)/@0x4c1485e - animation-leash of starting_reveal#10803](this:0xb400007cba83f990,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=c0c542f com.baatcheet.app/com.baatcheet.app.MainActivity)/@0x4c1485e - animation-leash of starting_reveal#10803'
+2026-01-16 09:21:57.047 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/conversations?limit=50&offset=0 (1500ms)
+2026-01-16 09:21:57.047 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.047 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.047 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.047 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.048 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: iFeRIK
+2026-01-16 09:21:57.048 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.048 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.049 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.049 30235-31299 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.079 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/files/upload-status (1510ms)
+2026-01-16 09:21:57.080 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.081 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.081 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.082 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.082 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: 0QkzJp
+2026-01-16 09:21:57.084 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.084 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.088 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.088 30235-31303 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.092 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects (1507ms)
+2026-01-16 09:21:57.092 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.093 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.093 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.094 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.094 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: 8ajOXZ
+2026-01-16 09:21:57.094 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.094 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.097 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.097 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/chat/usage (1541ms)
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: t344Dm
+2026-01-16 09:21:57.103 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.104 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.104 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.104 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.109   976-1049  BufferQueueDebug        surfaceflinger                       E  [Surface(name=fcc4712 Splash Screen com.baatcheet.app)/@0xea53645 - animation-leash of window_animation#10805](this:0xb400007cba870020,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=fcc4712 Splash Screen com.baatcheet.app)/@0xea53645 - animation-leash of window_animation#10805'
+2026-01-16 09:21:57.116 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/chat/modes (1558ms)
+2026-01-16 09:21:57.116 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.121 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.121 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.122 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.122 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: o7twZz
+2026-01-16 09:21:57.122 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.123 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.196 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects/collaborations
+2026-01-16 09:21:57.196 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:57.196 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:57.196 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:57.203 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  --> GET https://sharry121-baatcheet.hf.space/api/v1/projects/invitations/pending
+2026-01-16 09:21:57.203 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4NTA4NzcxLCJleHAiOjE3NjkxMTM1NzF9.CS-aG7kWBc2mjBo6mc9wGY-qnWqDrZtDvB5y46pbgUU
+2026-01-16 09:21:57.203 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-16 09:21:57.204 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END GET
+2026-01-16 09:21:57.248 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.248 30235-31301 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects/collaborations (228ms)
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:57 GMT
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: joV8Ss
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.425 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.426 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.426 30235-31302 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:57.605 30235-30235 os.LiceInfo             com.baatcheet.app                    D  instance successfully. com.transsion.message.bank.v1.MessageBankLice@7eea57a from com.transsion.message.bank.IMessageBankLice
+2026-01-16 09:21:57.613 30235-30235 TranClassInfo           com.baatcheet.app                    D  instance successfully. com.transsion.hubcore.internal.policy.TranDecorViewImpl@f7d5988 from com.transsion.hubcore.internal.policy.ITranDecorView
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 503 https://sharry121-baatcheet.hf.space/api/v1/projects/invitations/pending (440ms)
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Fri, 16 Jan 2026 04:21:58 GMT
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: text/html; charset=utf-8
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 49
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: L4122M
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-16 09:21:57.645 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-16 09:21:57.646 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  Your space is in error, check its status on hf.co
+2026-01-16 09:21:57.646 30235-31300 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (49-byte body)
+2026-01-16 09:21:58.064 30235-31354 TextToSpeech            com.baatcheet.app                    I  Connected to TTS engine
+2026-01-16 09:21:58.141 30235-30235 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
                                                                                                     Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-16 09:16:12.735 25239-27466 ProfileInstaller        com.baatcheet.app                    D  Installing profile for com.baatcheet.app
+2026-01-16 09:21:58.412 30235-31365 TextToSpeech            com.baatcheet.app                    I  Setting up the connection to TTS engine...
+2026-01-16 09:22:00.557 30235-31377 ProfileInstaller        com.baatcheet.app                    D  Installing profile for com.baatcheet.app
+2026-01-16 09:22:26.839 30235-31245 m.baatcheet.app         com.baatcheet.app                    W  userfaultfd: MOVE ioctl seems unsupported: Connection timed out
+2026-01-16 09:22:26.861 30235-31247 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~FYWvF2KT74ANIt-aNMtjyw==/com.google.android.tts-3BxQqINF6a7v8sbKiyJBwA==/base.apk' with 1 weak references
+2026-01-16 09:22:26.861 30235-31247 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~FYWvF2KT74ANIt-aNMtjyw==/com.google.android.tts-3BxQqINF6a7v8sbKiyJBwA==/split_config.arm64_v8a.apk' with 1 weak references
+2026-01-16 09:22:26.861 30235-31247 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~FYWvF2KT74ANIt-aNMtjyw==/com.google.android.tts-3BxQqINF6a7v8sbKiyJBwA==/split_config.en.apk' with 1 weak references
+2026-01-16 09:22:26.861 30235-31247 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~FYWvF2KT74ANIt-aNMtjyw==/com.google.android.tts-3BxQqINF6a7v8sbKiyJBwA==/split_config.nl.apk' with 1 weak references
+2026-01-16 09:22:26.861 30235-31247 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~FYWvF2KT74ANIt-aNMtjyw==/com.google.android.tts-3BxQqINF6a7v8sbKiyJBwA==/split_config.xxhdpi.apk' with 1 weak references
