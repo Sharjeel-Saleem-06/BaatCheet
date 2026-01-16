@@ -119,56 +119,24 @@ class VoiceChatViewModel @Inject constructor(
     }
     
     /**
-     * Load available voices from backend
+     * Load available voices - SIMPLIFIED
+     * 
+     * Always use the 4 curated voices for reliability:
+     * - 2 Urdu (Asad, Uzma) - for Urdu/Roman Urdu text
+     * - 2 English (Guy, Jenny) - for English text only
+     * 
+     * Backend will auto-select the correct voice based on text language!
      */
     private fun loadAvailableVoices() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoadingVoices = true) }
-            
-            try {
-                val result = chatRepository.getTTSVoices()
-                when (result) {
-                    is com.baatcheet.app.data.repository.ApiResult.Success -> {
-                        val aiVoices = result.data.map { voice ->
-                            AIVoice(
-                                id = voice.id,
-                                name = voice.name,
-                                description = voice.description ?: "AI voice assistant",
-                                previewUrl = voice.previewUrl,
-                                color = getVoiceColor(voice.id),
-                                icon = getVoiceIcon(voice.id)
-                            )
-                        }.ifEmpty { getDefaultVoices() }
-                        
-                        _state.update { 
-                            it.copy(
-                                availableVoices = aiVoices,
-                                isLoadingVoices = false,
-                                selectedVoice = aiVoices.firstOrNull()
-                            )
-                        }
-                    }
-                    is com.baatcheet.app.data.repository.ApiResult.Error -> {
-                        // Use default voices if API fails
-                        _state.update { 
-                            it.copy(
-                                availableVoices = getDefaultVoices(),
-                                isLoadingVoices = false,
-                                selectedVoice = getDefaultVoices().firstOrNull()
-                            )
-                        }
-                    }
-                    is com.baatcheet.app.data.repository.ApiResult.Loading -> {}
-                }
-            } catch (e: Exception) {
-                _state.update { 
-                    it.copy(
-                        availableVoices = getDefaultVoices(),
-                        isLoadingVoices = false,
-                        selectedVoice = getDefaultVoices().firstOrNull()
-                    )
-                }
-            }
+        // Use curated voices directly - no API call needed
+        // This ensures consistent, reliable voice options
+        val voices = getDefaultVoices()
+        _state.update { 
+            it.copy(
+                availableVoices = voices,
+                isLoadingVoices = false,
+                selectedVoice = voices.firstOrNull()
+            )
         }
     }
     

@@ -1,9 +1,10 @@
 /**
  * Settings Page
- * API keys, webhooks, and preferences
+ * Profile, preferences, API keys, and webhooks
  */
 
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import {
   Key,
   Webhook,
@@ -13,12 +14,24 @@ import {
   RefreshCw,
   Check,
   X,
-  Eye,
-  EyeOff,
   Loader2,
   AlertCircle,
+  User,
+  Brain,
+  Bell,
+  Shield,
+  Palette,
+  Volume2,
+  Globe,
+  FileText,
+  Edit2,
+  Save,
+  Sparkles,
+  MessageSquare,
+  Zap,
 } from 'lucide-react';
-import { apiKeys, webhooks } from '../services/api';
+import { apiKeys, webhooks, profile } from '../services/api';
+import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
 
 interface ApiKey {
@@ -41,52 +54,135 @@ interface WebhookData {
   isActive: boolean;
 }
 
+interface ProfileFact {
+  id: string;
+  fact: string;
+  category: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface UsageData {
+  messagesUsed: number;
+  messagesLimit: number;
+  imagesUsed: number;
+  imagesLimit: number;
+  voiceUsed: number;
+  voiceLimit: number;
+  tier: string;
+}
+
+type TabType = 'profile' | 'preferences' | 'apikeys' | 'webhooks' | 'usage';
+
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState<'apikeys' | 'webhooks'>('apikeys');
+  const { user } = useUser();
+  const [activeTab, setActiveTab] = useState<TabType>('profile');
+  const [loading, setLoading] = useState(false);
+  
+  // API Keys
   const [apiKeyList, setApiKeyList] = useState<ApiKey[]>([]);
   const [webhookList, setWebhookList] = useState<WebhookData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // API Key form
   const [keyName, setKeyName] = useState('');
-
-  // Webhook form
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookEvents, setWebhookEvents] = useState<string[]>([]);
   const [availableEvents, setAvailableEvents] = useState<{ event: string; description: string }[]>([]);
+  
+  // Profile
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [editingInstructions, setEditingInstructions] = useState(false);
+  const [profileFacts, setProfileFacts] = useState<ProfileFact[]>([]);
+  const [savingInstructions, setSavingInstructions] = useState(false);
+  
+  // Usage
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
+  
+  // Preferences
+  const [preferences, setPreferences] = useState({
+    theme: 'dark',
+    language: 'en',
+    defaultMode: 'chat',
+    autoTTS: false,
+    soundEffects: true,
+    notifications: true,
+  });
 
   useEffect(() => {
-    loadData();
+    loadTabData();
   }, [activeTab]);
 
-  const loadData = async () => {
+  const loadTabData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'apikeys') {
-        const { data } = await apiKeys.list();
-        // Handle both array and object responses
-        const items = data?.data?.items || data?.data || [];
-        setApiKeyList(Array.isArray(items) ? items : []);
-      } else {
-        const [webhooksRes, eventsRes] = await Promise.all([
-          webhooks.list().catch(() => ({ data: { data: [] } })),
-          webhooks.getEvents().catch(() => ({ data: { data: [] } })),
-        ]);
-        // Handle both array and object responses
-        const webhookItems = webhooksRes?.data?.data?.items || webhooksRes?.data?.data || [];
-        const eventItems = eventsRes?.data?.data?.items || eventsRes?.data?.data || [];
-        setWebhookList(Array.isArray(webhookItems) ? webhookItems : []);
-        setAvailableEvents(Array.isArray(eventItems) ? eventItems : []);
+      switch (activeTab) {
+        case 'apikeys':
+          const { data: keysData } = await apiKeys.list();
+          const items = keysData?.data?.items || keysData?.data || [];
+          setApiKeyList(Array.isArray(items) ? items : []);
+          break;
+          
+        case 'webhooks':
+          const [webhooksRes, eventsRes] = await Promise.all([
+            webhooks.list().catch(() => ({ data: { data: [] } })),
+            webhooks.getEvents().catch(() => ({ data: { data: [] } })),
+          ]);
+          const webhookItems = webhooksRes?.data?.data?.items || webhooksRes?.data?.data || [];
+          const eventItems = eventsRes?.data?.data?.items || eventsRes?.data?.data || [];
+          setWebhookList(Array.isArray(webhookItems) ? webhookItems : []);
+          setAvailableEvents(Array.isArray(eventItems) ? eventItems : []);
+          break;
+          
+        case 'profile':
+          try {
+            const [profileRes, factsRes] = await Promise.all([
+              profile.get().catch(() => ({ data: { data: {} } })),
+              profile.getFacts().catch(() => ({ data: { data: { facts: [] } } })),
+            ]);
+            setCustomInstructions(profileRes?.data?.data?.customInstructions || '');
+            setProfileFacts(factsRes?.data?.data?.facts || []);
+          } catch (e) {
+            console.error('Failed to load profile:', e);
+          }
+          break;
+          
+        case 'usage':
+          try {
+            const usageRes = await profile.getUsage();
+            setUsageData(usageRes?.data?.data || null);
+          } catch (e) {
+            console.error('Failed to load usage:', e);
+          }
+          break;
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      setApiKeyList([]);
-      setWebhookList([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveInstructions = async () => {
+    setSavingInstructions(true);
+    try {
+      await profile.updateInstructions(customInstructions);
+      setEditingInstructions(false);
+    } catch (error) {
+      console.error('Failed to save instructions:', error);
+    } finally {
+      setSavingInstructions(false);
+    }
+  };
+
+  const handleToggleFact = async (factId: string, isActive: boolean) => {
+    try {
+      await profile.updateFact(factId, { isActive: !isActive });
+      setProfileFacts(prev => prev.map(f => 
+        f.id === factId ? { ...f, isActive: !isActive } : f
+      ));
+    } catch (error) {
+      console.error('Failed to toggle fact:', error);
     }
   };
 
@@ -96,7 +192,7 @@ export default function Settings() {
       const { data } = await apiKeys.create(keyName);
       setNewApiKey(data.data.key);
       setKeyName('');
-      loadData();
+      loadTabData();
     } catch (error) {
       console.error('Failed to create API key:', error);
     }
@@ -106,7 +202,7 @@ export default function Settings() {
     if (!confirm('Revoke this API key? This cannot be undone.')) return;
     try {
       await apiKeys.delete(id);
-      loadData();
+      loadTabData();
     } catch (error) {
       console.error('Failed to delete API key:', error);
     }
@@ -117,7 +213,7 @@ export default function Settings() {
     try {
       const { data } = await apiKeys.rotate(id);
       setNewApiKey(data.data.newKey);
-      loadData();
+      loadTabData();
     } catch (error) {
       console.error('Failed to rotate API key:', error);
     }
@@ -130,7 +226,7 @@ export default function Settings() {
       setWebhookUrl('');
       setWebhookEvents([]);
       setShowModal(false);
-      loadData();
+      loadTabData();
     } catch (error) {
       console.error('Failed to create webhook:', error);
     }
@@ -140,7 +236,7 @@ export default function Settings() {
     if (!confirm('Delete this webhook?')) return;
     try {
       await webhooks.delete(id);
-      loadData();
+      loadTabData();
     } catch (error) {
       console.error('Failed to delete webhook:', error);
     }
@@ -162,238 +258,529 @@ export default function Settings() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const tabs = [
+    { id: 'profile' as const, label: 'Profile', icon: User },
+    { id: 'preferences' as const, label: 'Preferences', icon: Palette },
+    { id: 'usage' as const, label: 'Usage', icon: Zap },
+    { id: 'apikeys' as const, label: 'API Keys', icon: Key },
+    { id: 'webhooks' as const, label: 'Webhooks', icon: Webhook },
+  ];
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-semibold text-dark-100 mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold text-dark-100 mb-6">Settings</h1>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-dark-800 rounded-lg p-1 w-fit">
-          <button
-            onClick={() => setActiveTab('apikeys')}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
-              activeTab === 'apikeys'
-                ? 'bg-primary-500 text-white'
-                : 'text-dark-400 hover:text-dark-200'
-            )}
-          >
-            <Key size={18} />
-            <span>API Keys</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('webhooks')}
-            className={clsx(
-              'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
-              activeTab === 'webhooks'
-                ? 'bg-primary-500 text-white'
-                : 'text-dark-400 hover:text-dark-200'
-            )}
-          >
-            <Webhook size={18} />
-            <span>Webhooks</span>
-          </button>
+        <div className="flex flex-wrap gap-1 mb-6 bg-dark-800 rounded-xl p-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={clsx(
+                'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20'
+                  : 'text-dark-400 hover:text-dark-200 hover:bg-dark-700'
+              )}
+            >
+              <tab.icon size={18} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="animate-spin text-primary-400" size={32} />
           </div>
-        ) : activeTab === 'apikeys' ? (
-          <div className="space-y-6">
-            {/* New API Key Alert */}
-            {newApiKey && (
-              <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="text-primary-400 flex-shrink-0 mt-0.5" size={20} />
-                  <div className="flex-1">
-                    <p className="text-primary-400 font-medium mb-2">
-                      Save your API key now - it won't be shown again!
-                    </p>
-                    <div className="flex items-center gap-2 bg-dark-800 rounded-lg p-2">
-                      <code className="flex-1 text-sm text-dark-200 font-mono break-all">
-                        {newApiKey}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(newApiKey)}
-                        className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
-                      >
-                        {copied ? (
-                          <Check className="text-primary-400" size={18} />
-                        ) : (
-                          <Copy className="text-dark-400" size={18} />
-                        )}
-                      </button>
+        ) : (
+          <>
+            {/* Profile Tab */}
+            {activeTab === 'profile' && (
+              <div className="space-y-6">
+                {/* User Info */}
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl font-bold">
+                      {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-dark-100">
+                        {user?.fullName || user?.username || 'User'}
+                      </h2>
+                      <p className="text-dark-400">{user?.primaryEmailAddress?.emailAddress}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setNewApiKey(null)}
-                    className="text-dark-500 hover:text-dark-300"
-                  >
-                    <X size={20} />
-                  </button>
+                </div>
+
+                {/* Custom Instructions */}
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Brain className="text-primary-400" size={20} />
+                      <h3 className="text-lg font-semibold text-dark-100">Custom Instructions</h3>
+                    </div>
+                    {!editingInstructions ? (
+                      <button
+                        onClick={() => setEditingInstructions(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-400 hover:text-dark-200 transition-colors"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSaveInstructions}
+                        disabled={savingInstructions}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+                      >
+                        {savingInstructions ? (
+                          <Loader2 className="animate-spin" size={14} />
+                        ) : (
+                          <Save size={14} />
+                        )}
+                        Save
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-dark-500 text-sm mb-3">
+                    Tell the AI how you'd like it to respond. These instructions apply to all conversations.
+                  </p>
+                  {editingInstructions ? (
+                    <textarea
+                      value={customInstructions}
+                      onChange={(e) => setCustomInstructions(e.target.value)}
+                      rows={4}
+                      placeholder="e.g., Always respond in a professional tone. I'm a software developer working with React and Node.js."
+                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none"
+                    />
+                  ) : (
+                    <div className="px-4 py-3 bg-dark-700 rounded-xl text-dark-300 min-h-[100px]">
+                      {customInstructions || <span className="text-dark-500 italic">No custom instructions set</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Learned Facts */}
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="text-primary-400" size={20} />
+                    <h3 className="text-lg font-semibold text-dark-100">What I Know About You</h3>
+                  </div>
+                  <p className="text-dark-500 text-sm mb-4">
+                    The AI learns these facts from your conversations to personalize responses.
+                  </p>
+                  <div className="space-y-2">
+                    {profileFacts.map((fact) => (
+                      <div
+                        key={fact.id}
+                        className={clsx(
+                          'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+                          fact.isActive
+                            ? 'bg-dark-700 border-dark-600'
+                            : 'bg-dark-800 border-dark-700 opacity-50'
+                        )}
+                      >
+                        <button
+                          onClick={() => handleToggleFact(fact.id, fact.isActive)}
+                          className={clsx(
+                            'w-5 h-5 rounded flex items-center justify-center transition-colors',
+                            fact.isActive
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-dark-600 text-dark-400'
+                          )}
+                        >
+                          {fact.isActive && <Check size={12} />}
+                        </button>
+                        <span className="flex-1 text-dark-300 text-sm">{fact.fact}</span>
+                        <span className="text-xs text-dark-500 capitalize">{fact.category}</span>
+                      </div>
+                    ))}
+                    {profileFacts.length === 0 && (
+                      <div className="text-center py-8 text-dark-500">
+                        <MessageSquare className="mx-auto mb-2" size={24} />
+                        <p>No facts learned yet. Start chatting!</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Create API Key */}
-            <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
-              <h2 className="text-lg font-medium text-dark-100 mb-4">
-                Create API Key
-              </h2>
-              <form onSubmit={handleCreateApiKey} className="flex gap-3">
-                <input
-                  type="text"
-                  value={keyName}
-                  onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="Key name (e.g., My App)"
-                  required
-                  className="flex-1 px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500"
-                />
+            {/* Preferences Tab */}
+            {activeTab === 'preferences' && (
+              <div className="space-y-6">
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Appearance</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Theme</p>
+                        <p className="text-sm text-dark-500">Choose your preferred color scheme</p>
+                      </div>
+                      <select
+                        value={preferences.theme}
+                        onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
+                        className="px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-dark-200"
+                      >
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="system">System</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Chat</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Default AI Mode</p>
+                        <p className="text-sm text-dark-500">Mode to use for new conversations</p>
+                      </div>
+                      <select
+                        value={preferences.defaultMode}
+                        onChange={(e) => setPreferences({ ...preferences, defaultMode: e.target.value })}
+                        className="px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-dark-200"
+                      >
+                        <option value="chat">Chat</option>
+                        <option value="code">Code</option>
+                        <option value="research">Research</option>
+                        <option value="creative">Creative</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Auto Text-to-Speech</p>
+                        <p className="text-sm text-dark-500">Automatically read AI responses aloud</p>
+                      </div>
+                      <button
+                        onClick={() => setPreferences({ ...preferences, autoTTS: !preferences.autoTTS })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          preferences.autoTTS ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            preferences.autoTTS ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Notifications</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Sound Effects</p>
+                        <p className="text-sm text-dark-500">Play sounds for messages</p>
+                      </div>
+                      <button
+                        onClick={() => setPreferences({ ...preferences, soundEffects: !preferences.soundEffects })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          preferences.soundEffects ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            preferences.soundEffects ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Push Notifications</p>
+                        <p className="text-sm text-dark-500">Get notified about updates</p>
+                      </div>
+                      <button
+                        onClick={() => setPreferences({ ...preferences, notifications: !preferences.notifications })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          preferences.notifications ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            preferences.notifications ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Usage Tab */}
+            {activeTab === 'usage' && (
+              <div className="space-y-6">
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-dark-100">Your Plan</h3>
+                      <p className="text-dark-400 capitalize">{usageData?.tier || 'Free'} Tier</p>
+                    </div>
+                    <button className="px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all">
+                      Upgrade
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Messages */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-dark-300">Messages</span>
+                        <span className="text-dark-400 text-sm">
+                          {usageData?.messagesUsed || 0} / {usageData?.messagesLimit || 50}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, ((usageData?.messagesUsed || 0) / (usageData?.messagesLimit || 50)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Images */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-dark-300">Image Generations</span>
+                        <span className="text-dark-400 text-sm">
+                          {usageData?.imagesUsed || 0} / {usageData?.imagesLimit || 5}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, ((usageData?.imagesUsed || 0) / (usageData?.imagesLimit || 5)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Voice */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-dark-300">Voice Messages</span>
+                        <span className="text-dark-400 text-sm">
+                          {usageData?.voiceUsed || 0} / {usageData?.voiceLimit || 10}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, ((usageData?.voiceUsed || 0) / (usageData?.voiceLimit || 10)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Usage Resets</h3>
+                  <p className="text-dark-400">
+                    Your daily limits reset at midnight UTC. Upgrade to Pro for unlimited access.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* API Keys Tab */}
+            {activeTab === 'apikeys' && (
+              <div className="space-y-6">
+                {newApiKey && (
+                  <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="text-primary-400 flex-shrink-0 mt-0.5" size={20} />
+                      <div className="flex-1">
+                        <p className="text-primary-400 font-medium mb-2">
+                          Save your API key now - it won't be shown again!
+                        </p>
+                        <div className="flex items-center gap-2 bg-dark-800 rounded-lg p-2">
+                          <code className="flex-1 text-sm text-dark-200 font-mono break-all">
+                            {newApiKey}
+                          </code>
+                          <button
+                            onClick={() => copyToClipboard(newApiKey)}
+                            className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                          >
+                            {copied ? (
+                              <Check className="text-primary-400" size={18} />
+                            ) : (
+                              <Copy className="text-dark-400" size={18} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <button onClick={() => setNewApiKey(null)} className="text-dark-500 hover:text-dark-300">
+                        <X size={20} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h2 className="text-lg font-semibold text-dark-100 mb-4">Create API Key</h2>
+                  <form onSubmit={handleCreateApiKey} className="flex gap-3">
+                    <input
+                      type="text"
+                      value={keyName}
+                      onChange={(e) => setKeyName(e.target.value)}
+                      placeholder="Key name (e.g., My App)"
+                      required
+                      className="flex-1 px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500"
+                    />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl transition-all"
+                    >
+                      <Plus size={18} />
+                      <span>Create</span>
+                    </button>
+                  </form>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700">
+                  <div className="p-4 border-b border-dark-700">
+                    <h2 className="text-lg font-semibold text-dark-100">Your API Keys</h2>
+                  </div>
+                  <div className="divide-y divide-dark-700">
+                    {apiKeyList.map((key) => (
+                      <div key={key.id} className="p-4 flex items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-dark-200">{key.name}</span>
+                            <span
+                              className={clsx(
+                                'px-2 py-0.5 text-xs rounded-full',
+                                key.isActive
+                                  ? 'bg-green-500/10 text-green-400'
+                                  : 'bg-red-500/10 text-red-400'
+                              )}
+                            >
+                              {key.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-sm text-dark-500">
+                            <code className="font-mono">{key.keyPrefix}...</code>
+                            <span>•</span>
+                            <span>{key.usageCount} requests</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleRotateApiKey(key.id)}
+                            className="p-2 text-dark-500 hover:text-dark-300 transition-colors"
+                            title="Rotate key"
+                          >
+                            <RefreshCw size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteApiKey(key.id)}
+                            className="p-2 text-dark-500 hover:text-red-400 transition-colors"
+                            title="Revoke key"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {apiKeyList.length === 0 && (
+                      <div className="p-8 text-center text-dark-500">No API keys yet</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Webhooks Tab */}
+            {activeTab === 'webhooks' && (
+              <div className="space-y-6">
                 <button
-                  type="submit"
-                  className="flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
+                  onClick={() => setShowModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl transition-all"
                 >
                   <Plus size={18} />
-                  <span>Create</span>
+                  <span>Create Webhook</span>
                 </button>
-              </form>
-            </div>
 
-            {/* API Keys List */}
-            <div className="bg-dark-800 rounded-xl border border-dark-700">
-              <div className="p-4 border-b border-dark-700">
-                <h2 className="text-lg font-medium text-dark-100">
-                  Your API Keys
-                </h2>
-              </div>
-              <div className="divide-y divide-dark-700">
-                {apiKeyList.map((key) => (
-                  <div key={key.id} className="p-4 flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-dark-200">
-                          {key.name}
-                        </span>
-                        <span
-                          className={clsx(
-                            'px-2 py-0.5 text-xs rounded-full',
-                            key.isActive
-                              ? 'bg-green-500/10 text-green-400'
-                              : 'bg-red-500/10 text-red-400'
-                          )}
-                        >
-                          {key.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-dark-500">
-                        <code className="font-mono">{key.keyPrefix}...</code>
-                        <span>•</span>
-                        <span>{key.usageCount} requests</span>
-                        <span>•</span>
-                        <span>{key.rateLimit}/hour limit</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleRotateApiKey(key.id)}
-                        className="p-2 text-dark-500 hover:text-dark-300 transition-colors"
-                        title="Rotate key"
-                      >
-                        <RefreshCw size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteApiKey(key.id)}
-                        className="p-2 text-dark-500 hover:text-red-400 transition-colors"
-                        title="Revoke key"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                <div className="bg-dark-800 rounded-2xl border border-dark-700">
+                  <div className="p-4 border-b border-dark-700">
+                    <h2 className="text-lg font-semibold text-dark-100">Your Webhooks</h2>
                   </div>
-                ))}
-                {apiKeyList.length === 0 && (
-                  <div className="p-8 text-center text-dark-500">
-                    No API keys yet
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Create Webhook Button */}
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
-            >
-              <Plus size={18} />
-              <span>Create Webhook</span>
-            </button>
-
-            {/* Webhooks List */}
-            <div className="bg-dark-800 rounded-xl border border-dark-700">
-              <div className="p-4 border-b border-dark-700">
-                <h2 className="text-lg font-medium text-dark-100">
-                  Your Webhooks
-                </h2>
-              </div>
-              <div className="divide-y divide-dark-700">
-                {webhookList.map((webhook) => (
-                  <div key={webhook.id} className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm text-dark-200 font-mono truncate">
-                            {webhook.url}
-                          </code>
-                          <span
-                            className={clsx(
-                              'px-2 py-0.5 text-xs rounded-full',
-                              webhook.isActive
-                                ? 'bg-green-500/10 text-green-400'
-                                : 'bg-red-500/10 text-red-400'
-                            )}
-                          >
-                            {webhook.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {webhook.events.map((event) => (
-                            <span
-                              key={event}
-                              className="px-2 py-0.5 text-xs bg-dark-700 text-dark-400 rounded"
+                  <div className="divide-y divide-dark-700">
+                    {webhookList.map((webhook) => (
+                      <div key={webhook.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <code className="text-sm text-dark-200 font-mono truncate">
+                                {webhook.url}
+                              </code>
+                              <span
+                                className={clsx(
+                                  'px-2 py-0.5 text-xs rounded-full',
+                                  webhook.isActive
+                                    ? 'bg-green-500/10 text-green-400'
+                                    : 'bg-red-500/10 text-red-400'
+                                )}
+                              >
+                                {webhook.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {webhook.events.map((event) => (
+                                <span
+                                  key={event}
+                                  className="px-2 py-0.5 text-xs bg-dark-700 text-dark-400 rounded"
+                                >
+                                  {event}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleTestWebhook(webhook.id)}
+                              className="px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
                             >
-                              {event}
-                            </span>
-                          ))}
+                              Test
+                            </button>
+                            <button
+                              onClick={() => handleDeleteWebhook(webhook.id)}
+                              className="p-2 text-dark-500 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleTestWebhook(webhook.id)}
-                          className="px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
-                        >
-                          Test
-                        </button>
-                        <button
-                          onClick={() => handleDeleteWebhook(webhook.id)}
-                          className="p-2 text-dark-500 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
+                    ))}
+                    {webhookList.length === 0 && (
+                      <div className="p-8 text-center text-dark-500">No webhooks yet</div>
+                    )}
                   </div>
-                ))}
-                {webhookList.length === 0 && (
-                  <div className="p-8 text-center text-dark-500">
-                    No webhooks yet
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
 
         {/* Create Webhook Modal */}
@@ -401,36 +788,27 @@ export default function Settings() {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md">
               <div className="flex items-center justify-between p-4 border-b border-dark-700">
-                <h2 className="text-lg font-semibold text-dark-100">
-                  Create Webhook
-                </h2>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-dark-500 hover:text-dark-300"
-                >
+                <h2 className="text-lg font-semibold text-dark-100">Create Webhook</h2>
+                <button onClick={() => setShowModal(false)} className="text-dark-500 hover:text-dark-300">
                   <X size={20} />
                 </button>
               </div>
 
               <form onSubmit={handleCreateWebhook} className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                    URL
-                  </label>
+                  <label className="block text-sm font-medium text-dark-300 mb-1.5">URL</label>
                   <input
                     type="url"
                     value={webhookUrl}
                     onChange={(e) => setWebhookUrl(e.target.value)}
                     placeholder="https://example.com/webhook"
                     required
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                    Events
-                  </label>
+                  <label className="block text-sm font-medium text-dark-300 mb-1.5">Events</label>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {availableEvents.map(({ event, description }) => (
                       <label
@@ -462,14 +840,14 @@ export default function Settings() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={webhookEvents.length === 0}
-                    className="flex-1 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-dark-700 disabled:text-dark-500 text-white rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:bg-dark-700 disabled:text-dark-500 text-white rounded-xl transition-all"
                   >
                     Create
                   </button>

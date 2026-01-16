@@ -378,4 +378,65 @@ export const apiKeys = {
   getUsage: (id: string) => api.get(`/api-keys/${id}/usage`),
 };
 
+// ============================================
+// Modes API
+// ============================================
+
+export const modes = {
+  list: () => api.get('/modes'),
+
+  get: (modeId: string) => api.get(`/modes/${modeId}`),
+
+  detect: (message: string, attachments?: unknown[]) =>
+    api.post('/modes/detect', { message, attachments }),
+};
+
+// ============================================
+// TTS API
+// ============================================
+
+export const tts = {
+  speak: (text: string, voice?: string) =>
+    api.post('/tts/speak', { text, voice }, { responseType: 'blob' }),
+
+  getVoices: () => api.get('/tts/voices'),
+};
+
+// ============================================
+// Tags API
+// ============================================
+
+export const tags = {
+  list: () => api.get('/tags'),
+
+  create: (name: string, color?: string) =>
+    api.post('/tags', { name, color }),
+
+  update: (id: string, data: { name?: string; color?: string }) =>
+    api.put(`/tags/${id}`, data),
+
+  delete: (id: string) => api.delete(`/tags/${id}`),
+};
+
+// ============================================
+// Profile API
+// ============================================
+
+export const profile = {
+  get: () => api.get('/profile'),
+
+  update: (data: { displayName?: string; avatar?: string }) =>
+    api.put('/profile', data),
+
+  getFacts: () => api.get('/profile/facts'),
+
+  updateFact: (factId: string, data: { isActive?: boolean }) =>
+    api.put(`/profile/facts/${factId}`, data),
+
+  getUsage: () => api.get('/profile/usage'),
+
+  updateInstructions: (instructions: string) =>
+    api.put('/profile/instructions', { instructions }),
+};
+
 export default api;

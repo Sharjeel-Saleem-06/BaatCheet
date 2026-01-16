@@ -819,3 +819,217 @@ export const exportUserData = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+// ============================================
+// Moderator Management
+// ============================================
+
+/**
+ * POST /api/v1/admin/moderators/invite
+ * Invite a user as moderator or admin
+ */
+export const inviteModerator = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, role = 'moderator' } = req.body;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        error: 'Email is required',
+      });
+      return;
+    }
+
+    if (!['admin', 'moderator'].includes(role)) {
+      res.status(400).json({
+        success: false,
+        error: 'Role must be admin or moderator',
+      });
+      return;
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: { id: true, email: true, role: true, firstName: true, lastName: true },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found. They must sign up first before being promoted to moderator.',
+      });
+      return;
+    }
+
+    // Check if already has elevated role
+    if (user.role === 'admin' || user.role === 'moderator') {
+      res.status(400).json({
+        success: false,
+        error: `User is already a ${user.role}`,
+      });
+      return;
+    }
+
+    // Promote user
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { role },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    // Log action
+    await logAdminAction(
+      req.user!.id,
+      'MODERATOR_INVITED',
+      'user',
+      user.id,
+      { email, role },
+      req
+    );
+
+    logger.info(`User ${email} promoted to ${role} by ${req.user?.email}`);
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: `User ${email} has been promoted to ${role}`,
+    });
+  } catch (error) {
+    logger.error('Invite moderator error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to invite moderator',
+    });
+  }
+};
+
+/**
+ * GET /api/v1/admin/moderators
+ * List all moderators and admins
+ */
+export const listModerators = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const moderators = await prisma.user.findMany({
+      where: {
+        role: { in: ['admin', 'moderator'] },
+      },
+      orderBy: [
+        { role: 'asc' }, // admins first
+        { createdAt: 'desc' },
+      ],
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        role: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        moderators: moderators.map(m => ({
+          ...m,
+          name: `${m.firstName || ''} ${m.lastName || ''}`.trim() || m.email,
+        })),
+        count: moderators.length,
+        admins: moderators.filter(m => m.role === 'admin').length,
+        moderatorCount: moderators.filter(m => m.role === 'moderator').length,
+      },
+    });
+  } catch (error) {
+    logger.error('List moderators error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list moderators',
+    });
+  }
+};
+
+/**
+ * POST /api/v1/admin/moderators/:userId/revoke
+ * Revoke moderator/admin access (demote to user)
+ */
+export const revokeModerator = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    // Prevent self-demotion
+    if (userId === req.user?.id) {
+      res.status(400).json({
+        success: false,
+        error: 'Cannot revoke your own moderator access',
+      });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+      return;
+    }
+
+    if (user.role === 'user') {
+      res.status(400).json({
+        success: false,
+        error: 'User is not a moderator or admin',
+      });
+      return;
+    }
+
+    // Demote to regular user
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'user' },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    // Log action
+    await logAdminAction(
+      req.user!.id,
+      'MODERATOR_REVOKED',
+      'user',
+      userId,
+      { previousRole: user.role },
+      req
+    );
+
+    logger.info(`User ${user.email} demoted from ${user.role} to user by ${req.user?.email}`);
+
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: `${user.email}'s moderator access has been revoked`,
+    });
+  } catch (error) {
+    logger.error('Revoke moderator error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to revoke moderator access',
+    });
+  }
+};

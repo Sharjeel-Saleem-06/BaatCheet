@@ -17,10 +17,10 @@ import { useState } from 'react';
 import clsx from 'clsx';
 
 const navItems = [
-  { path: '/chat', icon: MessageSquare, label: 'Chat' },
-  { path: '/projects', icon: FolderOpen, label: 'Projects' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/settings', icon: Settings, label: 'Settings' },
+  { path: '/app/chat', icon: MessageSquare, label: 'Chat' },
+  { path: '/app/projects', icon: FolderOpen, label: 'Projects' },
+  { path: '/app/analytics', icon: BarChart3, label: 'Analytics' },
+  { path: '/app/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Layout() {

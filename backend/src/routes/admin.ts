@@ -200,6 +200,59 @@ router.get(
   usersController.exportUserData
 );
 
+/**
+ * @swagger
+ * /admin/moderators/invite:
+ *   post:
+ *     summary: Invite a user as moderator
+ *     tags: [Admin - Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, moderator]
+ */
+router.post(
+  '/moderators/invite',
+  requireFullAdmin,
+  auditLog('MODERATOR_INVITED'),
+  usersController.inviteModerator
+);
+
+/**
+ * @swagger
+ * /admin/moderators:
+ *   get:
+ *     summary: List all moderators and admins
+ *     tags: [Admin - Users]
+ */
+router.get(
+  '/moderators',
+  requirePermission(AdminPermission.VIEW_USERS),
+  usersController.listModerators
+);
+
+/**
+ * @swagger
+ * /admin/moderators/{userId}/revoke:
+ *   post:
+ *     summary: Revoke moderator/admin access
+ *     tags: [Admin - Users]
+ */
+router.post(
+  '/moderators/:userId/revoke',
+  requireFullAdmin,
+  auditLog('MODERATOR_REVOKED'),
+  usersController.revokeModerator
+);
+
 // ============================================
 // Content Moderation Routes
 // ============================================
