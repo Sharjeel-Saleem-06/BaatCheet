@@ -426,7 +426,12 @@ class TTSServiceClass {
 
   /**
    * Detect if text contains Urdu/Hindi/Arabic characters or Roman Urdu
-   * Roman Urdu is written in Latin script but uses Urdu/Hindi words
+   * 
+   * PRIORITY:
+   * 1. Real Urdu script (اردو) → 'urdu' → Use ur-PK-AsadNeural
+   * 2. Real Hindi script (हिंदी) → 'hindi' → Use hi-IN-MadhurNeural  
+   * 3. Roman Urdu (aap kaise hain) → 'mixed' → Use ur-PK-AsadNeural
+   * 4. Pure English → 'english' → Use en-US-GuyNeural
    */
   private detectLanguage(text: string): 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed' {
     // Urdu/Arabic character range (includes Persian, Urdu-specific characters)
@@ -438,34 +443,110 @@ class TTSServiceClass {
     const hasHindi = hindiPattern.test(text);
     const hasEnglish = /[a-zA-Z]/.test(text);
     
-    // Check for pure script
-    if (hasUrduArabic && !hasEnglish) return 'urdu';
-    if (hasHindi && !hasEnglish) return 'hindi';
-    if (hasUrduArabic && hasEnglish) return 'mixed';
-    if (hasHindi && hasEnglish) return 'mixed';
+    // Check for pure Urdu script FIRST (highest priority)
+    if (hasUrduArabic && !hasEnglish) {
+      logger.info(`Language detected: URDU (pure Urdu script)`);
+      return 'urdu';
+    }
+    
+    // Check for pure Hindi script
+    if (hasHindi && !hasEnglish) {
+      logger.info(`Language detected: HINDI (pure Hindi script)`);
+      return 'hindi';
+    }
+    
+    // Mixed script (Urdu/Hindi + English)
+    if (hasUrduArabic && hasEnglish) {
+      logger.info(`Language detected: MIXED (Urdu script + English)`);
+      return 'mixed';
+    }
+    if (hasHindi && hasEnglish) {
+      logger.info(`Language detected: MIXED (Hindi script + English)`);
+      return 'mixed';
+    }
     
     // Check for Roman Urdu (Latin script but Urdu/Hindi words)
-    // Common Roman Urdu words/phrases
-    const romanUrduPatterns = [
-      /\b(kya|hai|hain|nahi|aap|app|mein|main|tera|mera|kaise|kaisa|theek|thik|ho|haan|ji|yaar|bhai|sunao|sab|accha|acha|bohut|bahut|baat|chal|chalo|raha|rahi|kar|karo|dekh|dekho|chal|haal|kiya|karo|abhi|phir|lekin|aur|se|ko|pe|par|wala|wali|hoga|hogi|hein|aisa|waisa|jaldi|tum|tumhara)\b/gi,
+    // Comprehensive list of common Roman Urdu words
+    const romanUrduWords = [
+      // Common verbs
+      'hai', 'hain', 'tha', 'thi', 'the', 'ho', 'hoon', 'hoga', 'hogi', 'hongay',
+      'kar', 'karo', 'karna', 'kiya', 'ki', 'kiye', 'karunga', 'karenge',
+      'ja', 'jao', 'jana', 'gaya', 'gayi', 'gaye', 'jaunga', 'jayenge',
+      'aa', 'aao', 'aana', 'aaya', 'aayi', 'aaye', 'aaunga', 'aayenge',
+      'dekh', 'dekho', 'dekhna', 'dekha', 'dekhi', 'dekhe',
+      'sun', 'suno', 'sunna', 'suna', 'suni', 'sune',
+      'bol', 'bolo', 'bolna', 'bola', 'boli', 'bole',
+      'le', 'lo', 'lena', 'liya', 'li', 'liye',
+      'de', 'do', 'dena', 'diya', 'di', 'diye',
+      'raha', 'rahi', 'rahe', 'rahega', 'rahegi',
+      'sakta', 'sakti', 'sakte',
+      
+      // Pronouns
+      'mein', 'main', 'hum', 'tum', 'aap', 'app', 'wo', 'woh', 'ye', 'yeh',
+      'mera', 'meri', 'mere', 'hamara', 'hamari', 'hamare',
+      'tera', 'teri', 'tere', 'tumhara', 'tumhari', 'tumhare',
+      'aapka', 'aapki', 'aapke', 'uska', 'uski', 'uske',
+      'iska', 'iski', 'iske', 'kiska', 'kiski', 'kiske',
+      
+      // Question words
+      'kya', 'kaise', 'kaisa', 'kaisi', 'kahan', 'kab', 'kyun', 'kyon', 'kaun',
+      'kitna', 'kitni', 'kitne', 'konsa', 'konsi', 'konse',
+      
+      // Common nouns
+      'baat', 'din', 'raat', 'waqt', 'time', 'ghar', 'kaam', 'naam',
+      'bhai', 'behen', 'dost', 'yaar', 'sahab', 'ji',
+      'pyar', 'mohabbat', 'dil', 'jaan', 'zindagi',
+      
+      // Adjectives
+      'acha', 'accha', 'bura', 'buri', 'bara', 'bada', 'badi', 'chota', 'choti',
+      'naya', 'nayi', 'naye', 'purana', 'purani', 'purane',
+      'theek', 'thik', 'sahi', 'galat',
+      
+      // Adverbs
+      'bahut', 'bohut', 'bohat', 'zyada', 'kam', 'sirf', 'bas', 'abhi', 'ab',
+      'phir', 'fir', 'pehle', 'baad', 'jaldi', 'dheere',
+      
+      // Conjunctions/Particles
+      'aur', 'ya', 'lekin', 'magar', 'agar', 'to', 'toh', 'bhi', 'hi',
+      'se', 'ko', 'pe', 'par', 'mein', 'ke', 'ki', 'ka',
+      'wala', 'wali', 'wale', 'walay',
+      
+      // Common phrases
+      'assalam', 'walaikum', 'shukriya', 'meherbani', 'khuda', 'allah',
+      'inshallah', 'mashallah', 'alhamdulillah',
+      
+      // Negation
+      'nahi', 'nai', 'na', 'mat', 'kuch',
+      
+      // Affirmation
+      'haan', 'han', 'jee', 'ji', 'bilkul', 'zaroor',
     ];
     
     const textLower = text.toLowerCase();
     let romanUrduScore = 0;
     
     // Count Roman Urdu words
-    for (const pattern of romanUrduPatterns) {
-      const matches = textLower.match(pattern);
+    for (const word of romanUrduWords) {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      const matches = textLower.match(regex);
       if (matches) {
         romanUrduScore += matches.length;
       }
     }
     
-    // If we found multiple Roman Urdu words, treat as mixed
-    if (romanUrduScore >= 2) {
+    // Calculate percentage of text that is Roman Urdu
+    const words = textLower.split(/\s+/).filter(w => w.length > 0);
+    const romanUrduPercentage = words.length > 0 ? (romanUrduScore / words.length) * 100 : 0;
+    
+    logger.info(`Roman Urdu detection: score=${romanUrduScore}, words=${words.length}, percentage=${romanUrduPercentage.toFixed(1)}%`);
+    
+    // If significant portion is Roman Urdu, treat as mixed (will use Urdu voice)
+    if (romanUrduScore >= 1 || romanUrduPercentage >= 20) {
+      logger.info(`Language detected: MIXED (Roman Urdu)`);
       return 'mixed';
     }
     
+    logger.info(`Language detected: ENGLISH`);
     return 'english';
   }
   
@@ -511,17 +592,26 @@ class TTSServiceClass {
 
   /**
    * Get the best Edge TTS voice for the detected language
+   * 
+   * IMPORTANT: For Urdu content (both script and Roman), we use Pakistani Urdu voices
+   * - ur-PK-AsadNeural: Male Pakistani Urdu - excellent for real Urdu script
+   * - ur-PK-UzmaNeural: Female Pakistani Urdu
+   * 
+   * For Roman Urdu, we STILL use Urdu voice because:
+   * - Hindi voices mispronounce many Urdu words
+   * - Edge TTS Urdu voices handle Latin script reasonably well
    */
   private getEdgeTTSVoice(language: 'urdu' | 'arabic' | 'hindi' | 'english' | 'mixed'): string {
     switch (language) {
       case 'urdu':
       case 'arabic':
-        return 'ur-PK-AsadNeural'; // Best for pure Urdu
+        return 'ur-PK-AsadNeural'; // Best for pure Urdu script
       case 'hindi':
         return 'hi-IN-MadhurNeural'; // Best for Hindi
       case 'mixed':
-        // For Roman Urdu, use Hindi voice - sounds more natural
-        return 'hi-IN-MadhurNeural';
+        // For Roman Urdu, ALSO use Urdu voice - it handles Roman Urdu better than Hindi
+        // The Urdu voice understands Urdu phonetics even in Latin script
+        return 'ur-PK-AsadNeural';
       case 'english':
       default:
         return 'en-US-GuyNeural';

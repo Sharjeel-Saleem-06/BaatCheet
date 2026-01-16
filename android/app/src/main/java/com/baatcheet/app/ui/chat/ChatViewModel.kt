@@ -2085,14 +2085,24 @@ class ChatViewModel @Inject constructor(
      */
     fun changeCollaboratorRole(projectId: String, collaboratorId: String, newRole: String) {
         viewModelScope.launch {
+            _state.update { it.copy(isLoadingCollaborators = true) }
+            
             when (val result = chatRepository.changeCollaboratorRole(projectId, collaboratorId, newRole)) {
                 is ApiResult.Success -> {
-                    // Refresh project to update collaborators list
+                    // Refresh both project details AND collaborators list
                     loadProject(projectId)
+                    loadProjectCollaborators(projectId)
                     _state.update { it.copy(error = null) }
+                    
+                    // Log success for debugging
+                    android.util.Log.d("ChatViewModel", "Role changed successfully: $collaboratorId -> $newRole")
                 }
                 is ApiResult.Error -> {
-                    _state.update { it.copy(error = "Failed to change role: ${result.message}") }
+                    _state.update { it.copy(
+                        error = "Failed to change role: ${result.message}",
+                        isLoadingCollaborators = false
+                    ) }
+                    android.util.Log.e("ChatViewModel", "Failed to change role: ${result.message}")
                 }
                 is ApiResult.Loading -> { /* Ignore */ }
             }
