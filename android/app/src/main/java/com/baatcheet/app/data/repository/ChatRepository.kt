@@ -123,9 +123,11 @@ class ChatRepository @Inject constructor(
                 model = null, // Use default model
                 stream = false,
                 maxTokens = maxTokens,
-                // Add voice-specific system prompt instruction
-                systemPrompt = "You are in a voice conversation. Keep responses SHORT, NATURAL, and CONVERSATIONAL. Limit to 1-2 sentences when possible. Avoid lists, code, and long explanations - this is a spoken chat.",
-                isVoiceChat = true // AI will respond in Urdu script (not Roman Urdu) for proper TTS pronunciation
+                // Don't override systemPrompt - let backend use the enhanced Urdu voice prompt
+                // The backend will automatically use VOICE_CHAT_URDU_ENHANCEMENT when isVoiceChat=true
+                // This makes AI respond in real Urdu script (اردو) for proper TTS pronunciation
+                systemPrompt = null,
+                isVoiceChat = true // CRITICAL: AI will respond in Urdu script (not Roman Urdu) for proper TTS
             )
             
             val response = api.sendMessage(request)
