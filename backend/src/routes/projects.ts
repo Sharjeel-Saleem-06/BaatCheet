@@ -1077,16 +1077,21 @@ router.post(
         const roleEnum = roleStr === 'admin' ? 'admin' : roleStr === 'moderator' ? 'moderator' : 'viewer';
 
         // Add as collaborator with role-based permissions
+        // Role permissions:
+        // - Owner: Full access (edit, delete, invite, manage roles, change name/emoji)
+        // - Admin: Full access (edit, delete, invite, manage roles, change name/emoji)
+        // - Moderator: Can edit context, invite others, create chats (NOT delete, NOT manage roles, NOT change name/emoji)
+        // - Viewer: Can only view and create new chats (NOT edit context, NOT delete, NOT invite)
         await prisma.projectCollaborator.create({
           data: {
             projectId: invitation.projectId,
             userId: userId,
             role: roleEnum as any, // Cast to ProjectRole
             addedBy: invitation.inviterId,
-            canEdit: isAdmin || isModerator,
-            canDelete: isAdmin,
-            canInvite: isAdmin,
-            canManageRoles: isAdmin,
+            canEdit: isAdmin || isModerator, // Admin and Moderator can edit context/instructions
+            canDelete: isAdmin, // Only Admin can delete chats
+            canInvite: isAdmin || isModerator, // Admin and Moderator can invite others
+            canManageRoles: isAdmin, // Only Admin can manage roles
           },
         });
       }
@@ -1290,6 +1295,10 @@ router.put(
       }
 
       // Set permissions based on new role
+      // Role permissions:
+      // - Admin: Full access (edit, delete, invite, manage roles)
+      // - Moderator: Can edit context, invite others (NOT delete, NOT manage roles)
+      // - Viewer: Can only view and create new chats (NOT edit, NOT delete, NOT invite)
       const isAdmin = role === 'admin';
       const isModerator = role === 'moderator';
 
@@ -1297,10 +1306,10 @@ router.put(
         where: { projectId: id, userId: collaboratorId },
         data: {
           role: role,
-          canEdit: isAdmin || isModerator,
-          canDelete: isAdmin,
-          canInvite: isAdmin,
-          canManageRoles: isAdmin,
+          canEdit: isAdmin || isModerator, // Admin and Moderator can edit context
+          canDelete: isAdmin, // Only Admin can delete chats
+          canInvite: isAdmin || isModerator, // Admin and Moderator can invite
+          canManageRoles: isAdmin, // Only Admin can manage roles
         },
       });
 
