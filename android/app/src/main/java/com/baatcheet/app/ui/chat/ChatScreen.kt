@@ -4953,6 +4953,9 @@ private fun ProjectSettingsDialog(
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     
+    // Only owner and admin can change project name and emoji
+    val canChangeNameAndEmoji = project.isOwner || project.myRole == "admin"
+    
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = WhiteBackground,
@@ -4997,7 +5000,7 @@ private fun ProjectSettingsDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Clickable emoji box
+                // Emoji box - only clickable for owner/admin
                 Box(
                     modifier = Modifier
                         .size(50.dp)
@@ -5006,7 +5009,13 @@ private fun ProjectSettingsDialog(
                                     catch (e: Exception) { Color(0xFF1E293B) },
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .clickable { showEmojiPicker = !showEmojiPicker },
+                        .then(
+                            if (canChangeNameAndEmoji) {
+                                Modifier.clickable { showEmojiPicker = !showEmojiPicker }
+                            } else {
+                                Modifier // Not clickable for moderator/viewer
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -5018,53 +5027,67 @@ private fun ProjectSettingsDialog(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Column(modifier = Modifier.weight(1f)) {
-                    OutlinedTextField(
-                        value = projectName,
-                        onValueChange = { projectName = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Project name") },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = GreenAccent,
-                            unfocusedBorderColor = InputBorder,
-                            cursorColor = GreenAccent
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        textStyle = TextStyle(fontSize = 16.sp, color = DarkText, fontWeight = FontWeight.Medium)
-                    )
+                    // Name field - only editable for owner/admin
+                    if (canChangeNameAndEmoji) {
+                        OutlinedTextField(
+                            value = projectName,
+                            onValueChange = { projectName = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Project name") },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = GreenAccent,
+                                unfocusedBorderColor = InputBorder,
+                                cursorColor = GreenAccent
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            textStyle = TextStyle(fontSize = 16.sp, color = DarkText, fontWeight = FontWeight.Medium)
+                        )
+                    } else {
+                        // Read-only display for moderator/viewer
+                        Text(
+                            text = projectName,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DarkText,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                    }
                 }
             }
             
-            // Emoji picker
-            AnimatedVisibility(visible = showEmojiPicker) {
-                Column(modifier = Modifier.padding(top = 12.dp)) {
-                    Text(
-                        text = "Choose an emoji",
-                        fontSize = 13.sp,
-                        color = GrayText,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        PROJECT_EMOJIS.forEach { emoji ->
-                            Surface(
-                                onClick = {
-                                    selectedEmoji = emoji
-                                    showEmojiPicker = false
-                                },
-                                modifier = Modifier.size(44.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (selectedEmoji == emoji) GreenAccent.copy(alpha = 0.2f) else Color.Transparent,
-                                border = if (selectedEmoji == emoji) 
-                                    androidx.compose.foundation.BorderStroke(2.dp, GreenAccent) 
-                                else null
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(text = emoji, fontSize = 22.sp)
+            // Emoji picker - only for owner/admin
+            if (canChangeNameAndEmoji) {
+                AnimatedVisibility(visible = showEmojiPicker) {
+                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                        Text(
+                            text = "Choose an emoji",
+                            fontSize = 13.sp,
+                            color = GrayText,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            PROJECT_EMOJIS.forEach { emoji ->
+                                Surface(
+                                    onClick = {
+                                        selectedEmoji = emoji
+                                        showEmojiPicker = false
+                                    },
+                                    modifier = Modifier.size(44.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (selectedEmoji == emoji) GreenAccent.copy(alpha = 0.2f) else Color.Transparent,
+                                    border = if (selectedEmoji == emoji) 
+                                        androidx.compose.foundation.BorderStroke(2.dp, GreenAccent) 
+                                    else null
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(text = emoji, fontSize = 22.sp)
+                                    }
                                 }
                             }
                         }
@@ -5073,7 +5096,8 @@ private fun ProjectSettingsDialog(
             }
             
             Text(
-                text = "${project.conversationCount} chats • Tap emoji to change",
+                text = if (canChangeNameAndEmoji) "${project.conversationCount} chats • Tap emoji to change" 
+                       else "${project.conversationCount} chats",
                 fontSize = 13.sp,
                 color = GrayText,
                 modifier = Modifier.padding(top = 8.dp)
@@ -5362,8 +5386,11 @@ private fun ProjectSettingsDialog(
             Button(
                 onClick = { 
                     onSaveInstructions(instructions)
-                    onSaveEmoji?.invoke(selectedEmoji)
-                    onSaveName?.invoke(projectName)
+                    // Only save name/emoji if user has permission (owner or admin)
+                    if (canChangeNameAndEmoji) {
+                        onSaveEmoji?.invoke(selectedEmoji)
+                        onSaveName?.invoke(projectName)
+                    }
                     onDismiss() // Close dialog after saving
                 },
                 modifier = Modifier

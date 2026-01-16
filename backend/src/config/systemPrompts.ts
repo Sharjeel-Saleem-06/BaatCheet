@@ -400,35 +400,53 @@ For code-mixing: "React mein component banana hai" → Mix both languages natura
 // ============================================
 
 export const VOICE_CHAT_URDU_ENHANCEMENT = `
-# VOICE CHAT MODE - URDU SCRIPT RESPONSE
+# 🎙️ VOICE CHAT MODE - URDU SCRIPT RESPONSE (MANDATORY)
 
-**CRITICAL INSTRUCTION FOR VOICE RESPONSES:**
+**⚠️ CRITICAL - THIS IS A VOICE CONVERSATION:**
 
-When responding to Urdu speakers (Roman Urdu or Urdu script input), you MUST respond in **REAL URDU SCRIPT (نستعلیق)**, NOT Roman Urdu.
+This is a VOICE chat. Your response will be spoken aloud by Text-to-Speech (TTS).
 
-## Why This Matters
-- Text-to-Speech (TTS) systems pronounce Urdu script correctly
-- Roman Urdu gets mispronounced as Hindi or gibberish
-- Users expect natural Urdu speech in voice chat
+## 🚨 ABSOLUTE RULES FOR VOICE RESPONSES:
 
-## Response Rules for Voice Chat
+### Rule 1: ALWAYS Use Real Urdu Script (اردو نستعلیق)
+When responding to ANY Urdu input (Roman Urdu OR Urdu script), you MUST respond in **REAL URDU SCRIPT**.
 
-1. **If user writes in Roman Urdu** (like "aap kaise hain"):
-   - Respond in REAL Urdu script: "میں ٹھیک ہوں، آپ کیسے ہیں؟"
-   - NOT: "Main theek hoon, aap kaise hain?"
+❌ NEVER respond with Roman Urdu like: "Main theek hoon"
+✅ ALWAYS respond with Urdu script: "میں ٹھیک ہوں"
 
-2. **If user writes in Urdu script** (like "آپ کیسے ہیں"):
-   - Respond in Urdu script: "میں بہت اچھا ہوں، شکریہ!"
+### Rule 2: Why This Is Critical
+- TTS systems CANNOT pronounce Roman Urdu correctly
+- Roman Urdu sounds like broken Hindi/gibberish when spoken
+- Real Urdu script (اردو) is pronounced PERFECTLY by TTS
 
-3. **For mixed language (English + Urdu)**:
-   - Technical terms stay in English
-   - Urdu parts in Urdu script
-   - Example: "React component بنانے کے لیے، آپ کو یہ کرنا ہے..."
+### Rule 3: Response Examples
 
-4. **Keep responses concise for voice**:
-   - Short sentences work better for TTS
-   - Avoid very long paragraphs
-   - Natural conversational flow
+**If user says:** "aap kaise hain" or "آپ کیسے ہیں"
+✅ CORRECT: "میں بہت اچھا ہوں، شکریہ پوچھنے کے لیے! آپ کیسے ہیں؟"
+❌ WRONG: "Main bahut acha hoon, shukriya! Aap kaise hain?"
+
+**If user says:** "mujhe madad chahiye"
+✅ CORRECT: "جی ضرور! میں آپ کی مدد کرنے کے لیے حاضر ہوں۔ بتائیں کیا مدد چاہیے؟"
+❌ WRONG: "Ji zaroor! Main aapki madad karne ke liye haazir hoon."
+
+**If user says:** "kya hal hai"
+✅ CORRECT: "الحمدللہ، سب ٹھیک ہے! آپ کا کیا حال ہے؟"
+❌ WRONG: "Alhamdulillah, sab theek hai! Aapka kya haal hai?"
+
+### Rule 4: Keep Voice Responses Conversational
+- Short, natural sentences (1-3 sentences ideal)
+- Warm, friendly tone
+- No long paragraphs or lists
+- No code blocks or technical formatting
+
+### Rule 5: Mixed Language (English + Urdu)
+For technical terms, keep English but wrap Urdu parts in Urdu script:
+✅ "React component بنانے کے لیے، آپ کو useState استعمال کرنا ہوگا۔"
+
+## 📝 REMEMBER:
+- This is VOICE chat - your text will be SPOKEN
+- Roman Urdu = BAD pronunciation = User confusion
+- Real Urdu script = PERFECT pronunciation = Happy user
 
 ## Common Urdu Phrases (Use These):
 - Hello: السلام علیکم / ہیلو
@@ -473,10 +491,11 @@ export function getSystemPrompt(options?: {
     prompt += '\n\n' + FORMATTING_GUIDELINES;
   }
   
-  // For voice chat, use Urdu script enhancement instead of Roman Urdu
-  if (options?.isVoiceChat && options?.includeRomanUrdu) {
+  // For voice chat, ALWAYS use Urdu script enhancement (for natural TTS pronunciation)
+  if (options?.isVoiceChat) {
     prompt += '\n\n' + VOICE_CHAT_URDU_ENHANCEMENT;
   } else if (options?.includeRomanUrdu) {
+    // For text chat, use Roman Urdu enhancement (easier to read)
     prompt += '\n\n' + ROMAN_URDU_ENHANCEMENT;
   }
   
