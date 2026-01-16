@@ -1573,19 +1573,22 @@ class ChatRepository @Inject constructor(
     }
     
     /**
-     * Get available TTS voices
+     * Get available TTS voices with descriptions and friendly names
      */
     suspend fun getTTSVoices(): ApiResult<List<Voice>> {
         return try {
             val response = api.getTTSVoices()
             
             if (response.isSuccessful && response.body()?.success == true) {
-                val voices = response.body()?.data?.voices?.map { 
+                val voices = response.body()?.data?.voices?.map { voiceInfo ->
                     Voice(
-                        id = it.id,
-                        name = it.name,
-                        provider = it.provider,
-                        gender = it.gender
+                        id = voiceInfo.id,
+                        // Use friendly name mapping for better display
+                        name = getFriendlyVoiceName(voiceInfo.id, voiceInfo.name),
+                        provider = voiceInfo.provider,
+                        gender = voiceInfo.gender,
+                        // Generate description based on voice info
+                        description = getVoiceDescription(voiceInfo.id, voiceInfo.name, voiceInfo.language, voiceInfo.gender)
                     )
                 } ?: emptyList()
                 ApiResult.Success(voices)
@@ -1594,6 +1597,75 @@ class ChatRepository @Inject constructor(
             }
         } catch (e: Exception) {
             ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Map voice IDs to friendly display names
+     * Especially for Urdu voices to show appropriate names
+     */
+    private fun getFriendlyVoiceName(id: String, originalName: String): String {
+        return when (id) {
+            // Urdu / Multilingual voices - Use Pakistani/Hindi names
+            "pqHfZKP75CvOlQylNhV4" -> "Bilal (اردو)"  // Bill -> Bilal
+            "XB0fDUnXU5powFXDhCwa" -> "Arooj"          // Charlotte -> Arooj
+            "piTKgcLEGmPE4e6mEKli" -> "Nadia"          // Nicole -> Nadia
+            
+            // Keep English names as-is (they're already good)
+            else -> originalName
+        }
+    }
+    
+    /**
+     * Generate human-readable description for voices
+     * Maps ElevenLabs voice IDs to friendly descriptions
+     */
+    private fun getVoiceDescription(id: String, name: String, language: String?, gender: String?): String {
+        // Known ElevenLabs voices with custom descriptions
+        return when (id) {
+            // Urdu / Multilingual voices
+            "pqHfZKP75CvOlQylNhV4" -> "Natural Urdu speaker • Perfect for Urdu conversations"
+            "XB0fDUnXU5powFXDhCwa" -> "Roman Urdu & English mix • Conversational"
+            "piTKgcLEGmPE4e6mEKli" -> "Warm feminine voice • Hindi/Urdu friendly"
+            
+            // English voices
+            "EXAVITQu4vr4xnSDxMaL" -> "Natural & warm • Best for English"
+            "21m00Tcm4TlvDq8ikWAM" -> "Friendly & clear • American English"
+            "TxGEqnHWrfWFTfGW9XjX" -> "Deep & confident • Male voice"
+            "onwK4e9ZLuTAKqWW03F9" -> "British narrator • Clear pronunciation"
+            "N2lVS1w4EtoT3dr4eOWO" -> "Storyteller • Warm & engaging"
+            "VR6AewLTigWG4xSOukaG" -> "Deep & authoritative • Arnold"
+            "pNInz6obpgDQGcFmaJgB" -> "Natural male • Adam"
+            "yoZ06aMxZJJ28mfd3POQ" -> "Versatile • Sam"
+            "AZnzlk1XvdvUeBnXmlld" -> "Expressive feminine • Domi"
+            "MF3mGyEYCl7XYWbV9V6O" -> "Clear feminine • Elli"
+            
+            // Legacy OpenAI voices
+            "alloy" -> "Versatile and balanced"
+            "echo" -> "Warm and conversational"
+            "fable" -> "Expressive and dynamic"
+            "onyx" -> "Deep and authoritative"
+            "nova" -> "Friendly and upbeat"
+            "shimmer" -> "Clear and professional"
+            
+            // Default: generate from available info
+            else -> {
+                val langInfo = when (language?.lowercase()) {
+                    "ur" -> "Urdu"
+                    "hi" -> "Hindi"
+                    "en" -> "English"
+                    "multilingual" -> "Multilingual"
+                    else -> language ?: ""
+                }
+                val genderInfo = when (gender?.lowercase()) {
+                    "male" -> "Male"
+                    "female" -> "Female"
+                    else -> ""
+                }
+                listOfNotNull(langInfo.takeIf { it.isNotBlank() }, genderInfo.takeIf { it.isNotBlank() })
+                    .joinToString(" • ")
+                    .ifEmpty { "AI voice assistant" }
+            }
         }
     }
 }

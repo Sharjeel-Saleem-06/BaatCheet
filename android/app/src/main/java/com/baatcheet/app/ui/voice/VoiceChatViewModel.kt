@@ -242,23 +242,79 @@ class VoiceChatViewModel @Inject constructor(
         )
     )
     
-    private fun getVoiceColor(voiceId: String): Color = when (voiceId.lowercase()) {
+    /**
+     * Get voice color based on voice ID
+     * Supports both ElevenLabs IDs and legacy OpenAI voice names
+     */
+    private fun getVoiceColor(voiceId: String): Color = when (voiceId) {
+        // ============================================
+        // ElevenLabs Voice IDs (Primary)
+        // ============================================
+        // Urdu / Multilingual voices
+        "pqHfZKP75CvOlQylNhV4" -> VoiceAccent        // Bilal - Urdu (Green)
+        "XB0fDUnXU5powFXDhCwa" -> VoicePink          // Arooj - Roman Urdu
+        "piTKgcLEGmPE4e6mEKli" -> VoicePurple        // Nadia - Hindi/Urdu
+        
+        // English voices
+        "EXAVITQu4vr4xnSDxMaL" -> VoiceBlue          // Sarah
+        "21m00Tcm4TlvDq8ikWAM" -> Color(0xFF00C7BE)  // Rachel - Teal
+        "TxGEqnHWrfWFTfGW9XjX" -> VoiceOrange        // Josh
+        "onwK4e9ZLuTAKqWW03F9" -> Color(0xFF6366F1)  // Daniel - Indigo
+        "N2lVS1w4EtoT3dr4eOWO" -> Color(0xFFEC4899)  // Callum - Pink
+        "VR6AewLTigWG4xSOukaG" -> VoiceOrange        // Arnold
+        "pNInz6obpgDQGcFmaJgB" -> VoiceBlue          // Adam
+        "yoZ06aMxZJJ28mfd3POQ" -> VoicePurple        // Sam
+        "AZnzlk1XvdvUeBnXmlld" -> VoicePink          // Domi
+        "MF3mGyEYCl7XYWbV9V6O" -> Color(0xFF00C7BE)  // Elli
+        
+        // ============================================
+        // Legacy OpenAI Voice Names (Fallback)
+        // ============================================
         "alloy" -> VoiceAccent
         "echo" -> VoiceBlue
         "fable" -> VoicePurple
         "onyx" -> VoiceOrange
         "nova" -> VoicePink
         "shimmer" -> Color(0xFF00C7BE)
+        
         else -> VoiceAccent
     }
     
-    private fun getVoiceIcon(voiceId: String): String = when (voiceId.lowercase()) {
+    /**
+     * Get voice icon based on voice ID
+     * Supports both ElevenLabs IDs and legacy OpenAI voice names
+     */
+    private fun getVoiceIcon(voiceId: String): String = when (voiceId) {
+        // ============================================
+        // ElevenLabs Voice IDs (Primary)
+        // ============================================
+        // Urdu / Multilingual voices
+        "pqHfZKP75CvOlQylNhV4" -> "🇵🇰"  // Bilal - Urdu flag
+        "XB0fDUnXU5powFXDhCwa" -> "💬"    // Arooj - Speech bubble (Roman Urdu)
+        "piTKgcLEGmPE4e6mEKli" -> "🌸"    // Nadia - Flower (Hindi/Urdu feminine)
+        
+        // English voices
+        "EXAVITQu4vr4xnSDxMaL" -> "🎙️"    // Sarah - Microphone
+        "21m00Tcm4TlvDq8ikWAM" -> "✨"     // Rachel - Sparkle
+        "TxGEqnHWrfWFTfGW9XjX" -> "🔊"    // Josh - Speaker
+        "onwK4e9ZLuTAKqWW03F9" -> "🇬🇧"   // Daniel - UK flag
+        "N2lVS1w4EtoT3dr4eOWO" -> "📖"    // Callum - Book (storyteller)
+        "VR6AewLTigWG4xSOukaG" -> "💪"    // Arnold - Strong
+        "pNInz6obpgDQGcFmaJgB" -> "🎤"    // Adam - Microphone
+        "yoZ06aMxZJJ28mfd3POQ" -> "🎵"    // Sam - Music note
+        "AZnzlk1XvdvUeBnXmlld" -> "🌟"    // Domi - Star
+        "MF3mGyEYCl7XYWbV9V6O" -> "💫"    // Elli - Dizzy star
+        
+        // ============================================
+        // Legacy OpenAI Voice Names (Fallback)
+        // ============================================
         "alloy" -> "🎙️"
         "echo" -> "🔊"
         "fable" -> "📖"
         "onyx" -> "💎"
         "nova" -> "✨"
         "shimmer" -> "💫"
+        
         else -> "🎙️"
     }
     
