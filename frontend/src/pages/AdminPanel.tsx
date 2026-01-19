@@ -430,6 +430,7 @@ export default function AdminPanel() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['Health & System']));
   const [selectedEndpoint, setSelectedEndpoint] = useState<ApiEndpoint | null>(null);
@@ -448,10 +449,28 @@ export default function AdminPanel() {
   const fetchHealth = useCallback(async () => {
     try {
       const response = await fetch('/api/v1/health?detailed=true');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       setHealth(data);
-    } catch (error) {
-      console.error('Failed to fetch health:', error);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch health:', err);
+      setError('Failed to connect to backend. The server might be restarting.');
+      // Set a minimal health object so the UI doesn't break
+      setHealth({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        version: 'unknown',
+        environment: 'unknown',
+        uptime: 0,
+        services: {
+          database: { status: 'unhealthy', message: 'Unable to connect' },
+          redis: { status: 'unhealthy', message: 'Unable to connect' },
+          api: { status: 'unhealthy', message: 'Unable to connect' },
+        },
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -459,10 +478,14 @@ export default function AdminPanel() {
   }, []);
   
   useEffect(() => {
-    if (isLoaded && !isAdmin) {
+    if (!isLoaded) return; // Wait for Clerk to load
+    
+    if (!isAdmin) {
       navigate('/app/chat');
       return;
     }
+    
+    // Only fetch health if user is admin
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
@@ -692,6 +715,23 @@ export default function AdminPanel() {
       </header>
       
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-red-400 font-medium">{error}</p>
+              <p className="text-red-400/70 text-sm">Try refreshing or check the HuggingFace Space logs.</p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
