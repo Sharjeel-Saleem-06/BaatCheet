@@ -1,5 +1,4 @@
 # Netlify Configuration for BaatCheet Frontend
-# Using cd command since base directive is not being respected
 
 [build]
   # Navigate to frontend directory and build
@@ -10,19 +9,21 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Single Page Application redirect - all routes to index.html
-# Without force, this only applies when the file doesn't exist
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# IMPORTANT: Redirect order matters - first match wins!
 
-# API proxy to HuggingFace backend  
+# 1. API proxy to HuggingFace backend (force = true)
 [[redirects]]
   from = "/api/*"
   to = "https://sharry121-baatcheet.hf.space/api/:splat"
   status = 200
   force = true
+
+# 2. SPA fallback - all routes to index.html
+# This should be LAST and without force so static files are served first
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 # Headers for security and performance
 [[headers]]
@@ -47,9 +48,9 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Android App Links verification file
+# Android App Links verification file - serve as JSON
 [[headers]]
-  for = "/.well-known/assetlinks.json"
+  for = "/.well-known/*"
   [headers.values]
     Content-Type = "application/json"
     Access-Control-Allow-Origin = "*"
