@@ -85,3 +85,7 @@ backend/uploads/
 
 # Local Netlify folder
 .netlify
+
+# Embedded repositories (other projects in workspace)
+DocConverter/
+netlify-deploy-folder/
