@@ -302,6 +302,22 @@ model ProjectChatReadReceipt {
 }
 
 // ============================================
+// Project Chat Hidden Messages Model
+// Track messages hidden for specific users (delete for me)
+// ============================================
+model ProjectChatHiddenMessage {
+  id              String   @id @default(uuid())
+  messageId       String   @map("message_id")
+  userId          String   @map("user_id")  // User who hid this message
+  hiddenAt        DateTime @default(now()) @map("hidden_at")
+  
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
+  @@map("project_chat_hidden_messages")
+}
+
+// ============================================
 // Message Feedback Model (Like/Dislike Learning)
 // ============================================
 model MessageFeedback {

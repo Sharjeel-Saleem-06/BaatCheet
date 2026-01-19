@@ -49,7 +49,8 @@ interface ChatMessage {
     senderId: string;
   };
   canEdit: boolean;
-  canDelete: boolean;
+  canDeleteForMe: boolean;
+  canDeleteForEveryone: boolean;
   createdAt: string;
 }
 
@@ -191,25 +192,36 @@ export default function ProjectChat({ projectId, myRole }: ProjectChatProps) {
     }
   };
 
-  // Delete message
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Delete this message?')) return;
+  // Delete message - supports both "delete for me" and "delete for everyone"
+  const handleDeleteMessage = async (messageId: string, deleteForEveryone: boolean = false) => {
+    const confirmMsg = deleteForEveryone 
+      ? 'Delete this message for everyone? This cannot be undone.'
+      : 'Hide this message? Only you won\'t see it anymore.';
+    
+    if (!confirm(confirmMsg)) return;
 
     try {
       const token = await getClerkToken();
-      const response = await fetch(`/api/v1/projects/${projectId}/chat/messages/${messageId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `/api/v1/projects/${projectId}/chat/messages/${messageId}?deleteForEveryone=${deleteForEveryone}`, 
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) throw new Error('Failed to delete message');
 
+      // Remove from local state
       setMessages(prev => prev.filter(m => m.id !== messageId));
     } catch (err) {
       console.error('Delete message error:', err);
       setError('Failed to delete message');
     }
   };
+
+  // State for delete menu
+  const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
 
   // Update chat settings (admin only)
   const handleUpdateSettings = async (newSettings: Partial<ChatSettings>) => {
@@ -547,8 +559,8 @@ export default function ProjectChat({ projectId, myRole }: ProjectChatProps) {
                   </div>
 
                   {/* Actions */}
-                  {(msg.canEdit || msg.canDelete || canSendMessage) && (
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-start gap-1">
+                  {(msg.canEdit || msg.canDeleteForMe || msg.canDeleteForEveryone || canSendMessage) && (
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-start gap-1 relative">
                       {canSendMessage && (
                         <button
                           onClick={() => setReplyingTo(msg)}
@@ -570,14 +582,45 @@ export default function ProjectChat({ projectId, myRole }: ProjectChatProps) {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
-                      {(msg.canDelete || myRole === 'admin') && (
-                        <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1 text-dark-400 hover:text-red-500 hover:bg-red-500/10 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {/* Delete button with dropdown menu */}
+                      {(msg.canDeleteForMe || msg.canDeleteForEveryone) && (
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowDeleteMenu(showDeleteMenu === msg.id ? null : msg.id)}
+                            className="p-1 text-dark-400 hover:text-red-500 hover:bg-red-500/10 rounded"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          {showDeleteMenu === msg.id && (
+                            <div className="absolute right-0 top-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+                              {msg.canDeleteForMe && (
+                                <button
+                                  onClick={() => {
+                                    handleDeleteMessage(msg.id, false);
+                                    setShowDeleteMenu(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-dark-200 hover:bg-dark-700 flex items-center gap-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  Delete for me
+                                </button>
+                              )}
+                              {msg.canDeleteForEveryone && (
+                                <button
+                                  onClick={() => {
+                                    handleDeleteMessage(msg.id, true);
+                                    setShowDeleteMenu(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete for everyone
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}

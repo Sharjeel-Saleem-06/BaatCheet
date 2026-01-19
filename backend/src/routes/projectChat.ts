@@ -6,39 +6,61 @@ import { logger } from '../utils/logger.js';
 const router = Router();
 
 // ============================================
-// Helper Functions
+// Helper Functions - Security & Access Control
 // ============================================
 
 /**
  * Check if user has access to project and get their role
+ * This is the CORE security function - ensures users can only access their projects
  */
 async function getUserProjectAccess(projectId: string, userId: string) {
-  const project = await prisma.project.findFirst({
+  // First, verify the project exists
+  const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
-      collaborators: {
-        where: { userId },
-      },
       chatSettings: true,
     },
   });
 
   if (!project) return null;
 
+  // Check if user is the owner
   const isOwner = project.userId === userId;
-  const collaborator = project.collaborators[0];
   
-  if (!isOwner && !collaborator) return null;
+  if (isOwner) {
+    return {
+      project,
+      isOwner: true,
+      role: 'admin' as const,
+      collaborator: null,
+      chatSettings: project.chatSettings,
+      canEdit: true,
+      canDelete: true,
+      canInvite: true,
+      canManageRoles: true,
+    };
+  }
 
-  const role = isOwner ? 'admin' : (collaborator?.role || 'viewer');
-  const chatSettings = project.chatSettings;
+  // Check if user is a collaborator
+  const collaborator = await prisma.projectCollaborator.findUnique({
+    where: {
+      projectId_userId: { projectId, userId },
+    },
+  });
+
+  // If not owner and not collaborator, NO ACCESS
+  if (!collaborator) return null;
 
   return {
     project,
-    isOwner,
-    role,
+    isOwner: false,
+    role: collaborator.role as 'admin' | 'moderator' | 'viewer',
     collaborator,
-    chatSettings,
+    chatSettings: project.chatSettings,
+    canEdit: collaborator.canEdit,
+    canDelete: collaborator.canDelete,
+    canInvite: collaborator.canInvite,
+    canManageRoles: collaborator.canManageRoles,
   };
 }
 
@@ -59,6 +81,49 @@ function canSendMessage(role: string, chatAccess: string | undefined): boolean {
   }
 }
 
+/**
+ * Check if user can edit a specific message
+ * Only the sender can edit their own messages (if editing is allowed)
+ */
+function canEditMessage(
+  message: { senderId: string },
+  userId: string,
+  settings: { allowEditing?: boolean } | null
+): boolean {
+  // Only sender can edit
+  if (message.senderId !== userId) return false;
+  // Check if editing is allowed in settings
+  return settings?.allowEditing !== false;
+}
+
+/**
+ * Check if user can delete a specific message
+ * - Sender can delete their own messages (if allowed)
+ * - Admin can delete any message
+ */
+function canDeleteMessage(
+  message: { senderId: string },
+  userId: string,
+  role: string,
+  settings: { allowDeleting?: boolean } | null
+): { canDeleteForMe: boolean; canDeleteForEveryone: boolean } {
+  const isSender = message.senderId === userId;
+  const isAdmin = role === 'admin';
+  
+  // Everyone can "delete for me" (hide message)
+  const canDeleteForMe = true;
+  
+  // Delete for everyone: sender (if allowed) or admin
+  let canDeleteForEveryone = false;
+  if (isAdmin) {
+    canDeleteForEveryone = true;
+  } else if (isSender && settings?.allowDeleting !== false) {
+    canDeleteForEveryone = true;
+  }
+  
+  return { canDeleteForMe, canDeleteForEveryone };
+}
+
 // ============================================
 // Chat Settings Routes
 // ============================================
@@ -75,9 +140,10 @@ router.get(
       const userId = req.user!.id;
       const { projectId } = req.params;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
@@ -118,9 +184,10 @@ router.put(
       const { projectId } = req.params;
       const { chatAccess, allowImages, allowEmojis, allowEditing, allowDeleting } = req.body;
 
+      // SECURITY: Verify user has access and is admin
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
@@ -187,6 +254,8 @@ router.put(
 /**
  * GET /api/v1/projects/:projectId/chat/messages
  * Get chat messages for a project
+ * SECURITY: Only returns messages for projects user has access to
+ * Excludes messages deleted for everyone and messages hidden by this user
  */
 router.get(
   '/:projectId/chat/messages',
@@ -197,16 +266,25 @@ router.get(
       const { projectId } = req.params;
       const { limit = '50', before, after } = req.query;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
+
+      // Get messages hidden by this user
+      const hiddenMessages = await prisma.projectChatHiddenMessage.findMany({
+        where: { userId },
+        select: { messageId: true },
+      });
+      const hiddenMessageIds = hiddenMessages.map(h => h.messageId);
 
       // Build query conditions
       const whereConditions: any = {
         projectId,
-        isDeleted: false,
+        isDeleted: false, // Exclude messages deleted for everyone
+        id: { notIn: hiddenMessageIds }, // Exclude messages hidden by this user
       };
 
       if (before) {
@@ -226,6 +304,7 @@ router.get(
               id: true,
               content: true,
               senderId: true,
+              isDeleted: true,
             },
           },
         },
@@ -246,20 +325,25 @@ router.get(
       });
       const roleMap = new Map(collaborators.map(c => [c.userId, c.role]));
 
-      // Check if project owner is in senders
-      const isOwnerInSenders = senderIds.includes(access.project.userId);
+      // Get chat settings for permissions
+      const settings = access.chatSettings || { chatAccess: 'all', allowImages: true, allowEmojis: true, allowEditing: true, allowDeleting: true };
 
-      const items = messages.map(m => ({
-        ...m,
-        sender: senderMap.get(m.senderId) || null,
-        senderRole: m.senderId === access.project.userId ? 'admin' : (roleMap.get(m.senderId) || 'viewer'),
-        isOwner: m.senderId === access.project.userId,
-        canEdit: m.senderId === userId && access.chatSettings?.allowEditing !== false,
-        canDelete: m.senderId === userId && access.chatSettings?.allowDeleting !== false,
-      }));
-
-      // Get chat settings for response
-      const settings = access.chatSettings || { chatAccess: 'all', allowImages: true, allowEmojis: true };
+      const items = messages.map(m => {
+        const senderRole = m.senderId === access.project.userId ? 'admin' : (roleMap.get(m.senderId) || 'viewer');
+        const deletePerms = canDeleteMessage(m, userId, access.role, settings);
+        
+        return {
+          ...m,
+          sender: senderMap.get(m.senderId) || null,
+          senderRole,
+          isOwner: m.senderId === access.project.userId,
+          canEdit: canEditMessage(m, userId, settings),
+          canDeleteForMe: deletePerms.canDeleteForMe,
+          canDeleteForEveryone: deletePerms.canDeleteForEveryone,
+          // Hide reply content if reply was deleted
+          replyTo: m.replyTo?.isDeleted ? { ...m.replyTo, content: '[Message deleted]' } : m.replyTo,
+        };
+      });
 
       res.json({
         success: true,
@@ -287,6 +371,7 @@ router.get(
 /**
  * POST /api/v1/projects/:projectId/chat/messages
  * Send a chat message
+ * SECURITY: Verifies user has access and permission to send messages
  */
 router.post(
   '/:projectId/chat/messages',
@@ -302,19 +387,20 @@ router.post(
         return;
       }
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
-      // Check if user can send messages
+      // Check if user can send messages based on role and settings
       const settings = access.chatSettings || { chatAccess: 'all', allowImages: true, allowEmojis: true };
       
       if (!canSendMessage(access.role, settings.chatAccess)) {
         res.status(403).json({ 
           success: false, 
-          error: 'You do not have permission to send messages in this chat. Only admins and moderators can send messages.' 
+          error: `You do not have permission to send messages. Chat is restricted to ${settings.chatAccess === 'admin_only' ? 'admin only' : 'admins and moderators'}.`
         });
         return;
       }
@@ -325,10 +411,14 @@ router.post(
         return;
       }
 
-      // Validate reply target exists
+      // Validate reply target exists and is in the same project
       if (replyToId) {
         const replyTarget = await prisma.projectChatMessage.findFirst({
-          where: { id: replyToId, projectId, isDeleted: false },
+          where: { 
+            id: replyToId, 
+            projectId, // SECURITY: Ensure reply is to a message in the same project
+            isDeleted: false 
+          },
         });
         if (!replyTarget) {
           res.status(400).json({ success: false, error: 'Reply target message not found' });
@@ -365,6 +455,8 @@ router.post(
 
       logger.info('Chat message sent', { projectId, userId, messageId: message.id });
 
+      const deletePerms = canDeleteMessage(message, userId, access.role, settings);
+
       res.status(201).json({
         success: true,
         data: {
@@ -373,7 +465,8 @@ router.post(
           senderRole: access.role,
           isOwner: access.isOwner,
           canEdit: settings.allowEditing !== false,
-          canDelete: settings.allowDeleting !== false,
+          canDeleteForMe: deletePerms.canDeleteForMe,
+          canDeleteForEveryone: deletePerms.canDeleteForEveryone,
         },
         message: 'Message sent',
       });
@@ -387,6 +480,7 @@ router.post(
 /**
  * PUT /api/v1/projects/:projectId/chat/messages/:messageId
  * Edit a chat message (only sender can edit their own messages)
+ * SECURITY: Verifies user owns the message and has edit permission
  */
 router.put(
   '/:projectId/chat/messages/:messageId',
@@ -402,22 +496,20 @@ router.put(
         return;
       }
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
-      // Check if editing is allowed
-      const settings = access.chatSettings || { allowEditing: true };
-      if (!settings.allowEditing) {
-        res.status(403).json({ success: false, error: 'Editing messages is not allowed in this chat' });
-        return;
-      }
-
-      // Find the message
+      // Find the message - SECURITY: Ensure it belongs to this project
       const message = await prisma.projectChatMessage.findFirst({
-        where: { id: messageId, projectId, isDeleted: false },
+        where: { 
+          id: messageId, 
+          projectId, // SECURITY: Must be in the same project
+          isDeleted: false 
+        },
       });
 
       if (!message) {
@@ -425,9 +517,16 @@ router.put(
         return;
       }
 
-      // Only sender can edit their own messages
+      // SECURITY: Only sender can edit their own messages
       if (message.senderId !== userId) {
         res.status(403).json({ success: false, error: 'You can only edit your own messages' });
+        return;
+      }
+
+      // Check if editing is allowed
+      const settings = access.chatSettings || { allowEditing: true };
+      if (!settings.allowEditing) {
+        res.status(403).json({ success: false, error: 'Editing messages is not allowed in this chat' });
         return;
       }
 
@@ -463,7 +562,10 @@ router.put(
 
 /**
  * DELETE /api/v1/projects/:projectId/chat/messages/:messageId
- * Delete a chat message (sender can delete their own, admin can delete any)
+ * Delete a chat message
+ * SECURITY: Verifies permissions and supports two delete modes:
+ * - deleteForEveryone: Soft delete (marks as deleted) - sender or admin
+ * - deleteForMe: Hides message for this user only
  */
 router.delete(
   '/:projectId/chat/messages/:messageId',
@@ -472,19 +574,22 @@ router.delete(
     try {
       const userId = req.user!.id;
       const { projectId, messageId } = req.params;
+      const { deleteForEveryone = false } = req.query;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
-      // Check if deleting is allowed
-      const settings = access.chatSettings || { allowDeleting: true };
-      
-      // Find the message
+      // Find the message - SECURITY: Ensure it belongs to this project
       const message = await prisma.projectChatMessage.findFirst({
-        where: { id: messageId, projectId, isDeleted: false },
+        where: { 
+          id: messageId, 
+          projectId, // SECURITY: Must be in the same project
+          isDeleted: false 
+        },
       });
 
       if (!message) {
@@ -498,37 +603,61 @@ router.delete(
         return;
       }
 
-      // Check permissions
-      const isSender = message.senderId === userId;
-      const isAdmin = access.role === 'admin';
+      const settings = access.chatSettings || { allowDeleting: true };
+      const deletePerms = canDeleteMessage(message, userId, access.role, settings);
 
-      if (!isSender && !isAdmin) {
-        res.status(403).json({ success: false, error: 'You can only delete your own messages' });
-        return;
+      if (deleteForEveryone === 'true' || deleteForEveryone === true) {
+        // DELETE FOR EVERYONE - Soft delete
+        if (!deletePerms.canDeleteForEveryone) {
+          res.status(403).json({ 
+            success: false, 
+            error: access.role !== 'admin' && !settings.allowDeleting 
+              ? 'Deleting messages is not allowed in this chat' 
+              : 'You can only delete your own messages'
+          });
+          return;
+        }
+
+        // Soft delete message
+        await prisma.projectChatMessage.update({
+          where: { id: messageId },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+            deletedBy: userId,
+          },
+        });
+
+        logger.info('Chat message deleted for everyone', { projectId, messageId, userId, deletedBy: access.role === 'admin' ? 'admin' : 'sender' });
+
+        res.json({
+          success: true,
+          message: 'Message deleted for everyone',
+          deleteType: 'everyone',
+        });
+      } else {
+        // DELETE FOR ME - Hide message for this user only
+        await prisma.projectChatHiddenMessage.upsert({
+          where: {
+            messageId_userId: { messageId, userId },
+          },
+          create: {
+            messageId,
+            userId,
+          },
+          update: {
+            hiddenAt: new Date(),
+          },
+        });
+
+        logger.info('Chat message hidden for user', { projectId, messageId, userId });
+
+        res.json({
+          success: true,
+          message: 'Message hidden for you',
+          deleteType: 'me',
+        });
       }
-
-      // If sender but deleting is disabled, only admin can delete
-      if (isSender && !settings.allowDeleting && !isAdmin) {
-        res.status(403).json({ success: false, error: 'Deleting messages is not allowed in this chat' });
-        return;
-      }
-
-      // Soft delete message
-      await prisma.projectChatMessage.update({
-        where: { id: messageId },
-        data: {
-          isDeleted: true,
-          deletedAt: new Date(),
-          deletedBy: userId,
-        },
-      });
-
-      logger.info('Chat message deleted', { projectId, messageId, userId, deletedBy: isAdmin ? 'admin' : 'sender' });
-
-      res.json({
-        success: true,
-        message: 'Message deleted',
-      });
     } catch (error) {
       logger.error('Delete chat message error:', error);
       res.status(500).json({ success: false, error: 'Failed to delete message' });
@@ -548,9 +677,20 @@ router.post(
       const userId = req.user!.id;
       const { projectId, messageId } = req.params;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
+        return;
+      }
+
+      // Verify message exists in this project
+      const message = await prisma.projectChatMessage.findFirst({
+        where: { id: messageId, projectId },
+      });
+
+      if (!message) {
+        res.status(404).json({ success: false, error: 'Message not found' });
         return;
       }
 
@@ -591,13 +731,14 @@ router.post(
       const userId = req.user!.id;
       const { projectId } = req.params;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
-      // Get all unread messages
+      // Get all unread messages in this project
       const messages = await prisma.projectChatMessage.findMany({
         where: {
           projectId,
@@ -643,18 +784,27 @@ router.get(
       const userId = req.user!.id;
       const { projectId } = req.params;
 
+      // SECURITY: Verify user has access to this project
       const access = await getUserProjectAccess(projectId, userId);
       if (!access) {
-        res.status(404).json({ success: false, error: 'Project not found or no access' });
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
         return;
       }
 
-      // Count unread messages
+      // Get messages hidden by this user
+      const hiddenMessages = await prisma.projectChatHiddenMessage.findMany({
+        where: { userId },
+        select: { messageId: true },
+      });
+      const hiddenMessageIds = hiddenMessages.map(h => h.messageId);
+
+      // Count unread messages (excluding hidden and own messages)
       const unreadCount = await prisma.projectChatMessage.count({
         where: {
           projectId,
           isDeleted: false,
           senderId: { not: userId }, // Don't count own messages
+          id: { notIn: hiddenMessageIds }, // Don't count hidden messages
           readReceipts: {
             none: { userId },
           },
@@ -668,6 +818,44 @@ router.get(
     } catch (error) {
       logger.error('Get unread count error:', error);
       res.status(500).json({ success: false, error: 'Failed to get unread count' });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/projects/:projectId/chat/unhide/:messageId
+ * Unhide a message that was hidden (delete for me)
+ */
+router.post(
+  '/:projectId/chat/unhide/:messageId',
+  clerkAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user!.id;
+      const { projectId, messageId } = req.params;
+
+      // SECURITY: Verify user has access to this project
+      const access = await getUserProjectAccess(projectId, userId);
+      if (!access) {
+        res.status(403).json({ success: false, error: 'Access denied. You are not a member of this project.' });
+        return;
+      }
+
+      // Remove the hidden record
+      await prisma.projectChatHiddenMessage.deleteMany({
+        where: {
+          messageId,
+          userId,
+        },
+      });
+
+      res.json({
+        success: true,
+        message: 'Message unhidden',
+      });
+    } catch (error) {
+      logger.error('Unhide message error:', error);
+      res.status(500).json({ success: false, error: 'Failed to unhide message' });
     }
   }
 );
