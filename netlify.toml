@@ -10,6 +10,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Serve assetlinks.json for Android App Links verification
+[[redirects]]
+  from = "/.well-known/assetlinks.json"
+  to = "/.well-known/assetlinks.json"
+  status = 200
+  force = true
+
 # Single Page Application redirect - all routes to index.html
 [[redirects]]
   from = "/*"
@@ -45,3 +52,10 @@
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Android App Links verification file
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
