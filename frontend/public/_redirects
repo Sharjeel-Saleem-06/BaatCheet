@@ -1,8 +1,3 @@
-# Netlify redirects for SPA and API proxy
-
-# API proxy to HuggingFace backend (force with !)
+# Netlify redirects
+# API proxy to HuggingFace backend
 /api/*  https://sharry121-baatcheet.hf.space/api/:splat  200!
-
-# SPA fallback - all routes to index.html
-# Without !, this only applies when the file doesn't exist
-/*    /index.html   200
