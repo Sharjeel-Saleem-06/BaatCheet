@@ -1,12 +1,12 @@
 # Netlify Configuration for BaatCheet Frontend
+# NOTE: If this doesn't work, go to Netlify Dashboard > Site Settings > Build & Deploy
+# and set: Base directory = frontend, Build command = npm install && npm run build, Publish = frontend/dist
 
 [build]
-  # Base directory (where package.json is located)
-  base = "frontend/"
-  # Build command - install dependencies first
-  command = "npm install && npm run build"
-  # Output directory (relative to base, so just "dist")
-  publish = "dist"
+  # CD into frontend and build there
+  command = "cd frontend && npm install && npm run build"
+  # Publish from frontend/dist
+  publish = "frontend/dist"
 
 [build.environment]
   NODE_VERSION = "18"
