@@ -26,6 +26,7 @@ import {
 import { projects } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
+import ProjectChat from '../components/ProjectChat';
 
 interface Collaborator {
   id: string;
@@ -50,6 +51,7 @@ interface Project {
   contextInstructions?: string;
   ownerId: string;
   isOwner?: boolean;
+  myRole?: 'admin' | 'moderator' | 'viewer';
   collaborators?: Collaborator[];
   _count?: { conversations: number; collaborators: number };
 }
@@ -490,6 +492,18 @@ export default function Projects() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Team Chat - Only show if there are collaborators */}
+            {(selectedProject.collaborators && selectedProject.collaborators.length > 0) && (
+              <div className="mb-6">
+                <ProjectChat
+                  projectId={selectedProject.id}
+                  projectName={selectedProject.name}
+                  isOwner={selectedProject.isOwner || false}
+                  myRole={selectedProject.myRole || (selectedProject.isOwner ? 'admin' : 'viewer')}
+                />
               </div>
             )}
 

@@ -29,6 +29,7 @@ import imageGenRoutes from './imageGen.js';
 import tagsRoutes from './tags.js';
 import modesRoutes from './modes.js';
 import mobileAuthRoutes from './mobileAuth.js';
+import projectChatRoutes from './projectChat.js';
 
 const router = Router();
 
@@ -50,6 +51,9 @@ router.use('/conversations', conversationRoutes);
 
 // Projects
 router.use('/projects', projectRoutes);
+
+// Project Chat (nested under projects)
+router.use('/projects', projectChatRoutes);
 
 // Images (upload, OCR, analysis)
 router.use('/images', imageRoutes);

@@ -7,7 +7,7 @@ export default async (request, context) => {
         namespace: "android_app",
         package_name: "com.baatcheet.app",
         sha256_cert_fingerprints: [
-          "83:69:D4:26:DE:B0:23:D3:F4:57:11:DE:AD:A8:3F:8E:5C:B3:5D:EC"
+          "69:BB:5D:38:A6:D4:FA:B6:83:26:34:DD:7D:E6:3B:F8:58:C1:55:98:6F:F2:6D:35:AB:71:40:0D:D6:A7:04:F7"
         ]
       }
     }

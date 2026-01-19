@@ -857,6 +857,7 @@ router.get(
 /**
  * POST /api/v1/projects/:id/invite
  * Invite a collaborator to a project (owner or collaborator with canInvite permission)
+ * Role must be specified and will be assigned on acceptance
  */
 router.post(
   '/:id/invite',
@@ -869,6 +870,12 @@ router.post(
 
       if (!email) {
         res.status(400).json({ success: false, error: 'Email is required' });
+        return;
+      }
+
+      // Validate role
+      if (!['admin', 'moderator', 'viewer'].includes(role)) {
+        res.status(400).json({ success: false, error: 'Invalid role. Must be admin, moderator, or viewer.' });
         return;
       }
 
@@ -936,14 +943,16 @@ router.post(
         return;
       }
 
-      // Create invitation
+      // Create invitation with specified role (role is now an enum)
+      const roleEnum = role === 'admin' ? 'admin' : role === 'moderator' ? 'moderator' : 'viewer';
+      
       const invitation = await prisma.projectInvitation.create({
         data: {
           projectId: id,
           inviterId: userId,
           inviteeEmail: email.toLowerCase(),
           inviteeId: invitee?.id || null,
-          role,
+          role: roleEnum as any, // Cast to ProjectRole enum
           message,
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         },
@@ -1065,16 +1074,11 @@ router.post(
       }
 
       if (accept) {
-        // Set permissions based on role
-        // admin: full access (edit, delete, invite, manage roles)
-        // moderator: can edit and create, but not delete
-        // viewer: read-only access
-        const roleStr = invitation.role || 'viewer';
-        const isAdmin = roleStr === 'admin';
-        const isModerator = roleStr === 'moderator';
-
-        // Map string to ProjectRole enum
-        const roleEnum = roleStr === 'admin' ? 'admin' : roleStr === 'moderator' ? 'moderator' : 'viewer';
+        // Set permissions based on role from invitation
+        // The role is already a ProjectRole enum from the invitation
+        const roleValue = invitation.role;
+        const isAdmin = roleValue === 'admin';
+        const isModerator = roleValue === 'moderator';
 
         // Add as collaborator with role-based permissions
         // Role permissions:
@@ -1086,7 +1090,7 @@ router.post(
           data: {
             projectId: invitation.projectId,
             userId: userId,
-            role: roleEnum as any, // Cast to ProjectRole
+            role: roleValue, // Use the role directly from invitation (already ProjectRole enum)
             addedBy: invitation.inviterId,
             canEdit: isAdmin || isModerator, // Admin and Moderator can edit context/instructions
             canDelete: isAdmin, // Only Admin can delete chats

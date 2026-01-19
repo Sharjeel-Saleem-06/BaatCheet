@@ -132,6 +132,8 @@ model Project {
   conversations Conversation[]
   collaborators ProjectCollaborator[]
   invitations   ProjectInvitation[]
+  chatSettings  ProjectChatSettings?
+  chatMessages  ProjectChatMessage[]
   
   @@index([userId])
   @@index([isArchived])
@@ -186,7 +188,7 @@ model ProjectInvitation {
   inviterId   String   @map("inviter_id")  // User who sent invitation
   inviteeEmail String  @map("invitee_email")
   inviteeId   String?  @map("invitee_id")  // If user exists in system
-  role        String   @default("viewer")  // Role to assign on acceptance
+  role        ProjectRole @default(viewer)  // Role to assign on acceptance
   status      String   @default("pending")  // pending, accepted, rejected, expired
   message     String?  // Optional message from inviter
   
@@ -201,6 +203,102 @@ model ProjectInvitation {
   @@index([projectId])
   @@index([status])
   @@map("project_invitations")
+}
+
+// ============================================
+// Project Chat Settings Model
+// Controls who can send messages in project chat
+// ============================================
+model ProjectChatSettings {
+  id                String   @id @default(uuid())
+  projectId         String   @unique @map("project_id")
+  
+  // Chat access control - who can send messages
+  chatAccess        ChatAccessLevel @default(all) @map("chat_access")
+  
+  // Feature toggles
+  allowImages       Boolean  @default(true) @map("allow_images")
+  allowEmojis       Boolean  @default(true) @map("allow_emojis")
+  allowEditing      Boolean  @default(true) @map("allow_editing")  // Can users edit their messages
+  allowDeleting     Boolean  @default(true) @map("allow_deleting")  // Can users delete their messages
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("project_chat_settings")
+}
+
+// Chat access levels
+enum ChatAccessLevel {
+  all              // All collaborators can send messages
+  admin_moderator  // Only admin and moderators can send messages
+  admin_only       // Only admin can send messages
+}
+
+// ============================================
+// Project Chat Message Model
+// Messages in project collaboration chat
+// ============================================
+model ProjectChatMessage {
+  id              String   @id @default(uuid())
+  projectId       String   @map("project_id")
+  senderId        String   @map("sender_id")  // User ID who sent the message
+  
+  // Message content
+  content         String   @db.Text
+  messageType     ProjectMessageType @default(text) @map("message_type")
+  
+  // For image messages
+  imageUrl        String?  @map("image_url") @db.Text
+  imageThumbnail  String?  @map("image_thumbnail") @db.Text
+  
+  // Edit/Delete tracking
+  isEdited        Boolean  @default(false) @map("is_edited")
+  editedAt        DateTime? @map("edited_at")
+  isDeleted       Boolean  @default(false) @map("is_deleted")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?  @map("deleted_by")  // User ID who deleted (for admin deletes)
+  
+  // Reply support
+  replyToId       String?  @map("reply_to_id")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  replyTo         ProjectChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies         ProjectChatMessage[] @relation("MessageReplies")
+  readReceipts    ProjectChatReadReceipt[]
+  
+  @@index([projectId, createdAt])
+  @@index([senderId])
+  @@index([isDeleted])
+  @@map("project_chat_messages")
+}
+
+enum ProjectMessageType {
+  text
+  image
+  system  // System messages like "User joined", "Settings changed"
+}
+
+// ============================================
+// Project Chat Read Receipt Model
+// Track who has read messages
+// ============================================
+model ProjectChatReadReceipt {
+  id              String   @id @default(uuid())
+  messageId       String   @map("message_id")
+  userId          String   @map("user_id")
+  readAt          DateTime @default(now()) @map("read_at")
+  
+  message         ProjectChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("project_chat_read_receipts")
 }
 
 // ============================================
