@@ -283,8 +283,7 @@ interface BaatCheetApi {
     suspend fun getProjectChatMessages(
         @Path("id") projectId: String,
         @Query("limit") limit: Int = 50,
-        @Query("before") before: String? = null,
-        @Query("after") after: String? = null
+        @Query("offset") offset: Int = 0
     ): Response<ProjectChatMessagesResponse>
     
     /**
@@ -303,7 +302,7 @@ interface BaatCheetApi {
     suspend fun editProjectChatMessage(
         @Path("id") projectId: String,
         @Path("messageId") messageId: String,
-        @Body request: Map<String, String>
+        @Body request: EditProjectChatMessageRequest
     ): Response<SendProjectChatMessageResponse>
     
     /**

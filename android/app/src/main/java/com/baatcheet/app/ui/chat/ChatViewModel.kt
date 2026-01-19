@@ -123,6 +123,14 @@ data class ChatState(
     val projectCollaborators: com.baatcheet.app.data.repository.ProjectCollaborators? = null,
     val isLoadingCollaborators: Boolean = false,
     
+    // Team Chat (Project Collaboration Chat)
+    val teamChatMessages: List<com.baatcheet.app.data.remote.dto.ProjectChatMessageDto> = emptyList(),
+    val teamChatSettings: com.baatcheet.app.data.remote.dto.ProjectChatSettingsWithPermissions? = null,
+    val canSendTeamMessage: Boolean = false,
+    val isLoadingTeamChat: Boolean = false,
+    val isSendingTeamMessage: Boolean = false,
+    val teamChatError: String? = null,
+    
     // Templates
     val templates: List<Template> = emptyList(),
     val isLoadingTemplates: Boolean = false,
@@ -368,6 +376,27 @@ class ChatViewModel @Inject constructor(
     /**
      * Handle API errors consistently and clear all loading states
      */
+    /**
+     * Parse ISO timestamp string to Long milliseconds
+     */
+    private fun parseTimestamp(isoTimestamp: String?): Long {
+        if (isoTimestamp == null) return System.currentTimeMillis()
+        return try {
+            val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+            formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            formatter.parse(isoTimestamp)?.time ?: System.currentTimeMillis()
+        } catch (e: Exception) {
+            try {
+                // Try without milliseconds
+                val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault())
+                formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                formatter.parse(isoTimestamp)?.time ?: System.currentTimeMillis()
+            } catch (e2: Exception) {
+                System.currentTimeMillis()
+            }
+        }
+    }
+    
     private fun handleApiError(errorMessage: String) {
         _state.update { state ->
             val updatedMessages = state.messages.toMutableList()
@@ -451,6 +480,55 @@ class ChatViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             error = result.message
+                        )
+                    }
+                }
+                
+                is ApiResult.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+    
+    /**
+     * Load a shared conversation from a share link
+     * This fetches the shared conversation by its shareId and displays it
+     */
+    fun loadSharedConversation(shareId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+            
+            when (val result = chatRepository.getSharedConversation(shareId)) {
+                is ApiResult.Success -> {
+                    val shared = result.data
+                    // Convert shared messages to ChatMessage format
+                    val messages = shared.messages.map { msg ->
+                        ChatMessage(
+                            id = msg.id ?: java.util.UUID.randomUUID().toString(),
+                            content = msg.content ?: "",
+                            role = if (msg.role == "user") MessageRole.USER else MessageRole.ASSISTANT,
+                            timestamp = parseTimestamp(msg.createdAt)
+                        )
+                    }
+                    
+                    _state.update {
+                        it.copy(
+                            messages = messages,
+                            // Use originalConversationId if available, otherwise use shareId
+                            currentConversationId = shared.originalConversationId ?: shareId,
+                            isLoading = false,
+                            error = null
+                        )
+                    }
+                    
+                    // Refresh conversations list
+                    loadConversations()
+                }
+                
+                is ApiResult.Error -> {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Could not load shared conversation: ${result.message}"
                         )
                     }
                 }
@@ -2126,6 +2204,170 @@ class ChatViewModel @Inject constructor(
                 is ApiResult.Loading -> { /* Ignore */ }
             }
         }
+    }
+    
+    // ============================================
+    // Team Chat Operations
+    // ============================================
+    
+    /**
+     * Load team chat messages for a project
+     */
+    fun loadTeamChatMessages(projectId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingTeamChat = true, teamChatError = null) }
+            
+            when (val result = chatRepository.getProjectChatMessages(projectId)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(
+                        teamChatMessages = result.data.messages ?: emptyList(),
+                        teamChatSettings = result.data.settings,
+                        canSendTeamMessage = result.data.canSendMessage ?: false,
+                        isLoadingTeamChat = false,
+                        teamChatError = null
+                    ) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(
+                        isLoadingTeamChat = false,
+                        teamChatError = result.message
+                    ) }
+                }
+                is ApiResult.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+    
+    /**
+     * Send a team chat message
+     */
+    fun sendTeamChatMessage(
+        projectId: String, 
+        content: String,
+        messageType: String = "text",
+        imageUrl: String? = null,
+        replyToId: String? = null
+    ) {
+        if (content.isBlank() && imageUrl == null) return
+        
+        viewModelScope.launch {
+            _state.update { it.copy(isSendingTeamMessage = true, teamChatError = null) }
+            
+            when (val result = chatRepository.sendProjectChatMessage(projectId, content, messageType, imageUrl, replyToId)) {
+                is ApiResult.Success -> {
+                    // Add the new message to the list
+                    _state.update { it.copy(
+                        teamChatMessages = it.teamChatMessages + result.data,
+                        isSendingTeamMessage = false,
+                        teamChatError = null
+                    ) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(
+                        isSendingTeamMessage = false,
+                        teamChatError = result.message
+                    ) }
+                }
+                is ApiResult.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+    
+    /**
+     * Edit a team chat message
+     */
+    fun editTeamChatMessage(projectId: String, messageId: String, newContent: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.editProjectChatMessage(projectId, messageId, newContent)) {
+                is ApiResult.Success -> {
+                    // Update the message in the list
+                    _state.update { it.copy(
+                        teamChatMessages = it.teamChatMessages.map { msg ->
+                            if (msg.id == messageId) result.data else msg
+                        },
+                        teamChatError = null
+                    ) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(teamChatError = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Delete a team chat message
+     * @param deleteForEveryone If true, deletes for all users. If false, hides only for current user.
+     */
+    fun deleteTeamChatMessage(projectId: String, messageId: String, deleteForEveryone: Boolean = false) {
+        viewModelScope.launch {
+            when (val result = chatRepository.deleteProjectChatMessage(projectId, messageId, deleteForEveryone)) {
+                is ApiResult.Success -> {
+                    // Remove the message from the list
+                    _state.update { it.copy(
+                        teamChatMessages = it.teamChatMessages.filter { msg -> msg.id != messageId },
+                        teamChatError = null
+                    ) }
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(teamChatError = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Update team chat settings (admin only)
+     */
+    fun updateTeamChatSettings(
+        projectId: String,
+        chatAccess: String? = null,
+        allowImages: Boolean? = null,
+        allowEmojis: Boolean? = null,
+        allowEditing: Boolean? = null,
+        allowDeleting: Boolean? = null
+    ) {
+        viewModelScope.launch {
+            when (val result = chatRepository.updateProjectChatSettings(
+                projectId, chatAccess, allowImages, allowEmojis, allowEditing, allowDeleting
+            )) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(
+                        teamChatSettings = result.data,
+                        teamChatError = null
+                    ) }
+                    // Reload messages to get updated permissions
+                    loadTeamChatMessages(projectId)
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(teamChatError = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
+     * Clear team chat state (when leaving project view)
+     */
+    fun clearTeamChat() {
+        _state.update { it.copy(
+            teamChatMessages = emptyList(),
+            teamChatSettings = null,
+            canSendTeamMessage = false,
+            isLoadingTeamChat = false,
+            isSendingTeamMessage = false,
+            teamChatError = null
+        ) }
+    }
+    
+    /**
+     * Clear team chat error
+     */
+    fun clearTeamChatError() {
+        _state.update { it.copy(teamChatError = null) }
     }
     
     /**

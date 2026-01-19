@@ -924,7 +924,8 @@ data class SharedConversationData(
     val sharedBy: String?,
     val sharedByAvatar: String?,
     val createdAt: String?,
-    val messageCount: Int?
+    val messageCount: Int?,
+    val originalConversationId: String? = null
 )
 
 // ============================================
@@ -1061,7 +1062,7 @@ data class ProjectChatMessagesResponse(
 data class ProjectChatData(
     val messages: List<ProjectChatMessageDto>?,
     val canSendMessage: Boolean?,
-    val settings: ProjectChatSettingsDto?,
+    val settings: ProjectChatSettingsWithPermissions?,
     val myRole: String?,
     val isOwner: Boolean?
 )
@@ -1132,6 +1133,10 @@ data class SendProjectChatMessageRequest(
     val messageType: String = "text",
     val imageUrl: String? = null,
     val replyToId: String? = null
+)
+
+data class EditProjectChatMessageRequest(
+    val content: String
 )
 
 data class SendProjectChatMessageResponse(

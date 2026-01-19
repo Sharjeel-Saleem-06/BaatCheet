@@ -39,6 +39,7 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -115,9 +116,17 @@ private fun formatNextAvailableTime(isoTimestamp: String?): String? {
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
     onMenuClick: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    initialShareId: String? = null
 ) {
     val state by viewModel.state.collectAsState()
+    
+    // Handle deep link share ID - load the shared conversation
+    LaunchedEffect(initialShareId) {
+        if (!initialShareId.isNullOrBlank()) {
+            viewModel.loadSharedConversation(initialShareId)
+        }
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -4280,6 +4289,7 @@ private fun getFileNameFromUri(context: Context, uri: Uri): String? {
 /**
  * Project Chat Screen - Shows project details and conversations
  * Similar to ChatGPT's project interface
+ * Now includes Team Chat tab for collaboration between members
  */
 @Composable
 private fun ProjectChatScreen(
@@ -4296,6 +4306,19 @@ private fun ProjectChatScreen(
     onDeleteConversation: (String) -> Unit = {}
 ) {
     var messageText by remember { mutableStateOf("") }
+    // Tab state: 0 = AI Chats, 1 = Team Chat
+    var selectedTab by remember { mutableIntStateOf(0) }
+    // Team chat state
+    var teamChatMessages by remember { mutableStateOf<List<TeamChatMessage>>(emptyList()) }
+    var teamChatSettings by remember { mutableStateOf<TeamChatSettings?>(null) }
+    var canSendTeamMessage by remember { mutableStateOf(false) }
+    var isLoadingTeamChat by remember { mutableStateOf(false) }
+    var teamChatError by remember { mutableStateOf<String?>(null) }
+    var teamMessageText by remember { mutableStateOf("") }
+    var isSendingTeamMessage by remember { mutableStateOf(false) }
+    
+    // Check if project has collaborators
+    val hasCollaborators = (project.collaborators?.isNotEmpty() == true)
     
     Column(
         modifier = Modifier
@@ -4392,10 +4415,86 @@ private fun ProjectChatScreen(
                         )
                     }
                 }
+                
+                // Tab Row - Only show if project has collaborators
+                if (hasCollaborators) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // AI Chats Tab
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (selectedTab == 0) Color.White else Color.Transparent,
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .clickable { selectedTab = 0 }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.SmartToy,
+                                    contentDescription = null,
+                                    tint = if (selectedTab == 0) GreenAccent else GrayText,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "AI Chats",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (selectedTab == 0) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (selectedTab == 0) DarkText else GrayText
+                                )
+                            }
+                        }
+                        
+                        // Team Chat Tab
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    if (selectedTab == 1) Color.White else Color.Transparent,
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .clickable { selectedTab = 1 }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Groups,
+                                    contentDescription = null,
+                                    tint = if (selectedTab == 1) GreenAccent else GrayText,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Team Chat",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (selectedTab == 1) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (selectedTab == 1) DarkText else GrayText
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
         
-        // Content
+        // Content based on selected tab
         if (isLoadingProject || isLoadingConversations) {
             // Loading state
             Box(
@@ -4408,171 +4507,1612 @@ private fun ProjectChatScreen(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Project Description/Instructions
-                item {
-                    ProjectInstructionsCard(
-                        description = project.description,
-                        context = project.context,
-                        keyTopics = project.keyTopics,
-                        techStack = project.techStack,
-                        goals = project.goals,
-                        onEditClick = onSettingsClick
-                    )
-                }
-                
-                // Conversations section
-                item {
-                    Row(
+            when (selectedTab) {
+                0 -> {
+                    // AI Chats Tab Content
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "Chats in this project",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = DarkText
-                        )
-                        
-                        TextButton(onClick = onNewChat) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = GreenAccent,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "New chat",
-                                color = GreenAccent,
-                                fontSize = 14.sp
+                        // Project Description/Instructions
+                        item {
+                            ProjectInstructionsCard(
+                                description = project.description,
+                                context = project.context,
+                                keyTopics = project.keyTopics,
+                                techStack = project.techStack,
+                                goals = project.goals,
+                                onEditClick = onSettingsClick
                             )
                         }
-                    }
-                }
-                
-                // Conversation list
-                if (conversations.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Outlined.ChatBubbleOutline,
-                                    contentDescription = null,
-                                    tint = GrayText.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(48.dp)
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Conversations section
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "No chats yet",
-                                    fontSize = 16.sp,
-                                    color = GrayText
+                                    text = "Chats in this project",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = DarkText
                                 )
-                                Text(
-                                    text = "Start a conversation to get going",
-                                    fontSize = 14.sp,
-                                    color = GrayText.copy(alpha = 0.7f)
+                                
+                                TextButton(onClick = onNewChat) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        tint = GreenAccent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "New chat",
+                                        color = GreenAccent,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Conversation list
+                        if (conversations.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.ChatBubbleOutline,
+                                            contentDescription = null,
+                                            tint = GrayText.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "No chats yet",
+                                            fontSize = 16.sp,
+                                            color = GrayText
+                                        )
+                                        Text(
+                                            text = "Start a conversation to get going",
+                                            fontSize = 14.sp,
+                                            color = GrayText.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            items(conversations, key = { it.id }) { conversation ->
+                                ProjectConversationItem(
+                                    conversation = conversation,
+                                    onClick = { onConversationClick(conversation.id) },
+                                    canDelete = project.canDelete || project.isOwner,
+                                    onDelete = { onDeleteConversation(conversation.id) }
                                 )
                             }
                         }
                     }
-                } else {
-                    items(conversations, key = { it.id }) { conversation ->
-                        ProjectConversationItem(
-                            conversation = conversation,
-                            onClick = { onConversationClick(conversation.id) },
-                            canDelete = project.canDelete || project.isOwner,
-                            onDelete = { onDeleteConversation(conversation.id) }
+                    
+                    // Input area - Quick message to start new chat
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = WhiteBackground,
+                        shadowElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding() // Account for system navigation bar
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(24.dp),
+                                color = Color(0xFFF5F5F5),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                            ) {
+                                BasicTextField(
+                                    value = messageText,
+                                    onValueChange = { messageText = it },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    textStyle = TextStyle(
+                                        fontSize = 16.sp,
+                                        color = DarkText
+                                    ),
+                                    cursorBrush = SolidColor(GreenAccent),
+                                    decorationBox = { innerTextField ->
+                                        if (messageText.isEmpty()) {
+                                            Text(
+                                                text = "New chat in ${project.name}",
+                                                color = GrayText,
+                                                fontSize = 16.sp
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            // Send button
+                            IconButton(
+                                onClick = {
+                                    if (messageText.isNotBlank()) {
+                                        onSendMessage(messageText)
+                                        messageText = ""
+                                    }
+                                },
+                                enabled = messageText.isNotBlank(),
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(
+                                        if (messageText.isNotBlank()) GreenAccent else Color(0xFFE5E5EA),
+                                        CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "Send",
+                                    tint = if (messageText.isNotBlank()) Color.White else GrayText,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                1 -> {
+                    // Team Chat Tab Content
+                    TeamChatContent(
+                        projectId = project.id,
+                        myRole = project.myRole ?: if (project.isOwner) "admin" else "viewer",
+                        isOwner = project.isOwner,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ============================================
+// Team Chat Data Classes
+// ============================================
+
+data class TeamChatMessage(
+    val id: String,
+    val content: String,
+    val messageType: String, // text, image, system
+    val imageUrl: String? = null,
+    val senderId: String,
+    val sender: TeamChatSender? = null,
+    val senderRole: String,
+    val isOwner: Boolean,
+    val isEdited: Boolean,
+    val editedAt: String? = null,
+    val replyTo: TeamChatReply? = null,
+    val canEdit: Boolean,
+    val canDeleteForMe: Boolean,
+    val canDeleteForEveryone: Boolean,
+    val createdAt: String
+)
+
+data class TeamChatSender(
+    val id: String,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val username: String? = null,
+    val avatar: String? = null,
+    val email: String? = null
+)
+
+data class TeamChatReply(
+    val id: String,
+    val content: String,
+    val senderId: String
+)
+
+data class TeamChatSettings(
+    val chatAccess: String, // all, admin_moderator, admin_only
+    val allowImages: Boolean,
+    val allowEmojis: Boolean,
+    val allowEditing: Boolean,
+    val allowDeleting: Boolean
+)
+
+// ============================================
+// Team Chat Content Composable
+// ============================================
+
+@Composable
+private fun TeamChatContent(
+    projectId: String,
+    myRole: String,
+    isOwner: Boolean,
+    modifier: Modifier = Modifier,
+    viewModel: ChatViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    var messageText by remember { mutableStateOf("") }
+    var showSettings by remember { mutableStateOf(false) }
+    var selectedChatAccess by remember { mutableStateOf("all") }
+    var lastMessageCount by remember { mutableIntStateOf(0) }
+    var showNewMessageBanner by remember { mutableStateOf(false) }
+    
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Local state derived from ViewModel
+    val messages = state.teamChatMessages
+    val settings = state.teamChatSettings
+    val canSendMessage = state.canSendTeamMessage
+    val isLoading = state.isLoadingTeamChat
+    val isSending = state.isSendingTeamMessage
+    val error = state.teamChatError
+    
+    // Update selected chat access when settings load
+    LaunchedEffect(settings) {
+        settings?.chatAccess?.let { selectedChatAccess = it }
+    }
+    
+    // Load team chat messages when entering
+    LaunchedEffect(projectId) {
+        viewModel.loadTeamChatMessages(projectId)
+    }
+    
+    // Poll for new messages every 5 seconds
+    LaunchedEffect(projectId) {
+        while (true) {
+            kotlinx.coroutines.delay(5000) // 5 seconds
+            viewModel.loadTeamChatMessages(projectId)
+        }
+    }
+    
+    // Detect new messages and show banner if user is not at bottom
+    LaunchedEffect(messages.size) {
+        if (messages.size > lastMessageCount && lastMessageCount > 0) {
+            // New message arrived
+            val isAtBottom = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == messages.size - 2
+            if (!isAtBottom) {
+                showNewMessageBanner = true
+            } else {
+                // Auto-scroll to bottom
+                coroutineScope.launch {
+                    listState.animateScrollToItem(messages.size - 1)
+                }
+            }
+        }
+        lastMessageCount = messages.size
+    }
+    
+    // Scroll to bottom when new messages arrive (initial load)
+    LaunchedEffect(Unit) {
+        snapshotFlow { messages.size }
+            .collect { size ->
+                if (size > 0 && lastMessageCount == 0) {
+                    coroutineScope.launch {
+                        listState.scrollToItem(size - 1)
+                    }
+                }
+            }
+    }
+    
+    Column(modifier = modifier.fillMaxSize()) {
+        // Team Chat Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFFF8F8F8),
+            shadowElevation = 1.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Groups,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Team Chat",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DarkText
+                        )
+                        Text(
+                            text = "${messages.size} messages",
+                            fontSize = 12.sp,
+                            color = GrayText
+                        )
+                    }
+                }
+                
+                // Settings button (admin only)
+                if (myRole == "admin" || isOwner) {
+                    IconButton(
+                        onClick = { showSettings = !showSettings },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Chat Settings",
+                            tint = GrayText,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
         }
         
-        // Input area - Quick message to start new chat
+        // Settings Panel (admin only) - WhatsApp-style admin controls
+        if (showSettings && (myRole == "admin" || isOwner)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFFF5F5F5)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Header with icon
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AdminPanelSettings,
+                            contentDescription = null,
+                            tint = GreenAccent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Group Settings",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DarkText
+                        )
+                    }
+                    
+                    HorizontalDivider(color = Color(0xFFE0E0E0))
+                    
+                    // Section: Message Permissions
+                    Text(
+                        text = "MESSAGE PERMISSIONS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GrayText,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    // Who can send messages - Dropdown
+                    var expanded by remember { mutableStateOf(false) }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expanded = true }
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Send messages",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = DarkText
+                                )
+                                Text(
+                                    text = "Control who can send messages in this chat",
+                                    fontSize = 12.sp,
+                                    color = GrayText
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = when (selectedChatAccess) {
+                                        "all" -> "Everyone"
+                                        "admin_moderator" -> "Admin & Mods"
+                                        "admin_only" -> "Admin Only"
+                                        else -> "Everyone"
+                                    },
+                                    fontSize = 13.sp,
+                                    color = GreenAccent,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = GrayText
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text("Everyone", fontWeight = FontWeight.Medium)
+                                            Text("All members can send messages", fontSize = 12.sp, color = GrayText)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedChatAccess = "all"
+                                        viewModel.updateTeamChatSettings(projectId, chatAccess = "all")
+                                        expanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Groups, contentDescription = null, tint = GreenAccent)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text("Admin & Moderators", fontWeight = FontWeight.Medium)
+                                            Text("Only admins and mods can send", fontSize = 12.sp, color = GrayText)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedChatAccess = "admin_moderator"
+                                        viewModel.updateTeamChatSettings(projectId, chatAccess = "admin_moderator")
+                                        expanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Shield, contentDescription = null, tint = Color(0xFF3B82F6))
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { 
+                                        Column {
+                                            Text("Admin Only", fontWeight = FontWeight.Medium)
+                                            Text("Only admin can send messages", fontSize = 12.sp, color = GrayText)
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedChatAccess = "admin_only"
+                                        viewModel.updateTeamChatSettings(projectId, chatAccess = "admin_only")
+                                        expanded = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Star, contentDescription = null, tint = Color(0xFFF59E0B))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Section: Content Controls
+                    Text(
+                        text = "CONTENT CONTROLS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GrayText,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White
+                    ) {
+                        Column {
+                            // Allow images toggle
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Image,
+                                        contentDescription = null,
+                                        tint = GreenAccent,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Allow images",
+                                            fontSize = 14.sp,
+                                            color = DarkText
+                                        )
+                                        Text(
+                                            text = "Members can share images",
+                                            fontSize = 12.sp,
+                                            color = GrayText
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = settings?.allowImages ?: true,
+                                    onCheckedChange = { newValue ->
+                                        viewModel.updateTeamChatSettings(projectId, allowImages = newValue)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = GreenAccent
+                                    )
+                                )
+                            }
+                            
+                            HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(start = 52.dp))
+                            
+                            // Allow emojis toggle
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.EmojiEmotions,
+                                        contentDescription = null,
+                                        tint = Color(0xFFF59E0B),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Allow emojis",
+                                            fontSize = 14.sp,
+                                            color = DarkText
+                                        )
+                                        Text(
+                                            text = "Members can use emoji reactions",
+                                            fontSize = 12.sp,
+                                            color = GrayText
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = settings?.allowEmojis ?: true,
+                                    onCheckedChange = { newValue ->
+                                        viewModel.updateTeamChatSettings(projectId, allowEmojis = newValue)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = GreenAccent
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Section: Edit & Delete Controls
+                    Text(
+                        text = "EDIT & DELETE CONTROLS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GrayText,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White
+                    ) {
+                        Column {
+                            // Allow editing toggle
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Edit,
+                                        contentDescription = null,
+                                        tint = Color(0xFF3B82F6),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Allow message editing",
+                                            fontSize = 14.sp,
+                                            color = DarkText
+                                        )
+                                        Text(
+                                            text = "Members can edit their messages",
+                                            fontSize = 12.sp,
+                                            color = GrayText
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = settings?.allowEditing ?: true,
+                                    onCheckedChange = { newValue ->
+                                        viewModel.updateTeamChatSettings(projectId, allowEditing = newValue)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = GreenAccent
+                                    )
+                                )
+                            }
+                            
+                            HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(start = 52.dp))
+                            
+                            // Allow deleting toggle
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Delete,
+                                        contentDescription = null,
+                                        tint = Color(0xFFDC2626),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Allow message deletion",
+                                            fontSize = 14.sp,
+                                            color = DarkText
+                                        )
+                                        Text(
+                                            text = "Members can delete their messages",
+                                            fontSize = 12.sp,
+                                            color = GrayText
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = settings?.allowDeleting ?: true,
+                                    onCheckedChange = { newValue ->
+                                        viewModel.updateTeamChatSettings(projectId, allowDeleting = newValue)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = GreenAccent
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Info text
+                    Text(
+                        text = "Note: Admin can always send, edit, and delete any message regardless of these settings.",
+                        fontSize = 11.sp,
+                        color = GrayText,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                    )
+                }
+            }
+        }
+        
+        // Error message
+        if (error != null) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFFFEE2E2)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Error,
+                        contentDescription = null,
+                        tint = Color(0xFFDC2626),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = error!!,
+                        fontSize = 13.sp,
+                        color = Color(0xFFDC2626),
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { viewModel.clearTeamChatError() },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Dismiss",
+                            tint = Color(0xFFDC2626),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Messages List
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = GreenAccent,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        } else if (messages.isEmpty()) {
+            // Empty state
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Forum,
+                        contentDescription = null,
+                        tint = GrayText.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No messages yet",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = GrayText
+                    )
+                    Text(
+                        text = "Start chatting with your team!",
+                        fontSize = 14.sp,
+                        color = GrayText.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        } else {
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    reverseLayout = false
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        TeamChatMessageItemDto(
+                            message = message,
+                            onEdit = { newContent ->
+                                viewModel.editTeamChatMessage(projectId, message.id, newContent)
+                            },
+                            onDelete = { deleteForEveryone ->
+                                viewModel.deleteTeamChatMessage(projectId, message.id, deleteForEveryone)
+                            },
+                            onReply = { /* TODO: Implement reply */ }
+                        )
+                    }
+                }
+                
+                // New message banner - WhatsApp style
+                if (showNewMessageBanner) {
+                    Surface(
+                        onClick = {
+                            showNewMessageBanner = false
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(messages.size - 1)
+                            }
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        color = GreenAccent,
+                        shadowElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = "New messages",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Input area
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = WhiteBackground,
             shadowElevation = 4.dp
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding() // Account for system navigation bar
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(24.dp),
-                    color = Color(0xFFF5F5F5),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
-                ) {
-                    BasicTextField(
-                        value = messageText,
-                        onValueChange = { messageText = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            color = DarkText
-                        ),
-                        cursorBrush = SolidColor(GreenAccent),
-                        decorationBox = { innerTextField ->
-                            if (messageText.isEmpty()) {
-                                Text(
-                                    text = "New chat in ${project.name}",
-                                    color = GrayText,
-                                    fontSize = 16.sp
-                                )
-                            }
-                            innerTextField()
-                        }
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Send button
-                IconButton(
-                    onClick = {
-                        if (messageText.isNotBlank()) {
-                            onSendMessage(messageText)
-                            messageText = ""
-                        }
-                    },
-                    enabled = messageText.isNotBlank(),
+            if (canSendMessage || messages.isEmpty()) { // Show input if can send or no messages yet (for testing)
+                Row(
                     modifier = Modifier
-                        .size(44.dp)
-                        .background(
-                            if (messageText.isNotBlank()) GreenAccent else Color(0xFFE5E5EA),
-                            CircleShape
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFFF5F5F5),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                    ) {
+                        BasicTextField(
+                            value = messageText,
+                            onValueChange = { messageText = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            textStyle = TextStyle(
+                                fontSize = 16.sp,
+                                color = DarkText
+                            ),
+                            cursorBrush = SolidColor(GreenAccent),
+                            decorationBox = { innerTextField ->
+                                if (messageText.isEmpty()) {
+                                    Text(
+                                        text = "Message your team...",
+                                        color = GrayText,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
                         )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Send button
+                    IconButton(
+                        onClick = {
+                            if (messageText.isNotBlank()) {
+                                viewModel.sendTeamChatMessage(projectId, messageText.trim())
+                                messageText = ""
+                            }
+                        },
+                        enabled = messageText.isNotBlank() && !isSending,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(
+                                if (messageText.isNotBlank()) GreenAccent else Color(0xFFE5E5EA),
+                                CircleShape
+                            )
+                    ) {
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Send",
+                                tint = if (messageText.isNotBlank()) Color.White else GrayText,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Cannot send message
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send",
-                        tint = if (messageText.isNotBlank()) Color.White else GrayText,
-                        modifier = Modifier.size(20.dp)
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = null,
+                        tint = GrayText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = when (settings?.chatAccess) {
+                            "admin_only" -> "Only the admin can send messages"
+                            "admin_moderator" -> "Only admins and moderators can send messages"
+                            else -> "You cannot send messages in this chat"
+                        },
+                        fontSize = 13.sp,
+                        color = GrayText
                     )
                 }
             }
         }
+    }
+}
+
+// ============================================
+// Team Chat Message Item
+// ============================================
+
+@Composable
+private fun TeamChatMessageItem(
+    message: TeamChatMessage,
+    onEdit: () -> Unit,
+    onDelete: (Boolean) -> Unit,
+    onReply: () -> Unit
+) {
+    val senderName = message.sender?.let {
+        listOfNotNull(it.firstName, it.lastName).joinToString(" ").ifEmpty { it.username ?: it.email ?: "Unknown" }
+    } ?: "Unknown"
+    
+    val senderInitial = senderName.firstOrNull()?.uppercaseChar() ?: 'U'
+    
+    // System message
+    if (message.messageType == "system") {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = message.content,
+                fontSize = 12.sp,
+                color = GrayText,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+        return
+    }
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
+    ) {
+        // Avatar
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(GreenAccent.copy(alpha = 0.2f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            if (message.sender?.avatar != null) {
+                // TODO: Load avatar image
+                Text(
+                    text = senderInitial.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GreenAccent
+                )
+            } else {
+                Text(
+                    text = senderInitial.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GreenAccent
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.width(10.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = senderName,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = DarkText
+                )
+                
+                // Role badge
+                val roleIcon = when {
+                    message.isOwner -> Icons.Outlined.Star
+                    message.senderRole == "admin" -> Icons.Outlined.Shield
+                    message.senderRole == "moderator" -> Icons.Outlined.VerifiedUser
+                    else -> null
+                }
+                val roleColor = when {
+                    message.isOwner -> Color(0xFFF59E0B)
+                    message.senderRole == "admin" -> Color(0xFF9333EA)
+                    message.senderRole == "moderator" -> Color(0xFF3B82F6)
+                    else -> GrayText
+                }
+                
+                if (roleIcon != null) {
+                    Icon(
+                        imageVector = roleIcon,
+                        contentDescription = message.senderRole,
+                        tint = roleColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+                
+                // Timestamp
+                Text(
+                    text = formatTeamChatTime(message.createdAt),
+                    fontSize = 11.sp,
+                    color = GrayText
+                )
+                
+                if (message.isEdited) {
+                    Text(
+                        text = "(edited)",
+                        fontSize = 11.sp,
+                        color = GrayText
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Reply indicator
+            if (message.replyTo != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFF5F5F5),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(24.dp)
+                                .background(GreenAccent, RoundedCornerShape(2.dp))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = message.replyTo.content.take(50) + if (message.replyTo.content.length > 50) "..." else "",
+                            fontSize = 12.sp,
+                            color = GrayText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            
+            // Content
+            if (message.messageType == "image" && message.imageUrl != null) {
+                // Image message
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .aspectRatio(1.5f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF5F5F5)
+                ) {
+                    // TODO: Load image
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Image,
+                            contentDescription = null,
+                            tint = GrayText,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+            }
+            
+            Text(
+                text = message.content,
+                fontSize = 14.sp,
+                color = DarkText,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+private fun formatTeamChatTime(dateStr: String): String {
+    return try {
+        val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+        formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val date = formatter.parse(dateStr) ?: return dateStr
+        
+        val now = System.currentTimeMillis()
+        val diff = now - date.time
+        
+        when {
+            diff < 60_000 -> "Just now"
+            diff < 3_600_000 -> "${diff / 60_000}m ago"
+            diff < 86_400_000 -> {
+                val timeFormatter = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+                timeFormatter.format(date)
+            }
+            else -> {
+                val dateFormatter = java.text.SimpleDateFormat("MMM d", java.util.Locale.getDefault())
+                dateFormatter.format(date)
+            }
+        }
+    } catch (e: Exception) {
+        dateStr
+    }
+}
+
+// ============================================
+// Team Chat Message Item (DTO version)
+// ============================================
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun TeamChatMessageItemDto(
+    message: com.baatcheet.app.data.remote.dto.ProjectChatMessageDto,
+    onEdit: (String) -> Unit,
+    onDelete: (Boolean) -> Unit,
+    onReply: () -> Unit
+) {
+    val senderName = message.sender?.let { sender ->
+        listOfNotNull(sender.firstName, sender.lastName).joinToString(" ").ifEmpty { 
+            sender.username ?: sender.email ?: "Unknown" 
+        }
+    } ?: "Unknown"
+    
+    val senderInitial = senderName.firstOrNull()?.uppercaseChar() ?: 'U'
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editText by remember { mutableStateOf(message.content ?: "") }
+    var showActionSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    
+    // System message - styled like WhatsApp
+    if (message.messageType == "system") {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFE8F5E9)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = message.content ?: "",
+                        fontSize = 12.sp,
+                        color = Color(0xFF2E7D32),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+        return
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { },
+                onLongClick = {
+                    if (message.canEdit == true || message.canDeleteForMe == true || message.canDeleteForEveryone == true) {
+                        showActionSheet = true
+                    }
+                }
+            )
+            .padding(vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            // Avatar with role indicator
+            Box {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            when {
+                                message.isOwner == true -> Color(0xFFF59E0B).copy(alpha = 0.2f)
+                                message.senderRole == "admin" -> Color(0xFF9333EA).copy(alpha = 0.2f)
+                                message.senderRole == "moderator" -> Color(0xFF3B82F6).copy(alpha = 0.2f)
+                                else -> GreenAccent.copy(alpha = 0.2f)
+                            },
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = senderInitial.toString(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = when {
+                            message.isOwner == true -> Color(0xFFF59E0B)
+                            message.senderRole == "admin" -> Color(0xFF9333EA)
+                            message.senderRole == "moderator" -> Color(0xFF3B82F6)
+                            else -> GreenAccent
+                        }
+                    )
+                }
+                
+                // Role badge overlay
+                if (message.isOwner == true || message.senderRole == "admin" || message.senderRole == "moderator") {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(16.dp)
+                            .background(Color.White, CircleShape)
+                            .padding(2.dp)
+                    ) {
+                        Icon(
+                            imageVector = when {
+                                message.isOwner == true -> Icons.Outlined.Star
+                                message.senderRole == "admin" -> Icons.Outlined.Shield
+                                else -> Icons.Outlined.VerifiedUser
+                            },
+                            contentDescription = null,
+                            tint = when {
+                                message.isOwner == true -> Color(0xFFF59E0B)
+                                message.senderRole == "admin" -> Color(0xFF9333EA)
+                                else -> Color(0xFF3B82F6)
+                            },
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.width(10.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                // Header with name and time
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = senderName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = when {
+                            message.isOwner == true -> Color(0xFFF59E0B)
+                            message.senderRole == "admin" -> Color(0xFF9333EA)
+                            message.senderRole == "moderator" -> Color(0xFF3B82F6)
+                            else -> DarkText
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    Text(
+                        text = formatTeamChatTime(message.createdAt ?: ""),
+                        fontSize = 11.sp,
+                        color = GrayText
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                // Message content in a bubble
+                Surface(
+                    shape = RoundedCornerShape(
+                        topStart = 4.dp,
+                        topEnd = 16.dp,
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp
+                    ),
+                    color = Color(0xFFF5F5F5)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        // Image if present
+                        if (message.messageType == "image" && message.imageUrl != null) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1.5f),
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFE0E0E0)
+                            ) {
+                                AsyncImage(
+                                    model = message.imageUrl,
+                                    contentDescription = "Image",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+                        
+                        Text(
+                            text = message.content ?: "",
+                            fontSize = 14.sp,
+                            color = DarkText,
+                            lineHeight = 20.sp
+                        )
+                        
+                        // Edited indicator
+                        if (message.isEdited == true) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Edited",
+                                fontSize = 10.sp,
+                                color = GrayText,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // WhatsApp-style Bottom Sheet for message actions
+    if (showActionSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showActionSheet = false },
+            sheetState = sheetState,
+            containerColor = Color.White,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .width(40.dp)
+                        .height(4.dp)
+                        .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
+                // Message preview
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF5F5F5)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(4.dp)
+                                .height(40.dp)
+                                .background(GreenAccent, RoundedCornerShape(2.dp))
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = senderName,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GreenAccent
+                            )
+                            Text(
+                                text = (message.content ?: "").take(50) + if ((message.content?.length ?: 0) > 50) "..." else "",
+                                fontSize = 13.sp,
+                                color = GrayText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                
+                HorizontalDivider(color = Color(0xFFF0F0F0))
+                
+                // Action buttons
+                if (message.canEdit == true) {
+                    MessageActionItem(
+                        icon = Icons.Outlined.Edit,
+                        text = "Edit message",
+                        onClick = {
+                            showActionSheet = false
+                            editText = message.content ?: ""
+                            showEditDialog = true
+                        }
+                    )
+                }
+                
+                MessageActionItem(
+                    icon = Icons.Outlined.ContentCopy,
+                    text = "Copy text",
+                    onClick = {
+                        showActionSheet = false
+                        // TODO: Copy to clipboard
+                    }
+                )
+                
+                MessageActionItem(
+                    icon = Icons.Outlined.Reply,
+                    text = "Reply",
+                    onClick = {
+                        showActionSheet = false
+                        onReply()
+                    }
+                )
+                
+                if (message.canDeleteForMe == true || message.canDeleteForEveryone == true) {
+                    HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(vertical = 4.dp))
+                }
+                
+                if (message.canDeleteForMe == true) {
+                    MessageActionItem(
+                        icon = Icons.Outlined.Delete,
+                        text = "Delete for me",
+                        tint = Color(0xFF666666),
+                        onClick = {
+                            showActionSheet = false
+                            onDelete(false)
+                        }
+                    )
+                }
+                
+                if (message.canDeleteForEveryone == true) {
+                    MessageActionItem(
+                        icon = Icons.Outlined.DeleteForever,
+                        text = "Delete for everyone",
+                        tint = Color(0xFFDC2626),
+                        textColor = Color(0xFFDC2626),
+                        onClick = {
+                            showActionSheet = false
+                            onDelete(true)
+                        }
+                    )
+                }
+            }
+        }
+    }
+    
+    // Edit Dialog
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { 
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Edit,
+                        contentDescription = null,
+                        tint = GreenAccent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Edit Message") 
+                }
+            },
+            text = {
+                OutlinedTextField(
+                    value = editText,
+                    onValueChange = { editText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 5,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        cursorColor = GreenAccent
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onEdit(editText)
+                        showEditDialog = false
+                    },
+                    enabled = editText.isNotBlank()
+                ) {
+                    Text("Save", color = GreenAccent)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Message Action Item for bottom sheet
+ */
+@Composable
+private fun MessageActionItem(
+    icon: ImageVector,
+    text: String,
+    onClick: () -> Unit,
+    tint: Color = DarkText,
+    textColor: Color = DarkText
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            color = textColor
+        )
     }
 }
 

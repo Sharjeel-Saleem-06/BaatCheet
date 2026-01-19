@@ -1149,7 +1149,8 @@ class ChatRepository @Inject constructor(
                             sharedBy = data.sharedBy ?: "Anonymous",
                             sharedByAvatar = data.sharedByAvatar,
                             createdAt = data.createdAt,
-                            messageCount = data.messageCount ?: 0
+                            messageCount = data.messageCount ?: 0,
+                            originalConversationId = data.originalConversationId
                         )
                     )
                 } else {
@@ -1672,6 +1673,169 @@ class ChatRepository @Inject constructor(
             }
         }
     }
+    
+    // ============================================
+    // Project Team Chat Operations
+    // ============================================
+    
+    /**
+     * Get project team chat messages
+     */
+    suspend fun getProjectChatMessages(projectId: String, limit: Int = 50, offset: Int = 0): ApiResult<ProjectChatData> {
+        return try {
+            val response = api.getProjectChatMessages(projectId, limit, offset)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("No chat data found")
+                }
+            } else {
+                ApiResult.Error("Failed to get chat messages", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Send a team chat message
+     */
+    suspend fun sendProjectChatMessage(
+        projectId: String, 
+        content: String, 
+        messageType: String = "text",
+        imageUrl: String? = null,
+        replyToId: String? = null
+    ): ApiResult<ProjectChatMessageDto> {
+        return try {
+            val request = SendProjectChatMessageRequest(
+                content = content,
+                messageType = messageType,
+                imageUrl = imageUrl,
+                replyToId = replyToId
+            )
+            val response = api.sendProjectChatMessage(projectId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("Failed to send message")
+                }
+            } else {
+                val error = response.body()?.message ?: "Failed to send message"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Edit a team chat message
+     */
+    suspend fun editProjectChatMessage(projectId: String, messageId: String, content: String): ApiResult<ProjectChatMessageDto> {
+        return try {
+            val request = EditProjectChatMessageRequest(content = content)
+            val response = api.editProjectChatMessage(projectId, messageId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("Failed to edit message")
+                }
+            } else {
+                val error = response.body()?.message ?: "Failed to edit message"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Delete a team chat message
+     */
+    suspend fun deleteProjectChatMessage(projectId: String, messageId: String, deleteForEveryone: Boolean = false): ApiResult<Boolean> {
+        return try {
+            val response = api.deleteProjectChatMessage(projectId, messageId, deleteForEveryone)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                val errorMsg = response.body()?.message ?: "Failed to delete message"
+                ApiResult.Error(errorMsg, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Get project chat settings
+     */
+    suspend fun getProjectChatSettings(projectId: String): ApiResult<ProjectChatSettingsWithPermissions> {
+        return try {
+            val response = api.getProjectChatSettings(projectId)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("No settings found")
+                }
+            } else {
+                val errorMsg = "Failed to get chat settings"
+                ApiResult.Error(errorMsg, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    /**
+     * Update project chat settings (admin only)
+     */
+    suspend fun updateProjectChatSettings(
+        projectId: String, 
+        chatAccess: String? = null,
+        allowImages: Boolean? = null,
+        allowEmojis: Boolean? = null,
+        allowEditing: Boolean? = null,
+        allowDeleting: Boolean? = null
+    ): ApiResult<ProjectChatSettingsWithPermissions> {
+        return try {
+            val request = UpdateProjectChatSettingsRequest(
+                chatAccess = chatAccess,
+                allowImages = allowImages,
+                allowEmojis = allowEmojis,
+                allowEditing = allowEditing,
+                allowDeleting = allowDeleting
+            )
+            val response = api.updateProjectChatSettings(projectId, request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("Failed to update settings")
+                }
+            } else {
+                val error = "Failed to update chat settings"
+                ApiResult.Error(error, response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
 }
 
 // ============================================
@@ -1902,7 +2066,8 @@ data class SharedConversation(
     val sharedBy: String,
     val sharedByAvatar: String?,
     val createdAt: String?,
-    val messageCount: Int
+    val messageCount: Int,
+    val originalConversationId: String? = null
 )
 
 // Analytics Models

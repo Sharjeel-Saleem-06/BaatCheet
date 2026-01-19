@@ -99,12 +99,14 @@ fun BaatCheetNavHost(
     // The system splash (Android 12+) already provides a nice transition
     val startDestination = if (isLoggedIn) Routes.MAIN else Routes.SPLASH
     
-    // Handle deep link - navigate to conversation when logged in
+    // Handle deep link - for shared links, we pass the shareId to ChatScreen
+    // The ChatScreen will handle fetching the shared conversation
     LaunchedEffect(deepLinkConversationId) {
         if (deepLinkConversationId != null && isLoggedIn) {
-            // Navigate to the specific conversation
-            navController.navigate("${Routes.CHAT}/$deepLinkConversationId") {
-                popUpTo(Routes.MAIN) { inclusive = false }
+            // Navigate to main chat screen with the shareId as a parameter
+            // The ChatScreen/ViewModel will handle fetching the shared conversation
+            navController.navigate("${Routes.MAIN}?shareId=$deepLinkConversationId") {
+                popUpTo(Routes.MAIN) { inclusive = true }
             }
             // Clear the deep link after handling
             MainActivity.pendingDeepLink.value = null
@@ -233,9 +235,20 @@ fun BaatCheetNavHost(
             )
         }
         
-        // Main Screen - Chat
-        composable(Routes.MAIN) {
+        // Main Screen - Chat (with optional shareId for deep links)
+        composable(
+            route = "${Routes.MAIN}?shareId={shareId}",
+            arguments = listOf(
+                navArgument("shareId") {
+                    defaultValue = ""
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val shareId = backStackEntry.arguments?.getString("shareId")?.takeIf { it.isNotBlank() }
             ChatScreen(
+                initialShareId = shareId,
                 onLogout = {
                     // Clear session and navigate to login
                     SessionManager.clearSession(context)

@@ -43,7 +43,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             
-            <!-- Deep linking for shared chat links -->
+            <!-- Deep linking for shared chat links (with auto-verify for production) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -56,6 +56,22 @@
                     android:pathPrefix="/app/chat" />
                 <data
                     android:scheme="https"
+                    android:host="baatcheet-web.netlify.app"
+                    android:pathPrefix="/share" />
+            </intent-filter>
+            
+            <!-- Fallback intent filter for HTTP scheme (shows Open With dialog) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <data
+                    android:scheme="http"
+                    android:host="baatcheet-web.netlify.app"
+                    android:pathPrefix="/app/chat" />
+                <data
+                    android:scheme="http"
                     android:host="baatcheet-web.netlify.app"
                     android:pathPrefix="/share" />
             </intent-filter>
