@@ -395,7 +395,13 @@ router.post(
       }
 
       // Check if user can send messages based on role and settings
-      const settings = access.chatSettings || { chatAccess: 'all', allowImages: true, allowEmojis: true };
+      const settings = access.chatSettings || { 
+        chatAccess: 'all' as const, 
+        allowImages: true, 
+        allowEmojis: true,
+        allowEditing: true,
+        allowDeleting: true,
+      };
       
       if (!canSendMessage(access.role, settings.chatAccess)) {
         res.status(403).json({ 
@@ -606,7 +612,9 @@ router.delete(
       const settings = access.chatSettings || { allowDeleting: true };
       const deletePerms = canDeleteMessage(message, userId, access.role, settings);
 
-      if (deleteForEveryone === 'true' || deleteForEveryone === true) {
+      const shouldDeleteForEveryone = deleteForEveryone === 'true' || String(deleteForEveryone) === 'true';
+      
+      if (shouldDeleteForEveryone) {
         // DELETE FOR EVERYONE - Soft delete
         if (!deletePerms.canDeleteForEveryone) {
           res.status(403).json({ 
