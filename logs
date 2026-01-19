@@ -1,103 +1,40 @@
---------- beginning of main
---------- beginning of system
-2026-01-19 23:15:03.785 26567-28428 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~KluyrlSVT_qq8JPGcIQzOA==/com.google.android.tts-3JNtkUai0_JEuPFjeAmQOw==/base.apk' with 1 weak references
-2026-01-19 23:15:03.786 26567-28428 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~KluyrlSVT_qq8JPGcIQzOA==/com.google.android.tts-3JNtkUai0_JEuPFjeAmQOw==/split_config.arm64_v8a.apk' with 1 weak references
-2026-01-19 23:15:03.786 26567-28428 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~KluyrlSVT_qq8JPGcIQzOA==/com.google.android.tts-3JNtkUai0_JEuPFjeAmQOw==/split_config.en.apk' with 1 weak references
-2026-01-19 23:15:03.787 26567-28428 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~KluyrlSVT_qq8JPGcIQzOA==/com.google.android.tts-3JNtkUai0_JEuPFjeAmQOw==/split_config.nl.apk' with 1 weak references
-2026-01-19 23:15:03.787 26567-28428 m.baatcheet.app         com.baatcheet.app                    W  ApkAssets: Deleting an ApkAssets object '<empty> and /data/app/~~KluyrlSVT_qq8JPGcIQzOA==/com.google.android.tts-3JNtkUai0_JEuPFjeAmQOw==/split_config.xxhdpi.apk' with 1 weak references
-2026-01-19 23:15:45.479 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@43aeae6
-2026-01-19 23:15:45.495 26567-28446 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb4000073ddc40400 (UnprojectedRipple) with handle 0xb40000753dbbd7e0
-2026-01-19 23:15:45.496 26567-28446 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb4000073ddc5e060 (UnprojectedRipple) with handle 0xb40000753dbc2d60
-2026-01-19 23:15:45.496 26567-26567 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = DecorView@5fc59d8[MainActivity]
-2026-01-19 23:15:45.498   965-2123  BufferQueueDebug        surfaceflinger                       E  [Surface(name=11e975b com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xc09cd2f - animation-leash of window_animation#43074](this:0xb4000072ec40dfd0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=11e975b com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xc09cd2f - animation-leash of window_animation#43074'
-2026-01-19 23:15:45.514 26567-26567 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb40000753dba0b00
-2026-01-19 23:15:45.526 26567-28517 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#1](f:0,a:4) destructor()
-2026-01-19 23:15:45.526 26567-28517 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[MainActivity]#1(BLAST Consumer)1](id:67c700000001,api:0,p:-1,c:26567) disconnect
-2026-01-19 23:15:46.347 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-19 23:15:46.349 26567-26567 VRI[MainActivity]       com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-19 23:15:46.350 26567-26567 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: false
-2026-01-19 23:15:46.350 26567-26567 ViewRootImpl            com.baatcheet.app                    D  setView appearance:8 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-19 23:15:46.351   965-2874  BufferQueueDebug        surfaceflinger                       E  [81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity#43079](this:0xb4000072ec5334c0,id:-1,api:0,p:-1,c:-1) id info cannot be read from '81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity#43079'
-2026-01-19 23:15:46.358 26567-26567 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb40000753dbb7300
-2026-01-19 23:15:46.358 26567-26567 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-19 23:15:46.358 26567-26567 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-19 23:15:46.358 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-19 23:15:46.405   965-2874  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#43082](this:0xb4000072ec40dfd0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#43082'
-2026-01-19 23:15:46.412 26567-26567 BufferQueueConsumer     com.baatcheet.app                    D  [](id:67c700000002,api:0,p:-1,c:26567) connect: controlledByApp=false
-2026-01-19 23:15:46.413 26567-26567 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: true
-2026-01-19 23:15:46.413 26567-28446 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-19 23:15:46.435 26567-28446 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#2](f:0,a:1) acquireNextBufferLocked size=1238x2388 mFrameNumber=1 applyTransaction=true mTimestamp=97819781369983(auto) mPendingTransactions.size=0 graphicBufferId=114104396152852 transform=0
-2026-01-19 23:15:46.440   965-2874  BufferQueueDebug        surfaceflinger                       E  [Surface(name=81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xa852b9a - animation-leash of window_animation#43083](this:0xb4000072ec3a4a00,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xa852b9a - animation-leash of window_animation#43083'
-2026-01-19 23:15:48.675 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@56b1dc5
-2026-01-19 23:15:48.681 26567-28446 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb4000073ddc6ce90 (UnprojectedRipple) with handle 0xb40000753dbc76b0
-2026-01-19 23:15:48.681 26567-26567 View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = DecorView@4070071[MainActivity]
-2026-01-19 23:15:48.684   965-2123  BufferQueueDebug        surfaceflinger                       E  [Surface(name=81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xa852b9a - animation-leash of window_animation#43087](this:0xb4000072ec43b8d0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=81fe124 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xa852b9a - animation-leash of window_animation#43087'
-2026-01-19 23:15:48.687 26567-28517 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#2](f:0,a:4) destructor()
-2026-01-19 23:15:48.687 26567-28517 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[MainActivity]#2(BLAST Consumer)2](id:67c700000002,api:0,p:-1,c:26567) disconnect
-2026-01-19 23:15:48.695 26567-26567 InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb40000753dbb7300
-2026-01-19 23:15:49.662 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-19 23:15:49.664 26567-26567 VRI[MainActivity]       com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
-2026-01-19 23:15:49.664 26567-26567 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: false
-2026-01-19 23:15:49.664 26567-26567 ViewRootImpl            com.baatcheet.app                    D  setView appearance:8 com.baatcheet.app/com.baatcheet.app.MainActivity
-2026-01-19 23:15:49.666   965-1041  BufferQueueDebug        surfaceflinger                       E  [fd1da92 com.baatcheet.app/com.baatcheet.app.MainActivity#43092](this:0xb4000072ec413af0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'fd1da92 com.baatcheet.app/com.baatcheet.app.MainActivity#43092'
-2026-01-19 23:15:49.674 26567-26567 InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb40000753dbc6030
-2026-01-19 23:15:49.674 26567-26567 InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
-2026-01-19 23:15:49.674 26567-26567 InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
-2026-01-19 23:15:49.674 26567-26567 WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
-                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
-2026-01-19 23:15:49.721   965-1041  BufferQueueDebug        surfaceflinger                       E  [com.baatcheet.app/com.baatcheet.app.MainActivity#43095](this:0xb4000072ec44f7c0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'com.baatcheet.app/com.baatcheet.app.MainActivity#43095'
-2026-01-19 23:15:49.730 26567-26567 BufferQueueConsumer     com.baatcheet.app                    D  [](id:67c700000003,api:0,p:-1,c:26567) connect: controlledByApp=false
-2026-01-19 23:15:49.731 26567-26567 config_debug            com.baatcheet.app                    I  updateDecorCaptionStatus: {1.0 410mcc3mnc [en_US,nl_NL] ldltr sw441dp w441dp h910dp 392dpi nrml long widecg port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2436) mAppBounds=Rect(0, 108 - 1080, 2338) mMaxBounds=Rect(0, 0 - 1080, 2436) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mMultiWindowMode=normal mMultiWindowId=0 mWindowResiable=6 mInLargeScreen=-1 mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0 mUiOptSpec=-1 mCurDisplayId=-1} as.2 s.1 fontWeightAdjustment=0} fromMultiWindow: true
-2026-01-19 23:15:49.731 26567-28446 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
-2026-01-19 23:15:49.751 26567-28446 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#3](f:0,a:1) acquireNextBufferLocked size=1238x2388 mFrameNumber=1 applyTransaction=true mTimestamp=97823097251522(auto) mPendingTransactions.size=0 graphicBufferId=114104396152859 transform=0
-2026-01-19 23:15:49.754   965-1041  BufferQueueDebug        surfaceflinger                       E  [Surface(name=fd1da92 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xc620b78 - animation-leash of window_animation#43096](this:0xb4000072ec43b8d0,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'Surface(name=fd1da92 com.baatcheet.app/com.baatcheet.app.MainActivity)/@0xc620b78 - animation-leash of window_animation#43096'
-2026-01-19 23:15:51.563 26567-28426 m.baatcheet.app         com.baatcheet.app                    W  Cleared Reference was only reachable from finalizer (only reported once)
-2026-01-19 23:15:52.273 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/tts/generate
-2026-01-19 23:15:52.273 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 71
-2026-01-19 23:15:52.274 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4ODQ0ODE0LCJleHAiOjE3Njk0NDk2MTR9.9piVL77bYo2W8o3--7gPANcQu8gx8O8G3Y6JGxlxZ7Y
-2026-01-19 23:15:52.274 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
-2026-01-19 23:15:52.274 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  {"speed":1.0,"text":"Hi, I'm Guy (English)!","voice":"en-US-GuyNeural"}
-2026-01-19 23:15:52.274 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (71-byte body)
-2026-01-19 23:15:53.945 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/tts/generate (1670ms)
-2026-01-19 23:15:53.945 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Mon, 19 Jan 2026 18:15:54 GMT
-2026-01-19 23:15:53.945 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: audio/mpeg
-2026-01-19 23:15:53.945 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 35136
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: QmgaX_, QmgaX_
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
-2026-01-19 23:15:53.946 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 96
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 822
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-tts-provider: edge-tts
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"8940-Bx7olW23IoiYYWyc2u8ho4gEUDc"
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.3.222
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: 1g3whvfl-v6s9z
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/tts/generate
-2026-01-19 23:15:53.947 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
-2026-01-19 23:15:54.575 26567-28660 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (binary 35136-byte body omitted)
-2026-01-19 23:15:58.283 26567-26567 MediaPlayer             com.baatcheet.app                    V  resetDrmState:  mDrmInfo=null mDrmProvisioningThread=null mPrepareDrmInProgress=false mActiveDrmScheme=false
-2026-01-19 23:15:58.283 26567-26567 MediaPlayer             com.baatcheet.app                    V  cleanDrmObj: mDrmObj=null mDrmSessionId=null
-2026-01-19 23:15:58.283 26567-26567 MediaPlayer             com.baatcheet.app                    D  _release native called
-2026-01-19 23:15:58.304 26567-26567 MediaPlayer             com.baatcheet.app                    D  _release native finished
-2026-01-19 23:15:58.305 26567-26567 MediaPlayer             com.baatcheet.app                    W  mediaplayer went away with unhandled events
+clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+warnOnce @ clerk.browser.js:19
+load @ clerk.browser.js:5
+loadClerkJS @ index-ScvVNyFn.js:89
+await in loadClerkJS
+W5 @ index-ScvVNyFn.js:89
+getOrCreateInstance @ index-ScvVNyFn.js:89
+TS @ index-ScvVNyFn.js:89
+ES @ index-ScvVNyFn.js:89
+op @ index-ScvVNyFn.js:38
+Jy @ index-ScvVNyFn.js:40
+Ky @ index-ScvVNyFn.js:40
+S8 @ index-ScvVNyFn.js:40
+a0 @ index-ScvVNyFn.js:40
+Vy @ index-ScvVNyFn.js:40
+M @ index-ScvVNyFn.js:25
+Y @ index-ScvVNyFn.js:25
+index-ScvVNyFn.js:574  POST https://baatcheet-web.netlify.app/api/v1/auth/sync 500 (Internal Server Error)
+(anonymous) @ index-ScvVNyFn.js:574
+xhr @ index-ScvVNyFn.js:574
+L4 @ index-ScvVNyFn.js:576
+Promise.then
+_request @ index-ScvVNyFn.js:577
+request @ index-ScvVNyFn.js:576
+(anonymous) @ index-ScvVNyFn.js:577
+(anonymous) @ index-ScvVNyFn.js:572
+(anonymous) @ index-ScvVNyFn.js:958
+P0 @ index-ScvVNyFn.js:40
+us @ index-ScvVNyFn.js:40
+(anonymous) @ index-ScvVNyFn.js:40
+M @ index-ScvVNyFn.js:25
+Y @ index-ScvVNyFn.js:25
+Ie {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
+Promise.catch
+(anonymous) @ index-ScvVNyFn.js:958
+P0 @ index-ScvVNyFn.js:40
+us @ index-ScvVNyFn.js:40
+(anonymous) @ index-ScvVNyFn.js:40
+M @ index-ScvVNyFn.js:25
+Y @ index-ScvVNyFn.js:25
