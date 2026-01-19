@@ -1,137 +1,62 @@
-chunk-DC5AMYBS.js?v=feff0543:9 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-deprecations.ts:9 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
-warnOnce @ deprecations.ts:9
-logDeprecation @ deprecations.ts:14
-logV6DeprecationWarnings @ deprecations.ts:26
-(anonymous) @ index.tsx:816
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-(anonymous) @ react-dom.development.js:26808
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-deprecations.ts:9 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
-warnOnce @ deprecations.ts:9
-logDeprecation @ deprecations.ts:14
-logV6DeprecationWarnings @ deprecations.ts:37
-(anonymous) @ index.tsx:816
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-(anonymous) @ react-dom.development.js:26808
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
-warnOnce @ clerk.browser.js:19
-load @ clerk.browser.js:5
-loadClerkJS @ isomorphicClerk.ts:505
-await in loadClerkJS
-_IsomorphicClerk2 @ isomorphicClerk.ts:273
-getOrCreateInstance @ isomorphicClerk.ts:214
-useLoadedIsomorphicClerk @ ClerkContextProvider.tsx:115
-ClerkContextProvider @ ClerkContextProvider.tsx:27
-renderWithHooks @ react-dom.development.js:15486
-mountIndeterminateComponent @ react-dom.development.js:20103
-beginWork @ react-dom.development.js:21626
-beginWork$1 @ react-dom.development.js:27465
-performUnitOfWork @ react-dom.development.js:26596
-workLoopSync @ react-dom.development.js:26505
-renderRootSync @ react-dom.development.js:26473
-performConcurrentWorkOnRoot @ react-dom.development.js:25777
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-App.tsx:29  POST http://localhost:3000/api/v1/auth/sync 500 (Internal Server Error)
-dispatchXhrRequest @ xhr.js:198
-xhr @ xhr.js:15
-dispatchRequest @ dispatchRequest.js:51
-Promise.then
-_request @ Axios.js:163
-request @ Axios.js:40
-httpMethod @ Axios.js:224
-wrap @ bind.js:12
-(anonymous) @ App.tsx:29
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-(anonymous) @ react-dom.development.js:26808
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-AxiosError {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
-Promise.catch
-(anonymous) @ App.tsx:29
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-(anonymous) @ react-dom.development.js:26808
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-Projects.tsx:157  GET http://localhost:3000/api/v1/projects/invitations 404 (Not Found)
-loadPendingInvitations @ Projects.tsx:157
-await in loadPendingInvitations
-(anonymous) @ Projects.tsx:108
-commitHookEffectListMount @ react-dom.development.js:23189
-commitPassiveMountOnFiber @ react-dom.development.js:24965
-commitPassiveMountEffects_complete @ react-dom.development.js:24930
-commitPassiveMountEffects_begin @ react-dom.development.js:24917
-commitPassiveMountEffects @ react-dom.development.js:24905
-flushPassiveEffectsImpl @ react-dom.development.js:27078
-flushPassiveEffects @ react-dom.development.js:27023
-commitRootImpl @ react-dom.development.js:26974
-commitRoot @ react-dom.development.js:26721
-performSyncWorkOnRoot @ react-dom.development.js:26156
-flushSyncCallbacks @ react-dom.development.js:12042
-(anonymous) @ react-dom.development.js:25690
-Projects.tsx:157  GET http://localhost:3000/api/v1/projects/invitations 404 (Not Found)
-loadPendingInvitations @ Projects.tsx:157
-await in loadPendingInvitations
-(anonymous) @ Projects.tsx:108
-commitHookEffectListMount @ react-dom.development.js:23189
-invokePassiveEffectMountInDEV @ react-dom.development.js:25193
-invokeEffectsInDev @ react-dom.development.js:27390
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:27369
-flushPassiveEffectsImpl @ react-dom.development.js:27095
-flushPassiveEffects @ react-dom.development.js:27023
-commitRootImpl @ react-dom.development.js:26974
-commitRoot @ react-dom.development.js:26721
-performSyncWorkOnRoot @ react-dom.development.js:26156
-flushSyncCallbacks @ react-dom.development.js:12042
-(anonymous) @ react-dom.development.js:25690
-Projects.tsx:209  POST http://localhost:3000/api/v1/projects/b421c78b-39f1-41a1-a7ca-a4e6abae1921/invite 500 (Internal Server Error)
-handleInviteCollaborator @ Projects.tsx:209
-await in handleInviteCollaborator
-callCallback2 @ react-dom.development.js:4164
-invokeGuardedCallbackDev @ react-dom.development.js:4213
-invokeGuardedCallback @ react-dom.development.js:4277
-invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:4291
-executeDispatch @ react-dom.development.js:9041
-processDispatchQueueItemsInOrder @ react-dom.development.js:9073
-processDispatchQueue @ react-dom.development.js:9086
-dispatchEventsForPlugins @ react-dom.development.js:9097
-(anonymous) @ react-dom.development.js:9288
-batchedUpdates$1 @ react-dom.development.js:26179
-batchedUpdates @ react-dom.development.js:3991
-dispatchEventForPluginEventSystem @ react-dom.development.js:9287
-dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:6465
-dispatchEvent @ react-dom.development.js:6457
-dispatchDiscreteEvent @ react-dom.development.js:6430
+2026-01-19 11:03:34.852  7430-7430  VRI[Pop-Up Window]      com.baatcheet.app                    D  hardware acceleration = true, forceHwAccelerated = false
+2026-01-19 11:03:34.852  7430-7430  ViewRootImpl            com.baatcheet.app                    D  setView appearance:0 Pop-Up Window
+2026-01-19 11:03:34.862  7430-7430  InputTransport          com.baatcheet.app                    D  Create ARC handle: 0xb40000753dbe6f10
+2026-01-19 11:03:34.862  7430-7430  InputEventReceiver      com.baatcheet.app                    D  Input log is disabled in InputEventReceiver.
+2026-01-19 11:03:34.862  7430-7430  InputTransport          com.baatcheet.app                    D  Input log is disabled in InputChannel.
+2026-01-19 11:03:34.874  7430-7430  WindowOnBackDispatcher  com.baatcheet.app                    W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2026-01-19 11:03:34.913  7430-7430  BufferQueueConsumer     com.baatcheet.app                    D  [](id:1d0600000014,api:0,p:-1,c:7430) connect: controlledByApp=false
+2026-01-19 11:03:34.916  7430-12669 OpenGLRenderer          com.baatcheet.app                    E  Unable to match the desired swap behavior.
+2026-01-19 11:03:34.931  7430-12669 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#20](f:0,a:1) acquireNextBufferLocked size=1080x2436 mFrameNumber=1 applyTransaction=true mTimestamp=64151542294899(auto) mPendingTransactions.size=0 graphicBufferId=31911607009447 transform=0
+2026-01-19 11:03:36.287  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  --> POST https://sharry121-baatcheet.hf.space/api/v1/chat/share
+2026-01-19 11:03:36.287  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Length: 57
+2026-01-19 11:03:36.287  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyODIxYWY1Yy05MGFiLTQ1OGMtOWQ5NC04NWVlZDU1ZTkwYzMiLCJjbGVya0lkIjoidXNlcl8zODZDZTNHVHNUb1lrWnpHbTcxVkJ3NkxWUDAiLCJlbWFpbCI6Im9uc2Vhc29uMTBAZ21haWwuY29tIiwiaWF0IjoxNzY4ODAyNTQ1LCJleHAiOjE3Njk0MDczNDV9.mXcrKkuXVzmvxy-_FkqsyE7iGbpuH3KfZIbUXjNA3BY
+2026-01-19 11:03:36.288  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  Content-Type: application/json
+2026-01-19 11:03:36.288  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  {"conversationId":"b8887696-3e66-425f-9bfe-c9c09f6a1c8c"}
+2026-01-19 11:03:36.289  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  --> END POST (57-byte body)
+2026-01-19 11:03:36.332  7430-7430  WindowOnBackDispatcher  com.baatcheet.app                    W  sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda20@22261fb
+2026-01-19 11:03:36.337  7430-12669 OpenGLRenderer          com.baatcheet.app                    D  endAllActiveAnimators on 0xb4000073ddc1d3f0 (UnprojectedRipple) with handle 0xb40000753dbe3ee0
+2026-01-19 11:03:36.337  7430-7430  View                    com.baatcheet.app                    D  [Warning] assignParent to null: this = androidx.compose.material3.ModalBottomSheetWindow{ae17940 V.E...... ......ID 0,0-1080,2436 #1020002 android:id/content aid=1073741840}
+2026-01-19 11:03:36.353  7430-15056 BLASTBufferQueue        com.baatcheet.app                    D  [VRI[Pop-Up Window]#20](f:0,a:4) destructor()
+2026-01-19 11:03:36.353  7430-15056 BufferQueueConsumer     com.baatcheet.app                    D  [VRI[Pop-Up Window]#20(BLAST Consumer)20](id:1d0600000014,api:0,p:-1,c:7430) disconnect
+2026-01-19 11:03:36.358  7430-7430  InputTransport          com.baatcheet.app                    D  Destroy ARC handle: 0xb40000753dbe6f10
+2026-01-19 11:03:37.584  7430-7430  BLASTBufferQueue        com.baatcheet.app                    D  [VRI[MainActivity]#19](f:0,a:4) destructor()
+2026-01-19 11:03:37.585  7430-7430  BufferQueueConsumer     com.baatcheet.app                    D  [VRI[MainActivity]#19(BLAST Consumer)19](id:1d0600000013,api:0,p:-1,c:7430) disconnect
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- 200 https://sharry121-baatcheet.hf.space/api/v1/chat/share (1411ms)
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  date: Mon, 19 Jan 2026 06:03:38 GMT
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  content-type: application/json; charset=utf-8
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  content-length: 180
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-request-id: zodwJf, zodwJf
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  content-security-policy: default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline';img-src 'self' data: https:;connect-src 'self' https://api.clerk.dev;base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-opener-policy: same-origin
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  cross-origin-resource-policy: cross-origin
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  origin-agent-cluster: ?1
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  referrer-policy: no-referrer
+2026-01-19 11:03:37.701  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  strict-transport-security: max-age=31536000; includeSubDomains; preload
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-content-type-options: nosniff
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-dns-prefetch-control: off
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-download-options: noopen
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-frame-options: SAMEORIGIN
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-permitted-cross-domain-policies: none
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-xss-protection: 0
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: Origin
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  vary: origin, access-control-request-method, access-control-request-headers
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-allow-credentials: true
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  access-control-expose-headers: X-Request-ID,X-Response-Time,X-RateLimit-Limit,X-RateLimit-Remaining,X-RateLimit-Reset
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-message: Unable to find a signing key in JWKS that matches the kid='undefined' of the provided session token. Please make sure that the __session cookie or the HTTP authorization header contain a Clerk-generated session JWT. The following kid is available: ins_384KLXR0s0ZW3aoWTGXIMeX8Ihm Go to your Dashboard and validate your secret and public keys are correct. Contact support@clerk.com if the issue persists. (reason=jwk-kid-mismatch, token-carrier=header)
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-reason: jwk-kid-mismatch
+2026-01-19 11:03:37.702  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-clerk-auth-status: signed-out
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-policy: 100;w=900
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-limit: 100
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-remaining: 45
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  ratelimit-reset: 266
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-response-time: 153ms
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  etag: W/"b4-p2bP2PRT0QOpiCIdSAYy//jUsZI"
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-host: http://10.108.155.84
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-replica: hy23xu2k-ckwnm
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  x-proxied-path: /api/v1/chat/share
+2026-01-19 11:03:37.703  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  link: <https://huggingface.co/spaces/sharry121/BaatCheet>;rel="canonical"
+2026-01-19 11:03:37.705  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  {"success":true,"data":{"shareLink":"https://baatcheet.app/share/9eCJL08bToXrUsh3QqprgA","shareId":"9eCJL08bToXrUsh3QqprgA","expiresAt":"2026-01-26T06:03:03.906Z","accessCount":0}}
+2026-01-19 11:03:37.705  7430-13092 okhttp.OkHttpClient     com.baatcheet.app                    I  <-- END HTTP (180-byte body)
+2026-01-19 11:04:51.385   965-965   BufferQueueDebug        surfaceflinger                       E  [ActivityRecord{1beef27 u0 com.baatcheet.app/.MainActivity t10808}#24722 (Mirror)#26248](this:0xb4000072ec530730,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'ActivityRecord{1beef27 u0 com.baatcheet.app/.MainActivity t10808}#24722 (Mirror)#26248'
+2026-01-19 11:04:51.386   965-965   BufferQueueDebug        surfaceflinger                       E  [ae69f47 com.baatcheet.app/com.baatcheet.app.MainActivity#24968 (Mirror)#26249](this:0xb4000072ec48e220,id:-1,api:0,p:-1,c:-1) id info cannot be read from 'ae69f47 com.baatcheet.app/com.baatcheet.app.MainActivity#24968 (Mirror)#26249'

@@ -1019,7 +1019,7 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
 
     if (existingShare) {
       // Return existing share link
-      const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet.app';
+      const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet-web.netlify.app';
       res.json({
         success: true,
         data: {
@@ -1048,7 +1048,7 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
       },
     });
 
-    const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet.app';
+    const baseUrl = process.env.FRONTEND_URL || 'https://baatcheet-web.netlify.app';
     const fullShareLink = `${baseUrl}/share/${shareId}`;
 
     logger.info('Chat shared', { userId, conversationId, shareId });
