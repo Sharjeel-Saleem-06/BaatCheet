@@ -4,7 +4,7 @@
  */
 
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { SignedIn, SignedOut, SignIn, SignUp, useUser } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignIn, SignUp, useUser, useAuth } from '@clerk/clerk-react';
 import Layout from './components/Layout';
 import Chat from './pages/Chat';
 import Projects from './pages/Projects';
@@ -24,13 +24,29 @@ import api from './services/api';
 // Sync user with backend after Clerk authentication
 function UserSync() {
   const { isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
 
   useEffect(() => {
     if (isSignedIn && user) {
-      // Sync user data with backend
-      api.post('/auth/sync').catch(console.error);
+      // Sync user data with backend using explicit token
+      const syncUser = async () => {
+        try {
+          const token = await getToken();
+          if (token) {
+            await api.post('/auth/sync', {}, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            console.log('User synced with backend');
+          }
+        } catch (error) {
+          console.error('Failed to sync user:', error);
+        }
+      };
+      syncUser();
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, getToken]);
 
   return null;
 }
