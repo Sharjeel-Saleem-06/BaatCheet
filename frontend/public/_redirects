@@ -3,5 +3,8 @@
 # API proxy to HuggingFace backend
 /api/*  https://sharry121-baatcheet.hf.space/api/:splat  200
 
+# Serve assetlinks.json for Android App Links (must be before SPA fallback)
+/.well-known/assetlinks.json  /.well-known/assetlinks.json  200
+
 # SPA fallback - all routes to index.html
 /*    /index.html   200

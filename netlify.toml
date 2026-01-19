@@ -10,18 +10,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Serve assetlinks.json for Android App Links verification
-[[redirects]]
-  from = "/.well-known/assetlinks.json"
-  to = "/.well-known/assetlinks.json"
-  status = 200
-  force = true
-
 # Single Page Application redirect - all routes to index.html
+# Note: Static files in /public are served first by default
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  # Don't force - this allows static files like assetlinks.json to be served
 
 # API proxy to HuggingFace backend  
 [[redirects]]
