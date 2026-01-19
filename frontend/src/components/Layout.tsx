@@ -15,6 +15,7 @@ import {
   LogOut,
   HelpCircle,
   Lock,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
@@ -26,11 +27,18 @@ const navItems = [
   { path: '/app/settings', icon: Settings, label: 'Settings' },
 ];
 
+// Admin emails that can access the Admin Panel
+const ADMIN_EMAILS = ['muhammadsharjeelsaleem06@gmail.com', 'onseason10@gmail.com'];
+
 export default function Layout() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Check if current user is an admin
+  const isAdmin = user?.primaryEmailAddress?.emailAddress && 
+    ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress);
 
   const handleSignOut = async () => {
     await signOut();
@@ -110,6 +118,25 @@ export default function Layout() {
                 <Lock size={20} />
                 <span>Privacy Policy</span>
               </NavLink>
+              
+              {/* Admin Panel - Only visible to admin users */}
+              {isAdmin && (
+                <NavLink
+                  to="/app/admin"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400'
+                    )
+                  }
+                >
+                  <Shield size={20} />
+                  <span>Admin Panel</span>
+                </NavLink>
+              )}
             </div>
           </nav>
 
