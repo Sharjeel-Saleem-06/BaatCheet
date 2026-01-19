@@ -198,6 +198,53 @@ class ClerkAuthService @Inject constructor(
         }
     }
 
+    // MARK: - Sign In with Google ID Token
+    suspend fun signInWithGoogle(idToken: String): ClerkAuthResult = withContext(Dispatchers.IO) {
+        val url = "${APIConfig.BASE_URL}/auth/google"
+        
+        val body = mapOf("idToken" to idToken)
+        val requestBody = gson.toJson(body).toRequestBody("application/json".toMediaType())
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .header("Content-Type", "application/json")
+            .build()
+
+        try {
+            val response = okHttpClient.newCall(request).execute()
+            val responseBody = response.body?.string()
+            
+            if (responseBody != null) {
+                val authResponse = gson.fromJson(responseBody, AuthResponse::class.java)
+                
+                if (authResponse.success) {
+                    authResponse.data?.let { data ->
+                        if (data.token != null && data.user != null) {
+                            saveAuthToken(data.token)
+                            saveUser(data.user)
+                            return@withContext ClerkAuthResult.Success(
+                                token = data.token,
+                                userId = data.user.id,
+                                user = data.user
+                            )
+                        }
+                    }
+                }
+                
+                // Error response
+                val errorMessage = authResponse.error ?: "Google sign-in failed"
+                return@withContext ClerkAuthResult.Failure(Exception(errorMessage))
+            }
+            
+            ClerkAuthResult.Failure(Exception("Empty response from server"))
+        } catch (e: IOException) {
+            ClerkAuthResult.Failure(e)
+        } catch (e: Exception) {
+            ClerkAuthResult.Failure(e)
+        }
+    }
+
     // MARK: - Verify Email Code
     suspend fun verifyEmailCode(code: String): ClerkAuthResult = withContext(Dispatchers.IO) {
         val email = pendingEmail ?: return@withContext ClerkAuthResult.Failure(

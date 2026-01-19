@@ -1,17 +1,29 @@
 package com.baatcheet.app
 
+import android.app.Activity
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +32,8 @@ import androidx.navigation.navArgument
 import com.baatcheet.app.ui.analytics.AnalyticsScreen
 import com.baatcheet.app.ui.chat.ChatScreen
 import com.baatcheet.app.ui.imagegen.ImageGenScreen
+import com.baatcheet.app.ui.login.ClerkAuthResult
+import com.baatcheet.app.ui.login.ClerkAuthService
 import com.baatcheet.app.ui.login.EmailAuthScreen
 import com.baatcheet.app.ui.login.LoginScreen
 import com.baatcheet.app.ui.memory.MemoryScreen
@@ -28,6 +42,10 @@ import com.baatcheet.app.ui.settings.SettingsScreen
 import com.baatcheet.app.ui.splash.AnimatedSplashContent
 import com.baatcheet.app.ui.settings.UserSettings
 import com.baatcheet.app.ui.analytics.AnalyticsData
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import kotlinx.coroutines.launch
 
 /**
  * BaatCheet Navigation Host
@@ -111,9 +129,78 @@ fun BaatCheetNavHost(
         
         // Login Screen with animated carousel (no Apple Sign In on Android)
         composable(Routes.LOGIN) {
+            val activity = context as? Activity
+            val coroutineScope = rememberCoroutineScope()
+            val clerkAuthService: ClerkAuthService = hiltViewModel()
+            var isGoogleLoading by remember { mutableStateOf(false) }
+            
             LoginScreen(
                 onGoogleSignIn = {
-                    // TODO: Implement Google Sign In
+                    if (activity != null && !isGoogleLoading) {
+                        coroutineScope.launch {
+                            isGoogleLoading = true
+                            try {
+                                val credentialManager = CredentialManager.create(context)
+                                
+                                val googleIdOption = GetGoogleIdOption.Builder()
+                                    .setServerClientId("1042263517850-1iibs7u9ddhq9dq91cbe8prqlj1q858o.apps.googleusercontent.com")
+                                    .setFilterByAuthorizedAccounts(false)
+                                    .setAutoSelectEnabled(true)
+                                    .build()
+                                
+                                val request = GetCredentialRequest.Builder()
+                                    .addCredentialOption(googleIdOption)
+                                    .build()
+                                
+                                val result = credentialManager.getCredential(
+                                    request = request,
+                                    context = activity
+                                )
+                                
+                                val credential = result.credential
+                                
+                                if (credential is CustomCredential && 
+                                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                    
+                                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                    val idToken = googleIdTokenCredential.idToken
+                                    
+                                    Log.d("GoogleSignIn", "Got ID token, signing in with backend...")
+                                    
+                                    // Sign in with backend
+                                    when (val signInResult = clerkAuthService.signInWithGoogle(idToken)) {
+                                        is ClerkAuthResult.Success -> {
+                                            isGoogleLoading = false
+                                            navController.navigate(Routes.MAIN) {
+                                                popUpTo(Routes.LOGIN) { inclusive = true }
+                                            }
+                                        }
+                                        is ClerkAuthResult.Failure -> {
+                                            isGoogleLoading = false
+                                            Log.e("GoogleSignIn", "Backend error: ${signInResult.error.message}")
+                                        }
+                                        else -> {
+                                            isGoogleLoading = false
+                                        }
+                                    }
+                                } else {
+                                    isGoogleLoading = false
+                                }
+                            } catch (e: GetCredentialCancellationException) {
+                                isGoogleLoading = false
+                                Log.d("GoogleSignIn", "User cancelled")
+                            } catch (e: GetCredentialException) {
+                                isGoogleLoading = false
+                                Log.e("GoogleSignIn", "GetCredentialException", e)
+                            } catch (e: GoogleIdTokenParsingException) {
+                                isGoogleLoading = false
+                                Log.e("GoogleSignIn", "GoogleIdTokenParsingException", e)
+                            } catch (e: Exception) {
+                                isGoogleLoading = false
+                                Log.e("GoogleSignIn", "Exception", e)
+                            }
+                        }
+                    }
                 },
                 onEmailSignUp = {
                     navController.navigate("${Routes.EMAIL_AUTH}?mode=signup")

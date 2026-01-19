@@ -1,5 +1,7 @@
 package com.baatcheet.app.ui.login
 
+import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -36,9 +39,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.baatcheet.app.R
 import com.baatcheet.app.ui.theme.BaatCheetTheme
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -83,6 +94,86 @@ fun EmailAuthScreen(
     val focusManager = LocalFocusManager.current
     val uriHandler = LocalUriHandler.current
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val activity = context as? Activity
+    
+    // Google Sign-In state
+    var isGoogleLoading by remember { mutableStateOf(false) }
+    
+    // Google Sign-In function
+    val performGoogleSignIn: () -> Unit = {
+        if (activity != null && !isGoogleLoading) {
+            coroutineScope.launch {
+                isGoogleLoading = true
+                errorMessage = null
+                
+                try {
+                    val credentialManager = CredentialManager.create(context)
+                    
+                    val googleIdOption = GetGoogleIdOption.Builder()
+                        .setServerClientId("1042263517850-1iibs7u9ddhq9dq91cbe8prqlj1q858o.apps.googleusercontent.com")
+                        .setFilterByAuthorizedAccounts(false)
+                        .setAutoSelectEnabled(true)
+                        .build()
+                    
+                    val request = GetCredentialRequest.Builder()
+                        .addCredentialOption(googleIdOption)
+                        .build()
+                    
+                    val result = credentialManager.getCredential(
+                        request = request,
+                        context = activity
+                    )
+                    
+                    val credential = result.credential
+                    
+                    if (credential is CustomCredential && 
+                        credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                        
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        val idToken = googleIdTokenCredential.idToken
+                        
+                        Log.d("GoogleSignIn", "Got ID token, signing in with backend...")
+                        
+                        // Sign in with backend using the ID token
+                        when (val signInResult = clerkAuthService.signInWithGoogle(idToken)) {
+                            is ClerkAuthResult.Success -> {
+                                isGoogleLoading = false
+                                onAuthSuccess()
+                            }
+                            is ClerkAuthResult.Failure -> {
+                                isGoogleLoading = false
+                                errorMessage = signInResult.error.message ?: "Google sign-in failed"
+                            }
+                            else -> {
+                                isGoogleLoading = false
+                                errorMessage = "Unexpected response from server"
+                            }
+                        }
+                    } else {
+                        isGoogleLoading = false
+                        errorMessage = "Invalid credential type received"
+                    }
+                } catch (e: GetCredentialCancellationException) {
+                    isGoogleLoading = false
+                    // User cancelled - don't show error
+                    Log.d("GoogleSignIn", "User cancelled Google Sign-In")
+                } catch (e: GetCredentialException) {
+                    isGoogleLoading = false
+                    errorMessage = "Google Sign-In failed: ${e.message}"
+                    Log.e("GoogleSignIn", "GetCredentialException", e)
+                } catch (e: GoogleIdTokenParsingException) {
+                    isGoogleLoading = false
+                    errorMessage = "Failed to parse Google credentials"
+                    Log.e("GoogleSignIn", "GoogleIdTokenParsingException", e)
+                } catch (e: Exception) {
+                    isGoogleLoading = false
+                    errorMessage = "Google Sign-In error: ${e.message}"
+                    Log.e("GoogleSignIn", "Exception", e)
+                }
+            }
+        }
+    }
 
     // Email validation
     val isEmailValid = remember(email) {
@@ -493,9 +584,8 @@ fun EmailAuthScreen(
 
                 // Continue with Google Button
                 OutlinedButton(
-                    onClick = {
-                        // TODO: Implement Google Sign In
-                    },
+                    onClick = performGoogleSignIn,
+                    enabled = !isGoogleLoading && !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -512,14 +602,22 @@ fun EmailAuthScreen(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_google),
-                            contentDescription = "Google",
-                            modifier = Modifier.size(20.dp)
-                        )
+                        if (isGoogleLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.Black,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_google),
+                                contentDescription = "Google",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Continue with Google",
+                            text = if (isGoogleLoading) "Signing in..." else "Continue with Google",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
