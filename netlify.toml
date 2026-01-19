@@ -1,12 +1,12 @@
 # Netlify Configuration for BaatCheet Frontend
 
 [build]
-  # Base directory (where frontend code is)
-  base = "frontend"
+  # Base directory (where package.json is located)
+  base = "frontend/"
   # Build command - install dependencies first
   command = "npm install && npm run build"
-  # Output directory (relative to base)
-  publish = "frontend/dist"
+  # Output directory (relative to base, so just "dist")
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -17,7 +17,7 @@
   to = "/index.html"
   status = 200
 
-# API proxy to HuggingFace backend
+# API proxy to HuggingFace backend  
 [[redirects]]
   from = "/api/*"
   to = "https://sharry121-baatcheet.hf.space/api/:splat"
