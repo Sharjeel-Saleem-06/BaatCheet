@@ -1,8 +1,8 @@
 # Netlify redirects for SPA and API proxy
 
-# API proxy to HuggingFace backend
+# API proxy to HuggingFace backend (force with !)
 /api/*  https://sharry121-baatcheet.hf.space/api/:splat  200!
 
-# SPA fallback - all routes to index.html (200! means force)
-# Note: Static files in public folder are served first automatically
+# SPA fallback - all routes to index.html
+# Without !, this only applies when the file doesn't exist
 /*    /index.html   200
