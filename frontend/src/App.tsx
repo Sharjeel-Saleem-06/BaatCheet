@@ -10,6 +10,7 @@ import Chat from './pages/Chat';
 import Projects from './pages/Projects';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import AdminPanel from './pages/AdminPanel';
 import Home from './pages/Home';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
@@ -208,6 +209,7 @@ export default function App() {
           <Route path="projects" element={<Projects />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="admin" element={<AdminPanel />} />
         </Route>
 
         {/* Legacy routes - redirect to new structure */}
