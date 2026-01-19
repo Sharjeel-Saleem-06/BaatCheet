@@ -13,7 +13,9 @@ import Settings from './pages/Settings';
 import Home from './pages/Home';
 import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import Help from './pages/Help';
+import SharedChat from './pages/SharedChat';
 import Header from './components/Header';
 import { useEffect } from 'react';
 import api from './services/api';
@@ -126,8 +128,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/help" element={<Help />} />
-        <Route path="/terms" element={<Privacy />} /> {/* Reuse privacy for now */}
+        <Route path="/share/:shareId" element={<SharedChat />} />
         <Route path="/about" element={<Navigate to="/" replace />} />
         <Route path="/cookies" element={<Privacy />} /> {/* Reuse privacy for now */}
         

@@ -34,10 +34,44 @@
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.BaatCheet.Splash">
+            android:theme="@style/Theme.BaatCheet.Splash"
+            android:launchMode="singleTask">
+            
+            <!-- Launcher intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+            <!-- Deep linking for shared chat links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <!-- Handle baatcheet-web.netlify.app links -->
+                <data
+                    android:scheme="https"
+                    android:host="baatcheet-web.netlify.app"
+                    android:pathPrefix="/app/chat" />
+                <data
+                    android:scheme="https"
+                    android:host="baatcheet-web.netlify.app"
+                    android:pathPrefix="/share" />
+            </intent-filter>
+            
+            <!-- Custom scheme for app-to-app deep linking -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                
+                <data
+                    android:scheme="baatcheet"
+                    android:host="chat" />
+                <data
+                    android:scheme="baatcheet"
+                    android:host="share" />
             </intent-filter>
         </activity>
         

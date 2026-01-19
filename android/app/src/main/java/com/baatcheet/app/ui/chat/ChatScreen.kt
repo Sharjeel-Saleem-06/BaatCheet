@@ -337,9 +337,21 @@ fun ChatScreen(
                         },
                         onDeleteAccount = { /* TODO: Implement */ },
                         onClearHistory = { viewModel.clearAllConversations() },
-                        onPrivacyPolicy = { /* TODO: Open URL */ },
-                        onTermsOfService = { /* TODO: Open URL */ },
-                        onContactSupport = { /* TODO: Open email */ },
+                        onPrivacyPolicy = { 
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://baatcheet-web.netlify.app/privacy"))
+                            context.startActivity(intent)
+                        },
+                        onTermsOfService = { 
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://baatcheet-web.netlify.app/terms"))
+                            context.startActivity(intent)
+                        },
+                        onContactSupport = { 
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse("mailto:sharry00010@gmail.com")
+                                putExtra(Intent.EXTRA_SUBJECT, "BaatCheet Support Request")
+                            }
+                            context.startActivity(intent)
+                        },
                         onUpgrade = { /* TODO: Implement */ },
                         onChangePassword = { _, _ -> /* TODO: Implement change password */ },
                         onSaveCustomInstructions = { instructions ->

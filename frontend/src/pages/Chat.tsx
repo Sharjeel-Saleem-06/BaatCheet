@@ -1558,8 +1558,8 @@ export default function Chat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
-        <div className="border-t border-dark-700 p-4 bg-dark-800/50">
+        {/* Input area - mobile responsive with safe area */}
+        <div className="border-t border-dark-700 p-3 sm:p-4 bg-dark-800/50 safe-area-bottom">
           {/* Error message */}
           {error && (
             <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-between">

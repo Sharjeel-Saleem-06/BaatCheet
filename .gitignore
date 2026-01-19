@@ -82,3 +82,6 @@ coverage/
 *.key
 secrets/
 backend/uploads/
+
+# Local Netlify folder
+.netlify

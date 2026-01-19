@@ -68,7 +68,9 @@ object SessionManager {
 }
 
 @Composable
-fun BaatCheetNavHost() {
+fun BaatCheetNavHost(
+    deepLinkConversationId: String? = null
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
     
@@ -78,6 +80,18 @@ fun BaatCheetNavHost() {
     // Skip splash screen entirely if user is logged in - go directly to main
     // The system splash (Android 12+) already provides a nice transition
     val startDestination = if (isLoggedIn) Routes.MAIN else Routes.SPLASH
+    
+    // Handle deep link - navigate to conversation when logged in
+    LaunchedEffect(deepLinkConversationId) {
+        if (deepLinkConversationId != null && isLoggedIn) {
+            // Navigate to the specific conversation
+            navController.navigate("${Routes.CHAT}/$deepLinkConversationId") {
+                popUpTo(Routes.MAIN) { inclusive = false }
+            }
+            // Clear the deep link after handling
+            MainActivity.pendingDeepLink.value = null
+        }
+    }
     
     NavHost(
         navController = navController,
@@ -189,9 +203,21 @@ fun BaatCheetNavHost() {
                 },
                 onDeleteAccount = { /* TODO: Implement delete account */ },
                 onClearHistory = { /* TODO: Implement clear history */ },
-                onPrivacyPolicy = { /* TODO: Open privacy policy */ },
-                onTermsOfService = { /* TODO: Open terms of service */ },
-                onContactSupport = { /* TODO: Open contact support */ },
+                onPrivacyPolicy = { 
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://baatcheet-web.netlify.app/privacy"))
+                    context.startActivity(intent)
+                },
+                onTermsOfService = { 
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://baatcheet-web.netlify.app/terms"))
+                    context.startActivity(intent)
+                },
+                onContactSupport = { 
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                        data = android.net.Uri.parse("mailto:sharry00010@gmail.com")
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "BaatCheet Support Request")
+                    }
+                    context.startActivity(intent)
+                },
                 onUpgrade = { /* TODO: Implement upgrade */ },
                 onChangePassword = { _, _ -> /* TODO: Implement change password */ },
                 onSaveCustomInstructions = { /* TODO: Save custom instructions */ }
