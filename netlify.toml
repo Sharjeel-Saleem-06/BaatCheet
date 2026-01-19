@@ -9,6 +9,11 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Edge function for Android App Links
+[[edge_functions]]
+  path = "/.well-known/assetlinks.json"
+  function = "assetlinks"
+
 # IMPORTANT: Redirect order matters - first match wins!
 
 # 1. API proxy to HuggingFace backend (force = true)

@@ -1,0 +1,27 @@
+// Edge function to serve assetlinks.json for Android App Links
+export default async (request, context) => {
+  const assetlinks = [
+    {
+      relation: ["delegate_permission/common.handle_all_urls"],
+      target: {
+        namespace: "android_app",
+        package_name: "com.baatcheet.app",
+        sha256_cert_fingerprints: [
+          "83:69:D4:26:DE:B0:23:D3:F4:57:11:DE:AD:A8:3F:8E:5C:B3:5D:EC"
+        ]
+      }
+    }
+  ];
+
+  return new Response(JSON.stringify(assetlinks, null, 2), {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "public, max-age=86400"
+    }
+  });
+};
+
+export const config = {
+  path: "/.well-known/assetlinks.json"
+};
