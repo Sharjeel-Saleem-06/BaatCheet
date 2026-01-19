@@ -28,9 +28,10 @@ export interface SharedConversation {
   model: string;
   createdAt: Date;
   messages: Array<{
+    id: string;
     role: string;
     content: string;
-    createdAt: Date;
+    timestamp: string;
   }>;
 }
 

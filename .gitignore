@@ -89,3 +89,12 @@ backend/uploads/
 # Embedded repositories (other projects in workspace)
 DocConverter/
 netlify-deploy-folder/
+
+# Android build cache and gradle files
+android/.gradle/
+android/.cxx/
+android/app/build/
+android/build/
+*.apk
+*.aab
+android/local.properties
