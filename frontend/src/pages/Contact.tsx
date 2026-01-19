@@ -8,8 +8,6 @@ import { Link } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import {
   Mail,
-  Phone,
-  MapPin,
   Send,
   CheckCircle,
   AlertCircle,

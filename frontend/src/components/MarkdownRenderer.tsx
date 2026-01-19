@@ -9,7 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { Check, Copy, ChevronDown, ChevronRight, Volume2 } from 'lucide-react';
+import { Check, Copy, ChevronDown, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import 'katex/dist/katex.min.css';
 

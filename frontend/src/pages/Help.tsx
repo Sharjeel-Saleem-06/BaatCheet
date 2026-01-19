@@ -11,17 +11,13 @@ import {
   Code,
   Image as ImageIcon,
   Mic,
-  Users,
   Settings,
   CreditCard,
-  Shield,
   ChevronDown,
   ChevronRight,
   Mail,
   ExternalLink,
-  BookOpen,
   Zap,
-  Globe,
   Folder,
   HelpCircle,
   Sparkles,
@@ -219,7 +215,7 @@ export default function Help() {
     },
   };
 
-  const filteredCategories = Object.entries(categories).filter(([key, cat]) => {
+  const filteredCategories = Object.entries(categories).filter(([, cat]) => {
     if (!searchQuery) return true;
     const search = searchQuery.toLowerCase();
     return (

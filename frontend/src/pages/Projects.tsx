@@ -23,7 +23,7 @@ import {
   Eye,
   FileText,
 } from 'lucide-react';
-import { projects, conversations } from '../services/api';
+import { projects } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
 
@@ -154,12 +154,12 @@ export default function Projects() {
   const loadPendingInvitations = async () => {
     try {
       const token = await getClerkToken();
-      const response = await fetch('/api/v1/projects/invitations', {
+      const response = await fetch('/api/v1/projects/invitations/pending', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
-        setPendingInvitations(data?.data?.invitations || []);
+        setPendingInvitations(data?.data?.items || data?.data?.invitations || []);
       }
     } catch (error) {
       console.error('Failed to load invitations:', error);
@@ -218,7 +218,14 @@ export default function Projects() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invitation');
+        // Provide more helpful error messages
+        let errorMsg = data.error || 'Failed to send invitation';
+        if (response.status === 500) {
+          errorMsg = 'Server error. The user may need to sign up first, or there may be a configuration issue.';
+        } else if (response.status === 404) {
+          errorMsg = 'User not found. They must sign up to BaatCheet first.';
+        }
+        throw new Error(errorMsg);
       }
 
       setShowInviteModal(false);
@@ -226,7 +233,8 @@ export default function Projects() {
       setInviteRole('viewer');
       loadProjectDetails(selectedProject.id);
     } catch (error) {
-      setInviteError((error as Error).message);
+      const msg = (error as Error).message;
+      setInviteError(msg === 'Failed to fetch' ? 'Network error. Please check your connection.' : msg);
     } finally {
       setInviting(false);
     }
@@ -235,9 +243,13 @@ export default function Projects() {
   const handleAcceptInvitation = async (invitationId: string) => {
     try {
       const token = await getClerkToken();
-      const response = await fetch(`/api/v1/projects/invitations/${invitationId}/accept`, {
+      const response = await fetch(`/api/v1/projects/invitations/${invitationId}/respond`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accept: true }),
       });
 
       if (response.ok) {
@@ -252,9 +264,13 @@ export default function Projects() {
   const handleDeclineInvitation = async (invitationId: string) => {
     try {
       const token = await getClerkToken();
-      const response = await fetch(`/api/v1/projects/invitations/${invitationId}/decline`, {
+      const response = await fetch(`/api/v1/projects/invitations/${invitationId}/respond`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accept: false }),
       });
 
       if (response.ok) {
@@ -544,82 +560,88 @@ export default function Projects() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateProject} className="p-4 space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                    Emoji
-                  </label>
-                  <div className="flex flex-wrap gap-1">
-                    {emojis.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, emoji })}
-                        className={clsx(
-                          'w-9 h-9 rounded-lg text-lg transition-all',
-                          formData.emoji === emoji 
-                            ? 'bg-primary-500/20 ring-2 ring-primary-500' 
-                            : 'bg-dark-700 hover:bg-dark-600'
-                        )}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+            <form onSubmit={handleCreateProject} className="p-4 space-y-5">
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-2">
+                  Project Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  placeholder="Enter project name"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-lg"
+                />
+              </div>
+
+              {/* Emoji Selection */}
+              <div>
+                <label className="block text-sm font-medium text-dark-300 mb-2">
+                  Icon
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, emoji })}
+                      className={clsx(
+                        'w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all',
+                        formData.emoji === emoji 
+                          ? 'bg-primary-500/20 ring-2 ring-primary-500 scale-110' 
+                          : 'bg-dark-700 hover:bg-dark-600 hover:scale-105'
+                      )}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
                 </div>
               </div>
 
+              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                  Description
+                <label className="block text-sm font-medium text-dark-300 mb-2">
+                  Description <span className="text-dark-500">(optional)</span>
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500 resize-none"
+                  placeholder="Brief description of your project"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
                 />
               </div>
 
+              {/* Context Instructions */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                  Context Instructions (AI will follow these for all chats in this project)
+                <label className="block text-sm font-medium text-dark-300 mb-2">
+                  Context Instructions <span className="text-dark-500">(AI follows these for all chats)</span>
                 </label>
                 <textarea
                   value={formData.contextInstructions}
                   onChange={(e) => setFormData({ ...formData, contextInstructions: e.target.value })}
                   rows={3}
                   placeholder="e.g., Always respond in formal English. This project is about mobile app development."
-                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500 resize-none"
+                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
                 />
               </div>
 
+              {/* Color Selection */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1.5">
-                  Color
+                <label className="block text-sm font-medium text-dark-300 mb-2">
+                  Color Theme
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   {colors.map((color) => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => setFormData({ ...formData, color })}
                       className={clsx(
-                        'w-8 h-8 rounded-lg transition-transform',
-                        formData.color === color && 'ring-2 ring-white scale-110'
+                        'w-10 h-10 rounded-xl transition-all',
+                        formData.color === color ? 'ring-2 ring-white ring-offset-2 ring-offset-dark-800 scale-110' : 'hover:scale-105'
                       )}
                       style={{ backgroundColor: color }}
                     />
@@ -627,19 +649,20 @@ export default function Projects() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-3 border-t border-dark-700">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                  className="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg transition-all"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl transition-all font-semibold shadow-lg shadow-primary-500/20"
                 >
-                  {editProject ? 'Save' : 'Create'}
+                  {editProject ? 'Save Changes' : 'Create Project'}
                 </button>
               </div>
             </form>

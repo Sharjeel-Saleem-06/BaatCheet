@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Backend URL - use environment variable or fallback to HuggingFace deployment
-const BACKEND_URL = process.env.VITE_API_URL || 'https://sharry00010-baatcheet-backend.hf.space';
+// Use the HuggingFace deployed backend
+const BACKEND_URL = 'https://sharry121-baatcheet.hf.space';
 
 export default defineConfig({
   plugins: [react()],
@@ -12,20 +12,24 @@ export default defineConfig({
       '/api': {
         target: BACKEND_URL,
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        rewrite: (path) => path, // Keep the path as-is
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, res) => {
-            console.log('Proxy error - trying production backend');
-            // Silently handle errors - the frontend will use production API
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy error:', err.message);
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Proxying:', req.method, req.url, '→', BACKEND_URL);
+            console.log('Proxying:', req.method, req.url, '→', BACKEND_URL + req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Response:', proxyRes.statusCode, req.url);
           });
         },
       },
     },
   },
   define: {
-    'import.meta.env.VITE_API_URL': JSON.stringify(BACKEND_URL),
+    // Make the backend URL available to the app
+    'import.meta.env.VITE_BACKEND_URL': JSON.stringify(BACKEND_URL),
   },
 });

@@ -26,13 +26,11 @@ import {
   Volume2,
   VolumeX,
   Share2,
-  Tag,
   Sparkles,
   Code,
   Globe,
   Search,
   Calculator,
-  BookOpen,
   Lightbulb,
   Languages,
   FileText,
@@ -40,14 +38,14 @@ import {
   GraduationCap,
   Briefcase,
   Wand2,
-  MoreHorizontal,
-  Settings,
-  Folder,
+  Phone,
+  MessageSquare,
 } from 'lucide-react';
-import { conversations, images, audio, modes as modesApi } from '../services/api';
+import { conversations, audio } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import TranslationButton from '../components/TranslationButton';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import VoiceCall from '../components/VoiceCall';
 import clsx from 'clsx';
 
 // Web Speech API TypeScript declarations
@@ -123,8 +121,9 @@ interface AIMode {
   capabilities: string[];
 }
 
-// Mode icons mapping
-const modeIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+// Mode icons mapping - using 'any' to avoid LucideIcon compatibility issues
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const modeIcons: Record<string, any> = {
   'chat': Bot,
   'image-generation': ImageIcon,
   'vision': Sparkles,
@@ -191,15 +190,24 @@ export default function Chat() {
   // Feedback
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
   
-  // Tags
-  const [showTagsModal, setShowTagsModal] = useState(false);
-  const [conversationTags, setConversationTags] = useState<string[]>([]);
-  
   // Share
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  
+  // Voice Call
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  
+  // Quick action tags
+  const quickTags = [
+    { id: 'image', icon: ImageIcon, label: 'Image', color: 'from-purple-500 to-pink-500', prompt: 'Generate an image of ' },
+    { id: 'code', icon: Code, label: 'Code', color: 'from-orange-500 to-amber-500', prompt: 'Write code for ' },
+    { id: 'research', icon: Search, label: 'Research', color: 'from-green-500 to-emerald-500', prompt: 'Research about ' },
+    { id: 'translate', icon: Languages, label: 'Translate', color: 'from-blue-500 to-cyan-500', prompt: 'Translate to Urdu: ' },
+    { id: 'explain', icon: Lightbulb, label: 'Explain', color: 'from-yellow-500 to-amber-500', prompt: 'Explain in simple terms: ' },
+    { id: 'summarize', icon: FileText, label: 'Summarize', color: 'from-violet-500 to-purple-500', prompt: 'Summarize this: ' },
+  ];
   
   // Language metadata for voice input
   const [voiceInputMetadata, setVoiceInputMetadata] = useState<{
@@ -213,7 +221,7 @@ export default function Chat() {
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isRecordingRef = useRef(false);
@@ -274,7 +282,20 @@ export default function Chat() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Default modes for fallback when API is unavailable
+  const defaultModes: AIMode[] = [
+    { id: 'chat', name: 'Chat', icon: 'Bot', description: 'General conversation', capabilities: ['chat'] },
+    { id: 'image-generation', name: 'Image Generation', icon: 'Image', description: 'Create images from text', capabilities: ['image'] },
+    { id: 'code', name: 'Code Assistant', icon: 'Code', description: 'Help with programming', capabilities: ['code'] },
+    { id: 'web-search', name: 'Web Search', icon: 'Globe', description: 'Search the internet', capabilities: ['search'] },
+    { id: 'translate', name: 'Translate', icon: 'Languages', description: 'Translate text between languages', capabilities: ['translate'] },
+    { id: 'creative', name: 'Creative Writing', icon: 'Wand2', description: 'Creative content generation', capabilities: ['creative'] },
+  ];
+
   const loadModes = async () => {
+    // Set default modes first
+    setAvailableModes(defaultModes);
+    
     try {
       const token = await getClerkToken();
       const response = await fetch('/api/v1/modes', {
@@ -282,12 +303,13 @@ export default function Chat() {
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data?.modes) {
+        if (data.success && data.data?.modes && data.data.modes.length > 0) {
           setAvailableModes(data.data.modes);
         }
       }
     } catch (error) {
-      console.error('Failed to load modes:', error);
+      console.error('Failed to load modes, using defaults:', error);
+      // Keep default modes on error
     }
   };
 
@@ -299,7 +321,7 @@ export default function Chat() {
         setConversation(conv);
         setMessages(Array.isArray(conv.messages) ? conv.messages : []);
         if (conv.mode) setSelectedMode(conv.mode);
-        if (conv.tags) setConversationTags(conv.tags);
+        // Tags loaded with conversation
       }
     } catch (error) {
       console.error('Failed to load conversation:', error);
@@ -495,7 +517,6 @@ export default function Chat() {
     navigate('/app/chat');
     setConversation(null);
     setMessages([]);
-    setConversationTags([]);
   };
 
   const handleCopy = (content: string, id: string) => {
@@ -633,6 +654,28 @@ export default function Chat() {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     }
+  };
+  
+  // Quick tag handler
+  const handleQuickTag = (prompt: string, modeId: string) => {
+    setInput(prompt);
+    if (modeId === 'image') setSelectedMode('image-generation');
+    else if (modeId === 'code') setSelectedMode('code');
+    else if (modeId === 'research') setSelectedMode('research');
+    else if (modeId === 'translate') setSelectedMode('translate');
+    inputRef.current?.focus();
+  };
+  
+  // Voice call - opens full screen voice call modal
+  const openVoiceCall = () => {
+    setShowVoiceCall(true);
+  };
+  
+  const handleVoiceCallConversationCreated = (newConversationId: string) => {
+    // Navigate to the new conversation and refresh list
+    navigate(`/app/chat/${newConversationId}`);
+    // Reload recent conversations
+    loadRecentConversations();
   };
 
   // File handling
@@ -1042,7 +1085,6 @@ export default function Chat() {
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
         
         let finalTranscript = '';
         let lastSpeechTime = Date.now();
@@ -1196,38 +1238,54 @@ export default function Chat() {
           </div>
         </div>
 
+        {/* Recent Conversations Header */}
+        <div className="px-4 py-2 border-b border-dark-700">
+          <span className="text-xs text-dark-500 font-medium uppercase tracking-wider">Recent Chats</span>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {(recentConversations || []).map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => navigate(`/app/chat/${conv.id}`)}
-              className={clsx(
-                'w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors group',
-                conv.id === conversationId
-                  ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
-                  : 'text-dark-400 hover:bg-dark-700 hover:text-dark-200'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <MessageSquare size={14} className="flex-shrink-0" />
-                <span className="truncate">{conv.title || 'New Conversation'}</span>
-              </div>
-              {conv.tags && conv.tags.length > 0 && (
-                <div className="flex gap-1 mt-1">
-                  {conv.tags.slice(0, 2).map((tag, i) => (
-                    <span key={i} className="text-xs px-1.5 py-0.5 bg-dark-600 rounded text-dark-400">
-                      {tag}
-                    </span>
-                  ))}
+          {(recentConversations || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <MessageSquare className="text-dark-600 mb-2" size={24} />
+              <p className="text-dark-500 text-sm">No conversations yet</p>
+              <p className="text-dark-600 text-xs mt-1">Start a new chat to begin</p>
+            </div>
+          ) : (
+            (recentConversations || []).map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => navigate(`/app/chat/${conv.id}`)}
+                className={clsx(
+                  'w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors group',
+                  conv.id === conversationId
+                    ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
+                    : 'text-dark-400 hover:bg-dark-700 hover:text-dark-200'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="flex-shrink-0" />
+                  <span className="truncate flex-1">{conv.title || 'New Conversation'}</span>
                 </div>
-              )}
-            </button>
-          ))}
+                {conv.tags && conv.tags.length > 0 && (
+                  <div className="flex gap-1 mt-1 ml-5">
+                    {conv.tags.slice(0, 2).map((tag, i) => (
+                      <span key={i} className="text-xs px-1.5 py-0.5 bg-dark-600 rounded text-dark-400">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Voice call indicator */}
+{/* Voice call modal is now handled separately */}
+
         {/* Chat header with share button */}
         {conversationId && conversation && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700 bg-dark-800/50">
@@ -1242,6 +1300,15 @@ export default function Chat() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Voice call button */}
+              <button
+                onClick={openVoiceCall}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-dark-400 hover:text-dark-200 hover:bg-dark-700"
+                title="Start voice call"
+              >
+                <Phone size={16} />
+                <span className="hidden sm:inline text-sm">Call</span>
+              </button>
               <button
                 onClick={handleShare}
                 className="flex items-center gap-2 px-3 py-1.5 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
@@ -1264,9 +1331,38 @@ export default function Chat() {
               <h2 className="text-2xl font-bold text-dark-100 mb-2">
                 Start a Conversation
               </h2>
-              <p className="text-dark-400 max-w-md mb-8">
+              <p className="text-dark-400 max-w-md mb-6">
                 Ask me anything! I can help with coding, writing, research, image generation, and more.
               </p>
+              
+              {/* Voice Call Button - More prominent with phone icon */}
+              <button
+                onClick={openVoiceCall}
+                className="flex items-center gap-3 px-6 py-3 mb-8 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-full transition-all shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 hover:-translate-y-0.5"
+              >
+                <Phone size={20} />
+                <span className="font-medium">Start Voice Call</span>
+              </button>
+              
+              {/* Quick Action Tags - Compact chips like ChatGPT */}
+              <div className="mb-8">
+                <p className="text-dark-500 text-sm mb-3">Quick Actions</p>
+                <div className="flex flex-wrap justify-center gap-2 max-w-xl">
+                  {quickTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => handleQuickTag(tag.prompt, tag.id)}
+                      className="group flex items-center gap-2 px-3 py-1.5 bg-dark-800/60 border border-dark-700 rounded-full hover:border-primary-500/50 hover:bg-dark-700 transition-all"
+                    >
+                      <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${tag.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                        <tag.icon size={10} className="text-white" />
+                      </div>
+                      <span className="text-xs font-medium text-dark-400 group-hover:text-dark-200">{tag.label}</span>
+                      <Plus size={12} className="text-dark-600 group-hover:text-primary-400 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
               
               {/* Quick mode suggestions */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
@@ -1829,6 +1925,13 @@ export default function Chat() {
           </div>
         </div>
       )}
+      
+      {/* Voice Call Modal */}
+      <VoiceCall
+        isOpen={showVoiceCall}
+        onClose={() => setShowVoiceCall(false)}
+        onConversationCreated={handleVoiceCallConversationCreated}
+      />
     </div>
   );
 }

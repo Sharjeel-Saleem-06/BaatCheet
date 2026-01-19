@@ -154,26 +154,15 @@
    CLERK AUTH STYLING - HIDE BRANDING
    ======================================== */
 
-/* Hide all Clerk branding and internal elements */
-.cl-internal-b3fm6y,
+/* Hide only Clerk branding elements - NOT the form */
 .cl-footerPages,
-.cl-footer,
-.cl-footerPagesLink,
 .cl-powered-by-clerk,
-.cl-internal-1dauvt6,
-.cl-card > footer > div:last-child,
+.cl-footerPagesLink,
 [data-localization-key="footerPageLink__help"],
 [data-localization-key="footerPageLink__privacy"],
 [data-localization-key="footerPageLink__terms"],
-[href*="clerk.com"],
-.cl-logoBox,
-.cl-logoImage,
-div[class*="cl-internal"] {
+[href*="clerk.com"] {
   display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
 }
 
 /* Clerk card styling */

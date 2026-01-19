@@ -3,13 +3,12 @@
  * Modern, beautiful design with gradient backgrounds and animations
  */
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import {
   MessageSquare,
   Zap,
   Globe,
-  Shield,
   Sparkles,
   Code,
   Image as ImageIcon,
@@ -21,7 +20,6 @@ import {
   ChevronRight,
   Languages,
   Brain,
-  Folder,
 } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -153,8 +151,6 @@ const plans = [
 ];
 
 export default function Home() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-dark-900 overflow-hidden">
       {/* Header */}

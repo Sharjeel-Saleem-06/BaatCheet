@@ -4,7 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { Mail, Globe, Github, Linkedin, Twitter, Heart } from 'lucide-react';
+import { Mail, Globe, Github, Linkedin, Twitter } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -148,17 +148,6 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-dark-500 text-sm text-center md:text-left">
               © {currentYear} BaatCheet. All rights reserved.
-            </p>
-            <p className="text-dark-500 text-sm flex items-center gap-1">
-              Made with <Heart size={14} className="text-red-500 fill-red-500" /> by{' '}
-              <a 
-                href="https://muhammad-sharjeel-portfolio.netlify.app/" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary-400 hover:text-primary-300 transition-colors"
-              >
-                Muhammad Sharjeel
-              </a>
             </p>
           </div>
         </div>

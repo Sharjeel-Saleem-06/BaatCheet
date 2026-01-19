@@ -15,7 +15,6 @@ import Contact from './pages/Contact';
 import Privacy from './pages/Privacy';
 import Help from './pages/Help';
 import Header from './components/Header';
-import Footer from './components/Footer';
 import { useEffect } from 'react';
 import api from './services/api';
 
@@ -118,68 +117,6 @@ const clerkAppearance = {
   },
 };
 
-// Auth page wrapper component
-function AuthPageWrapper({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle: string }) {
-  return (
-    <div className="min-h-screen bg-dark-900 flex flex-col">
-      <Header transparent={false} />
-      <div className="flex-1 flex items-center justify-center p-4 pt-24">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
-              <span className="text-white font-bold text-3xl">B</span>
-            </div>
-            <h1 className="text-2xl font-bold text-dark-100 mb-2">{title}</h1>
-            <p className="text-dark-400">{subtitle}</p>
-          </div>
-          {children}
-        </div>
-      </div>
-      {/* Hide Clerk branding with CSS */}
-      <style>{`
-        .cl-internal-b3fm6y,
-        .cl-footerPages,
-        .cl-footer,
-        [data-localization-key="footerPageLink__help"],
-        [data-localization-key="footerPageLink__privacy"],
-        [data-localization-key="footerPageLink__terms"],
-        .cl-footerPagesLink,
-        .cl-powered-by-clerk,
-        .cl-internal-1dauvt6,
-        [class*="cl-internal-"],
-        .cl-socialButtonsProviderIcon__clerk,
-        [href*="clerk.com"],
-        .cl-footerAction__signIn + .cl-footerPages,
-        .cl-footerAction__signUp + .cl-footerPages,
-        .cl-card > footer > div:last-child {
-          display: none !important;
-        }
-        .cl-card {
-          background: #1f1f35 !important;
-          border: 1px solid #2d2d4a !important;
-        }
-        .cl-formButtonPrimary {
-          background: linear-gradient(to right, #22c55e, #16a34a) !important;
-        }
-        .cl-formFieldInput {
-          background: #252538 !important;
-          border-color: #3d3d5c !important;
-        }
-        .cl-socialButtonsBlockButton {
-          background: #252538 !important;
-          border-color: #3d3d5c !important;
-        }
-        .cl-dividerLine {
-          background: #3d3d5c !important;
-        }
-        .cl-headerTitle, .cl-headerSubtitle {
-          display: none !important;
-        }
-      `}</style>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <>
@@ -198,29 +135,53 @@ export default function App() {
         <Route
           path="/sign-in/*"
           element={
-            <AuthPageWrapper title="Welcome Back" subtitle="Sign in to continue to BaatCheet">
-              <SignIn 
-                routing="path" 
-                path="/sign-in"
-                appearance={clerkAppearance}
-                afterSignInUrl="/app/chat"
-                signUpUrl="/sign-up"
-              />
-            </AuthPageWrapper>
+            <div className="min-h-screen bg-dark-900 flex flex-col">
+              <Header transparent={false} />
+              <div className="flex-1 flex items-center justify-center px-4 py-8 mt-20">
+                <div className="w-full max-w-md">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
+                      <span className="text-white font-bold text-3xl">B</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-dark-100 mb-2">Welcome Back</h1>
+                    <p className="text-dark-400">Sign in to continue to BaatCheet</p>
+                  </div>
+                  <SignIn 
+                    routing="path" 
+                    path="/sign-in"
+                    appearance={clerkAppearance}
+                    afterSignInUrl="/app/chat"
+                    signUpUrl="/sign-up"
+                  />
+                </div>
+              </div>
+            </div>
           }
         />
         <Route
           path="/sign-up/*"
           element={
-            <AuthPageWrapper title="Create Account" subtitle="Start your AI journey with BaatCheet">
-              <SignUp 
-                routing="path" 
-                path="/sign-up"
-                appearance={clerkAppearance}
-                afterSignUpUrl="/app/chat"
-                signInUrl="/sign-in"
-              />
-            </AuthPageWrapper>
+            <div className="min-h-screen bg-dark-900 flex flex-col">
+              <Header transparent={false} />
+              <div className="flex-1 flex items-center justify-center px-4 py-8 mt-20">
+                <div className="w-full max-w-md">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary-500/25">
+                      <span className="text-white font-bold text-3xl">B</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-dark-100 mb-2">Create Account</h1>
+                    <p className="text-dark-400">Start your AI journey with BaatCheet</p>
+                  </div>
+                  <SignUp 
+                    routing="path" 
+                    path="/sign-up"
+                    appearance={clerkAppearance}
+                    afterSignUpUrl="/app/chat"
+                    signInUrl="/sign-in"
+                  />
+                </div>
+              </div>
+            </div>
           }
         />
 

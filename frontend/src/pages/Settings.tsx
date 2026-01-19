@@ -18,18 +18,19 @@ import {
   AlertCircle,
   User,
   Brain,
-  Bell,
   Shield,
   Palette,
   Volume2,
-  Globe,
-  FileText,
   Edit2,
   Save,
   Sparkles,
   MessageSquare,
   Zap,
+  Download,
+  LogOut,
+  Mic,
 } from 'lucide-react';
+import { useClerk } from '@clerk/clerk-react';
 import { apiKeys, webhooks, profile } from '../services/api';
 import { getClerkToken } from '../utils/auth';
 import clsx from 'clsx';
@@ -72,10 +73,11 @@ interface UsageData {
   tier: string;
 }
 
-type TabType = 'profile' | 'preferences' | 'apikeys' | 'webhooks' | 'usage';
+type TabType = 'profile' | 'preferences' | 'voice' | 'privacy' | 'usage' | 'apikeys' | 'webhooks';
 
 export default function Settings() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [loading, setLoading] = useState(false);
   
@@ -108,6 +110,29 @@ export default function Settings() {
     soundEffects: true,
     notifications: true,
   });
+  
+  // Voice settings
+  const [voiceSettings, setVoiceSettings] = useState({
+    selectedVoice: 'bilal',
+    speed: 1.0,
+    pitch: 1.0,
+    autoSpeak: false,
+  });
+  
+  // Privacy settings
+  const [privacySettings, setPrivacySettings] = useState({
+    saveHistory: true,
+    shareAnalytics: true,
+    allowDataTraining: false,
+  });
+  
+  // Available voices
+  const availableVoices = [
+    { id: 'bilal', name: 'Bilal (Urdu Male)', language: 'ur' },
+    { id: 'fatima', name: 'Fatima (Urdu Female)', language: 'ur' },
+    { id: 'matthew', name: 'Matthew (English Male)', language: 'en' },
+    { id: 'jenny', name: 'Jenny (English Female)', language: 'en' },
+  ];
 
   useEffect(() => {
     loadTabData();
@@ -261,10 +286,52 @@ export default function Settings() {
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'preferences' as const, label: 'Preferences', icon: Palette },
+    { id: 'voice' as const, label: 'Voice', icon: Mic },
+    { id: 'privacy' as const, label: 'Privacy', icon: Shield },
     { id: 'usage' as const, label: 'Usage', icon: Zap },
     { id: 'apikeys' as const, label: 'API Keys', icon: Key },
     { id: 'webhooks' as const, label: 'Webhooks', icon: Webhook },
   ];
+  
+  const handleExportData = async () => {
+    try {
+      const token = await getClerkToken();
+      const response = await fetch('/api/v1/user/export', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'baatcheet-data-export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Failed to export data:', error);
+    }
+  };
+  
+  const handleDeleteAllData = async () => {
+    if (!confirm('Are you sure you want to delete ALL your data? This action cannot be undone.')) return;
+    if (!confirm('This will permanently delete all your conversations, projects, and settings. Continue?')) return;
+    
+    try {
+      const token = await getClerkToken();
+      await fetch('/api/v1/user/data', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert('All data has been deleted.');
+    } catch (error) {
+      console.error('Failed to delete data:', error);
+    }
+  };
+  
+  const handleSignOut = () => {
+    signOut();
+  };
 
   return (
     <div className="h-full overflow-y-auto p-6">
@@ -518,6 +585,223 @@ export default function Settings() {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Voice Tab */}
+            {activeTab === 'voice' && (
+              <div className="space-y-6">
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Mic className="text-primary-400" size={20} />
+                    <h3 className="text-lg font-semibold text-dark-100">Voice Selection</h3>
+                  </div>
+                  <p className="text-dark-500 text-sm mb-4">
+                    Choose your preferred voice for text-to-speech and voice calls.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableVoices.map((voice) => (
+                      <button
+                        key={voice.id}
+                        onClick={() => setVoiceSettings({ ...voiceSettings, selectedVoice: voice.id })}
+                        className={clsx(
+                          'p-4 rounded-xl border transition-all text-left',
+                          voiceSettings.selectedVoice === voice.id
+                            ? 'bg-primary-500/10 border-primary-500/50'
+                            : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={clsx(
+                            'w-10 h-10 rounded-xl flex items-center justify-center',
+                            voice.language === 'ur' ? 'bg-green-500/20' : 'bg-blue-500/20'
+                          )}>
+                            <Volume2 size={18} className={voice.language === 'ur' ? 'text-green-400' : 'text-blue-400'} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-dark-200">{voice.name}</p>
+                            <p className="text-xs text-dark-500">{voice.language === 'ur' ? 'Urdu' : 'English'}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Voice Settings</h3>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-dark-300">Speed</span>
+                        <span className="text-dark-500">{voiceSettings.speed.toFixed(1)}x</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={voiceSettings.speed}
+                        onChange={(e) => setVoiceSettings({ ...voiceSettings, speed: parseFloat(e.target.value) })}
+                        className="w-full accent-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-dark-300">Pitch</span>
+                        <span className="text-dark-500">{voiceSettings.pitch.toFixed(1)}x</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={voiceSettings.pitch}
+                        onChange={(e) => setVoiceSettings({ ...voiceSettings, pitch: parseFloat(e.target.value) })}
+                        className="w-full accent-primary-500"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Auto-speak Responses</p>
+                        <p className="text-sm text-dark-500">Automatically read AI responses aloud</p>
+                      </div>
+                      <button
+                        onClick={() => setVoiceSettings({ ...voiceSettings, autoSpeak: !voiceSettings.autoSpeak })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          voiceSettings.autoSpeak ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            voiceSettings.autoSpeak ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Test Voice</h3>
+                  <button className="flex items-center gap-2 px-4 py-2.5 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-xl transition-colors">
+                    <Volume2 size={18} />
+                    <span>Play Sample</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Tab */}
+            {activeTab === 'privacy' && (
+              <div className="space-y-6">
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="text-primary-400" size={20} />
+                    <h3 className="text-lg font-semibold text-dark-100">Privacy Settings</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Save Chat History</p>
+                        <p className="text-sm text-dark-500">Keep your conversation history for future reference</p>
+                      </div>
+                      <button
+                        onClick={() => setPrivacySettings({ ...privacySettings, saveHistory: !privacySettings.saveHistory })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          privacySettings.saveHistory ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            privacySettings.saveHistory ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Share Analytics</p>
+                        <p className="text-sm text-dark-500">Help improve BaatCheet with anonymous usage data</p>
+                      </div>
+                      <button
+                        onClick={() => setPrivacySettings({ ...privacySettings, shareAnalytics: !privacySettings.shareAnalytics })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          privacySettings.shareAnalytics ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            privacySettings.shareAnalytics ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-dark-200">Allow Data Training</p>
+                        <p className="text-sm text-dark-500">Let AI learn from your conversations to improve</p>
+                      </div>
+                      <button
+                        onClick={() => setPrivacySettings({ ...privacySettings, allowDataTraining: !privacySettings.allowDataTraining })}
+                        className={clsx(
+                          'w-12 h-6 rounded-full transition-colors',
+                          privacySettings.allowDataTraining ? 'bg-primary-500' : 'bg-dark-600'
+                        )}
+                      >
+                        <div
+                          className={clsx(
+                            'w-5 h-5 rounded-full bg-white transition-transform',
+                            privacySettings.allowDataTraining ? 'translate-x-6' : 'translate-x-0.5'
+                          )}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Data Management</h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleExportData}
+                      className="w-full flex items-center gap-3 px-4 py-3 bg-dark-700 hover:bg-dark-600 rounded-xl transition-colors"
+                    >
+                      <Download className="text-primary-400" size={20} />
+                      <div className="text-left flex-1">
+                        <p className="text-dark-200 font-medium">Export Data</p>
+                        <p className="text-sm text-dark-500">Download all your conversations and settings</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={handleDeleteAllData}
+                      className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl transition-colors"
+                    >
+                      <Trash2 className="text-red-400" size={20} />
+                      <div className="text-left flex-1">
+                        <p className="text-red-400 font-medium">Delete All Data</p>
+                        <p className="text-sm text-red-400/70">Permanently remove all your data</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Account</h3>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 px-4 py-3 bg-dark-700 hover:bg-dark-600 rounded-xl transition-colors"
+                  >
+                    <LogOut className="text-dark-400" size={20} />
+                    <span className="text-dark-200">Sign Out</span>
+                  </button>
                 </div>
               </div>
             )}

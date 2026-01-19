@@ -5,14 +5,20 @@
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
-const API_BASE = '/api/v1';
+// Backend URLs - try proxy first, fallback to direct HuggingFace URL
+const PROXY_API = '/api/v1';
+const HUGGINGFACE_API = 'https://sharry121-baatcheet.hf.space/api/v1';
 
-// Create axios instance
+// Determine if we should use direct API (when proxy fails)
+let useDirectApi = false;
+
+// Create axios instance - start with proxy
 const api: AxiosInstance = axios.create({
-  baseURL: API_BASE,
+  baseURL: PROXY_API,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 second timeout
 });
 
 // Request interceptor - add Clerk auth token
@@ -32,10 +38,27 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor - handle errors
+// Response interceptor - handle errors and fallback to direct API
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config;
+    
+    // If proxy failed (404 or network error) and we haven't tried direct API yet
+    if (!useDirectApi && originalRequest && (
+      error.response?.status === 404 || 
+      error.code === 'ERR_NETWORK' ||
+      error.code === 'ECONNREFUSED'
+    )) {
+      console.log('Proxy failed, switching to direct HuggingFace API...');
+      useDirectApi = true;
+      api.defaults.baseURL = HUGGINGFACE_API;
+      
+      // Retry the request with direct API
+      originalRequest.baseURL = HUGGINGFACE_API;
+      return api.request(originalRequest);
+    }
+    
     if (error.response?.status === 401) {
       // Redirect to sign-in if unauthorized
       window.location.href = '/sign-in';
@@ -85,7 +108,8 @@ export const chat = {
         // No token
       }
 
-      const response = await fetch(`${API_BASE}/chat/completions`, {
+      const apiBase = useDirectApi ? HUGGINGFACE_API : PROXY_API;
+      const response = await fetch(`${apiBase}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

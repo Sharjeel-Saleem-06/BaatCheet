@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut } from '@clerk/clerk-react';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import clsx from 'clsx';
@@ -16,6 +16,8 @@ interface HeaderProps {
 export default function Header({ transparent = true }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +26,37 @@ export default function Header({ transparent = true }: HeaderProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Handle hash scrolling after navigation
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
+
+  const handleNavClick = (href: string, e: React.MouseEvent) => {
+    if (href.startsWith('/#')) {
+      e.preventDefault();
+      const hash = href.replace('/', '');
+      
+      if (location.pathname === '/') {
+        // Already on home page, just scroll
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to home page with hash
+        navigate('/' + hash);
+      }
+    }
+    setMobileMenuOpen(false);
+  };
 
   const navLinks = [
     { href: '/#features', label: 'Features' },
@@ -57,13 +90,14 @@ export default function Header({ transparent = true }: HeaderProps) {
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
-                <Link
+                <a
                   key={link.href}
-                  to={link.href}
-                  className="text-dark-400 hover:text-dark-100 transition-colors font-medium"
+                  href={link.href}
+                  onClick={(e) => handleNavClick(link.href, e)}
+                  className="text-dark-400 hover:text-dark-100 transition-colors font-medium cursor-pointer"
                 >
                   {link.label}
-                </Link>
+                </a>
               ))}
             </div>
 
@@ -109,14 +143,14 @@ export default function Header({ transparent = true }: HeaderProps) {
           <div className="md:hidden bg-dark-900/95 backdrop-blur-lg border-t border-dark-800">
             <div className="px-4 py-4 space-y-3">
               {navLinks.map((link) => (
-                <Link
+                <a
                   key={link.href}
-                  to={link.href}
-                  className="block px-4 py-2 text-dark-300 hover:text-dark-100 hover:bg-dark-800 rounded-lg transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
+                  href={link.href}
+                  className="block px-4 py-2 text-dark-300 hover:text-dark-100 hover:bg-dark-800 rounded-lg transition-colors cursor-pointer"
+                  onClick={(e) => handleNavClick(link.href, e)}
                 >
                   {link.label}
-                </Link>
+                </a>
               ))}
               <div className="pt-4 border-t border-dark-800 space-y-2">
                 <SignedOut>

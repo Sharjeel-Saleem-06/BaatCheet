@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await api.get('/auth/me')
+          const response = await api.get('/auth/me') as { success: boolean; data: User; error?: string }
           if (response.success) {
             setUser(response.data)
           } else {
@@ -54,7 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token])
 
   const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
+    const response = await api.post('/auth/login', { email, password }) as { 
+      success: boolean; 
+      data: { token: string; user: User }; 
+      error?: string 
+    }
     
     if (response.success) {
       setToken(response.data.token)
@@ -66,7 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const register = async (email: string, password: string, name: string) => {
-    const response = await api.post('/auth/register', { email, password, name })
+    const response = await api.post('/auth/register', { email, password, name }) as { 
+      success: boolean; 
+      data: { token: string; user: User }; 
+      error?: string 
+    }
     
     if (response.success) {
       setToken(response.data.token)

@@ -4,7 +4,7 @@
  */
 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { UserButton, useUser, useClerk } from '@clerk/clerk-react';
 import {
   MessageSquare,
   FolderOpen,
@@ -12,6 +12,9 @@ import {
   Settings,
   Menu,
   X,
+  LogOut,
+  HelpCircle,
+  Lock,
 } from 'lucide-react';
 import { useState } from 'react';
 import clsx from 'clsx';
@@ -25,8 +28,14 @@ const navItems = [
 
 export default function Layout() {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <div className="flex h-screen bg-dark-900">
@@ -82,11 +91,31 @@ export default function Layout() {
                 <span>{item.label}</span>
               </NavLink>
             ))}
+            
+            {/* Additional links */}
+            <div className="pt-4 mt-4 border-t border-dark-700 space-y-1">
+              <NavLink
+                to="/help"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-dark-400 hover:bg-dark-700 hover:text-dark-200 transition-colors"
+              >
+                <HelpCircle size={20} />
+                <span>Help & Support</span>
+              </NavLink>
+              <NavLink
+                to="/privacy"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-dark-400 hover:bg-dark-700 hover:text-dark-200 transition-colors"
+              >
+                <Lock size={20} />
+                <span>Privacy Policy</span>
+              </NavLink>
+            </div>
           </nav>
 
           {/* User section with Clerk UserButton */}
           <div className="p-4 border-t border-dark-700">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <UserButton 
                 appearance={{
                   elements: {
@@ -103,6 +132,14 @@ export default function Layout() {
                 </p>
               </div>
             </div>
+            {/* Logout button */}
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut size={18} />
+              <span className="text-sm">Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
