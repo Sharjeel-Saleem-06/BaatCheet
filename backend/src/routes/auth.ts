@@ -421,4 +421,140 @@ router.get(
   }
 );
 
+// ============================================
+// Google OAuth Routes
+// ============================================
+
+/**
+ * POST /api/v1/auth/google
+ * Authenticate with Google ID Token
+ * Used by Android app to sign in with Google credentials
+ */
+router.post(
+  '/google',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { idToken, platform = 'android' } = req.body;
+
+      if (!idToken) {
+        res.status(400).json({
+          success: false,
+          error: 'Google ID token is required',
+        });
+        return;
+      }
+
+      logger.info('Processing Google OAuth', { platform });
+
+      // Verify the Google ID token with Google's API
+      const { OAuth2Client } = await import('google-auth-library');
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+
+      if (!payload || !payload.email) {
+        res.status(401).json({
+          success: false,
+          error: 'Invalid Google token',
+        });
+        return;
+      }
+
+      const { email, given_name, family_name, picture, sub: googleId } = payload;
+
+      logger.info('Google token verified', { email, googleId });
+
+      // Check if user exists
+      let user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (user) {
+        // Update user with Google info if not already set
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            firstName: user.firstName || given_name,
+            lastName: user.lastName || family_name,
+            avatar: user.avatar || picture,
+            lastLoginAt: new Date(),
+            loginCount: { increment: 1 },
+          },
+        });
+
+        logger.info('Existing user logged in via Google', { userId: user.id, email });
+      } else {
+        // Create new user
+        const username = email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
+        
+        user = await prisma.user.create({
+          data: {
+            clerkId: `google_${googleId}`, // Use Google ID as clerk ID for Google users
+            email,
+            username,
+            firstName: given_name,
+            lastName: family_name,
+            avatar: picture,
+            role: 'user',
+            tier: 'free',
+            lastLoginAt: new Date(),
+            loginCount: 1,
+          },
+        });
+
+        // Create default quota
+        await prisma.imageGenerationQuota.create({
+          data: {
+            userId: user.id,
+            dailyLimit: 5,
+            monthlyLimit: 50,
+          },
+        });
+
+        logger.info('New user created via Google OAuth', { userId: user.id, email });
+      }
+
+      // Generate a session token (simple JWT for now)
+      const jwt = await import('jsonwebtoken');
+      const sessionToken = jwt.default.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          provider: 'google',
+        },
+        process.env.JWT_SECRET || 'baatcheet-secret-key',
+        { expiresIn: '30d' }
+      );
+
+      res.json({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+            tier: user.tier,
+          },
+          token: sessionToken,
+          isNewUser: user.loginCount === 1,
+        },
+      });
+    } catch (error) {
+      logger.error('Google OAuth error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to authenticate with Google',
+      });
+    }
+  }
+);
+
 export default router;

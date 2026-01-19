@@ -1072,13 +1072,16 @@ router.post('/share', clerkAuth, async (req: Request, res: Response): Promise<vo
 });
 
 /**
- * GET /api/v1/chat/share/:shareId
- * Get a shared conversation (PUBLIC - no auth required)
+ * GET /api/v1/chat/shared/:shareId
+ * Get a shared conversation (REQUIRES AUTH - user must be logged in)
  */
-router.get('/share/:shareId', async (req: Request, res: Response): Promise<void> => {
+router.get('/shared/:shareId', clerkAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const { shareId } = req.params;
+    const viewerId = req.user!.id;
     const { prisma } = await import('../config/database.js');
+
+    logger.info('Fetching shared conversation', { shareId, viewerId });
 
     // Find the share link
     const share = await prisma.shareLink.findUnique({
@@ -1100,6 +1103,7 @@ router.get('/share/:shareId', async (req: Request, res: Response): Promise<void>
               select: {
                 username: true,
                 firstName: true,
+                lastName: true,
                 avatar: true,
               },
             },
@@ -1140,14 +1144,26 @@ router.get('/share/:shareId', async (req: Request, res: Response): Promise<void>
       data: { accessCount: { increment: 1 } },
     });
 
+    // Get sharer's display name
+    const sharedBy = share.conversation.user.firstName 
+      ? `${share.conversation.user.firstName} ${share.conversation.user.lastName || ''}`.trim()
+      : share.conversation.user.username || 'Someone';
+
     res.json({
       success: true,
       data: {
+        id: share.id,
         title: share.conversation.title,
-        messages: share.conversation.messages,
-        sharedBy: share.conversation.user.username || share.conversation.user.firstName || 'Anonymous',
+        messages: share.conversation.messages.map(m => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          timestamp: m.createdAt.toISOString(),
+        })),
+        sharedBy,
         sharedByAvatar: share.conversation.user.avatar,
-        createdAt: share.createdAt.toISOString(),
+        sharedAt: share.createdAt.toISOString(),
+        originalConversationId: share.conversationId,
         messageCount: share.conversation.messages.length,
       },
     });

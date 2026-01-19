@@ -96,15 +96,18 @@ router.get(
 
 /**
  * GET /api/v1/share/:shareId
- * Get shared conversation (public endpoint)
+ * Get shared conversation (requires authentication)
+ * User must be logged in to view shared conversations
  */
 router.get(
   '/:shareId',
+  clerkAuth, // Require authentication to view shared chats
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { shareId } = req.params;
+      const viewerId = req.user!.id;
 
-      const result = await shareService.getSharedConversation(shareId);
+      const result = await shareService.getSharedConversation(shareId, viewerId);
 
       if (!result.success) {
         res.status(404).json({

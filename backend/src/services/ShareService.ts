@@ -118,10 +118,21 @@ class ShareServiceClass {
 
   /**
    * Get shared conversation by share ID
+   * Now requires viewerId for authentication tracking
    */
   public async getSharedConversation(
-    shareId: string
-  ): Promise<{ success: boolean; conversation?: SharedConversation; error?: string }> {
+    shareId: string,
+    viewerId?: string
+  ): Promise<{ 
+    success: boolean; 
+    conversation?: SharedConversation & { 
+      id: string;
+      sharedBy: string;
+      sharedAt: string;
+      originalConversationId: string;
+    }; 
+    error?: string 
+  }> {
     try {
       const shareLink = await prisma.shareLink.findUnique({
         where: { shareId },
@@ -131,11 +142,20 @@ class ShareServiceClass {
               messages: {
                 orderBy: { createdAt: 'asc' },
                 select: {
+                  id: true,
                   role: true,
                   content: true,
                   createdAt: true,
                 },
               },
+            },
+          },
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              username: true,
+              email: true,
             },
           },
         },
@@ -156,13 +176,27 @@ class ShareServiceClass {
         data: { accessCount: { increment: 1 } },
       });
 
+      // Get sharer's display name
+      const sharedBy = shareLink.user.firstName 
+        ? `${shareLink.user.firstName} ${shareLink.user.lastName || ''}`.trim()
+        : shareLink.user.username || 'Someone';
+
       return {
         success: true,
         conversation: {
+          id: shareLink.id,
           title: shareLink.conversation.title,
           model: shareLink.conversation.model,
           createdAt: shareLink.conversation.createdAt,
-          messages: shareLink.conversation.messages,
+          messages: shareLink.conversation.messages.map(m => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: m.createdAt.toISOString(),
+          })),
+          sharedBy,
+          sharedAt: shareLink.createdAt.toISOString(),
+          originalConversationId: shareLink.conversationId,
         },
       };
     } catch (error) {
