@@ -1,5 +1,9 @@
 package com.baatcheet.app.ui.voice
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -19,8 +23,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 
 // Color palette
@@ -58,6 +61,8 @@ data class AIVoice(
 
 /**
  * Voice Chat Screen - Full Screen Dialog
+ * 
+ * FIXED: Added proper RECORD_AUDIO permission handling to prevent Activity flickering
  */
 @Composable
 fun VoiceChatScreen(
@@ -66,6 +71,64 @@ fun VoiceChatScreen(
     onConversationCreated: (String) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+    
+    // Permission state
+    var hasRecordPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    
+    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    
+    // Permission launcher - handles permission request without Activity recreation
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasRecordPermission = isGranted
+        if (isGranted) {
+            // Execute the pending action after permission is granted
+            pendingAction?.invoke()
+            pendingAction = null
+        } else {
+            showPermissionDeniedDialog = true
+        }
+    }
+    
+    // Helper function to check permission before action
+    fun withPermission(action: () -> Unit) {
+        if (hasRecordPermission) {
+            action()
+        } else {
+            pendingAction = action
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+    
+    // Permission denied dialog
+    if (showPermissionDeniedDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDeniedDialog = false },
+            title = { Text("Microphone Permission Required", color = Color.White) },
+            text = { 
+                Text(
+                    "Voice mode requires microphone access to hear your voice. Please grant permission in Settings.",
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showPermissionDeniedDialog = false }) {
+                    Text("OK", color = VoiceAccent)
+                }
+            },
+            containerColor = VoiceCardBg
+        )
+    }
     
     Dialog(
         onDismissRequest = onDismiss,
@@ -96,7 +159,12 @@ fun VoiceChatScreen(
                         playingVoiceId = state.playingVoiceId,
                         onVoiceSelect = { voice -> viewModel.selectVoice(voice) },
                         onPlayPreview = { voice -> viewModel.playVoicePreview(voice) },
-                        onStartCall = { viewModel.startVoiceCall() },
+                        onStartCall = { 
+                            // Request permission before starting call
+                            withPermission {
+                                viewModel.startVoiceCall()
+                            }
+                        },
                         onBack = { viewModel.moveToIntro() },
                         onDismiss = onDismiss
                     )
@@ -107,14 +175,24 @@ fun VoiceChatScreen(
                         isProcessing = state.isProcessing,
                         isAISpeaking = state.isAISpeaking,
                         selectedVoice = state.selectedVoice,
+                        hasPermission = hasRecordPermission,
                         onToggleRecording = { 
-                            if (state.isRecording) viewModel.stopRecordingAndSend() 
-                            else viewModel.startRecording() 
+                            if (state.isRecording) {
+                                viewModel.stopRecordingAndSend()
+                            } else {
+                                // Check permission before recording
+                                withPermission {
+                                    viewModel.startRecording()
+                                }
+                            }
                         },
                         onEndCall = { 
                             viewModel.endCall()
                             state.conversationId?.let { onConversationCreated(it) }
                             onDismiss()
+                        },
+                        onRequestPermission = {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     )
                 }
@@ -319,6 +397,8 @@ private fun VoiceCard(voice: AIVoice, isSelected: Boolean, isPlaying: Boolean, o
  * Design based on Figma with animated cloud bubble
  * Tap to start speaking, tap again to stop and analyze
  * Fixed button positions at bottom
+ * 
+ * FIXED: Added permission state and request callback
  */
 @Composable
 private fun ActiveVoiceCallScreen(
@@ -326,8 +406,10 @@ private fun ActiveVoiceCallScreen(
     isProcessing: Boolean,
     isAISpeaking: Boolean,
     selectedVoice: AIVoice?,
+    hasPermission: Boolean,
     onToggleRecording: () -> Unit,
-    onEndCall: () -> Unit
+    onEndCall: () -> Unit,
+    onRequestPermission: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "cloud")
     
@@ -446,6 +528,7 @@ private fun ActiveVoiceCallScreen(
             // Status text - shows current state
             Text(
                 text = when {
+                    !hasPermission -> "Tap mic to grant permission"
                     isAISpeaking -> "AI is speaking..."
                     isProcessing -> "Analyzing..."
                     isRecording -> "Listening to you..."
@@ -460,9 +543,9 @@ private fun ActiveVoiceCallScreen(
             if (!isRecording && !isProcessing && !isAISpeaking) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Tap the mic button to start",
+                    text = if (!hasPermission) "Microphone access required" else "Tap the mic button to start",
                     fontSize = 14.sp,
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = if (!hasPermission) VoiceRed.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.5f)
                 )
             }
             
@@ -499,9 +582,16 @@ private fun ActiveVoiceCallScreen(
                 
                 // Main Mic/Stop button (center) - Large, prominent
                 Surface(
-                    onClick = onToggleRecording,
+                    onClick = {
+                        if (!hasPermission) {
+                            onRequestPermission()
+                        } else {
+                            onToggleRecording()
+                        }
+                    },
                     shape = CircleShape,
                     color = when {
+                        !hasPermission -> VoiceGray // Gray when no permission
                         isRecording -> VoiceRed // Red when recording (tap to stop)
                         isProcessing -> VoicePurple.copy(alpha = 0.6f) // Disabled look when processing
                         isAISpeaking -> VoiceGray.copy(alpha = 0.4f) // Disabled when AI speaking
@@ -528,10 +618,10 @@ private fun ActiveVoiceCallScreen(
                                 strokeWidth = 3.dp
                             )
                         } else {
-                            // Mic icon when idle
+                            // Mic icon when idle (or when no permission)
                             Icon(
-                                Icons.Default.Mic,
-                                contentDescription = "Tap to speak",
+                                if (!hasPermission) Icons.Default.MicOff else Icons.Default.Mic,
+                                contentDescription = if (!hasPermission) "Grant microphone permission" else "Tap to speak",
                                 tint = Color.White,
                                 modifier = Modifier.size(36.dp)
                             )

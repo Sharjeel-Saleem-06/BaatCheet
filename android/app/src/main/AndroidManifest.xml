@@ -20,6 +20,7 @@
         android:name=".BaatCheetApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -28,7 +29,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BaatCheet.Splash"
         android:usesCleartextTraffic="true"
-        tools:targetApi="31">
+        tools:targetApi="34">
         
         <activity
             android:name=".MainActivity"
