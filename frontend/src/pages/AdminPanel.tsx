@@ -17,7 +17,7 @@ import {
   Activity, Server, Key, Users, Database, Cpu,
   RefreshCw, Play, CheckCircle, XCircle, AlertTriangle, Clock,
   ChevronDown, ChevronRight, Copy, ExternalLink, Search,
-  Zap, Image, MessageSquare, Globe, Volume2,
+  Zap, Image, MessageSquare, Globe, Volume2, Mail,
   Shield, Settings, BarChart3, Loader2, Terminal, Code,
   Mic, Upload, Tag, Share2, User, Lock,
   Download, Eye, Folder, Heart, Send,
@@ -89,6 +89,7 @@ const API_ENDPOINTS: ApiEndpoint[] = [
   { method: 'GET', path: '/health/ready', description: 'Kubernetes readiness probe', category: 'Health & System', auth: false, testable: true },
   { method: 'GET', path: '/health/live', description: 'Kubernetes liveness probe', category: 'Health & System', auth: false, testable: true },
   { method: 'GET', path: '/health/metrics', description: 'System metrics (CPU, memory, etc.)', category: 'Health & System', auth: false, testable: true },
+  { method: 'GET', path: '/health/email', description: 'Email service status (Resend)', category: 'Health & System', auth: false, testable: true },
   
   // ============================================
   // CHAT (17 endpoints)
@@ -1279,6 +1280,7 @@ export default function AdminPanel() {
                   { path: '/health?detailed=true', label: 'Health Check (Detailed)', icon: <Activity className="w-5 h-5 text-green-500" /> },
                   { path: '/health/providers', label: 'Provider Status', icon: <Zap className="w-5 h-5 text-yellow-500" /> },
                   { path: '/health/metrics', label: 'System Metrics', icon: <Cpu className="w-5 h-5 text-purple-500" /> },
+                  { path: '/health/email', label: 'Email Service', icon: <Mail className="w-5 h-5 text-orange-500" /> },
                   { path: '/health/queues', label: 'Queue Status', icon: <Database className="w-5 h-5 text-blue-500" /> },
                   { path: '/health/cache', label: 'Cache Status', icon: <Server className="w-5 h-5 text-cyan-500" /> },
                   { path: '/tts/debug', label: 'TTS Debug', icon: <Volume2 className="w-5 h-5 text-pink-500" /> },
