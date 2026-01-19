@@ -3,12 +3,11 @@
  * Real-time chat for project collaborators with role-based permissions
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Send,
   Image as ImageIcon,
   Smile,
-  MoreVertical,
   Edit2,
   Trash2,
   Reply,
@@ -25,7 +24,6 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { getClerkToken } from '../utils/auth';
-import { useUser } from '@clerk/clerk-react';
 
 interface ChatMessage {
   id: string;
@@ -72,8 +70,7 @@ interface ProjectChatProps {
 
 const EMOJI_LIST = ['👍', '👎', '❤️', '😀', '😂', '🎉', '🔥', '💯', '✅', '❌', '🤔', '👀', '🙏', '💪', '🚀', '⭐'];
 
-export default function ProjectChat({ projectId, projectName, isOwner, myRole }: ProjectChatProps) {
-  const { user } = useUser();
+export default function ProjectChat({ projectId, myRole }: ProjectChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -86,7 +83,6 @@ export default function ProjectChat({ projectId, projectName, isOwner, myRole }:
   const [editContent, setEditContent] = useState('');
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [messageMenuId, setMessageMenuId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
