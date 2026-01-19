@@ -273,6 +273,102 @@ interface BaatCheetApi {
     ): Response<BaseResponse<Any>>
     
     // ============================================
+    // Project Chat Endpoints
+    // ============================================
+    
+    /**
+     * Get project chat messages
+     */
+    @GET("projects/{id}/chat/messages")
+    suspend fun getProjectChatMessages(
+        @Path("id") projectId: String,
+        @Query("limit") limit: Int = 50,
+        @Query("before") before: String? = null,
+        @Query("after") after: String? = null
+    ): Response<ProjectChatMessagesResponse>
+    
+    /**
+     * Send project chat message
+     */
+    @POST("projects/{id}/chat/messages")
+    suspend fun sendProjectChatMessage(
+        @Path("id") projectId: String,
+        @Body request: SendProjectChatMessageRequest
+    ): Response<SendProjectChatMessageResponse>
+    
+    /**
+     * Edit project chat message
+     */
+    @PUT("projects/{id}/chat/messages/{messageId}")
+    suspend fun editProjectChatMessage(
+        @Path("id") projectId: String,
+        @Path("messageId") messageId: String,
+        @Body request: Map<String, String>
+    ): Response<SendProjectChatMessageResponse>
+    
+    /**
+     * Delete project chat message
+     * @param deleteForEveryone - true to delete for everyone, false to hide for self only
+     */
+    @DELETE("projects/{id}/chat/messages/{messageId}")
+    suspend fun deleteProjectChatMessage(
+        @Path("id") projectId: String,
+        @Path("messageId") messageId: String,
+        @Query("deleteForEveryone") deleteForEveryone: Boolean = false
+    ): Response<DeleteMessageResponse>
+    
+    /**
+     * Get project chat settings
+     */
+    @GET("projects/{id}/chat/settings")
+    suspend fun getProjectChatSettings(
+        @Path("id") projectId: String
+    ): Response<ProjectChatSettingsResponse>
+    
+    /**
+     * Update project chat settings (admin only)
+     */
+    @PUT("projects/{id}/chat/settings")
+    suspend fun updateProjectChatSettings(
+        @Path("id") projectId: String,
+        @Body request: UpdateProjectChatSettingsRequest
+    ): Response<ProjectChatSettingsResponse>
+    
+    /**
+     * Get unread message count for project chat
+     */
+    @GET("projects/{id}/chat/unread-count")
+    suspend fun getProjectChatUnreadCount(
+        @Path("id") projectId: String
+    ): Response<ProjectChatUnreadCountResponse>
+    
+    /**
+     * Mark all messages as read
+     */
+    @POST("projects/{id}/chat/read-all")
+    suspend fun markAllProjectChatMessagesRead(
+        @Path("id") projectId: String
+    ): Response<BaseResponse<Any>>
+    
+    /**
+     * Mark single message as read
+     */
+    @POST("projects/{id}/chat/messages/{messageId}/read")
+    suspend fun markProjectChatMessageRead(
+        @Path("id") projectId: String,
+        @Path("messageId") messageId: String
+    ): Response<BaseResponse<Any>>
+    
+    /**
+     * Unhide a message (undo delete for me)
+     */
+    @POST("projects/{id}/chat/unhide/{messageId}")
+    suspend fun unhideProjectChatMessage(
+        @Path("id") projectId: String,
+        @Path("messageId") messageId: String
+    ): Response<BaseResponse<Any>>
+    
+    // ============================================
     // Profile Endpoints
     // ============================================
     

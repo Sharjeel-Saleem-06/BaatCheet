@@ -1050,6 +1050,120 @@ data class CollaboratorsData(
 // Note: CollaboratorDto is defined near ProjectDto with all permission fields
 
 // ============================================
+// Project Chat Models
+// ============================================
+
+data class ProjectChatMessagesResponse(
+    val success: Boolean,
+    val data: ProjectChatData?
+)
+
+data class ProjectChatData(
+    val messages: List<ProjectChatMessageDto>?,
+    val canSendMessage: Boolean?,
+    val settings: ProjectChatSettingsDto?,
+    val myRole: String?,
+    val isOwner: Boolean?
+)
+
+data class ProjectChatMessageDto(
+    val id: String,
+    val projectId: String,
+    val senderId: String,
+    val content: String,
+    val messageType: String?, // text, image, system
+    val imageUrl: String?,
+    val isEdited: Boolean?,
+    val editedAt: String?,
+    val replyTo: ProjectChatReplyDto?,
+    val sender: ProjectChatSenderDto?,
+    val senderRole: String?, // admin, moderator, viewer
+    val isOwner: Boolean?,
+    val canEdit: Boolean?,
+    val canDeleteForMe: Boolean?,
+    val canDeleteForEveryone: Boolean?,
+    val createdAt: String?,
+    val updatedAt: String?
+)
+
+data class ProjectChatReplyDto(
+    val id: String,
+    val content: String?,
+    val senderId: String?
+)
+
+data class ProjectChatSenderDto(
+    val id: String,
+    val firstName: String?,
+    val lastName: String?,
+    val username: String?,
+    val avatar: String?,
+    val email: String?
+)
+
+data class ProjectChatSettingsDto(
+    val chatAccess: String?, // all, admin_moderator, admin_only
+    val allowImages: Boolean?,
+    val allowEmojis: Boolean?,
+    val allowEditing: Boolean?,
+    val allowDeleting: Boolean?
+)
+
+data class ProjectChatSettingsResponse(
+    val success: Boolean,
+    val data: ProjectChatSettingsWithPermissions?
+)
+
+data class ProjectChatSettingsWithPermissions(
+    val id: String?,
+    val projectId: String?,
+    val chatAccess: String?,
+    val allowImages: Boolean?,
+    val allowEmojis: Boolean?,
+    val allowEditing: Boolean?,
+    val allowDeleting: Boolean?,
+    val canSendMessage: Boolean?,
+    val myRole: String?,
+    val isOwner: Boolean?
+)
+
+data class SendProjectChatMessageRequest(
+    val content: String,
+    val messageType: String = "text",
+    val imageUrl: String? = null,
+    val replyToId: String? = null
+)
+
+data class SendProjectChatMessageResponse(
+    val success: Boolean,
+    val data: ProjectChatMessageDto?,
+    val message: String?
+)
+
+data class UpdateProjectChatSettingsRequest(
+    val chatAccess: String? = null,
+    val allowImages: Boolean? = null,
+    val allowEmojis: Boolean? = null,
+    val allowEditing: Boolean? = null,
+    val allowDeleting: Boolean? = null
+)
+
+data class ProjectChatUnreadCountResponse(
+    val success: Boolean,
+    val data: ProjectChatUnreadData?
+)
+
+data class ProjectChatUnreadData(
+    val unreadCount: Int?
+)
+
+data class DeleteMessageResponse(
+    val success: Boolean,
+    val message: String?,
+    val deleteType: String? // "everyone" or "me"
+)
+
+// ============================================
 // Analytics Models
 // ============================================
 
