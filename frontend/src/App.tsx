@@ -19,7 +19,6 @@ import Help from './pages/Help';
 import SharedChat from './pages/SharedChat';
 import Header from './components/Header';
 import { useEffect } from 'react';
-import api from './services/api';
 
 // Direct API URL to bypass Netlify proxy issues
 const DIRECT_API = 'https://sharry121-baatcheet.hf.space/api/v1';
