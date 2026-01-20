@@ -454,8 +454,9 @@ export default function AdminPanel() {
   
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/health?detailed=true`, { 
-        signal: AbortSignal.timeout(15000),
+      // Fetch basic health (fast) - don't use detailed=true as it can timeout
+      const response = await fetch(`${API_BASE}/health`, { 
+        signal: AbortSignal.timeout(10000),
         headers: { 'Accept': 'application/json' },
       });
       
