@@ -449,19 +449,15 @@ export default function AdminPanel() {
   const isAdmin = user?.primaryEmailAddress?.emailAddress && 
     ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress);
   
+  // Direct HuggingFace API URL - bypasses Netlify proxy which causes timeouts
+  const API_BASE = 'https://sharry121-baatcheet.hf.space/api/v1';
+  
   const fetchHealth = useCallback(async () => {
     try {
-      // Try direct HuggingFace URL first (bypass Netlify proxy which times out)
-      const directUrl = 'https://sharry121-baatcheet.hf.space/api/v1/health?detailed=true';
-      const proxyUrl = '/api/v1/health?detailed=true';
-      
-      let response;
-      try {
-        response = await fetch(directUrl, { signal: AbortSignal.timeout(10000) });
-      } catch {
-        // Fallback to proxy
-        response = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-      }
+      const response = await fetch(`${API_BASE}/health?detailed=true`, { 
+        signal: AbortSignal.timeout(15000),
+        headers: { 'Accept': 'application/json' },
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -469,9 +465,9 @@ export default function AdminPanel() {
       const data = await response.json();
       setHealth(data);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch health:', err);
-      setError('Failed to connect to backend. The server might be restarting.');
+      setError(`Failed to connect to backend: ${err.message}. Try refreshing.`);
       setHealth({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -492,8 +488,10 @@ export default function AdminPanel() {
   
   const fetchProviders = useCallback(async () => {
     try {
-      const directUrl = 'https://sharry121-baatcheet.hf.space/api/v1/health/providers';
-      const response = await fetch(directUrl, { signal: AbortSignal.timeout(10000) });
+      const response = await fetch(`${API_BASE}/health/providers`, { 
+        signal: AbortSignal.timeout(10000),
+        headers: { 'Accept': 'application/json' },
+      });
       if (response.ok) {
         const data = await response.json();
         setProviders(data);
@@ -506,7 +504,7 @@ export default function AdminPanel() {
   const testProvider = async (providerName: string) => {
     setTestingProvider(providerName);
     try {
-      const response = await fetch('https://sharry121-baatcheet.hf.space/api/v1/health/providers/test', {
+      const response = await fetch(`${API_BASE}/health/providers/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: providerName }),
@@ -893,12 +891,12 @@ export default function AdminPanel() {
                 <QuickActionButton
                   label="Health Check"
                   icon={<Heart className="w-5 h-5" />}
-                  onClick={() => window.open('/api/v1/health?detailed=true', '_blank')}
+                  onClick={() => window.open('https://sharry121-baatcheet.hf.space/api/v1/health?detailed=true', '_blank')}
                 />
                 <QuickActionButton
                   label="System Metrics"
                   icon={<Cpu className="w-5 h-5" />}
-                  onClick={() => window.open('/api/v1/health/metrics', '_blank')}
+                  onClick={() => window.open('https://sharry121-baatcheet.hf.space/api/v1/health/metrics', '_blank')}
                 />
               </div>
             </div>

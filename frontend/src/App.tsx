@@ -21,6 +21,9 @@ import Header from './components/Header';
 import { useEffect } from 'react';
 import api from './services/api';
 
+// Direct API URL to bypass Netlify proxy issues
+const DIRECT_API = 'https://sharry121-baatcheet.hf.space/api/v1';
+
 // Sync user with backend after Clerk authentication
 function UserSync() {
   const { isSignedIn, user } = useUser();
@@ -33,12 +36,22 @@ function UserSync() {
         try {
           const token = await getToken();
           if (token) {
-            await api.post('/auth/sync', {}, {
+            // Use direct HuggingFace URL to bypass Netlify proxy
+            const response = await fetch(`${DIRECT_API}/auth/sync`, {
+              method: 'POST',
               headers: {
-                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
               },
+              body: JSON.stringify({}),
             });
-            console.log('User synced with backend');
+            
+            if (response.ok) {
+              console.log('User synced with backend');
+            } else {
+              const error = await response.json();
+              console.error('Sync failed:', error);
+            }
           }
         } catch (error) {
           console.error('Failed to sync user:', error);

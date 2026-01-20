@@ -1,181 +1,44 @@
- Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
+clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
 warnOnce @ clerk.browser.js:19
-/api/v1/auth/sync:1  Failed to load resource: the server responded with a status of 500 ()
- Failed to sync user: Re
+load @ clerk.browser.js:5
+loadClerkJS @ index-_1sHkq1w.js:89
+await in loadClerkJS
+G5 @ index-_1sHkq1w.js:89
+getOrCreateInstance @ index-_1sHkq1w.js:89
+AS @ index-_1sHkq1w.js:89
+TS @ index-_1sHkq1w.js:89
+op @ index-_1sHkq1w.js:38
+Zy @ index-_1sHkq1w.js:40
+Xy @ index-_1sHkq1w.js:40
+j8 @ index-_1sHkq1w.js:40
+a0 @ index-_1sHkq1w.js:40
+Gy @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+index-_1sHkq1w.js:574  POST https://baatcheet-web.netlify.app/api/v1/auth/sync 500 (Internal Server Error)
+(anonymous) @ index-_1sHkq1w.js:574
+xhr @ index-_1sHkq1w.js:574
+Dx @ index-_1sHkq1w.js:576
+Promise.then
+_request @ index-_1sHkq1w.js:577
+request @ index-_1sHkq1w.js:576
+(anonymous) @ index-_1sHkq1w.js:577
+(anonymous) @ index-_1sHkq1w.js:572
 (anonymous) @ index-_1sHkq1w.js:958
- 🎯 Swagger Helper: Detected API documentation page, initializing...
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
- Failed to fetch health: 
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health/queues:1  Failed to load resource: the server responded with a status of 504 ()
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health/metrics:1  Failed to load resource: the server responded with a status of 504 ()
-/api/v1/chat/completions:1  Failed to load resource: the server responded with a status of 500 ()
-/api/v1/chat/test:1  Failed to load resource: the server responded with a status of 500 ()
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/projects:1  Failed to load resource: the server responded with a status of 500 ()
-/api/v1/images/styles:1  Failed to load resource: the server responded with a status of 404 ()
-/api/v1/images/status:1  Failed to load resource: the server responded with a status of 404 ()
-/api/v1/tts/reset-keys:1  Failed to load resource: the server responded with a status of 500 ()
-/api/v1/audio/languages:1  Failed to load resource: the server responded with a status of 404 ()
-/api/v1/audio/formats:1  Failed to load resource: the server responded with a status of 404 ()
-/api/v1/auth/mobile/me:1  Failed to load resource: the server responded with a status of 404 ()
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
-/api/v1/health?detailed=true:1  Failed to load resource: the server responded with a status of 504 ()
-index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
-    at index-_1sHkq1w.js:863:119491
-(anonymous) @ index-_1sHkq1w.js:863
+await in (anonymous)
+(anonymous) @ index-_1sHkq1w.js:958
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+(anonymous) @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+index-_1sHkq1w.js:958 Failed to sync user: Re {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
+(anonymous) @ index-_1sHkq1w.js:958
+await in (anonymous)
+(anonymous) @ index-_1sHkq1w.js:958
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+(anonymous) @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+content.js:74 🎯 Swagger Helper: Detected API documentation page, initializing...
