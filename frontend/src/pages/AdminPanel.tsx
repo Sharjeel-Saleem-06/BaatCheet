@@ -582,7 +582,8 @@ export default function AdminPanel() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      let url = `/api/v1${endpoint.path}`;
+      // Use direct HuggingFace API to bypass Netlify proxy issues
+      let url = `${API_BASE}${endpoint.path}`;
       url = url.replace(':id', 'test-id')
                .replace(':projectId', 'test-project-id')
                .replace(':conversationId', 'test-conv-id')
@@ -810,13 +811,13 @@ export default function AdminPanel() {
               />
               <StatCard
                 title="Total API Keys"
-                value={health?.providers?.reduce((sum, p) => sum + p.keys, 0) || 0}
+                value={providers?.summary?.totalKeys || 0}
                 icon={<Key className="w-5 h-5" />}
                 color="purple"
               />
               <StatCard
                 title="Active Providers"
-                value={`${health?.providers?.filter(p => p.status === 'available').length || 0}/${health?.providers?.length || 0}`}
+                value={`${providers?.summary?.activeProviders || 0}/${providers?.summary?.totalProviders || 0}`}
                 icon={<Zap className="w-5 h-5" />}
                 color="green"
               />
@@ -1180,27 +1181,52 @@ export default function AdminPanel() {
         
         {/* Providers Tab */}
         {activeTab === 'providers' && (
-          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
+          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8 pr-2">
             {/* Test All Providers Button */}
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">API Provider Status & Key Testing</h2>
-              <button
-                onClick={testAllProviders}
-                disabled={testingProvider !== null}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {testingProvider ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                Test All Providers
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={fetchProviders}
+                  className="flex items-center gap-2 px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </button>
+                <button
+                  onClick={testAllProviders}
+                  disabled={testingProvider !== null}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {testingProvider ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                  Test All Providers
+                </button>
+              </div>
             </div>
+            
+            {/* Loading state */}
+            {!providers?.providers && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-green-500 mb-4" />
+                  <p className="text-dark-400">Loading provider data...</p>
+                  <button
+                    onClick={fetchProviders}
+                    className="mt-4 text-sm text-green-400 hover:underline"
+                  >
+                    Click to retry
+                  </button>
+                </div>
+              </div>
+            )}
             
             {/* Provider Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(providers?.providers || health?.providers || []).map((provider: any) => {
+              {(providers?.providers || []).map((provider: any) => {
                 const testResult = providerTestResults[provider.name];
                 return (
                   <div
@@ -1303,25 +1329,25 @@ export default function AdminPanel() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-500">
-                    {providers?.summary?.totalKeys || health?.providers?.reduce((sum: number, p: any) => sum + p.keys, 0) || 0}
+                    {providers?.summary?.totalKeys || 0}
                   </p>
                   <p className="text-sm text-dark-400">Total Keys</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-blue-500">
-                    {(providers?.summary?.totalCapacity || health?.providers?.reduce((sum: number, p: any) => sum + p.dailyCapacity, 0) || 0).toLocaleString()}
+                    {(providers?.summary?.totalCapacity || 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-dark-400">Daily Capacity</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-500">
-                    {(providers?.summary?.totalUsed || health?.providers?.reduce((sum: number, p: any) => sum + p.used, 0) || 0).toLocaleString()}
+                    {(providers?.summary?.totalUsed || 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-dark-400">Used Today</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-purple-500">
-                    {providers?.summary?.activeProviders || health?.providers?.filter((p: any) => p.status === 'available').length || 0} / {providers?.summary?.totalProviders || health?.providers?.length || 0}
+                    {providers?.summary?.activeProviders || 0} / {providers?.summary?.totalProviders || 0}
                   </p>
                   <p className="text-sm text-dark-400">Active Providers</p>
                 </div>
