@@ -477,25 +477,27 @@ fun EmailAuthScreen(
                                 errorMessage = null
                                 
                                 if (authMode == AuthMode.SIGN_IN) {
-                                    // Sign in flow
+                                    // Sign in flow - no verification needed for existing users
                                     when (val signInResult = clerkAuthService.signIn(email, password)) {
                                         is ClerkAuthResult.Success -> {
                                             isLoading = false
                                             onAuthSuccess()
                                         }
-                                        is ClerkAuthResult.NeedsVerification -> {
-                                            isLoading = false
-                                            clerkAuthService.setPendingEmail(email)
-                                            showVerificationScreen = true
-                                        }
                                         is ClerkAuthResult.Failure -> {
                                             isLoading = false
                                             val signInError = signInResult.error.message?.lowercase() ?: ""
-                                            errorMessage = if (signInError.contains("invalid email or password")) {
+                                            errorMessage = if (signInError.contains("invalid email or password") ||
+                                                signInError.contains("incorrect") ||
+                                                signInError.contains("not found")) {
                                                 "Invalid email or password. Don't have an account? Sign up below."
                                             } else {
                                                 signInResult.error.message ?: "Sign in failed"
                                             }
+                                        }
+                                        else -> {
+                                            // NeedsVerification should never happen for sign-in
+                                            isLoading = false
+                                            errorMessage = "Unexpected error. Please try again."
                                         }
                                     }
                                 } else {

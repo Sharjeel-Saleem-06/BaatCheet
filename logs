@@ -1,40 +1,65 @@
 clerk.browser.js:19 Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview
 warnOnce @ clerk.browser.js:19
 load @ clerk.browser.js:5
-loadClerkJS @ index-ScvVNyFn.js:89
+loadClerkJS @ index-_1sHkq1w.js:89
 await in loadClerkJS
-W5 @ index-ScvVNyFn.js:89
-getOrCreateInstance @ index-ScvVNyFn.js:89
-TS @ index-ScvVNyFn.js:89
-ES @ index-ScvVNyFn.js:89
-op @ index-ScvVNyFn.js:38
-Jy @ index-ScvVNyFn.js:40
-Ky @ index-ScvVNyFn.js:40
-S8 @ index-ScvVNyFn.js:40
-a0 @ index-ScvVNyFn.js:40
-Vy @ index-ScvVNyFn.js:40
-M @ index-ScvVNyFn.js:25
-Y @ index-ScvVNyFn.js:25
-index-ScvVNyFn.js:574  POST https://baatcheet-web.netlify.app/api/v1/auth/sync 500 (Internal Server Error)
-(anonymous) @ index-ScvVNyFn.js:574
-xhr @ index-ScvVNyFn.js:574
-L4 @ index-ScvVNyFn.js:576
+G5 @ index-_1sHkq1w.js:89
+getOrCreateInstance @ index-_1sHkq1w.js:89
+AS @ index-_1sHkq1w.js:89
+TS @ index-_1sHkq1w.js:89
+op @ index-_1sHkq1w.js:38
+Zy @ index-_1sHkq1w.js:40
+Xy @ index-_1sHkq1w.js:40
+j8 @ index-_1sHkq1w.js:40
+a0 @ index-_1sHkq1w.js:40
+Gy @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+index-_1sHkq1w.js:574  POST https://baatcheet-web.netlify.app/api/v1/auth/sync 500 (Internal Server Error)
+(anonymous) @ index-_1sHkq1w.js:574
+xhr @ index-_1sHkq1w.js:574
+Dx @ index-_1sHkq1w.js:576
 Promise.then
-_request @ index-ScvVNyFn.js:577
-request @ index-ScvVNyFn.js:576
-(anonymous) @ index-ScvVNyFn.js:577
-(anonymous) @ index-ScvVNyFn.js:572
-(anonymous) @ index-ScvVNyFn.js:958
-P0 @ index-ScvVNyFn.js:40
-us @ index-ScvVNyFn.js:40
-(anonymous) @ index-ScvVNyFn.js:40
-M @ index-ScvVNyFn.js:25
-Y @ index-ScvVNyFn.js:25
-Ie {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
-Promise.catch
-(anonymous) @ index-ScvVNyFn.js:958
-P0 @ index-ScvVNyFn.js:40
-us @ index-ScvVNyFn.js:40
-(anonymous) @ index-ScvVNyFn.js:40
-M @ index-ScvVNyFn.js:25
-Y @ index-ScvVNyFn.js:25
+_request @ index-_1sHkq1w.js:577
+request @ index-_1sHkq1w.js:576
+(anonymous) @ index-_1sHkq1w.js:577
+(anonymous) @ index-_1sHkq1w.js:572
+(anonymous) @ index-_1sHkq1w.js:958
+await in (anonymous)
+(anonymous) @ index-_1sHkq1w.js:958
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+(anonymous) @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+index-_1sHkq1w.js:958 Failed to sync user: Re {message: 'Request failed with status code 500', name: 'AxiosError', code: 'ERR_BAD_RESPONSE', config: {…}, request: XMLHttpRequest, …}
+(anonymous) @ index-_1sHkq1w.js:958
+await in (anonymous)
+(anonymous) @ index-_1sHkq1w.js:958
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+(anonymous) @ index-_1sHkq1w.js:40
+M @ index-_1sHkq1w.js:25
+Y @ index-_1sHkq1w.js:25
+index-_1sHkq1w.js:863  GET https://baatcheet-web.netlify.app/api/v1/health?detailed=true 504 (Gateway Timeout)
+(anonymous) @ index-_1sHkq1w.js:863
+(anonymous) @ index-_1sHkq1w.js:863
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+C8 @ index-_1sHkq1w.js:40
+ii @ index-_1sHkq1w.js:40
+q1 @ index-_1sHkq1w.js:40
+Ga @ index-_1sHkq1w.js:38
+(anonymous) @ index-_1sHkq1w.js:40
+index-_1sHkq1w.js:863 Failed to fetch health: Error: HTTP 504
+    at index-_1sHkq1w.js:863:119491
+(anonymous) @ index-_1sHkq1w.js:863
+await in (anonymous)
+(anonymous) @ index-_1sHkq1w.js:863
+P0 @ index-_1sHkq1w.js:40
+us @ index-_1sHkq1w.js:40
+C8 @ index-_1sHkq1w.js:40
+ii @ index-_1sHkq1w.js:40
+q1 @ index-_1sHkq1w.js:40
+Ga @ index-_1sHkq1w.js:38
+(anonymous) @ index-_1sHkq1w.js:40
