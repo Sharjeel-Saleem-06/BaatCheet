@@ -439,6 +439,9 @@ export default function AdminPanel() {
   const [requestBody, setRequestBody] = useState<string>('{}');
   const [batchTestResults, setBatchTestResults] = useState<Map<string, TestResult>>(new Map());
   const [batchTesting, setBatchTesting] = useState(false);
+  const [providers, setProviders] = useState<any>(null);
+  const [providerTestResults, setProviderTestResults] = useState<Record<string, any>>({});
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
   
   // Admin emails
   const ADMIN_EMAILS = ['muhammadsharjeelsaleem06@gmail.com', 'onseason10@gmail.com'];
@@ -448,7 +451,18 @@ export default function AdminPanel() {
   
   const fetchHealth = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/health?detailed=true');
+      // Try direct HuggingFace URL first (bypass Netlify proxy which times out)
+      const directUrl = 'https://sharry121-baatcheet.hf.space/api/v1/health?detailed=true';
+      const proxyUrl = '/api/v1/health?detailed=true';
+      
+      let response;
+      try {
+        response = await fetch(directUrl, { signal: AbortSignal.timeout(10000) });
+      } catch {
+        // Fallback to proxy
+        response = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -458,7 +472,6 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Failed to fetch health:', err);
       setError('Failed to connect to backend. The server might be restarting.');
-      // Set a minimal health object so the UI doesn't break
       setHealth({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -477,6 +490,48 @@ export default function AdminPanel() {
     }
   }, []);
   
+  const fetchProviders = useCallback(async () => {
+    try {
+      const directUrl = 'https://sharry121-baatcheet.hf.space/api/v1/health/providers';
+      const response = await fetch(directUrl, { signal: AbortSignal.timeout(10000) });
+      if (response.ok) {
+        const data = await response.json();
+        setProviders(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch providers:', err);
+    }
+  }, []);
+  
+  const testProvider = async (providerName: string) => {
+    setTestingProvider(providerName);
+    try {
+      const response = await fetch('https://sharry121-baatcheet.hf.space/api/v1/health/providers/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: providerName }),
+        signal: AbortSignal.timeout(15000),
+      });
+      const data = await response.json();
+      setProviderTestResults(prev => ({ ...prev, [providerName]: data }));
+    } catch (err: any) {
+      setProviderTestResults(prev => ({ 
+        ...prev, 
+        [providerName]: { success: false, error: err.message } 
+      }));
+    } finally {
+      setTestingProvider(null);
+    }
+  };
+  
+  const testAllProviders = async () => {
+    const providerNames = ['groq', 'openrouter', 'deepseek', 'gemini', 'huggingface', 'ocrspace'];
+    for (const name of providerNames) {
+      await testProvider(name);
+      await new Promise(r => setTimeout(r, 500)); // Small delay between tests
+    }
+  };
+  
   useEffect(() => {
     if (!isLoaded) return; // Wait for Clerk to load
     
@@ -485,11 +540,16 @@ export default function AdminPanel() {
       return;
     }
     
-    // Only fetch health if user is admin
+    // Fetch health and providers if user is admin
     fetchHealth();
-    const interval = setInterval(fetchHealth, 30000);
-    return () => clearInterval(interval);
-  }, [isLoaded, isAdmin, navigate, fetchHealth]);
+    fetchProviders();
+    const healthInterval = setInterval(fetchHealth, 30000);
+    const providerInterval = setInterval(fetchProviders, 60000);
+    return () => {
+      clearInterval(healthInterval);
+      clearInterval(providerInterval);
+    };
+  }, [isLoaded, isAdmin, navigate, fetchHealth, fetchProviders]);
   
   const handleRefresh = () => {
     setRefreshing(true);
@@ -651,7 +711,7 @@ export default function AdminPanel() {
   }
   
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-900 text-white overflow-y-auto">
       {/* Header */}
       <header className="bg-dark-800 border-b border-dark-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -734,7 +794,7 @@ export default function AdminPanel() {
         
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
@@ -875,7 +935,7 @@ export default function AdminPanel() {
         
         {/* API Explorer Tab */}
         {activeTab === 'apis' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
             {/* Endpoints List */}
             <div className="bg-dark-800 rounded-xl border border-dark-700 overflow-hidden">
               <div className="p-4 border-b border-dark-700">
@@ -1121,63 +1181,121 @@ export default function AdminPanel() {
         
         {/* Providers Tab */}
         {activeTab === 'providers' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
+            {/* Test All Providers Button */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">API Provider Status & Key Testing</h2>
+              <button
+                onClick={testAllProviders}
+                disabled={testingProvider !== null}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {testingProvider ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+                Test All Providers
+              </button>
+            </div>
+            
+            {/* Provider Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {health?.providers?.map((provider) => (
-                <div
-                  key={provider.name}
-                  className={clsx(
-                    'bg-dark-800 rounded-xl p-6 border',
-                    provider.status === 'available' && 'border-green-500/30',
-                    provider.status === 'limited' && 'border-yellow-500/30',
-                    provider.status === 'unavailable' && 'border-red-500/30',
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold capitalize">{provider.name}</h3>
-                    <span className={clsx(
-                      'px-2 py-1 text-xs rounded-full',
-                      provider.status === 'available' && 'bg-green-500/20 text-green-400',
-                      provider.status === 'limited' && 'bg-yellow-500/20 text-yellow-400',
-                      provider.status === 'unavailable' && 'bg-red-500/20 text-red-400',
-                    )}>
-                      {provider.status}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-dark-400">API Keys</span>
-                      <span>{provider.available} / {provider.keys}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-dark-400">Daily Capacity</span>
-                      <span>{provider.dailyCapacity.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-dark-400">Used Today</span>
-                      <span>{provider.used.toLocaleString()}</span>
+              {(providers?.providers || health?.providers || []).map((provider: any) => {
+                const testResult = providerTestResults[provider.name];
+                return (
+                  <div
+                    key={provider.name}
+                    className={clsx(
+                      'bg-dark-800 rounded-xl p-6 border',
+                      provider.status === 'available' && 'border-green-500/30',
+                      provider.status === 'limited' && 'border-yellow-500/30',
+                      provider.status === 'unavailable' && 'border-red-500/30',
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold capitalize text-lg">{provider.name}</h3>
+                      <span className={clsx(
+                        'px-2 py-1 text-xs rounded-full',
+                        provider.status === 'available' && 'bg-green-500/20 text-green-400',
+                        provider.status === 'limited' && 'bg-yellow-500/20 text-yellow-400',
+                        provider.status === 'unavailable' && 'bg-red-500/20 text-red-400',
+                      )}>
+                        {provider.status}
+                      </span>
                     </div>
                     
-                    <div className="mt-2">
-                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
-                        <div
-                          className={clsx(
-                            'h-full rounded-full transition-all',
-                            provider.percentUsed < 50 && 'bg-green-500',
-                            provider.percentUsed >= 50 && provider.percentUsed < 80 && 'bg-yellow-500',
-                            provider.percentUsed >= 80 && 'bg-red-500',
-                          )}
-                          style={{ width: `${Math.min(provider.percentUsed, 100)}%` }}
-                        />
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-dark-400">API Keys</span>
+                        <span className="font-medium">{provider.available || provider.keys} / {provider.keys}</span>
                       </div>
-                      <p className="text-xs text-dark-400 mt-1 text-right">
-                        {provider.percentUsed}% used
-                      </p>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-dark-400">Daily Capacity</span>
+                        <span className="font-medium">{(provider.dailyCapacity || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-dark-400">Used Today</span>
+                        <span className="font-medium">{(provider.used || 0).toLocaleString()}</span>
+                      </div>
+                      
+                      <div className="mt-2">
+                        <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                          <div
+                            className={clsx(
+                              'h-full rounded-full transition-all',
+                              (provider.percentUsed || 0) < 50 && 'bg-green-500',
+                              (provider.percentUsed || 0) >= 50 && (provider.percentUsed || 0) < 80 && 'bg-yellow-500',
+                              (provider.percentUsed || 0) >= 80 && 'bg-red-500',
+                            )}
+                            style={{ width: `${Math.min(provider.percentUsed || 0, 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-dark-400 mt-1 text-right">
+                          {provider.percentUsed || 0}% used
+                        </p>
+                      </div>
+                      
+                      {/* Test Button */}
+                      <button
+                        onClick={() => testProvider(provider.name)}
+                        disabled={testingProvider === provider.name}
+                        className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors text-sm disabled:opacity-50"
+                      >
+                        {testingProvider === provider.name ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Zap className="w-4 h-4" />
+                        )}
+                        Test API Key
+                      </button>
+                      
+                      {/* Test Result */}
+                      {testResult && (
+                        <div className={clsx(
+                          'mt-2 p-3 rounded-lg text-sm',
+                          testResult.success ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                        )}>
+                          <div className="flex items-center gap-2">
+                            {testResult.success ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : (
+                              <XCircle className="w-4 h-4" />
+                            )}
+                            <span className="font-medium">{testResult.success ? 'Valid' : 'Failed'}</span>
+                          </div>
+                          <p className="mt-1 text-xs opacity-80">
+                            {testResult.message || testResult.error}
+                          </p>
+                          {testResult.latency && (
+                            <p className="text-xs opacity-60 mt-1">{testResult.latency}ms</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             {/* Provider Summary */}
@@ -1186,28 +1304,45 @@ export default function AdminPanel() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-500">
-                    {health?.providers?.reduce((sum, p) => sum + p.keys, 0) || 0}
+                    {providers?.summary?.totalKeys || health?.providers?.reduce((sum: number, p: any) => sum + p.keys, 0) || 0}
                   </p>
                   <p className="text-sm text-dark-400">Total Keys</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-blue-500">
-                    {health?.providers?.reduce((sum, p) => sum + p.dailyCapacity, 0)?.toLocaleString() || 0}
+                    {(providers?.summary?.totalCapacity || health?.providers?.reduce((sum: number, p: any) => sum + p.dailyCapacity, 0) || 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-dark-400">Daily Capacity</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-500">
-                    {health?.providers?.reduce((sum, p) => sum + p.used, 0)?.toLocaleString() || 0}
+                    {(providers?.summary?.totalUsed || health?.providers?.reduce((sum: number, p: any) => sum + p.used, 0) || 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-dark-400">Used Today</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-purple-500">
-                    {health?.providers?.filter(p => p.status === 'available').length || 0} / {health?.providers?.length || 0}
+                    {providers?.summary?.activeProviders || health?.providers?.filter((p: any) => p.status === 'available').length || 0} / {providers?.summary?.totalProviders || health?.providers?.length || 0}
                   </p>
                   <p className="text-sm text-dark-400">Active Providers</p>
                 </div>
+              </div>
+            </div>
+            
+            {/* Fallback Chain Info */}
+            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+              <h2 className="text-lg font-semibold mb-4">🔄 Fallback Chain</h2>
+              <p className="text-sm text-dark-400 mb-4">
+                When an API key fails or is exhausted, the system automatically tries the next available key.
+                If all keys for a provider fail, it falls back to the next provider in the chain.
+              </p>
+              <div className="flex flex-wrap gap-2 items-center">
+                {['Groq', 'OpenRouter', 'DeepSeek', 'Gemini'].map((name, i) => (
+                  <div key={name} className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-dark-700 rounded-lg text-sm">{name}</span>
+                    {i < 3 && <span className="text-dark-500">→</span>}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1215,7 +1350,7 @@ export default function AdminPanel() {
         
         {/* Batch Testing Tab */}
         {activeTab === 'testing' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
             <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -1308,7 +1443,7 @@ export default function AdminPanel() {
         
         {/* Logs Tab */}
         {activeTab === 'logs' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
             <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
                 <Terminal className="w-5 h-5 text-green-500" />
