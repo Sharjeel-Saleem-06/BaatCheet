@@ -2453,6 +2453,9 @@ class ChatViewModel @Inject constructor(
                             isLoading = false
                         ) }
                     }
+                    is ApiResult.Loading -> {
+                        // Already showing loading state
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ChatViewModel", "Failed to update profile picture", e)

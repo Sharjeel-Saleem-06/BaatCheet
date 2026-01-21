@@ -15,6 +15,8 @@ import com.baatcheet.app.domain.model.UsageInfo
 import com.baatcheet.app.domain.model.UserSummary
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -440,10 +442,8 @@ class ChatRepository @Inject constructor(
             val bytes = inputStream.readBytes()
             inputStream.close()
             
-            val requestBody = okhttp3.RequestBody.create(
-                okhttp3.MediaType.parse(mimeType),
-                bytes
-            )
+            val mediaType = mimeType.toMediaTypeOrNull()
+            val requestBody = bytes.toRequestBody(mediaType)
             val part = okhttp3.MultipartBody.Part.createFormData("avatar", fileName, requestBody)
             
             val response = api.uploadAvatar(part)
