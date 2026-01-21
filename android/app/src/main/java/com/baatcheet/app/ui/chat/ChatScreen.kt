@@ -725,7 +725,11 @@ fun ChatScreen(
                     uploadNextAvailableAt = state.uploadNextAvailableAt,
                     imageGenUsedToday = state.imageGenStatus?.usedToday ?: 0,
                     imageGenDailyLimit = state.imageGenStatus?.dailyLimit ?: 2,
-                    imageGenNextAvailableAt = state.imageGenStatus?.nextAvailableAt
+                    imageGenNextAvailableAt = state.imageGenStatus?.nextAvailableAt,
+                    onRefreshLimits = {
+                        viewModel.loadImageGenStatus()
+                        viewModel.loadUploadStatus()
+                    }
                 )
                 
                 // Mode Selector Bottom Sheet
@@ -2852,7 +2856,8 @@ private fun ChatInputBar(
     uploadNextAvailableAt: String? = null,
     imageGenUsedToday: Int = 0,
     imageGenDailyLimit: Int = 2,  // 2 per day for free tier
-    imageGenNextAvailableAt: String? = null
+    imageGenNextAvailableAt: String? = null,
+    onRefreshLimits: () -> Unit = {}
 ) {
     var showPlusMenu by remember { mutableStateOf(false) }
     
@@ -2935,8 +2940,7 @@ private fun ChatInputBar(
                     onClick = { 
                         if (!isLoading) {
                             // Refresh limits before showing menu
-                            viewModel.loadImageGenStatus()
-                            viewModel.loadUploadStatus()
+                            onRefreshLimits()
                             showPlusMenu = true 
                         }
                     },
