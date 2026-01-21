@@ -144,7 +144,7 @@ data class ChatState(
     // File Upload Limits (combined for files, images, camera)
     val uploadLimitReached: Boolean = false,
     val uploadsUsedToday: Int = 0,
-    val uploadDailyLimit: Int = 10,  // 10 for testing
+    val uploadDailyLimit: Int = 2,  // 2 per day limit for free tier
     val uploadNextAvailableAt: String? = null,  // ISO timestamp
     
     // Image Generation Limits
@@ -2212,10 +2212,14 @@ class ChatViewModel @Inject constructor(
     
     /**
      * Load team chat messages for a project
+     * @param showLoading Whether to show loading indicator (false for background refresh/polling)
      */
-    fun loadTeamChatMessages(projectId: String) {
+    fun loadTeamChatMessages(projectId: String, showLoading: Boolean = true) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoadingTeamChat = true, teamChatError = null) }
+            // Only show loading state on initial load, not during polling refresh
+            if (showLoading && _state.value.teamChatMessages.isEmpty()) {
+                _state.update { it.copy(isLoadingTeamChat = true, teamChatError = null) }
+            }
             
             when (val result = chatRepository.getProjectChatMessages(projectId)) {
                 is ApiResult.Success -> {
@@ -2230,7 +2234,7 @@ class ChatViewModel @Inject constructor(
                 is ApiResult.Error -> {
                     _state.update { it.copy(
                         isLoadingTeamChat = false,
-                        teamChatError = result.message
+                        teamChatError = if (showLoading) result.message else null // Don't show error during polling
                     ) }
                 }
                 is ApiResult.Loading -> { /* Already handled */ }

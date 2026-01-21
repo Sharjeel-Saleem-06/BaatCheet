@@ -4775,11 +4775,11 @@ private fun TeamChatContent(
         viewModel.loadTeamChatMessages(projectId)
     }
     
-    // Poll for new messages every 5 seconds
+    // Poll for new messages every 10 seconds (silent refresh - no loading indicator)
     LaunchedEffect(projectId) {
         while (true) {
-            kotlinx.coroutines.delay(5000) // 5 seconds
-            viewModel.loadTeamChatMessages(projectId)
+            kotlinx.coroutines.delay(10000) // 10 seconds - reduced frequency for better UX
+            viewModel.loadTeamChatMessages(projectId, showLoading = false) // Silent refresh
         }
     }
     
