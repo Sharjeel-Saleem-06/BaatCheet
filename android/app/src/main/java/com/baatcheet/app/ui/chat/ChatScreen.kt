@@ -345,6 +345,7 @@ fun ChatScreen(
                         userSettings = com.baatcheet.app.ui.settings.UserSettings(
                             displayName = state.userProfile?.displayName ?: "",
                             email = state.userProfile?.email ?: "",
+                            avatar = state.userProfile?.avatar,
                             tier = "free",
                             customInstructions = "", // TODO: Get from user profile
                             totalMessages = state.analyticsDashboard?.totalMessages ?: 0,

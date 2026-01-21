@@ -16,12 +16,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 // Colors
 private val WhiteBackground = Color(0xFFFFFFFF)
@@ -249,6 +252,7 @@ fun SettingsScreen(
                         email = userSettings.email,
                         tier = userSettings.tier,
                         memberSince = userSettings.memberSince,
+                        avatarUrl = userSettings.avatar,
                         onUpgrade = onUpgrade,
                         onEditProfile = { showEditProfileDialog = true }
                     )
@@ -512,6 +516,7 @@ private fun ProfileSection(
     email: String,
     tier: String,
     memberSince: String,
+    avatarUrl: String? = null,
     onUpgrade: () -> Unit,
     onEditProfile: () -> Unit = {}
 ) {
@@ -527,16 +532,28 @@ private fun ProfileSection(
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .background(PurpleColor, CircleShape)
+                    .clip(CircleShape)
+                    .background(PurpleColor)
                     .clickable { onEditProfile() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = displayName.take(2).uppercase(),
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (!avatarUrl.isNullOrEmpty()) {
+                    // Show uploaded avatar image
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Show initials fallback
+                    Text(
+                        text = displayName.take(2).uppercase(),
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 // Edit overlay indicator
                 Box(
                     modifier = Modifier
