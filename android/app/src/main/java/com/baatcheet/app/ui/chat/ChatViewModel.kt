@@ -2431,19 +2431,35 @@ class ChatViewModel @Inject constructor(
     fun updateProfilePicture(uri: android.net.Uri, context: android.content.Context) {
         viewModelScope.launch {
             try {
-                // Upload the image and get the URL
-                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
-                val filename = "profile_${System.currentTimeMillis()}.jpg"
+                _state.update { it.copy(isLoading = true) }
+                android.util.Log.d("ChatViewModel", "Uploading profile picture: $uri")
                 
-                // For now, just update the local avatar with the URI
-                // The actual upload would require a backend endpoint
-                _state.update { it.copy(
-                    userProfile = it.userProfile?.copy(avatar = uri.toString())
-                ) }
-                android.util.Log.d("ChatViewModel", "Profile picture updated: $uri")
+                // Upload the image to the backend
+                when (val result = chatRepository.uploadAvatar(uri, context)) {
+                    is ApiResult.Success -> {
+                        val avatarUrl = result.data
+                        android.util.Log.d("ChatViewModel", "Profile picture uploaded successfully: $avatarUrl")
+                        
+                        // Update local state with the new avatar URL
+                        _state.update { it.copy(
+                            userProfile = it.userProfile?.copy(avatar = avatarUrl),
+                            isLoading = false
+                        ) }
+                    }
+                    is ApiResult.Error -> {
+                        android.util.Log.e("ChatViewModel", "Failed to upload profile picture: ${result.message}")
+                        _state.update { it.copy(
+                            error = "Failed to upload profile picture: ${result.message}",
+                            isLoading = false
+                        ) }
+                    }
+                }
             } catch (e: Exception) {
                 android.util.Log.e("ChatViewModel", "Failed to update profile picture", e)
-                _state.update { it.copy(error = "Failed to update profile picture") }
+                _state.update { it.copy(
+                    error = "Failed to update profile picture: ${e.message}",
+                    isLoading = false
+                ) }
             }
         }
     }

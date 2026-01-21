@@ -497,6 +497,15 @@ interface BaatCheetApi {
         @Part("prompt") prompt: RequestBody? = null
     ): Response<ImageAnalysisResponse>
     
+    /**
+     * Upload profile avatar image
+     */
+    @Multipart
+    @POST("images/avatar")
+    suspend fun uploadAvatar(
+        @Part avatar: MultipartBody.Part
+    ): Response<AvatarUploadResponse>
+    
     // ============================================
     // Image Generation Endpoints
     // ============================================

@@ -420,6 +420,49 @@ class ChatRepository @Inject constructor(
         }
     }
     
+    /**
+     * Upload profile avatar
+     */
+    suspend fun uploadAvatar(imageUri: android.net.Uri, context: android.content.Context): ApiResult<String> {
+        return try {
+            val contentResolver = context.contentResolver
+            val inputStream = contentResolver.openInputStream(imageUri)
+                ?: return ApiResult.Error("Cannot read image file")
+            
+            val mimeType = contentResolver.getType(imageUri) ?: "image/jpeg"
+            val extension = when {
+                mimeType.contains("png") -> "png"
+                mimeType.contains("gif") -> "gif"
+                else -> "jpg"
+            }
+            val fileName = "avatar_${System.currentTimeMillis()}.$extension"
+            
+            val bytes = inputStream.readBytes()
+            inputStream.close()
+            
+            val requestBody = okhttp3.RequestBody.create(
+                okhttp3.MediaType.parse(mimeType),
+                bytes
+            )
+            val part = okhttp3.MultipartBody.Part.createFormData("avatar", fileName, requestBody)
+            
+            val response = api.uploadAvatar(part)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                val avatarUrl = response.body()?.data?.avatarUrl
+                if (avatarUrl != null) {
+                    ApiResult.Success(avatarUrl)
+                } else {
+                    ApiResult.Error("No avatar URL returned")
+                }
+            } else {
+                ApiResult.Error(response.body()?.error ?: "Failed to upload avatar", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
     // ============================================
     // Project Operations
     // ============================================

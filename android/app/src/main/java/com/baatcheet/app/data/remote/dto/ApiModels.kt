@@ -478,6 +478,26 @@ data class ImagesUploadData(
     val images: List<UploadedImageDto>?
 )
 
+data class AvatarUploadResponse(
+    val success: Boolean,
+    val data: AvatarUploadData?,
+    val error: String?,
+    val message: String?
+)
+
+data class AvatarUploadData(
+    val avatarUrl: String?,
+    val user: UserDto?
+)
+
+data class UserDto(
+    val id: String,
+    val email: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val avatar: String?
+)
+
 data class UploadedImageDto(
     val id: String,
     val url: String?,
