@@ -2425,6 +2425,29 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Update user's profile picture
+     */
+    fun updateProfilePicture(uri: android.net.Uri, context: android.content.Context) {
+        viewModelScope.launch {
+            try {
+                // Upload the image and get the URL
+                val mimeType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                val filename = "profile_${System.currentTimeMillis()}.jpg"
+                
+                // For now, just update the local avatar with the URI
+                // The actual upload would require a backend endpoint
+                _state.update { it.copy(
+                    userProfile = it.userProfile?.copy(avatar = uri.toString())
+                ) }
+                android.util.Log.d("ChatViewModel", "Profile picture updated: $uri")
+            } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Failed to update profile picture", e)
+                _state.update { it.copy(error = "Failed to update profile picture") }
+            }
+        }
+    }
+    
+    /**
      * Clear all conversations (for Settings)
      */
     fun clearAllConversations() {

@@ -62,7 +62,8 @@ private val GrayButton = Color(0x5C787880) // 36% opacity
 fun LoginScreen(
     onGoogleSignIn: () -> Unit = {},
     onEmailSignUp: () -> Unit = {},
-    onLogin: () -> Unit = {}
+    onLogin: () -> Unit = {},
+    isGoogleLoading: Boolean = false
 ) {
     // Carousel slides with updated colors
     val slides = listOf(
@@ -207,7 +208,8 @@ fun LoginScreen(
             BottomSheet(
                 onGoogleSignIn = onGoogleSignIn,
                 onEmailSignUp = onEmailSignUp,
-                onLogin = onLogin
+                onLogin = onLogin,
+                isGoogleLoading = isGoogleLoading
             )
         }
     }
@@ -217,7 +219,8 @@ fun LoginScreen(
 private fun BottomSheet(
     onGoogleSignIn: () -> Unit,
     onEmailSignUp: () -> Unit,
-    onLogin: () -> Unit
+    onLogin: () -> Unit,
+    isGoogleLoading: Boolean = false
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -233,12 +236,14 @@ private fun BottomSheet(
         ) {
             // Continue with Google Button
             Button(
-                onClick = onGoogleSignIn,
+                onClick = { if (!isGoogleLoading) onGoogleSignIn() },
+                enabled = !isGoogleLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GrayButton
+                    containerColor = GrayButton,
+                    disabledContainerColor = GrayButton.copy(alpha = 0.6f)
                 ),
                 shape = RoundedCornerShape(14.dp)
             ) {
@@ -246,14 +251,22 @@ private fun BottomSheet(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_google),
-                        contentDescription = "Google",
-                        modifier = Modifier.size(16.dp)
-                    )
+                    if (isGoogleLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_google),
+                            contentDescription = "Google",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Continue with Google",
+                        text = if (isGoogleLoading) "Signing in..." else "Continue with Google",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White

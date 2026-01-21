@@ -138,6 +138,16 @@ fun ChatScreen(
         viewModel.initTTS(context)
     }
     
+    // Profile picture picker launcher
+    val profilePictureLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            viewModel.updateProfilePicture(selectedUri, context)
+            android.widget.Toast.makeText(context, "Updating profile picture...", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    
     // Media picker for camera, gallery, and file picking
     val mediaPicker = rememberMediaPicker(
         onImageSelected = { uri ->
@@ -371,15 +381,12 @@ fun ChatScreen(
                             viewModel.saveCustomInstructions(instructions)
                         },
                         onUpdateProfilePicture = {
-                            // Open gallery to pick profile picture
-                            val intent = Intent(Intent.ACTION_PICK).apply {
-                                type = "image/*"
-                            }
-                            try {
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "Unable to open gallery", android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                            // Open gallery to pick profile picture using proper launcher
+                            profilePictureLauncher.launch(
+                                androidx.activity.result.PickVisualMediaRequest(
+                                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly
+                                )
+                            )
                         },
                         onUpdateDisplayName = { newName ->
                             viewModel.updateDisplayName(newName)
@@ -1874,65 +1881,73 @@ private fun ChatHistoryItem(
         )
     }
     
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(if (isSelected) ChipBackground else Color.Transparent)
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = { if (onDelete != null) showOptionsMenu = true }
-                )
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (isPinned) {
-                Icon(
-                    Icons.Default.PushPin,
-                    contentDescription = "Pinned",
-                    tint = GreenAccent,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-            Text(
-                text = text,
-                fontSize = 14.sp,
-                color = DarkText,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isSelected) ChipBackground else Color.Transparent)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { if (onDelete != null) showOptionsMenu = true }
             )
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isPinned) {
+            Icon(
+                Icons.Default.PushPin,
+                contentDescription = "Pinned",
+                tint = GreenAccent,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
         }
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = DarkText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
         
-        // Options dropdown menu - positioned at end of row
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 8.dp)
-        ) {
-            DropdownMenu(
-                expanded = showOptionsMenu,
-                onDismissRequest = { showOptionsMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = Color(0xFFFF3B30)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text("Delete", color = Color(0xFFFF3B30))
+        // Options button with dropdown - properly anchored
+        if (onDelete != null) {
+            Box {
+                IconButton(
+                    onClick = { showOptionsMenu = true },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Options",
+                        tint = GrayText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                
+                DropdownMenu(
+                    expanded = showOptionsMenu,
+                    onDismissRequest = { showOptionsMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { 
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Delete,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = Color(0xFFFF3B30)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text("Delete Chat", color = Color(0xFFFF3B30))
+                            }
+                        },
+                        onClick = {
+                            showOptionsMenu = false
+                            showDeleteDialog = true
                         }
-                    },
-                    onClick = {
-                        showOptionsMenu = false
-                        showDeleteDialog = true
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -6639,18 +6654,45 @@ private fun ProjectConversationItem(
                     }
                 }
                 
-                // Show options button if can delete
+                // Show options button if can delete - with dropdown anchored to button
                 if (canDelete && onDelete != null) {
-                    IconButton(
-                        onClick = { showOptionsMenu = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Options",
-                            tint = GrayText,
-                            modifier = Modifier.size(18.dp)
-                        )
+                    Box {
+                        IconButton(
+                            onClick = { showOptionsMenu = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Options",
+                                tint = GrayText,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        
+                        // Options dropdown menu - anchored to the button
+                        DropdownMenu(
+                            expanded = showOptionsMenu,
+                            onDismissRequest = { showOptionsMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Delete,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = Color(0xFFFF3B30)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("Delete Chat", color = Color(0xFFFF3B30))
+                                    }
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    showDeleteDialog = true
+                                }
+                            )
+                        }
                     }
                 } else {
                     Icon(
@@ -6660,31 +6702,6 @@ private fun ProjectConversationItem(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-            }
-            
-            // Options dropdown menu
-            DropdownMenu(
-                expanded = showOptionsMenu,
-                onDismissRequest = { showOptionsMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = Color(0xFFFF3B30)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text("Delete Chat", color = Color(0xFFFF3B30))
-                        }
-                    },
-                    onClick = {
-                        showOptionsMenu = false
-                        showDeleteDialog = true
-                    }
-                )
             }
         }
     }
