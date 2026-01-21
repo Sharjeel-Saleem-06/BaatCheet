@@ -1416,23 +1416,38 @@ class ChatViewModel @Inject constructor(
                     is ApiResult.Error -> {
                         // Check if it's a rate limit error
                         val isLimitError = result.message.contains("limit", ignoreCase = true) || result.code == 429
+                        val isSizeError = result.message.contains("large", ignoreCase = true) || result.code == 413
                         
+                        android.util.Log.e("ChatViewModel", "File upload failed: ${result.message}, code: ${result.code}")
+                        
+                        // Keep file with FAILED status for user feedback, remove after short delay
                         updateFileStatus(localId, FileUploadStatus.FAILED)
                         _state.update { it.copy(
-                            uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }, // Remove failed file
                             isUploading = false,
                             uploadLimitReached = isLimitError,
-                            error = result.message
+                            error = if (isSizeError) "File too large. Max 5MB for documents/images." else result.message
+                        )}
+                        
+                        // Remove failed file after 3 seconds so user sees the error
+                        kotlinx.coroutines.delay(3000)
+                        _state.update { it.copy(
+                            uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }
                         )}
                     }
                     is ApiResult.Loading -> { /* Already handled */ }
                 }
             } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "File upload exception", e)
                 updateFileStatus(localId, FileUploadStatus.FAILED)
                 _state.update { it.copy(
-                    uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }, // Remove failed file
                     isUploading = false,
                     error = "Upload error: ${e.message}"
+                )}
+                
+                // Remove failed file after 3 seconds so user sees the error
+                kotlinx.coroutines.delay(3000)
+                _state.update { it.copy(
+                    uploadedFiles = it.uploadedFiles.filter { f -> f.id != localId }
                 )}
             }
         }
