@@ -212,6 +212,9 @@ fun ChatScreen(
     // All chats screen state
     var showAllChatsScreen by remember { mutableStateOf(false) }
     
+    // Upgrade to Pro dialog state
+    var showUpgradeDialog by remember { mutableStateOf(false) }
+    
     // Handle back navigation properly - close overlays before exiting app
     BackHandler(
         enabled = showSettingsScreen || showAnalyticsScreen || showCollaborationsScreen || 
@@ -361,11 +364,25 @@ fun ChatScreen(
                             }
                             context.startActivity(intent)
                         },
-                        onUpgrade = { /* TODO: Implement */ },
+                        onUpgrade = { showUpgradeDialog = true },
                         onChangePassword = { _, _ -> /* TODO: Implement change password */ },
                         onSaveCustomInstructions = { instructions ->
                             // TODO: Save custom instructions to backend
                             viewModel.saveCustomInstructions(instructions)
+                        },
+                        onUpdateProfilePicture = {
+                            // Open gallery to pick profile picture
+                            val intent = Intent(Intent.ACTION_PICK).apply {
+                                type = "image/*"
+                            }
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "Unable to open gallery", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onUpdateDisplayName = { newName ->
+                            viewModel.updateDisplayName(newName)
                         }
                     )
                 }
@@ -374,19 +391,19 @@ fun ChatScreen(
                     // Analytics Screen (Full screen)
                     com.baatcheet.app.ui.analytics.AnalyticsScreen(
                         analyticsData = com.baatcheet.app.ui.analytics.AnalyticsData(
-                            totalMessages = state.usageInfo.messagesUsed,
-                            totalConversations = state.conversations.size,
-                            totalProjects = state.projects.size,
+                            totalMessages = state.analyticsDashboard?.totalMessages ?: state.usageInfo.messagesUsed,
+                            totalConversations = state.analyticsDashboard?.totalConversations ?: state.conversations.size,
+                            totalProjects = state.analyticsDashboard?.totalProjects ?: state.projects.size,
                             totalCollaborations = state.collaborations.size,
-                            imageGenerations = state.usageInfo.imagesUsed,
+                            imageGenerations = state.imageGenStatus?.usedToday ?: state.usageInfo.imagesUsed,
                             voiceMinutes = 0,
-                            tokensUsed = state.usageInfo.messagesUsed.toLong() * 100,
+                            tokensUsed = state.analyticsDashboard?.totalTokens ?: (state.usageInfo.messagesUsed.toLong() * 100),
                             tokensLimit = state.usageInfo.messagesLimit.toLong() * 100,
                             topModes = emptyList(),
                             weeklyActivity = emptyList(),
                             topTopics = emptyList(),
-                            streak = 1,
-                            lastActive = "Today"
+                            streak = if (state.conversations.isNotEmpty()) state.conversations.size.coerceAtMost(7) else 0, // Estimate based on activity
+                            lastActive = if (state.conversations.isNotEmpty()) "Today" else "Never"
                         ),
                         isLoading = state.isLoadingUsage,
                         onBack = { showAnalyticsScreen = false },
@@ -690,7 +707,7 @@ fun ChatScreen(
                     uploadDailyLimit = state.uploadDailyLimit,
                     uploadNextAvailableAt = state.uploadNextAvailableAt,
                     imageGenUsedToday = state.imageGenStatus?.usedToday ?: 0,
-                    imageGenDailyLimit = state.imageGenStatus?.dailyLimit ?: 6,
+                    imageGenDailyLimit = state.imageGenStatus?.dailyLimit ?: 2,
                     imageGenNextAvailableAt = state.imageGenStatus?.nextAvailableAt
                 )
                 
@@ -791,6 +808,211 @@ fun ChatScreen(
             viewModel.clearError()
         }
     }
+    
+    // Upgrade to Pro Dialog
+    if (showUpgradeDialog) {
+        UpgradeToProDialog(
+            onDismiss = { showUpgradeDialog = false },
+            onSendRequest = { name, email, message ->
+                // Open email intent with pre-filled content
+                val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:sharry00010@gmail.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "BaatCheet Pro Upgrade Request from $name")
+                    putExtra(Intent.EXTRA_TEXT, """
+                        Name: $name
+                        Email: $email
+                        
+                        Message:
+                        $message
+                        
+                        ---
+                        Sent from BaatCheet Android App
+                    """.trimIndent())
+                }
+                try {
+                    context.startActivity(emailIntent)
+                    showUpgradeDialog = false
+                    android.widget.Toast.makeText(context, "Opening email app...", android.widget.Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(context, "No email app found. Please email sharry00010@gmail.com directly.", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Upgrade to Pro Dialog
+ */
+@Composable
+private fun UpgradeToProDialog(
+    onDismiss: () -> Unit,
+    onSendRequest: (name: String, email: String, message: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "⭐",
+                        fontSize = 24.sp
+                    )
+                    Text(
+                        text = "Upgrade to Pro",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = DarkText
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Info card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFFFF8E1),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        Text(
+                            text = "🚀 Pro Benefits",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = Color(0xFFFF8F00)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "• 50 image generations/day\n• 100 file uploads/day\n• Priority support\n• Advanced AI modes\n• Unlimited projects",
+                            fontSize = 13.sp,
+                            color = Color(0xFF795548),
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+                
+                // Notice
+                Text(
+                    text = "We haven't added payment yet. Contact admin to upgrade your account manually.",
+                    fontSize = 13.sp,
+                    color = GrayText,
+                    lineHeight = 18.sp
+                )
+                
+                // Name field
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Your Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    )
+                )
+                
+                // Email field
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Your Email") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    )
+                )
+                
+                // Message field
+                OutlinedTextField(
+                    value = message,
+                    onValueChange = { message = it },
+                    label = { Text("Message (optional)") },
+                    minLines = 3,
+                    maxLines = 5,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenAccent,
+                        unfocusedBorderColor = InputBorder
+                    ),
+                    placeholder = { Text("Why do you want to upgrade?", color = GrayText) }
+                )
+                
+                // Admin contact info
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFE3F2FD),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Email,
+                            contentDescription = null,
+                            tint = Color(0xFF1976D2),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "sharry00010@gmail.com",
+                            fontSize = 13.sp,
+                            color = Color(0xFF1976D2),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val finalMessage = message.ifBlank { "I would like to upgrade to BaatCheet Pro." }
+                    onSendRequest(name, email, finalMessage)
+                },
+                enabled = name.isNotBlank() && email.isNotBlank() && email.contains("@"),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenAccent,
+                    disabledContainerColor = GreenAccent.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Send Request")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = GrayText)
+            }
+        },
+        containerColor = WhiteBackground,
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 @Composable
@@ -1652,7 +1874,7 @@ private fun ChatHistoryItem(
         )
     }
     
-    Box {
+    Box(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1683,29 +1905,35 @@ private fun ChatHistoryItem(
             )
         }
         
-        // Options dropdown menu
-        DropdownMenu(
-            expanded = showOptionsMenu,
-            onDismissRequest = { showOptionsMenu = false }
+        // Options dropdown menu - positioned at end of row
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
         ) {
-            DropdownMenuItem(
-                text = { 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = Color(0xFFFF3B30)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Delete", color = Color(0xFFFF3B30))
+            DropdownMenu(
+                expanded = showOptionsMenu,
+                onDismissRequest = { showOptionsMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFFFF3B30)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Delete", color = Color(0xFFFF3B30))
+                        }
+                    },
+                    onClick = {
+                        showOptionsMenu = false
+                        showDeleteDialog = true
                     }
-                },
-                onClick = {
-                    showOptionsMenu = false
-                    showDeleteDialog = true
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -2594,10 +2822,10 @@ private fun ChatInputBar(
     uploadLimitReached: Boolean = false,
     imageGenLimitReached: Boolean = false,
     uploadsUsedToday: Int = 0,
-    uploadDailyLimit: Int = 6,
+    uploadDailyLimit: Int = 2,  // 2 per day for free tier
     uploadNextAvailableAt: String? = null,
     imageGenUsedToday: Int = 0,
-    imageGenDailyLimit: Int = 6,
+    imageGenDailyLimit: Int = 2,  // 2 per day for free tier
     imageGenNextAvailableAt: String? = null
 ) {
     var showPlusMenu by remember { mutableStateOf(false) }
@@ -2892,10 +3120,10 @@ private fun PlusMenuBottomSheet(
     uploadLimitReached: Boolean = false,
     imageGenLimitReached: Boolean = false,
     uploadsUsedToday: Int = 0,
-    uploadDailyLimit: Int = 6,
+    uploadDailyLimit: Int = 2,  // 2 per day for free tier
     uploadNextAvailableAt: String? = null,
     imageGenUsedToday: Int = 0,
-    imageGenDailyLimit: Int = 6,
+    imageGenDailyLimit: Int = 2,  // 2 per day for free tier
     imageGenNextAvailableAt: String? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
