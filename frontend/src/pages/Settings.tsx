@@ -100,6 +100,8 @@ export default function Settings() {
   const [editingInstructions, setEditingInstructions] = useState(false);
   const [profileFacts, setProfileFacts] = useState<ProfileFact[]>([]);
   const [savingInstructions, setSavingInstructions] = useState(false);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // Usage
   const [usageData, setUsageData] = useState<UsageData | null>(null);
@@ -170,6 +172,10 @@ export default function Settings() {
             ]);
             setCustomInstructions(profileRes?.data?.data?.customInstructions || '');
             setProfileFacts(factsRes?.data?.data?.facts || []);
+            // Load avatar from profile if available
+            if (profileRes?.data?.data?.user?.avatar) {
+              setProfileAvatar(profileRes.data.data.user.avatar);
+            }
           } catch (e) {
             console.error('Failed to load profile:', e);
           }
@@ -200,6 +206,52 @@ export default function Settings() {
       console.error('Failed to save instructions:', error);
     } finally {
       setSavingInstructions(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be smaller than 5MB');
+      return;
+    }
+    
+    setUploadingAvatar(true);
+    try {
+      const token = await getClerkToken();
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await fetch('/api/v1/images/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.data?.avatarUrl) {
+        setProfileAvatar(data.data.avatarUrl);
+        console.log('Avatar uploaded successfully:', data.data.avatarUrl);
+      } else {
+        throw new Error(data.error || 'Failed to upload avatar');
+      }
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -372,14 +424,49 @@ export default function Settings() {
                 {/* User Info */}
                 <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                    <div className="relative group">
+                      {profileAvatar ? (
+                        <img 
+                          src={profileAvatar} 
+                          alt="Profile" 
+                          className="w-16 h-16 rounded-xl object-cover"
+                        />
+                      ) : user?.imageUrl ? (
+                        <img 
+                          src={user.imageUrl} 
+                          alt="Profile" 
+                          className="w-16 h-16 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl font-bold">
+                          {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                        </div>
+                      )}
+                      <label 
+                        htmlFor="avatar-upload"
+                        className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"
+                      >
+                        {uploadingAvatar ? (
+                          <Loader2 className="animate-spin text-white" size={20} />
+                        ) : (
+                          <Edit2 className="text-white" size={20} />
+                        )}
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={uploadingAvatar}
+                      />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-dark-100">
                         {user?.fullName || user?.username || 'User'}
                       </h2>
                       <p className="text-dark-400">{user?.primaryEmailAddress?.emailAddress}</p>
+                      <p className="text-xs text-dark-500 mt-1">Click avatar to change</p>
                     </div>
                   </div>
                 </div>
