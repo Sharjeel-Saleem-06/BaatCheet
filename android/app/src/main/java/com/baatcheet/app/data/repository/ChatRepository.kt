@@ -402,6 +402,26 @@ class ChatRepository @Inject constructor(
         }
     }
     
+    /**
+     * Delete user account
+     */
+    suspend fun deleteAccount(): ApiResult<Boolean> {
+        return try {
+            val response = api.deleteAccount()
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                // Clear local auth data
+                authPreferences.clearAuth()
+                ApiResult.Success(true)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                ApiResult.Error(errorBody ?: "Failed to delete account", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
     // ============================================
     // Project Operations
     // ============================================

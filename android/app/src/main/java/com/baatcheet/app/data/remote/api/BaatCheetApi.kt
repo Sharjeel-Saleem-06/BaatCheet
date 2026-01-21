@@ -989,6 +989,12 @@ interface BaatCheetApi {
     suspend fun deleteUserData(): Response<GDPRDeleteResponse>
     
     /**
+     * Delete user account
+     */
+    @DELETE("auth/account")
+    suspend fun deleteAccount(): Response<BaseResponse<Any>>
+    
+    /**
      * Download exported data
      */
     @GET("gdpr/download/{exportId}")

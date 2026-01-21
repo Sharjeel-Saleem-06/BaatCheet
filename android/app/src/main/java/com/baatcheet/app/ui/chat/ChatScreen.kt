@@ -357,7 +357,17 @@ fun ChatScreen(
                             showSettingsScreen = false
                             onLogout()
                         },
-                        onDeleteAccount = { /* TODO: Implement */ },
+                        onDeleteAccount = { 
+                            viewModel.deleteAccount(
+                                onSuccess = {
+                                    android.widget.Toast.makeText(context, "Account deleted successfully", android.widget.Toast.LENGTH_LONG).show()
+                                    onLogout()
+                                },
+                                onError = { error ->
+                                    android.widget.Toast.makeText(context, "Failed to delete account: $error", android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        },
                         onClearHistory = { viewModel.clearAllConversations() },
                         onPrivacyPolicy = { 
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://baatcheet-web.netlify.app/privacy"))
@@ -1927,7 +1937,8 @@ private fun ChatHistoryItem(
                 
                 DropdownMenu(
                     expanded = showOptionsMenu,
-                    onDismissRequest = { showOptionsMenu = false }
+                    onDismissRequest = { showOptionsMenu = false },
+                    offset = androidx.compose.ui.unit.DpOffset(x = (-100).dp, y = 0.dp)
                 ) {
                     DropdownMenuItem(
                         text = { 

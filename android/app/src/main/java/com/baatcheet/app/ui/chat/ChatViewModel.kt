@@ -2462,4 +2462,28 @@ class ChatViewModel @Inject constructor(
             startNewChat()
         }
     }
+    
+    /**
+     * Delete user account
+     */
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                when (val result = chatRepository.deleteAccount()) {
+                    is ApiResult.Success -> {
+                        android.util.Log.d("ChatViewModel", "Account deleted successfully")
+                        onSuccess()
+                    }
+                    is ApiResult.Error -> {
+                        android.util.Log.e("ChatViewModel", "Failed to delete account: ${result.message}")
+                        onError(result.message)
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Exception deleting account", e)
+                onError(e.message ?: "Unknown error")
+            }
+        }
+    }
 }
