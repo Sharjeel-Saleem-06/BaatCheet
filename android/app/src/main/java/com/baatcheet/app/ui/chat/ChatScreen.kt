@@ -1395,15 +1395,25 @@ private fun ChatDrawerContent(
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .background(Color(0xFF7C4DFF), CircleShape),
+                        .clip(CircleShape)
+                        .background(Color(0xFF7C4DFF)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = state.userProfile?.initials ?: "U",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    if (!state.userProfile?.avatar.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = state.userProfile?.avatar,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = state.userProfile?.initials ?: "U",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -5795,16 +5805,16 @@ private fun TeamChatMessageItem(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(GreenAccent.copy(alpha = 0.2f), CircleShape),
+                .clip(CircleShape)
+                .background(GreenAccent.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
-            if (message.sender?.avatar != null) {
-                // TODO: Load avatar image
-                Text(
-                    text = senderInitial.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = GreenAccent
+            if (!message.sender?.avatar.isNullOrEmpty()) {
+                AsyncImage(
+                    model = message.sender?.avatar,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
             } else {
                 Text(
@@ -6043,28 +6053,37 @@ private fun TeamChatMessageItemDto(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
+                        .clip(CircleShape)
                         .background(
                             when {
                                 message.isOwner == true -> Color(0xFFF59E0B).copy(alpha = 0.2f)
                                 message.senderRole == "admin" -> Color(0xFF9333EA).copy(alpha = 0.2f)
                                 message.senderRole == "moderator" -> Color(0xFF3B82F6).copy(alpha = 0.2f)
                                 else -> GreenAccent.copy(alpha = 0.2f)
-                            },
-                            CircleShape
+                            }
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = senderInitial.toString(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = when {
-                            message.isOwner == true -> Color(0xFFF59E0B)
-                            message.senderRole == "admin" -> Color(0xFF9333EA)
-                            message.senderRole == "moderator" -> Color(0xFF3B82F6)
-                            else -> GreenAccent
-                        }
-                    )
+                    if (!message.sender?.avatar.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = message.sender?.avatar,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = senderInitial.toString(),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = when {
+                                message.isOwner == true -> Color(0xFFF59E0B)
+                                message.senderRole == "admin" -> Color(0xFF9333EA)
+                                message.senderRole == "moderator" -> Color(0xFF3B82F6)
+                                else -> GreenAccent
+                            }
+                        )
+                    }
                 }
                 
                 // Role badge overlay
