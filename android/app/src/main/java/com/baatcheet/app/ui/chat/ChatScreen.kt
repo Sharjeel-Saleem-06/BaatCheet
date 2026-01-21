@@ -2932,7 +2932,14 @@ private fun ChatInputBar(
             ) {
                 // Plus button - opens action sheet (disabled when loading)
                 IconButton(
-                    onClick = { if (!isLoading) showPlusMenu = true },
+                    onClick = { 
+                        if (!isLoading) {
+                            // Refresh limits before showing menu
+                            viewModel.loadImageGenStatus()
+                            viewModel.loadUploadStatus()
+                            showPlusMenu = true 
+                        }
+                    },
                     enabled = !isLoading,
                     modifier = Modifier.size(36.dp)
                 ) {

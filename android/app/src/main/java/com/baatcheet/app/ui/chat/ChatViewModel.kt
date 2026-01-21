@@ -1672,8 +1672,10 @@ class ChatViewModel @Inject constructor(
      */
     fun loadImageGenStatus() {
         viewModelScope.launch {
+            android.util.Log.d("ChatViewModel", "Loading image gen status...")
             when (val result = chatRepository.getImageGenStatus()) {
                 is ApiResult.Success -> {
+                    android.util.Log.d("ChatViewModel", "Image gen status: used=${result.data.usedToday}, limit=${result.data.dailyLimit}, canGenerate=${result.data.canGenerate}")
                     _state.update { 
                         it.copy(
                             imageGenStatus = result.data,
@@ -1681,7 +1683,9 @@ class ChatViewModel @Inject constructor(
                         ) 
                     }
                 }
-                is ApiResult.Error -> { /* Ignore */ }
+                is ApiResult.Error -> {
+                    android.util.Log.e("ChatViewModel", "Failed to load image gen status: ${result.message}")
+                }
                 is ApiResult.Loading -> { /* Ignore */ }
             }
         }
