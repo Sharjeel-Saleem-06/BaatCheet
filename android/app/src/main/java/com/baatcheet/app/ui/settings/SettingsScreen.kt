@@ -209,6 +209,7 @@ fun SettingsScreen(
     if (showEditProfileDialog) {
         EditProfileDialog(
             currentName = userSettings.displayName,
+            currentAvatarUrl = userSettings.avatar,
             onDismiss = { showEditProfileDialog = false },
             onUpdateName = { newName ->
                 showEditProfileDialog = false
@@ -1124,6 +1125,7 @@ private fun ChangePasswordDialog(
 @Composable
 private fun EditProfileDialog(
     currentName: String,
+    currentAvatarUrl: String?,
     onDismiss: () -> Unit,
     onUpdateName: (String) -> Unit,
     onUpdatePicture: () -> Unit
@@ -1167,16 +1169,26 @@ private fun EditProfileDialog(
                 Box(
                     modifier = Modifier
                         .size(100.dp)
-                        .background(PurpleColor, CircleShape)
+                        .clip(CircleShape)
+                        .background(PurpleColor)
                         .clickable { onUpdatePicture() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = displayName.take(2).uppercase(),
-                        color = Color.White,
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (!currentAvatarUrl.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = currentAvatarUrl,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = displayName.take(2).uppercase(),
+                            color = Color.White,
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     // Camera icon overlay
                     Box(
                         modifier = Modifier
