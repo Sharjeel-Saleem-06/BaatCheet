@@ -10,18 +10,18 @@
   # Node version
   environment = { NODE_VERSION = "18" }
 
-# Single Page Application redirect - all routes to index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# API proxy to HuggingFace backend
+# API proxy to HuggingFace backend - MUST be before SPA fallback
 [[redirects]]
   from = "/api/*"
   to = "https://sharry121-baatcheet.hf.space/api/:splat"
   status = 200
   force = true
+
+# Single Page Application redirect - all routes to index.html (fallback - must be last)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 # Headers for security and performance
 [[headers]]
