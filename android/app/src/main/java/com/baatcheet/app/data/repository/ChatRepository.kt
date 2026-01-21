@@ -410,8 +410,6 @@ class ChatRepository @Inject constructor(
             val response = api.deleteAccount()
             
             if (response.isSuccessful && response.body()?.success == true) {
-                // Clear local auth data
-                authPreferences.clearAuth()
                 ApiResult.Success(true)
             } else {
                 val errorBody = response.errorBody()?.string()
