@@ -2437,7 +2437,11 @@ class ChatViewModel @Inject constructor(
                 // Upload the image to the backend
                 when (val result = chatRepository.uploadAvatar(uri, context)) {
                     is ApiResult.Success -> {
-                        val avatarUrl = result.data
+                        var avatarUrl = result.data
+                        // If it's a relative path, prepend the base URL
+                        if (avatarUrl.startsWith("/")) {
+                            avatarUrl = "https://sharry121-baatcheet.hf.space$avatarUrl"
+                        }
                         android.util.Log.d("ChatViewModel", "Profile picture uploaded successfully: $avatarUrl")
                         
                         // Update local state with the new avatar URL
