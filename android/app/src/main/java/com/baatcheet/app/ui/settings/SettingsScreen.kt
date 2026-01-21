@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -528,36 +529,43 @@ private fun ProfileSection(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar - Clickable to edit profile picture
+            // Avatar container with edit button
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(PurpleColor)
-                    .clickable { onEditProfile() },
+                modifier = Modifier.size(72.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (!avatarUrl.isNullOrEmpty()) {
-                    // Show uploaded avatar image
-                    AsyncImage(
-                        model = avatarUrl,
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    // Show initials fallback
-                    Text(
-                        text = displayName.take(2).uppercase(),
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                // Avatar - Clickable to edit profile picture
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(PurpleColor)
+                        .clickable { onEditProfile() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!avatarUrl.isNullOrEmpty()) {
+                        // Show uploaded avatar image
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        // Show initials fallback
+                        Text(
+                            text = displayName.take(2).uppercase(),
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
-                // Edit overlay indicator
+                // Edit overlay indicator - positioned outside the clipped circle
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
+                        .offset(x = (-4).dp, y = (-4).dp)
                         .size(24.dp)
                         .background(GreenAccent, CircleShape),
                     contentAlignment = Alignment.Center
@@ -571,7 +579,7 @@ private fun ProfileSection(
                 }
             }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Row(

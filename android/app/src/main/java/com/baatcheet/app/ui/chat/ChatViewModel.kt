@@ -2430,11 +2430,19 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = chatRepository.updateDisplayName(newName)) {
                 is ApiResult.Success -> {
-                    // Update local state - firstName is used for display name
+                    // Parse the new name into first and last name
+                    val nameParts = newName.trim().split(" ", limit = 2)
+                    val firstName = nameParts.firstOrNull() ?: newName
+                    val lastName = if (nameParts.size > 1) nameParts[1] else null
+                    
+                    // Update local state with parsed name
                     _state.update { it.copy(
-                        userProfile = it.userProfile?.copy(firstName = newName)
+                        userProfile = it.userProfile?.copy(
+                            firstName = firstName,
+                            lastName = lastName
+                        )
                     ) }
-                    android.util.Log.d("ChatViewModel", "Display name updated to: $newName")
+                    android.util.Log.d("ChatViewModel", "Display name updated to: $newName (firstName=$firstName, lastName=$lastName)")
                 }
                 is ApiResult.Error -> {
                     _state.update { it.copy(error = result.message) }
