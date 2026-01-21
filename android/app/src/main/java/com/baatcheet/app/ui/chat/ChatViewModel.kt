@@ -189,6 +189,7 @@ class ChatViewModel @Inject constructor(
         loadAIModes()
         loadUsage()
         loadUploadStatus()
+        loadImageGenStatus()  // Load image generation limits
     }
     
     // ============================================
