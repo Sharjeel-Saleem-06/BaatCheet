@@ -86,6 +86,9 @@ export default function Settings() {
   const [webhookList, setWebhookList] = useState<WebhookData[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
+  
+  // Upgrade Modal
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [keyName, setKeyName] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -815,7 +818,10 @@ export default function Settings() {
                       <h3 className="text-lg font-semibold text-dark-100">Your Plan</h3>
                       <p className="text-dark-400 capitalize">{usageData?.tier || 'Free'} Tier</p>
                     </div>
-                    <button className="px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all">
+                    <button 
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg hover:from-primary-600 hover:to-primary-700 transition-all"
+                    >
                       Upgrade
                     </button>
                   </div>
@@ -1140,6 +1146,206 @@ export default function Settings() {
             </div>
           </div>
         )}
+
+        {/* Upgrade to Pro Modal */}
+        {showUpgradeModal && (
+          <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Upgrade to Pro Modal Component
+ */
+function UpgradeModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    
+    try {
+      // Use EmailJS (same as Contact page)
+      const emailjs = await import('@emailjs/browser');
+      
+      await emailjs.send(
+        'service_zukq4lf',
+        'template_24gtxc6',
+        {
+          from_name: name,
+          from_email: email,
+          subject: `BaatCheet Pro Upgrade Request from ${name}`,
+          message: `Upgrade Request:\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message || 'I would like to upgrade to BaatCheet Pro.'}`,
+          to_name: 'Muhammad Sharjeel',
+        },
+        'Mq2IhyUUB3uKd1WsS'
+      );
+      
+      setSent(true);
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to send upgrade request:', error);
+      // Fallback to mailto
+      window.location.href = `mailto:sharry00010@gmail.com?subject=BaatCheet Pro Upgrade Request&body=Name: ${encodeURIComponent(name)}%0AEmail: ${encodeURIComponent(email)}%0A%0AMessage:%0A${encodeURIComponent(message || 'I would like to upgrade to BaatCheet Pro.')}`;
+    } finally {
+      setSending(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-dark-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                <Sparkles className="text-white" size={20} />
+              </div>
+              <h2 className="text-xl font-bold text-dark-100">Upgrade to Pro</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+            >
+              <X className="text-dark-400" size={20} />
+            </button>
+          </div>
+        </div>
+        
+        <div className="p-6 space-y-5">
+          {sent ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                <Check className="text-green-400" size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-dark-100 mb-2">Request Sent!</h3>
+              <p className="text-dark-400">We'll get back to you within 24 hours.</p>
+            </div>
+          ) : (
+            <>
+              {/* Pro Benefits */}
+              <div className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 rounded-xl border border-yellow-500/20">
+                <h3 className="text-sm font-semibold text-yellow-400 mb-3 flex items-center gap-2">
+                  <Zap size={16} />
+                  Pro Benefits
+                </h3>
+                <ul className="space-y-2 text-sm text-dark-300">
+                  <li className="flex items-center gap-2">
+                    <Check size={14} className="text-green-400" />
+                    50 image generations/day
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={14} className="text-green-400" />
+                    100 file uploads/day
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={14} className="text-green-400" />
+                    Priority support
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={14} className="text-green-400" />
+                    Advanced AI modes
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={14} className="text-green-400" />
+                    Unlimited projects
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Notice */}
+              <p className="text-sm text-dark-400">
+                We haven't added payment yet. Contact admin to upgrade your account manually.
+              </p>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    placeholder="Muhammad Sharjeel"
+                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                    Your Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                    Message (optional)
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={3}
+                    placeholder="Why do you want to upgrade?"
+                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
+                  />
+                </div>
+                
+                {/* Admin contact */}
+                <div className="p-3 bg-dark-700 rounded-lg flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
+                    <MessageSquare className="text-primary-400" size={16} />
+                  </div>
+                  <span className="text-sm text-dark-300">sharry00010@gmail.com</span>
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sending || !name || !email}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:opacity-50 text-white rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    {sending ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={18} />
+                        Send Request
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
