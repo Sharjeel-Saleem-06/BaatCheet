@@ -197,6 +197,7 @@ class ChatViewModel @Inject constructor(
     // ============================================
     
     private fun loadUserProfile() {
+        // First load from local cache (SharedPreferences) for immediate display
         val userJson = prefs.getString("user_data", null)
         if (userJson != null) {
             try {
@@ -215,6 +216,68 @@ class ChatViewModel @Inject constructor(
             } catch (e: Exception) {
                 // Ignore parsing errors
             }
+        }
+        
+        // Then sync from server to get latest data (including avatar)
+        syncUserProfileFromServer()
+    }
+    
+    /**
+     * Sync user profile from server to get latest avatar and other data
+     */
+    private fun syncUserProfileFromServer() {
+        viewModelScope.launch {
+            try {
+                when (val result = chatRepository.getCurrentUser()) {
+                    is ApiResult.Success -> {
+                        val serverUser = result.data
+                        _state.update {
+                            it.copy(
+                                userProfile = UserProfile(
+                                    id = serverUser.id,
+                                    email = serverUser.email,
+                                    firstName = serverUser.firstName,
+                                    lastName = serverUser.lastName,
+                                    avatar = serverUser.avatar
+                                )
+                            )
+                        }
+                        // Persist to SharedPreferences
+                        persistUserDataToPrefs()
+                        android.util.Log.d("ChatViewModel", "User profile synced from server: avatar=${serverUser.avatar}")
+                    }
+                    is ApiResult.Error -> {
+                        android.util.Log.w("ChatViewModel", "Failed to sync user profile: ${result.message}")
+                        // Keep using cached data
+                    }
+                    is ApiResult.Loading -> { /* Ignore */ }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Error syncing user profile", e)
+            }
+        }
+    }
+    
+    /**
+     * Persist current user profile to SharedPreferences
+     */
+    private fun persistUserDataToPrefs() {
+        val profile = _state.value.userProfile ?: return
+        try {
+            val userData = UserData(
+                id = profile.id,
+                email = profile.email,
+                firstName = profile.firstName,
+                lastName = profile.lastName,
+                avatar = profile.avatar,
+                role = null,
+                tier = null
+            )
+            val userJson = gson.toJson(userData)
+            prefs.edit().putString("user_data", userJson).apply()
+            android.util.Log.d("ChatViewModel", "User data persisted to prefs: avatar=${profile.avatar}")
+        } catch (e: Exception) {
+            android.util.Log.e("ChatViewModel", "Failed to persist user data", e)
         }
     }
     
@@ -2443,6 +2506,9 @@ class ChatViewModel @Inject constructor(
                         )
                     ) }
                     android.util.Log.d("ChatViewModel", "Display name updated to: $newName (firstName=$firstName, lastName=$lastName)")
+                    
+                    // Persist to SharedPreferences
+                    persistUserDataToPrefs()
                 }
                 is ApiResult.Error -> {
                     _state.update { it.copy(error = result.message) }
@@ -2476,6 +2542,9 @@ class ChatViewModel @Inject constructor(
                             userProfile = it.userProfile?.copy(avatar = avatarUrl),
                             isLoading = false
                         ) }
+                        
+                        // Persist avatar to SharedPreferences so it survives app restart
+                        persistUserDataToPrefs()
                     }
                     is ApiResult.Error -> {
                         android.util.Log.e("ChatViewModel", "Failed to upload profile picture: ${result.message}")

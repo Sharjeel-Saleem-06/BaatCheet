@@ -38,6 +38,32 @@ class ChatRepository @Inject constructor(
 ) {
     
     // ============================================
+    // Auth / User Operations
+    // ============================================
+    
+    /**
+     * Get current user profile from server
+     * Syncs avatar and other profile data with the backend
+     */
+    suspend fun getCurrentUser(): ApiResult<CurrentUserData> {
+        return try {
+            val response = api.getCurrentUser()
+            if (response.isSuccessful && response.body()?.success == true) {
+                val userData = response.body()?.data
+                if (userData != null) {
+                    ApiResult.Success(userData)
+                } else {
+                    ApiResult.Error("No user data returned")
+                }
+            } else {
+                ApiResult.Error(response.body()?.error ?: "Failed to get user", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
+    // ============================================
     // Chat Operations
     // ============================================
     

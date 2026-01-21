@@ -19,6 +19,30 @@ data class DeleteResponse(
 )
 
 // ============================================
+// Auth / User Models
+// ============================================
+
+data class CurrentUserResponse(
+    val success: Boolean,
+    val data: CurrentUserData?,
+    val error: String?
+)
+
+data class CurrentUserData(
+    val id: String,
+    @SerializedName("clerkId") val clerkId: String?,
+    val email: String,
+    val username: String?,
+    @SerializedName("firstName") val firstName: String?,
+    @SerializedName("lastName") val lastName: String?,
+    val avatar: String?,
+    val role: String?,
+    val tier: String?,
+    @SerializedName("createdAt") val createdAt: String?,
+    @SerializedName("updatedAt") val updatedAt: String?
+)
+
+// ============================================
 // Chat Models
 // ============================================
 

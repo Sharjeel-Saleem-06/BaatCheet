@@ -19,6 +19,16 @@ interface BaatCheetApi {
     }
     
     // ============================================
+    // Auth Endpoints
+    // ============================================
+    
+    /**
+     * Get current user profile (synced with server)
+     */
+    @GET("auth/me")
+    suspend fun getCurrentUser(): Response<CurrentUserResponse>
+    
+    // ============================================
     // Chat Endpoints
     // ============================================
     
