@@ -487,10 +487,10 @@ data class AvatarUploadResponse(
 
 data class AvatarUploadData(
     val avatarUrl: String?,
-    val user: UserDto?
+    val user: AvatarUserDto?
 )
 
-data class UserDto(
+data class AvatarUserDto(
     val id: String,
     val email: String?,
     val firstName: String?,
