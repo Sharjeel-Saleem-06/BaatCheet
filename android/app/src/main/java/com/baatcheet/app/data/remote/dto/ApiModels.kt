@@ -368,6 +368,7 @@ data class ProfileStats(
 )
 
 data class UpdateProfileRequest(
+    val displayName: String? = null,
     val preferredLanguage: String? = null,
     val communicationTone: String? = null,
     val responseStyle: String? = null,

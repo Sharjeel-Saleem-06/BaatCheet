@@ -2404,6 +2404,27 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Update user's display name
+     */
+    fun updateDisplayName(newName: String) {
+        viewModelScope.launch {
+            when (val result = chatRepository.updateDisplayName(newName)) {
+                is ApiResult.Success -> {
+                    // Update local state
+                    _state.update { it.copy(
+                        userProfile = it.userProfile?.copy(displayName = newName)
+                    ) }
+                    android.util.Log.d("ChatViewModel", "Display name updated to: $newName")
+                }
+                is ApiResult.Error -> {
+                    _state.update { it.copy(error = result.message) }
+                }
+                is ApiResult.Loading -> { /* Ignore */ }
+            }
+        }
+    }
+    
+    /**
      * Clear all conversations (for Settings)
      */
     fun clearAllConversations() {

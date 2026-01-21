@@ -384,6 +384,24 @@ class ChatRepository @Inject constructor(
         }
     }
     
+    /**
+     * Update user's display name
+     */
+    suspend fun updateDisplayName(newName: String): ApiResult<Boolean> {
+        return try {
+            val request = UpdateProfileRequest(displayName = newName)
+            val response = api.updateProfileSettings(request)
+            
+            if (response.isSuccessful && response.body()?.success == true) {
+                ApiResult.Success(true)
+            } else {
+                ApiResult.Error("Failed to update display name", response.code())
+            }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Network error")
+        }
+    }
+    
     // ============================================
     // Project Operations
     // ============================================
