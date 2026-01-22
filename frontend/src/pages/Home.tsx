@@ -310,9 +310,11 @@ export default function Home() {
               {/* Mock Chat Interface */}
               <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6 shadow-2xl">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-                    <span className="text-white font-bold">B</span>
-                  </div>
+                  <img 
+                    src="/logo.jpg" 
+                    alt="BaatCheet" 
+                    className="w-10 h-10 rounded-xl object-cover"
+                  />
                   <div>
                     <p className="text-dark-200 font-medium">BaatCheet AI</p>
                     <p className="text-dark-500 text-sm">Code Mode Active</p>

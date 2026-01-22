@@ -79,9 +79,11 @@ export default function Header({ transparent = true }: HeaderProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
-                <span className="text-white font-bold text-xl">B</span>
-              </div>
+              <img 
+                src="/logo.jpg" 
+                alt="BaatCheet" 
+                className="w-10 h-10 rounded-xl shadow-lg shadow-primary-500/25 object-cover"
+              />
               <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
                 BaatCheet
               </span>
