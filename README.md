@@ -1,69 +1,110 @@
 <div align="center">
 
-<!-- Official Logo Only -->
-<br/>
-<img src="frontend/public/logo.png" width="350" alt="BaatCheet Logo"/>
+<!-- Animated Banner -->
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=120&color=gradient&customColorList=2,3,12&section=header"/>
+
+<!-- Logo with Glow Effect -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="logo.png">
+  <img src="logo.png" width="400" alt="BaatCheet - باتچیت"/>
+</picture>
+
 <br/><br/>
 
-<!-- Subtitle -->
-<h3>🤖 Your AI That Speaks Your Language</h3>
-<p><em>Chat, Code, Generate Images, Voice Chat & Research - All in Urdu, English & Roman Urdu</em></p>
+<!-- Animated Title -->
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=28&duration=3000&pause=1000&color=10B981&center=true&vCenter=true&multiline=true&repeat=false&width=600&height=60&lines=🤖+Your+AI+That+Speaks+Your+Language" alt="Typing SVG" />
 
 <br/>
 
-<!-- Live Demo -->
+<!-- Tagline -->
+<h4>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Speech%20Balloon.png" alt="Speech" width="25" />
+  Chat • Code • Image • Voice • Research
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Speech%20Balloon.png" alt="Speech" width="25" />
+</h4>
+
+<h5>🌍 Multilingual: Urdu | English | Hindi | Roman Urdu</h5>
+
+<br/>
+
+<!-- Live Demo Button -->
 <a href="https://baatcheet-web.netlify.app">
-  <img src="https://img.shields.io/badge/🚀_LIVE_DEMO-baatcheet--web.netlify.app-10B981?style=for-the-badge&labelColor=1E3A8A" alt="Live Demo"/>
+  <img src="https://img.shields.io/badge/🚀_TRY_LIVE_DEMO-baatcheet--web.netlify.app-00D4AA?style=for-the-badge&labelColor=0D1117&logoColor=white" alt="Live Demo"/>
 </a>
 
 <br/><br/>
 
-<!-- Tech Badges -->
+<!-- Quick Stats -->
+<img src="https://img.shields.io/badge/⚡_Streaming-Real--time_SSE-10B981?style=flat-square&labelColor=1E293B"/>
+<img src="https://img.shields.io/badge/🔄_Failover-Auto_Provider_Switch-3B82F6?style=flat-square&labelColor=1E293B"/>
+<img src="https://img.shields.io/badge/🆓_Free-Daily_Limits_Included-F59E0B?style=flat-square&labelColor=1E293B"/>
+<img src="https://img.shields.io/badge/👥_Teams-Collaboration_Ready-8B5CF6?style=flat-square&labelColor=1E293B"/>
+
+<br/><br/>
+
+<!-- Tech Stack Icons -->
 <p>
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React"/>
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
-  <img src="https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js"/>
-  <img src="https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white" alt="Express"/>
-  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL"/>
-  <img src="https://img.shields.io/badge/Prisma-5-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma"/>
-  <img src="https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind"/>
+  <img src="https://skillicons.dev/icons?i=react,typescript,nodejs,express,postgres,tailwind,vite&theme=dark" alt="Tech Stack"/>
 </p>
 
-<!-- Stats -->
+<!-- GitHub Stats -->
 <p>
-  <img src="https://img.shields.io/github/stars/Sharjeel-Saleem-06/BaatCheet?style=social" alt="Stars"/>
-  <img src="https://img.shields.io/github/forks/Sharjeel-Saleem-06/BaatCheet?style=social" alt="Forks"/>
-  <img src="https://img.shields.io/github/last-commit/Sharjeel-Saleem-06/BaatCheet?style=flat-square" alt="Last Commit"/>
+  <a href="https://github.com/Sharjeel-Saleem-06/BaatCheet/stargazers">
+    <img src="https://img.shields.io/github/stars/Sharjeel-Saleem-06/BaatCheet?style=for-the-badge&logo=github&logoColor=white&labelColor=0D1117&color=FFD700" alt="Stars"/>
+  </a>
+  <a href="https://github.com/Sharjeel-Saleem-06/BaatCheet/network/members">
+    <img src="https://img.shields.io/github/forks/Sharjeel-Saleem-06/BaatCheet?style=for-the-badge&logo=github&logoColor=white&labelColor=0D1117&color=00D4AA" alt="Forks"/>
+  </a>
+  <a href="https://github.com/Sharjeel-Saleem-06/BaatCheet/commits">
+    <img src="https://img.shields.io/github/last-commit/Sharjeel-Saleem-06/BaatCheet?style=for-the-badge&logo=github&logoColor=white&labelColor=0D1117&color=3B82F6" alt="Last Commit"/>
+  </a>
 </p>
 
 </div>
 
 ---
 
-<div align="center">
-
-## 🌟 THE COMPLETE AI CHAT ECOSYSTEM
-
-</div>
+<!-- Platforms Section -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Globe%20with%20Meridians.png" alt="Globe" width="30" />
+  Available Platforms
+</h2>
 
 <table>
 <tr>
-<td align="center" width="50%">
+<td width="50%" align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Desktop%20Computer.png" alt="Web" width="80"/>
 
 ### 🌐 Web Application
 
-[![Web](https://img.shields.io/badge/Live-baatcheet--web.netlify.app-10B981?style=for-the-badge)](https://baatcheet-web.netlify.app)
+<a href="https://baatcheet-web.netlify.app">
+  <img src="https://img.shields.io/badge/LIVE-baatcheet--web.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white"/>
+</a>
 
-React + TypeScript + Tailwind CSS
+**React 18 • TypeScript • Tailwind CSS**
+
+✅ All features available
+<br/>✅ Responsive design
+<br/>✅ Light/Dark theme
 
 </td>
-<td align="center" width="50%">
+<td width="50%" align="center">
+
+<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Mobile%20Phone.png" alt="Mobile" width="80"/>
 
 ### 📱 Android Application
 
-[![Android](https://img.shields.io/badge/Repo-BaatCheet__Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Sharjeel-Saleem-06/BaatCheet_Android)
+<a href="https://github.com/Sharjeel-Saleem-06/BaatCheet_Android">
+  <img src="https://img.shields.io/badge/VIEW_REPO-BaatCheet__Android-3DDC84?style=for-the-badge&logo=android&logoColor=white"/>
+</a>
 
-Kotlin + Jetpack Compose + Material 3
+**Kotlin • Jetpack Compose • Material 3**
+
+✅ Native performance
+<br/>✅ Offline support
+<br/>✅ Push notifications
 
 </td>
 </tr>
@@ -71,138 +112,233 @@ Kotlin + Jetpack Compose + Material 3
 
 ---
 
-<div align="center">
+<!-- Features Section -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Star" width="30" />
+  Powerful Features
+</h2>
 
-## ✨ FEATURES
-
-</div>
-
-<!-- Feature Grid -->
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 🤖 AI Chat Engine
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Robot.png" width="25"/> AI Chat Engine
 
-**Actual AI Models Used:**
+<details open>
+<summary><b>🧠 Real AI Models Used</b></summary>
 
-| Provider | Models |
-|:---------|:-------|
-| **Groq** (Primary) | Llama 3.3 70B Versatile, Llama 3.1 8B Instant, Mixtral 8x7B, Gemma 2 9B |
-| **OpenRouter** | Llama 3.1 70B (Free), Gemini 2.0 Flash (Free), Mistral 7B (Free) |
-| **DeepSeek** | DeepSeek Chat, DeepSeek Coder |
-| **Gemini** | Gemini 2.5 Flash, Gemini 2.0 Flash |
+| Provider | Models | Speed |
+|:---------|:-------|:-----:|
+| **Groq** | Llama 3.3 70B Versatile | ⚡⚡⚡ |
+| | Llama 3.1 8B Instant | ⚡⚡⚡ |
+| | Mixtral 8x7B (32K) | ⚡⚡ |
+| | Gemma 2 9B | ⚡⚡ |
+| **OpenRouter** | Llama 3.1 70B (Free) | ⚡⚡ |
+| | Gemini 2.0 Flash (Free) | ⚡⚡⚡ |
+| | Mistral 7B (Free) | ⚡⚡ |
+| **DeepSeek** | DeepSeek Chat | ⚡⚡ |
+| | DeepSeek Coder | ⚡⚡ |
+| **Gemini** | Gemini 2.5 Flash | ⚡⚡⚡ |
+| | Gemini 2.0 Flash | ⚡⚡⚡ |
 
-**Features:**
-- ⚡ Real-time SSE streaming responses
-- 🧠 50 messages context memory
-- 🔄 Automatic provider failover
-- 📊 Load balancing across API keys
+</details>
 
-</td>
-<td width="50%" valign="top">
+<details>
+<summary><b>⚡ Core Capabilities</b></summary>
 
-### 🎯 7 AI Modes
+```
+┌─────────────────────────────────┐
+│  ✦ Real-time SSE Streaming     │
+│  ✦ 50 Messages Context Memory  │
+│  ✦ Auto Provider Failover      │
+│  ✦ Smart Load Balancing        │
+│  ✦ Rate Limit Management       │
+│  ✦ Health Check Monitoring     │
+└─────────────────────────────────┘
+```
 
-| Mode | Description |
-|:-----|:------------|
-| **💬 Chat** | Natural multilingual conversations |
-| **💻 Code** | Write, debug, explain code |
-| **🔍 Research** | Web search with citations |
-| **🎨 Image Gen** | Create images from text |
-| **📚 Tutor** | Interactive learning |
-| **✍️ Creative** | Stories, poems, scripts |
-| **🧮 Math** | Step-by-step solutions |
-
-**Smart Features:**
-- 🎯 Auto mode detection
-- ⚡ Instant mode switching
-- 💾 Per-conversation memory
-
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### 🗣️ Voice & Language
-
-**Speech-to-Text Languages:**
-- 🇵🇰 Urdu
-- 🇺🇸 English  
-- 🇮🇳 Hindi
-- 📝 Roman Urdu
-
-**Text-to-Speech Voices:**
-- 🇵🇰 Urdu: Asad (Male), Uzma (Female)
-- 🇺🇸 English: Guy (Male), Jenny (Female)
-
-**Features:**
-- 🎧 Voice chat mode
-- 🎤 Real-time transcription
-- 🔊 Natural AI voices
+</details>
 
 </td>
 <td width="50%" valign="top">
 
-### 📸 Vision & Image AI
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Direct%20Hit.png" width="25"/> 7 Specialized Modes
 
-**Image Generation Models:**
-- Z-Image Turbo (FLUX) - Primary, fastest
-- FLUX Schnell - Fallback
-- Stable Diffusion XL
-- Playground v2.5
-- Stable Diffusion 1.5
+<details open>
+<summary><b>🎯 AI Mode Selection</b></summary>
 
-**Vision & OCR:**
-| Service | Provider |
-|:--------|:---------|
-| 🔍 Image Analysis | Gemini 2.5 Flash |
-| 📝 OCR Extraction | OCR.space (60+ langs) |
-| 🖼️ Image Captioning | Hugging Face |
+| Mode | Icon | What It Does |
+|:-----|:----:|:-------------|
+| **Chat** | 💬 | Natural multilingual conversations |
+| **Code** | 💻 | Write, debug, explain code |
+| **Research** | 🔍 | Web search with citations |
+| **Image Gen** | 🎨 | Create images from text |
+| **Tutor** | 📚 | Interactive learning assistant |
+| **Creative** | ✍️ | Stories, poems, scripts |
+| **Math** | 🧮 | Step-by-step solutions |
+
+</details>
+
+<details>
+<summary><b>🎨 Smart Auto-Detection</b></summary>
+
+```
+┌─────────────────────────────────┐
+│  🎯 Automatic Mode Detection    │
+│  ⚡ Instant Mode Switching      │
+│  💾 Per-Conversation Memory     │
+│  🔄 Context-Aware Responses     │
+│  📊 Mode-Specific Formatting    │
+└─────────────────────────────────┘
+```
+
+</details>
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 👥 Team Collaboration
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Studio%20Microphone.png" width="25"/> Voice & Language
 
-**Project Features:**
-- 📁 Create unlimited projects
-- 👥 Invite via email
-- 💬 Real-time team chat
-- ↩️ Reply to messages
-- 📷 Share images with captions
-- 🗑️ Delete for me / everyone
-- ⚙️ AI context settings
+<details open>
+<summary><b>🎙️ Speech Recognition</b></summary>
 
-**Role-Based Access:**
-- 👑 **Admin** - Full control
-- 🛡️ **Moderator** - Edit/delete own
-- 👁️ **Viewer** - Read-only
+| Language | Accuracy |
+|:---------|:--------:|
+| 🇵🇰 Urdu | ⭐⭐⭐⭐⭐ |
+| 🇺🇸 English | ⭐⭐⭐⭐⭐ |
+| 🇮🇳 Hindi | ⭐⭐⭐⭐ |
+| 📝 Roman Urdu | ⭐⭐⭐⭐ |
+
+</details>
+
+<details>
+<summary><b>🔊 Text-to-Speech Voices</b></summary>
+
+```
+┌─────────────────────────────────┐
+│  🇵🇰 URDU VOICES                │
+│     ♂ Asad (Natural Male)       │
+│     ♀ Uzma (Natural Female)     │
+│                                 │
+│  🇺🇸 ENGLISH VOICES             │
+│     ♂ Guy (American Male)       │
+│     ♀ Jenny (American Female)   │
+└─────────────────────────────────┘
+```
+
+</details>
 
 </td>
 <td width="50%" valign="top">
 
-### 📊 Usage & Limits
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" width="25"/> Vision & Image AI
 
-**Free Daily Limits:**
-- 💬 50 Chat Messages
-- 🎨 10 Image Generations
-- 🎙️ 10 Voice Messages
+<details open>
+<summary><b>🎨 Image Generation Models</b></summary>
 
-✅ Resets every 24 hours
-✅ No credit card required
+| Model | Quality | Speed |
+|:------|:-------:|:-----:|
+| Z-Image Turbo (FLUX) | ⭐⭐⭐⭐⭐ | ⚡⚡⚡ |
+| FLUX Schnell | ⭐⭐⭐⭐⭐ | ⚡⚡⚡ |
+| Stable Diffusion XL | ⭐⭐⭐⭐ | ⚡⚡ |
+| Playground v2.5 | ⭐⭐⭐⭐⭐ | ⚡⚡ |
+| Stable Diffusion 1.5 | ⭐⭐⭐ | ⚡⚡⚡ |
 
-**Analytics Dashboard:**
-- 📈 Usage statistics
-- 📅 Daily/weekly trends
-- 🤖 Model usage breakdown
+</details>
 
-**Settings:**
-- 👤 Profile management
-- 🎨 Light theme
-- 🔊 Voice preferences
+<details>
+<summary><b>📸 Vision Capabilities</b></summary>
+
+```
+┌─────────────────────────────────┐
+│  🔍 Image Analysis (Gemini)     │
+│  📝 OCR: 60+ Languages          │
+│  📄 Document Scanning           │
+│  🖼️ Full-Screen Viewer          │
+│  📤 Image Sharing               │
+└─────────────────────────────────┘
+```
+
+</details>
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Busts%20in%20Silhouette.png" width="25"/> Team Collaboration
+
+<details open>
+<summary><b>👥 Project Features</b></summary>
+
+| Feature | Description |
+|:--------|:------------|
+| 📁 **Projects** | Create unlimited |
+| 👥 **Invite** | Via email |
+| 💬 **Team Chat** | Real-time sync |
+| ↩️ **Reply** | Quote messages |
+| 📷 **Images** | Share with captions |
+| 🗑️ **Delete** | For me / Everyone |
+| ⚙️ **AI Settings** | Per-project context |
+
+</details>
+
+<details>
+<summary><b>👑 Role-Based Access</b></summary>
+
+```
+┌─────────────────────────────────┐
+│  👑 ADMIN                       │
+│     Full control over project   │
+│     Delete any message          │
+│     Manage all members          │
+│                                 │
+│  🛡️ MODERATOR                   │
+│     Send messages               │
+│     Delete own content          │
+│                                 │
+│  👁️ VIEWER                      │
+│     Read-only access            │
+└─────────────────────────────────┘
+```
+
+</details>
+
+</td>
+<td width="50%" valign="top">
+
+### <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Bar%20Chart.png" width="25"/> Analytics & Limits
+
+<details open>
+<summary><b>🆓 Free Daily Limits</b></summary>
+
+| Feature | Daily Limit |
+|:--------|:-----------:|
+| 💬 Chat Messages | **50** |
+| 🎨 Image Generations | **10** |
+| 🎙️ Voice Messages | **10** |
+
+✅ **Resets every 24 hours**
+<br/>✅ **No credit card required**
+
+</details>
+
+<details>
+<summary><b>📊 Analytics Dashboard</b></summary>
+
+```
+┌─────────────────────────────────┐
+│  📈 Usage Statistics            │
+│  📅 Daily/Weekly/Monthly        │
+│  🤖 Model Usage Breakdown       │
+│  ⏱️ Response Time Metrics       │
+│  📤 Export Your Data            │
+└─────────────────────────────────┘
+```
+
+</details>
 
 </td>
 </tr>
@@ -210,198 +346,200 @@ Kotlin + Jetpack Compose + Material 3
 
 ---
 
+<!-- Provider Stats -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Electric%20Plug.png" alt="Plug" width="30" />
+  API Provider Configuration
+</h2>
+
 <div align="center">
 
-## 📊 API PROVIDER CAPACITY
+> 📍 **Source:** `backend/src/config/index.ts`
+
+| Provider | Daily Limit/Key | Primary Use | Status |
+|:---------|:---------------:|:------------|:------:|
+| <img src="https://img.shields.io/badge/Groq-FF6600?style=flat-square&logoColor=white"/> | `14,400` | 💬 Primary Chat (Fastest) | 🟢 |
+| <img src="https://img.shields.io/badge/OpenRouter-7C3AED?style=flat-square&logoColor=white"/> | `200` | 🤖 100+ Models Access | 🟢 |
+| <img src="https://img.shields.io/badge/DeepSeek-0EA5E9?style=flat-square&logoColor=white"/> | `1,000` | 💻 Code Generation | 🟢 |
+| <img src="https://img.shields.io/badge/Gemini-4285F4?style=flat-square&logo=google&logoColor=white"/> | `1,500` | 📸 Vision & Multimodal | 🟢 |
+| <img src="https://img.shields.io/badge/HuggingFace-FFD21E?style=flat-square&logo=huggingface&logoColor=black"/> | `1,000` | 🎨 Image Captioning | 🟢 |
+| <img src="https://img.shields.io/badge/OCR.space-10B981?style=flat-square&logoColor=white"/> | `500` | 📝 Text Extraction | 🟢 |
 
 </div>
-
-**Actual Configuration from `backend/src/config/index.ts`:**
-
-| Provider | Daily Limit/Key | Primary Use |
-|:---------|:---------------:|:------------|
-| **Groq** | 14,400 | 💬 Primary chat (fastest inference) |
-| **OpenRouter** | 200 | 🤖 Backup chat (100+ models) |
-| **DeepSeek** | 1,000 | 💻 Code generation |
-| **Gemini** | 1,500 | 📸 Vision & multimodal |
-| **Hugging Face** | 1,000 | 🎨 Image captioning |
-| **OCR.space** | 500 | 📝 Text extraction (60+ langs) |
 
 ---
 
-<div align="center">
+<!-- Architecture -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Building%20Construction.png" alt="Building" width="30" />
+  System Architecture
+</h2>
 
-## 🏗️ SYSTEM ARCHITECTURE
-
-</div>
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                           BAATCHEET PLATFORM                              │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│  ┌─────────────────────────┐       ┌─────────────────────────┐           │
-│  │     🌐 WEB FRONTEND     │       │    📱 ANDROID APP       │           │
-│  │                         │       │                         │           │
-│  │  React 18 + TypeScript  │       │  Kotlin + Compose       │           │
-│  │  Tailwind CSS + Vite    │       │  Material 3 + MVVM      │           │
-│  │  Clerk Auth             │       │  Hilt + Coroutines      │           │
-│  │  Netlify Hosting        │       │  Firebase Distribution  │           │
-│  └────────────┬────────────┘       └────────────┬────────────┘           │
-│               │                                 │                         │
-│               └────────────────┬────────────────┘                         │
-│                                │                                          │
-│                                ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │               🚀 BACKEND API (Node.js + Express)                   │  │
-│  │                                                                    │  │
-│  │  Routes: auth • chat • vision • ocr • tts • projects • images     │  │
-│  │                                                                    │  │
-│  │  Services:                                                         │  │
-│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐               │  │
-│  │  │ ChatService  │ │VisionService │ │  OCRService  │               │  │
-│  │  │ AIRouter     │ │  TTSService  │ │ImageGenSvc   │               │  │
-│  │  └──────────────┘ └──────────────┘ └──────────────┘               │  │
-│  │                                                                    │  │
-│  │  Provider Manager: Groq • OpenRouter • DeepSeek • Gemini • HF     │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
-│                                │                                          │
-│                                ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐  │
-│  │                        💾 DATA LAYER                               │  │
-│  │                                                                    │  │
-│  │  ┌──────────────────┐              ┌──────────────────┐           │  │
-│  │  │  PostgreSQL      │              │    Clerk Auth    │           │  │
-│  │  │  (Neon DB)       │              │                  │           │  │
-│  │  │                  │              │  • Google OAuth  │           │  │
-│  │  │  • Users         │              │  • Email/Pass    │           │  │
-│  │  │  • Conversations │              │  • Sessions      │           │  │
-│  │  │  • Messages      │              │                  │           │  │
-│  │  │  • Projects      │              │                  │           │  │
-│  │  └──────────────────┘              └──────────────────┘           │  │
-│  └────────────────────────────────────────────────────────────────────┘  │
-│                                                                           │
-└──────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Clients["🖥️ Clients"]
+        Web["🌐 Web App<br/>React + TypeScript"]
+        Android["📱 Android App<br/>Kotlin + Compose"]
+    end
+    
+    subgraph Backend["⚙️ Backend API"]
+        Express["🚀 Express.js"]
+        
+        subgraph Services["📦 Services"]
+            Chat["💬 ChatService"]
+            Vision["📸 VisionService"]
+            TTS["🔊 TTSService"]
+            OCR["📝 OCRService"]
+            ImageGen["🎨 ImageGenService"]
+        end
+        
+        subgraph Providers["🔌 Provider Manager"]
+            Groq["Groq"]
+            OpenRouter["OpenRouter"]
+            DeepSeek["DeepSeek"]
+            Gemini["Gemini"]
+            HF["HuggingFace"]
+            OCRS["OCR.space"]
+        end
+    end
+    
+    subgraph Data["💾 Data Layer"]
+        Postgres["🐘 PostgreSQL<br/>(Neon DB)"]
+        Clerk["🔐 Clerk Auth"]
+    end
+    
+    Web --> Express
+    Android --> Express
+    Express --> Services
+    Services --> Providers
+    Express --> Data
 ```
 
 ---
 
+<!-- Tech Stack -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Tools" width="30" />
+  Technology Stack
+</h2>
+
 <div align="center">
 
-## 🛠️ TECH STACK
+### Frontend
 
-</div>
-
-### Frontend (Web)
-
-| Technology | Purpose |
-|:-----------|:--------|
-| React 18 | UI framework |
-| TypeScript 5 | Type safety |
-| Tailwind CSS 3 | Styling |
-| Vite 5 | Build tool |
-| Clerk | Authentication |
-| React Markdown | AI response rendering |
+<p>
+  <img src="https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
+  <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white"/>
+</p>
 
 ### Backend
 
-| Technology | Purpose |
-|:-----------|:--------|
-| Node.js 20 | Runtime |
-| Express 4 | API framework |
-| TypeScript | Type safety |
-| Prisma 5 | ORM |
-| PostgreSQL (Neon) | Database |
-| Zod | Validation |
-| Helmet | Security |
+<p>
+  <img src="https://img.shields.io/badge/Node.js_20-339933?style=for-the-badge&logo=nodedotjs&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Express_4-000000?style=for-the-badge&logo=express&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Prisma_5-2D3748?style=for-the-badge&logo=prisma&logoColor=white"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/>
+</p>
 
-### Deployment
+### Infrastructure
 
-| Service | Purpose |
-|:--------|:--------|
-| Netlify | Frontend hosting |
-| Render | Backend hosting |
-| Neon | PostgreSQL database |
-| Clerk | Auth provider |
+<p>
+  <img src="https://img.shields.io/badge/Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Neon_DB-00E699?style=for-the-badge&logo=neon&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Clerk-6C47FF?style=for-the-badge&logo=clerk&logoColor=white"/>
+</p>
+
+</div>
 
 ---
 
-<div align="center">
+<!-- Project Structure -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Open%20File%20Folder.png" alt="Folder" width="30" />
+  Project Structure
+</h2>
 
-## 📁 PROJECT STRUCTURE
-
-</div>
+<details>
+<summary><b>📂 Click to expand full structure</b></summary>
 
 ```
 📦 BaatCheet/
 │
-├── 🌐 frontend/                    # React Web App
-│   ├── src/
-│   │   ├── components/             # UI components
-│   │   │   ├── Header.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   ├── Layout.tsx
-│   │   │   ├── ProjectChat.tsx
-│   │   │   └── MarkdownRenderer.tsx
+├── 🌐 frontend/                      # React Web Application
+│   ├── 📂 src/
+│   │   ├── 📂 components/            # Reusable UI
+│   │   │   ├── Header.tsx            # Navigation header
+│   │   │   ├── Footer.tsx            # Site footer
+│   │   │   ├── Layout.tsx            # Main layout wrapper
+│   │   │   ├── ProjectChat.tsx       # Team chat component
+│   │   │   └── MarkdownRenderer.tsx  # AI response renderer
 │   │   │
-│   │   ├── pages/                  # Route pages
-│   │   │   ├── Home.tsx
-│   │   │   ├── Chat.tsx            # Main AI chat
-│   │   │   ├── Projects.tsx
-│   │   │   ├── Analytics.tsx
-│   │   │   ├── Settings.tsx
-│   │   │   └── AdminPanel.tsx
+│   │   ├── 📂 pages/                 # Route pages
+│   │   │   ├── Home.tsx              # Landing page
+│   │   │   ├── Chat.tsx              # 💬 Main AI chat
+│   │   │   ├── Projects.tsx          # 👥 Team projects
+│   │   │   ├── Analytics.tsx         # 📊 Usage stats
+│   │   │   ├── Settings.tsx          # ⚙️ User settings
+│   │   │   └── AdminPanel.tsx        # 👑 Admin dashboard
 │   │   │
-│   │   ├── App.tsx
-│   │   └── main.tsx
+│   │   ├── App.tsx                   # Router & Clerk config
+│   │   ├── main.tsx                  # Entry point
+│   │   └── index.css                 # Global styles
 │   │
 │   └── package.json
 │
-├── ⚙️ backend/                     # Node.js API
-│   ├── src/
-│   │   ├── config/
-│   │   │   └── index.ts            # Provider config
+├── ⚙️ backend/                       # Node.js API Server
+│   ├── 📂 src/
+│   │   ├── 📂 config/
+│   │   │   └── index.ts              # 🔑 Provider configuration
 │   │   │
-│   │   ├── middleware/
-│   │   │   ├── auth.ts             # Clerk auth
-│   │   │   └── validation.ts       # Zod validation
+│   │   ├── 📂 middleware/
+│   │   │   ├── auth.ts               # 🔐 Clerk authentication
+│   │   │   ├── validation.ts         # ✅ Zod validation
+│   │   │   └── rateLimit.ts          # ⏱️ Rate limiting
 │   │   │
-│   │   ├── routes/
-│   │   │   ├── chat.ts
-│   │   │   ├── vision.ts
-│   │   │   ├── projects.ts
-│   │   │   └── projectChat.ts
+│   │   ├── 📂 routes/
+│   │   │   ├── chat.ts               # 💬 Chat endpoints
+│   │   │   ├── vision.ts             # 📸 Vision endpoints
+│   │   │   ├── projects.ts           # 👥 Project management
+│   │   │   └── projectChat.ts        # 💬 Team chat
 │   │   │
-│   │   ├── services/
-│   │   │   ├── AIRouter.ts         # Model routing
-│   │   │   ├── ChatService.ts
-│   │   │   ├── VisionService.ts
-│   │   │   ├── OCRService.ts
-│   │   │   ├── TTSService.ts
-│   │   │   ├── ImageGenerationService.ts
-│   │   │   └── ProviderManager.ts  # API key management
+│   │   ├── 📂 services/
+│   │   │   ├── AIRouter.ts           # 🧠 Model routing
+│   │   │   ├── ChatService.ts        # 💬 Chat logic
+│   │   │   ├── VisionService.ts      # 📸 Image analysis
+│   │   │   ├── OCRService.ts         # 📝 Text extraction
+│   │   │   ├── TTSService.ts         # 🔊 Text-to-speech
+│   │   │   ├── ImageGenerationService.ts  # 🎨 Image gen
+│   │   │   └── ProviderManager.ts    # 🔌 API key management
 │   │   │
-│   │   └── index.ts
+│   │   └── index.ts                  # 🚀 Server entry
 │   │
-│   ├── prisma/
-│   │   └── schema.prisma
+│   ├── 📂 prisma/
+│   │   └── schema.prisma             # 💾 Database schema
 │   │
 │   └── package.json
 │
-├── 📱 android/                     # → See BaatCheet_Android repo
-│
-└── README.md
+├── 📱 android/                       # → See BaatCheet_Android repo
+├── 🖼️ logo.png                       # Official logo
+└── 📄 README.md                      # This file
 ```
+
+</details>
 
 ---
 
-<div align="center">
+<!-- Quick Start -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Rocket.png" alt="Rocket" width="30" />
+  Quick Start
+</h2>
 
-## 🚀 QUICK START
-
-</div>
-
-### Prerequisites
+<details>
+<summary><b>📋 Prerequisites</b></summary>
 
 | Requirement | Version |
 |:------------|:--------|
@@ -409,44 +547,43 @@ Kotlin + Jetpack Compose + Material 3
 | PostgreSQL | 14+ (or Neon DB) |
 | npm | 9+ |
 
-### Installation
+</details>
 
 ```bash
-# 1. Clone
+# 1️⃣ Clone the repository
 git clone https://github.com/Sharjeel-Saleem-06/BaatCheet.git
 cd BaatCheet
 
-# 2. Backend Setup
+# 2️⃣ Backend Setup
 cd backend
-cp env.example .env    # Configure API keys
+cp env.example .env    # Configure your API keys
 npm install
 npx prisma generate
 npx prisma db push
 
-# 3. Start Backend
-npm run dev            # http://localhost:5001
+# 3️⃣ Start Backend (Terminal 1)
+npm run dev            # → http://localhost:5001
 
-# 4. Frontend Setup (new terminal)
+# 4️⃣ Frontend Setup (Terminal 2)
 cd ../frontend
 npm install
-
-# 5. Start Frontend
-npm run dev            # http://localhost:5173
+npm run dev            # → http://localhost:5173
 ```
 
-### Environment Variables
+<details>
+<summary><b>🔐 Environment Variables</b></summary>
 
 Create `.env` in `backend/`:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@host:5432/baatcheet
+DATABASE_URL=postgresql://user:pass@host:5432/baatcheet
 
 # Clerk Auth
 CLERK_SECRET_KEY=sk_live_...
 CLERK_PUBLISHABLE_KEY=pk_live_...
 
-# AI Providers (add your keys)
+# AI Providers
 GROQ_API_KEY_1=gsk_...
 OPENROUTER_API_KEY_1=sk-or-...
 DEEPSEEK_API_KEY_1=sk-...
@@ -455,15 +592,18 @@ HUGGINGFACE_API_KEY_1=hf_...
 OCR_SPACE_API_KEY_1=K...
 ```
 
+</details>
+
 ---
 
-<div align="center">
+<!-- API Documentation -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="30" />
+  API Endpoints
+</h2>
 
-## 📖 API ENDPOINTS
-
-</div>
-
-### Chat
+<details>
+<summary><b>💬 Chat Endpoints</b></summary>
 
 | Method | Endpoint | Description |
 |:------:|:---------|:------------|
@@ -472,22 +612,23 @@ OCR_SPACE_API_KEY_1=K...
 | `GET` | `/api/v1/chat/models` | List available models |
 | `GET` | `/api/v1/chat/providers/health` | Provider status |
 
-### Vision & OCR
+</details>
+
+<details>
+<summary><b>📸 Vision & Voice Endpoints</b></summary>
 
 | Method | Endpoint | Description |
 |:------:|:---------|:------------|
-| `POST` | `/api/v1/chat/vision/analyze` | Image analysis (Gemini) |
-| `POST` | `/api/v1/chat/ocr/extract` | OCR (OCR.space) |
+| `POST` | `/api/v1/chat/vision/analyze` | Image analysis |
+| `POST` | `/api/v1/chat/ocr/extract` | OCR extraction |
 | `POST` | `/api/v1/chat/tts` | Text-to-speech |
 | `POST` | `/api/v1/chat/voice/transcribe` | Speech-to-text |
+| `POST` | `/api/v1/images/generate` | Image generation |
 
-### Images
+</details>
 
-| Method | Endpoint | Description |
-|:------:|:---------|:------------|
-| `POST` | `/api/v1/images/generate` | Generate image (FLUX) |
-
-### Projects
+<details>
+<summary><b>👥 Project Endpoints</b></summary>
 
 | Method | Endpoint | Description |
 |:------:|:---------|:------------|
@@ -495,55 +636,45 @@ OCR_SPACE_API_KEY_1=K...
 | `GET/POST` | `/api/v1/projects/:id/chat/messages` | Team chat |
 | `GET/POST` | `/api/v1/projects/:id/collaborators` | Team members |
 
----
-
-<div align="center">
-
-## 🔧 DEVELOPMENT
-
-</div>
-
-```bash
-# Backend
-cd backend
-npm run dev          # Start with hot reload
-npm run build        # Build for production
-
-# Frontend
-cd frontend
-npm run dev          # Vite dev server
-npm run build        # Production build
-
-# Database
-npx prisma generate  # Generate client
-npx prisma db push   # Push schema
-npx prisma studio    # GUI
-```
+</details>
 
 ---
 
+<!-- Developer Section -->
+<h2>
+  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/People/Technologist.png" alt="Developer" width="30" />
+  Developer
+</h2>
+
 <div align="center">
 
-## 👨‍💻 DEVELOPER
-
-<br/>
-
-<img src="https://avatars.githubusercontent.com/Sharjeel-Saleem-06" width="120" style="border-radius: 50%;"/>
+<img src="https://avatars.githubusercontent.com/Sharjeel-Saleem-06" width="150" style="border-radius: 50%; border: 4px solid #10B981;"/>
 
 <br/><br/>
 
 ### **Muhammad Sharjeel**
-
-*Full-Stack & Mobile Developer*
+*Full-Stack Developer • Mobile Developer • AI Enthusiast*
 
 <br/>
 
-[![Email](https://img.shields.io/badge/📧_sharry00010@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:sharry00010@gmail.com)
-[![WhatsApp](https://img.shields.io/badge/📱_+92_332_576_0344-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/923325760344)
+<a href="mailto:sharry00010@gmail.com">
+  <img src="https://img.shields.io/badge/📧_sharry00010@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white"/>
+</a>
+<a href="https://wa.me/923325760344">
+  <img src="https://img.shields.io/badge/📱_+92_332_576_0344-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
+</a>
 
-[![Portfolio](https://img.shields.io/badge/Portfolio-FF5722?style=flat-square)](https://muhammad-sharjeel-portfolio.netlify.app/)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/sharjeel-saleem)
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/Sharjeel-Saleem-06)
+<br/><br/>
+
+<a href="https://muhammad-sharjeel-portfolio.netlify.app/">
+  <img src="https://img.shields.io/badge/🌐_Portfolio-FF5722?style=flat-square"/>
+</a>
+<a href="https://linkedin.com/in/sharjeel-saleem">
+  <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white"/>
+</a>
+<a href="https://github.com/Sharjeel-Saleem-06">
+  <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white"/>
+</a>
 
 </div>
 
@@ -551,14 +682,17 @@ npx prisma studio    # GUI
 
 <div align="center">
 
-## 📄 LICENSE
+## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+**MIT License** - see [LICENSE](LICENSE) for details
 
 ---
 
+<!-- Footer -->
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&height=120&color=gradient&customColorList=2,3,12&section=footer"/>
+
 **Made with ❤️ in Pakistan 🇵🇰**
 
-<sub>© 2026 BaatCheet by Muhammad Sharjeel</sub>
+<sub>© 2026 BaatCheet by Muhammad Sharjeel. All rights reserved.</sub>
 
 </div>
