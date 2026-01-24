@@ -1,6 +1,6 @@
 /**
  * Terms of Service Page
- * Legal terms and conditions for BaatCheet
+ * Legal terms and conditions for BaatCheet - Light Theme
  */
 
 import { Link } from 'react-router-dom';
@@ -88,29 +88,29 @@ Your continued use of the Service following any changes indicates your acceptanc
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Header */}
       <Header transparent={false} />
 
       {/* Hero */}
       <section className="pt-24 pb-12 relative">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-dark-900 to-purple-500/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/40 via-transparent to-purple-100/40" />
         </div>
         
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-full text-primary-400 text-sm mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-700 text-sm mb-6">
             <Scale size={16} />
             <span>Legal Document</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             Terms of Service
           </h1>
-          <p className="text-lg text-dark-300 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Please read these terms carefully before using BaatCheet.
           </p>
-          <p className="text-sm text-dark-500 mt-4">
+          <p className="text-sm text-slate-500 mt-4">
             Last updated: {lastUpdated}
           </p>
         </div>
@@ -122,23 +122,23 @@ Your continued use of the Service following any changes indicates your acceptanc
           {sections.map((section, index) => (
             <div
               key={index}
-              className="bg-dark-800/50 border border-dark-700 rounded-2xl p-6 sm:p-8"
+              className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-                  <section.icon className="text-primary-400" size={24} />
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <section.icon className="text-emerald-600" size={24} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-semibold text-white mb-4">
+                  <h2 className="text-xl font-semibold text-slate-800 mb-4">
                     {section.title}
                   </h2>
-                  <div className="text-dark-300 leading-relaxed whitespace-pre-line">
+                  <div className="text-slate-600 leading-relaxed whitespace-pre-line">
                     {section.content.split('\n').map((line, i) => {
                       if (line.startsWith('**') && line.includes(':**')) {
                         const [bold, rest] = line.split(':**');
                         return (
                           <p key={i} className="mb-2">
-                            <strong className="text-dark-100">{bold.replace('**', '')}:</strong>
+                            <strong className="text-slate-700">{bold.replace('**', '')}:</strong>
                             {rest}
                           </p>
                         );
@@ -159,17 +159,17 @@ Your continued use of the Service following any changes indicates your acceptanc
           ))}
 
           {/* Contact section */}
-          <div className="bg-gradient-to-r from-primary-500/10 to-purple-500/10 border border-primary-500/20 rounded-2xl p-6 sm:p-8 text-center">
-            <Mail className="mx-auto text-primary-400 mb-4" size={32} />
-            <h3 className="text-xl font-semibold text-white mb-2">
+          <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 rounded-2xl p-6 sm:p-8 text-center">
+            <Mail className="mx-auto text-emerald-500 mb-4" size={32} />
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
               Questions about our Terms?
             </h3>
-            <p className="text-dark-300 mb-4">
+            <p className="text-slate-600 mb-4">
               If you have any questions about these Terms of Service, please contact us.
             </p>
             <a
               href="mailto:sharry00010@gmail.com"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl transition-colors shadow-lg shadow-emerald-500/25"
             >
               <Mail size={18} />
               Contact Us
@@ -180,14 +180,14 @@ Your continued use of the Service following any changes indicates your acceptanc
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link
               to="/privacy"
-              className="text-primary-400 hover:text-primary-300 transition-colors"
+              className="text-emerald-600 hover:text-emerald-700 transition-colors"
             >
               Read our Privacy Policy →
             </Link>
-            <span className="hidden sm:inline text-dark-600">•</span>
+            <span className="hidden sm:inline text-slate-300">•</span>
             <Link
               to="/help"
-              className="text-primary-400 hover:text-primary-300 transition-colors"
+              className="text-emerald-600 hover:text-emerald-700 transition-colors"
             >
               Help & Support →
             </Link>

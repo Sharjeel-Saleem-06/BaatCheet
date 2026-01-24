@@ -100,7 +100,7 @@ function highlightLine(line: string, keywords: string[]): React.ReactNode {
     const commentMatch = remaining.match(/^(\/\/.*|#.*|--.*)/);
     if (commentMatch) {
       parts.push(
-        <span key={key++} className="text-dark-500 italic">
+        <span key={key++} className="text-slate-500 italic">
           {commentMatch[0]}
         </span>
       );
@@ -187,16 +187,16 @@ function CodeBlock({
   const displayName = LANGUAGE_NAMES[language] || language || 'Code';
 
   return (
-    <div className="my-4 rounded-lg overflow-hidden border border-dark-600 bg-dark-900">
+    <div className="my-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-800 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-dark-800 border-b border-dark-600">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-700 border-b border-slate-600">
         <div className="flex items-center gap-2">
           {/* Language badge */}
-          <span className="px-2 py-0.5 text-xs font-medium rounded bg-dark-700 text-dark-300">
+          <span className="px-2 py-0.5 text-xs font-medium rounded bg-slate-600 text-slate-200">
             {displayName}
           </span>
           {/* Line count */}
-          <span className="text-xs text-dark-500">
+          <span className="text-xs text-slate-400">
             {lineCount} line{lineCount !== 1 ? 's' : ''}
           </span>
         </div>
@@ -206,7 +206,7 @@ function CodeBlock({
           {isLong && (
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-1 text-dark-400 hover:text-dark-200 transition-colors"
+              className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
               title={collapsed ? 'Expand' : 'Collapse'}
             >
               {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
@@ -217,10 +217,10 @@ function CodeBlock({
           <button
             onClick={handleCopy}
             className={clsx(
-              'flex items-center gap-1 px-2 py-1 text-xs rounded transition-all',
+              'flex items-center gap-1 px-2 py-1 text-xs rounded-lg transition-all',
               copied
-                ? 'bg-green-500/20 text-green-400'
-                : 'bg-dark-700 text-dark-300 hover:bg-dark-600 hover:text-dark-100'
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-slate-600 text-slate-300 hover:bg-slate-500 hover:text-white'
             )}
           >
             {copied ? (
@@ -245,7 +245,7 @@ function CodeBlock({
           collapsed && 'max-h-24 overflow-y-hidden'
         )}
       >
-        <pre className="p-4 text-sm font-mono text-dark-100 leading-relaxed">
+        <pre className="p-4 text-sm font-mono text-slate-100 leading-relaxed">
           {highlightCode(children, language)}
         </pre>
       </div>
@@ -253,7 +253,7 @@ function CodeBlock({
       {/* Collapsed indicator */}
       {collapsed && isLong && (
         <div 
-          className="px-4 py-2 text-center text-xs text-dark-400 bg-dark-800/50 cursor-pointer hover:bg-dark-800"
+          className="px-4 py-2 text-center text-xs text-slate-400 bg-slate-700/50 cursor-pointer hover:bg-slate-700"
           onClick={() => setCollapsed(false)}
         >
           Click to expand ({lineCount - 5} more lines)
@@ -291,80 +291,80 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
         components={{
           // Headings
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold mb-4 mt-6 text-dark-50 border-b border-dark-600 pb-2">
+            <h1 className="text-2xl font-bold mb-4 mt-6 text-slate-800 border-b border-slate-200 pb-2">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold mb-3 mt-5 text-dark-100">
+            <h2 className="text-xl font-bold mb-3 mt-5 text-slate-800">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-semibold mb-2 mt-4 text-dark-200">
+            <h3 className="text-lg font-semibold mb-2 mt-4 text-slate-700">
               {children}
             </h3>
           ),
           h4: ({ children }) => (
-            <h4 className="text-base font-semibold mb-2 mt-3 text-dark-300">
+            <h4 className="text-base font-semibold mb-2 mt-3 text-slate-700">
               {children}
             </h4>
           ),
           
           // Paragraphs
           p: ({ children }) => (
-            <p className="mb-4 leading-relaxed text-dark-200">
+            <p className="mb-4 leading-relaxed text-slate-700">
               {children}
             </p>
           ),
           
           // Lists
           ul: ({ children }) => (
-            <ul className="mb-4 ml-4 space-y-1.5 list-disc list-outside marker:text-primary-400">
+            <ul className="mb-4 ml-4 space-y-1.5 list-disc list-outside marker:text-emerald-500">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="mb-4 ml-4 space-y-1.5 list-decimal list-outside marker:text-primary-400">
+            <ol className="mb-4 ml-4 space-y-1.5 list-decimal list-outside marker:text-emerald-500">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="leading-relaxed text-dark-200 pl-1">
+            <li className="leading-relaxed text-slate-700 pl-1">
               {children}
             </li>
           ),
           
-          // Tables - ChatGPT-like styling
+          // Tables - Light theme styling
           table: ({ children }) => (
-            <div className="overflow-x-auto mb-4 rounded-lg border border-dark-600">
-              <table className="min-w-full divide-y divide-dark-600">
+            <div className="overflow-x-auto mb-4 rounded-xl border border-slate-200 shadow-sm">
+              <table className="min-w-full divide-y divide-slate-200">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-dark-700">
+            <thead className="bg-gradient-to-r from-slate-100 to-slate-50">
               {children}
             </thead>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-3 text-left text-sm font-semibold text-dark-100 border-r border-dark-600 last:border-r-0">
+            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-r border-slate-200 last:border-r-0">
               {children}
             </th>
           ),
           tbody: ({ children }) => (
-            <tbody className="divide-y divide-dark-700 bg-dark-800">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {children}
             </tbody>
           ),
           tr: ({ children }) => (
-            <tr className="hover:bg-dark-700/50 transition-colors">
+            <tr className="hover:bg-slate-50 transition-colors">
               {children}
             </tr>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-3 text-sm text-dark-200 border-r border-dark-700 last:border-r-0">
+            <td className="px-4 py-3 text-sm text-slate-600 border-r border-slate-100 last:border-r-0">
               {children}
             </td>
           ),
@@ -378,7 +378,7 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
               // Inline code
               return (
                 <code 
-                  className="px-1.5 py-0.5 rounded bg-dark-700 text-primary-300 text-sm font-mono"
+                  className="px-1.5 py-0.5 rounded bg-slate-100 text-emerald-600 text-sm font-mono border border-slate-200"
                   {...props}
                 >
                   {children}
@@ -398,7 +398,7 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
           
           // Blockquotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-primary-500 pl-4 py-2 mb-4 italic text-dark-300 bg-primary-500/5 rounded-r">
+            <blockquote className="border-l-4 border-emerald-500 pl-4 py-2 mb-4 italic text-slate-600 bg-emerald-50/50 rounded-r-lg">
               {children}
             </blockquote>
           ),
@@ -407,7 +407,7 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
           a: ({ href, children }) => (
             <a 
               href={href}
-              className="text-primary-400 hover:text-primary-300 hover:underline font-medium"
+              className="text-emerald-600 hover:text-emerald-500 hover:underline font-medium"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -417,19 +417,19 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
           
           // Emphasis
           strong: ({ children }) => (
-            <strong className="font-bold text-dark-50">
+            <strong className="font-bold text-slate-800">
               {children}
             </strong>
           ),
           em: ({ children }) => (
-            <em className="italic text-dark-200">
+            <em className="italic text-slate-600">
               {children}
             </em>
           ),
           
           // Horizontal rule
           hr: () => (
-            <hr className="my-6 border-dark-600" />
+            <hr className="my-6 border-slate-200" />
           ),
           
           // Images
@@ -437,7 +437,7 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
             <img 
               src={src} 
               alt={alt || ''} 
-              className="max-w-full h-auto rounded-lg my-4 border border-dark-600"
+              className="max-w-full h-auto rounded-lg my-4 border border-slate-200 shadow-sm"
             />
           ),
         }}

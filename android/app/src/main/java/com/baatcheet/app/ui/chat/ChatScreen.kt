@@ -66,7 +66,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.baatcheet.app.R
 import com.baatcheet.app.ui.voice.VoiceChatScreen
 import com.baatcheet.app.ui.components.shareText
@@ -77,6 +79,8 @@ import com.baatcheet.app.domain.model.MessageRole
 import com.baatcheet.app.domain.model.Project
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
@@ -1953,7 +1957,9 @@ private fun ChatHistoryItem(
                 DropdownMenu(
                     expanded = showOptionsMenu,
                     onDismissRequest = { showOptionsMenu = false },
-                    offset = androidx.compose.ui.unit.DpOffset(x = (-100).dp, y = 0.dp)
+                    offset = androidx.compose.ui.unit.DpOffset(x = (-100).dp, y = 0.dp),
+                    modifier = Modifier
+                        .background(Color.White, RoundedCornerShape(12.dp))
                 ) {
                     DropdownMenuItem(
                         text = { 
@@ -5023,6 +5029,7 @@ private fun TeamChatContent(
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
     var messageText by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
@@ -5030,8 +5037,30 @@ private fun TeamChatContent(
     var lastMessageCount by remember { mutableIntStateOf(0) }
     var showNewMessageBanner by remember { mutableStateOf(false) }
     
+    // Reply state
+    var replyingToMessage by remember { mutableStateOf<com.baatcheet.app.data.remote.dto.ProjectChatMessageDto?>(null) }
+    
+    // Image picker state
+    var selectedImageUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var isUploadingImage by remember { mutableStateOf(false) }
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        selectedImageUri = uri
+    }
+    
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    
+    // Derive scroll position to reduce recomposition
+    val isAtBottom by remember {
+        derivedStateOf {
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            val totalItems = listState.layoutInfo.totalItemsCount
+            lastVisibleItem?.index == totalItems - 1 || totalItems == 0
+        }
+    }
     
     // Local state derived from ViewModel
     val messages = state.teamChatMessages
@@ -5063,7 +5092,6 @@ private fun TeamChatContent(
     LaunchedEffect(messages.size) {
         if (messages.size > lastMessageCount && lastMessageCount > 0) {
             // New message arrived
-            val isAtBottom = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == messages.size - 2
             if (!isAtBottom) {
                 showNewMessageBanner = true
             } else {
@@ -5232,7 +5260,9 @@ private fun TeamChatContent(
                             }
                             DropdownMenu(
                                 expanded = expanded,
-                                onDismissRequest = { expanded = false }
+                                onDismissRequest = { expanded = false },
+                                modifier = Modifier
+                                    .background(Color.White, RoundedCornerShape(12.dp))
                             ) {
                                 DropdownMenuItem(
                                     text = { 
@@ -5601,7 +5631,11 @@ private fun TeamChatContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     reverseLayout = false
                 ) {
-                    items(messages, key = { it.id }) { message ->
+                    items(
+                        items = messages,
+                        key = { it.id },
+                        contentType = { it.messageType ?: "text" }
+                    ) { message ->
                         TeamChatMessageItemDto(
                             message = message,
                             onEdit = { newContent ->
@@ -5610,7 +5644,9 @@ private fun TeamChatContent(
                             onDelete = { deleteForEveryone ->
                                 viewModel.deleteTeamChatMessage(projectId, message.id, deleteForEveryone)
                             },
-                            onReply = { /* TODO: Implement reply */ }
+                            onReply = { 
+                                replyingToMessage = message
+                            }
                         )
                     }
                 }
@@ -5661,74 +5697,245 @@ private fun TeamChatContent(
             shadowElevation = 4.dp
         ) {
             if (canSendMessage || messages.isEmpty()) { // Show input if can send or no messages yet (for testing)
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(24.dp),
-                        color = Color(0xFFF5F5F5),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
-                    ) {
-                        BasicTextField(
-                            value = messageText,
-                            onValueChange = { messageText = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            textStyle = TextStyle(
-                                fontSize = 16.sp,
-                                color = DarkText
-                            ),
-                            cursorBrush = SolidColor(GreenAccent),
-                            decorationBox = { innerTextField ->
-                                if (messageText.isEmpty()) {
+                    // Reply preview
+                    if (replyingToMessage != null) {
+                        val replySenderName = replyingToMessage?.sender?.let { sender ->
+                            listOfNotNull(sender.firstName, sender.lastName).joinToString(" ").ifEmpty { 
+                                sender.username ?: sender.email ?: "Unknown" 
+                            }
+                        } ?: "Unknown"
+                        
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFE8F5E9)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(40.dp)
+                                        .background(GreenAccent, RoundedCornerShape(2.dp))
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Message your team...",
+                                        text = "Replying to $replySenderName",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = GreenAccent
+                                    )
+                                    Text(
+                                        text = (replyingToMessage?.content ?: "").take(50) + if ((replyingToMessage?.content?.length ?: 0) > 50) "..." else "",
+                                        fontSize = 13.sp,
                                         color = GrayText,
-                                        fontSize = 16.sp
+                                        maxLines = 1
                                     )
                                 }
-                                innerTextField()
+                                IconButton(
+                                    onClick = { replyingToMessage = null },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Cancel reply",
+                                        tint = GrayText,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
-                        )
+                        }
                     }
                     
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    // Send button
-                    IconButton(
-                        onClick = {
-                            if (messageText.isNotBlank()) {
-                                viewModel.sendTeamChatMessage(projectId, messageText.trim())
-                                messageText = ""
+                    // Selected image preview with caption input
+                    if (selectedImageUri != null && !isSending) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFF8F8F8)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp)
+                            ) {
+                                // Image preview with close button
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Surface(
+                                        modifier = Modifier.size(80.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = Color(0xFFE0E0E0)
+                                    ) {
+                                        AsyncImage(
+                                            model = selectedImageUri,
+                                            contentDescription = "Selected image",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { selectedImageUri = null },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove image",
+                                            tint = GrayText,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
                             }
-                        },
-                        enabled = messageText.isNotBlank() && !isSending,
+                        }
+                    }
+                    
+                    // Show uploading indicator
+                    if (isSending && selectedImageUri != null) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = Color(0xFFF8F8F8)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    color = GreenAccent,
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Sending image...",
+                                    fontSize = 14.sp,
+                                    color = GrayText
+                                )
+                            }
+                        }
+                    }
+                    
+                    Row(
                         modifier = Modifier
-                            .size(44.dp)
-                            .background(
-                                if (messageText.isNotBlank()) GreenAccent else Color(0xFFE5E5EA),
-                                CircleShape
-                            )
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isSending) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
+                        // Image picker button
+                        IconButton(
+                            onClick = { imagePickerLauncher.launch("image/*") },
+                            enabled = !isUploadingImage && !isSending,
+                            modifier = Modifier.size(40.dp)
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = "Send",
-                                tint = if (messageText.isNotBlank()) Color.White else GrayText,
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.Outlined.Photo,
+                                contentDescription = "Add image",
+                                tint = if (!isUploadingImage) GreenAccent else GrayText,
+                                modifier = Modifier.size(24.dp)
                             )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(24.dp),
+                            color = Color(0xFFF5F5F5),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, InputBorder)
+                        ) {
+                            BasicTextField(
+                                value = messageText,
+                                onValueChange = { messageText = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                textStyle = TextStyle(
+                                    fontSize = 16.sp,
+                                    color = DarkText
+                                ),
+                                cursorBrush = SolidColor(GreenAccent),
+                                decorationBox = { innerTextField ->
+                                    if (messageText.isEmpty()) {
+                                        Text(
+                                            text = when {
+                                                selectedImageUri != null -> "Add a caption..."
+                                                replyingToMessage != null -> "Reply..."
+                                                else -> "Message your team..."
+                                            },
+                                            color = GrayText,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Send button
+                        val sendContext = LocalContext.current
+                        IconButton(
+                            onClick = {
+                                if (selectedImageUri != null) {
+                                    // Send message with image
+                                    viewModel.sendTeamChatMessageWithImage(
+                                        projectId = projectId,
+                                        content = messageText.trim(),
+                                        imageUri = selectedImageUri!!,
+                                        context = sendContext,
+                                        replyToId = replyingToMessage?.id
+                                    )
+                                    messageText = ""
+                                    replyingToMessage = null
+                                    selectedImageUri = null
+                                } else if (messageText.isNotBlank()) {
+                                    // Send text-only message
+                                    viewModel.sendTeamChatMessage(
+                                        projectId = projectId, 
+                                        content = messageText.trim(),
+                                        replyToId = replyingToMessage?.id
+                                    )
+                                    messageText = ""
+                                    replyingToMessage = null
+                                }
+                            },
+                            enabled = (messageText.isNotBlank() || selectedImageUri != null) && !isSending && !isUploadingImage,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(
+                                    if (messageText.isNotBlank() || selectedImageUri != null) GreenAccent else Color(0xFFE5E5EA),
+                                    CircleShape
+                                )
+                        ) {
+                            if (isSending || isUploadingImage) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "Send",
+                                    tint = if (messageText.isNotBlank() || selectedImageUri != null) Color.White else GrayText,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -5994,6 +6201,7 @@ private fun TeamChatMessageItemDto(
     var showEditDialog by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf(message.content ?: "") }
     var showActionSheet by remember { mutableStateOf(false) }
+    var showFullScreenImage by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     
     // System message - styled like WhatsApp
@@ -6064,12 +6272,30 @@ private fun TeamChatMessageItemDto(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (!message.sender?.avatar.isNullOrEmpty()) {
+                    val avatarUrl = message.sender?.avatar
+                    val context = LocalContext.current
+                    // Use message.senderId as key to properly track avatar state per sender
+                    var showFallback by remember(message.senderId, avatarUrl) { mutableStateOf(false) }
+                    
+                    if (!avatarUrl.isNullOrEmpty() && !showFallback) {
                         AsyncImage(
-                            model = message.sender?.avatar,
+                            model = ImageRequest.Builder(context)
+                                .data(avatarUrl)
+                                .crossfade(true)
+                                .memoryCacheKey("avatar_${message.senderId}")
+                                .diskCacheKey("avatar_${message.senderId}")
+                                .allowHardware(false)
+                                .build(),
                             contentDescription = "Profile Picture",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop,
+                            onError = { 
+                                android.util.Log.e("ChatScreen", "Avatar load failed: $avatarUrl")
+                                showFallback = true 
+                            },
+                            onSuccess = { showFallback = false }
                         )
                     } else {
                         Text(
@@ -6143,6 +6369,44 @@ private fun TeamChatMessageItemDto(
                 
                 Spacer(modifier = Modifier.height(2.dp))
                 
+                // Reply indicator (if replying to a message)
+                if (message.replyTo != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFFE8F5E9),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(28.dp)
+                                    .background(GreenAccent, RoundedCornerShape(2.dp))
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Replying to",
+                                    fontSize = 11.sp,
+                                    color = GreenAccent,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = (message.replyTo.content?.take(60) ?: "") + if ((message.replyTo.content?.length ?: 0) > 60) "..." else "",
+                                    fontSize = 12.sp,
+                                    color = GrayText,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+                
                 // Message content in a bubble
                 Surface(
                     shape = RoundedCornerShape(
@@ -6154,31 +6418,97 @@ private fun TeamChatMessageItemDto(
                     color = Color(0xFFF5F5F5)
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        // Image if present
+                        // Image if present - handle both URLs and base64 data
                         if (message.messageType == "image" && message.imageUrl != null) {
+                            val imageContext = LocalContext.current
+                            var imageLoadError by remember { mutableStateOf(false) }
+                            val isBase64 = message.imageUrl.startsWith("data:")
+                            
+                            // Convert base64 to bitmap if needed
+                            val imageData = remember(message.imageUrl) {
+                                if (isBase64) {
+                                    try {
+                                        val base64Part = message.imageUrl.substringAfter(",")
+                                        val imageBytes = android.util.Base64.decode(base64Part, android.util.Base64.DEFAULT)
+                                        android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                                    } catch (e: Exception) {
+                                        null
+                                    }
+                                } else {
+                                    null
+                                }
+                            }
+                            
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .aspectRatio(1.5f),
+                                    .aspectRatio(1.5f)
+                                    .clickable { 
+                                        // Open full screen image viewer
+                                        showFullScreenImage = true
+                                    },
                                 shape = RoundedCornerShape(8.dp),
                                 color = Color(0xFFE0E0E0)
                             ) {
-                                AsyncImage(
-                                    model = message.imageUrl,
-                                    contentDescription = "Image",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                if (imageLoadError && imageData == null) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.BrokenImage,
+                                                contentDescription = "Failed to load",
+                                                tint = GrayText,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                            Text(
+                                                text = "Image failed to load",
+                                                fontSize = 12.sp,
+                                                color = GrayText
+                                            )
+                                        }
+                                    }
+                                } else if (isBase64 && imageData != null) {
+                                    // Display decoded base64 bitmap
+                                    Image(
+                                        bitmap = imageData.asImageBitmap(),
+                                        contentDescription = "Image",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    // Display from URL
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(imageContext)
+                                            .data(message.imageUrl)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Image",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize(),
+                                        onError = { imageLoadError = true }
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                         }
                         
-                        Text(
-                            text = message.content ?: "",
-                            fontSize = 14.sp,
-                            color = DarkText,
-                            lineHeight = 20.sp
-                        )
+                        // Only show text if it's not the default "Image" placeholder or there's actual content
+                        val displayContent = message.content?.let { content ->
+                            if (content == "Image" && message.messageType == "image") "" else content
+                        } ?: ""
+                        
+                        if (displayContent.isNotEmpty()) {
+                            Text(
+                                text = displayContent,
+                                fontSize = 14.sp,
+                                color = DarkText,
+                                lineHeight = 20.sp
+                            )
+                        }
                         
                         // Edited indicator
                         if (message.isEdited == true) {
@@ -6365,6 +6695,108 @@ private fun TeamChatMessageItemDto(
                 }
             }
         )
+    }
+    
+    // Full-screen image viewer dialog
+    if (showFullScreenImage && message.imageUrl != null) {
+        val imageContext = LocalContext.current
+        val isBase64 = message.imageUrl.startsWith("data:")
+        val bitmapData = remember(message.imageUrl) {
+            if (isBase64) {
+                try {
+                    val base64Part = message.imageUrl.substringAfter(",")
+                    val imageBytes = android.util.Base64.decode(base64Part, android.util.Base64.DEFAULT)
+                    android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                } catch (e: Exception) {
+                    null
+                }
+            } else null
+        }
+        
+        Dialog(
+            onDismissRequest = { showFullScreenImage = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
+                // Close button
+                IconButton(
+                    onClick = { showFullScreenImage = false },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                
+                // Image
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isBase64 && bitmapData != null) {
+                        Image(
+                            bitmap = bitmapData.asImageBitmap(),
+                            contentDescription = "Full screen image",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        AsyncImage(
+                            model = ImageRequest.Builder(imageContext)
+                                .data(message.imageUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Full screen image",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+                
+                // Caption at bottom if present
+                val caption = message.content?.let { if (it == "Image") null else it }
+                if (!caption.isNullOrEmpty()) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = senderName,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = GreenAccent
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = caption,
+                                fontSize = 15.sp,
+                                color = Color.White,
+                                lineHeight = 22.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -6714,7 +7146,9 @@ private fun ProjectConversationItem(
                         // Options dropdown menu - anchored to the button
                         DropdownMenu(
                             expanded = showOptionsMenu,
-                            onDismissRequest = { showOptionsMenu = false }
+                            onDismissRequest = { showOptionsMenu = false },
+                            modifier = Modifier
+                                .background(Color.White, RoundedCornerShape(12.dp))
                         ) {
                             DropdownMenuItem(
                                 text = { 
@@ -8123,7 +8557,9 @@ private fun CollaboratorManagementCard(
                         
                         DropdownMenu(
                             expanded = showOptionsMenu,
-                            onDismissRequest = { showOptionsMenu = false }
+                            onDismissRequest = { showOptionsMenu = false },
+                            modifier = Modifier
+                                .background(Color.White, RoundedCornerShape(12.dp))
                         ) {
                             DropdownMenuItem(
                                 text = { 

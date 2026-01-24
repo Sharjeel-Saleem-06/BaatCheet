@@ -109,14 +109,14 @@ export default function Analytics() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-dark-100">Analytics</h1>
-            <p className="text-dark-400">Your usage statistics and insights</p>
+            <h1 className="text-2xl font-semibold text-slate-800">Analytics</h1>
+            <p className="text-slate-500">Your usage statistics and insights</p>
           </div>
           <div className="flex items-center gap-2">
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="px-3 py-2 bg-dark-700 border border-dark-600 rounded-lg text-dark-200 focus:outline-none focus:border-primary-500"
+              className="px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-700 focus:outline-none focus:border-primary-500"
             >
               <option value="7d">Last 7 days</option>
               <option value="14d">Last 14 days</option>
@@ -124,7 +124,7 @@ export default function Analytics() {
             </select>
             <button
               onClick={() => handleExport('csv')}
-              className="flex items-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
             >
               <Download size={18} />
               <span>Export</span>
@@ -178,7 +178,7 @@ export default function Analytics() {
             {insights.map((insight, i) => (
               <div
                 key={i}
-                className="p-4 bg-dark-800 rounded-xl border border-dark-700"
+                className="p-4 bg-white rounded-xl border border-slate-200"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">{insight.icon}</span>
@@ -189,15 +189,15 @@ export default function Analytics() {
                     <TrendingDown className="text-red-400" size={16} />
                   )}
                 </div>
-                <p className="text-sm text-dark-300">{insight.message}</p>
+                <p className="text-sm text-slate-600">{insight.message}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Usage Chart */}
-        <div className="bg-dark-800 rounded-xl border border-dark-700 p-6 mb-6">
-          <h2 className="text-lg font-medium text-dark-100 mb-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+          <h2 className="text-lg font-medium text-slate-800 mb-4">
             Messages Over Time
           </h2>
           <div className="h-48 flex items-end gap-1">
@@ -214,7 +214,7 @@ export default function Analytics() {
                   }}
                   title={`${day.messages} messages`}
                 />
-                <span className="text-xs text-dark-500 truncate w-full text-center">
+                <span className="text-xs text-slate-400 truncate w-full text-center">
                   {new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}
                 </span>
               </div>
@@ -224,8 +224,8 @@ export default function Analytics() {
 
         {/* Top Models */}
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
-            <h2 className="text-lg font-medium text-dark-100 mb-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="text-lg font-medium text-slate-800 mb-4">
               Top Models
             </h2>
             <div className="space-y-3">
@@ -237,32 +237,32 @@ export default function Analytics() {
                   <span className="w-6 h-6 rounded-full bg-primary-500/20 text-primary-400 text-sm flex items-center justify-center">
                     {i + 1}
                   </span>
-                  <span className="text-dark-200 font-mono text-sm truncate">
+                  <span className="text-slate-700 font-mono text-sm truncate">
                     {model}
                   </span>
                 </div>
               ))}
               {(dashboard?.topModels || []).length === 0 && (
-                <p className="text-dark-500">No data yet</p>
+                <p className="text-slate-400">No data yet</p>
               )}
             </div>
           </div>
 
-          <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
-            <h2 className="text-lg font-medium text-dark-100 mb-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <h2 className="text-lg font-medium text-slate-800 mb-4">
               Top Tags
             </h2>
             <div className="flex flex-wrap gap-2">
               {(dashboard?.topTags || []).map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 bg-dark-700 text-dark-300 rounded-full text-sm"
+                  className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm"
                 >
                   {tag}
                 </span>
               ))}
               {(dashboard?.topTags || []).length === 0 && (
-                <p className="text-dark-500">No tags yet</p>
+                <p className="text-slate-400">No tags yet</p>
               )}
             </div>
           </div>
@@ -293,7 +293,7 @@ function StatCard({
   };
 
   return (
-    <div className="bg-dark-800 rounded-xl border border-dark-700 p-4">
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
       <div
         className={clsx(
           'w-10 h-10 rounded-lg flex items-center justify-center mb-3',
@@ -302,8 +302,8 @@ function StatCard({
       >
         <Icon size={20} />
       </div>
-      <p className="text-2xl font-semibold text-dark-100">{value}</p>
-      <p className="text-sm text-dark-500">{label}</p>
+      <p className="text-2xl font-semibold text-slate-800">{value}</p>
+      <p className="text-sm text-slate-400">{label}</p>
     </div>
   );
 }

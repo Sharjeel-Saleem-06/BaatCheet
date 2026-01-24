@@ -2,48 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light theme */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #94a3b8;
 }
 
-/* Markdown styles */
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Markdown styles - Light theme */
 .prose {
-  @apply text-dark-200;
+  @apply text-slate-700;
 }
 
 .prose h1, .prose h2, .prose h3 {
-  @apply text-dark-100 font-semibold;
+  @apply text-slate-800 font-semibold;
 }
 
 .prose code {
-  @apply bg-dark-800 px-1.5 py-0.5 rounded text-primary-400 font-mono text-sm;
+  @apply bg-slate-100 px-1.5 py-0.5 rounded text-emerald-600 font-mono text-sm;
 }
 
 .prose pre {
-  @apply bg-dark-800 rounded-lg p-4 overflow-x-auto;
+  @apply bg-slate-800 rounded-lg p-4 overflow-x-auto;
 }
 
 .prose pre code {
-  @apply bg-transparent p-0;
+  @apply bg-transparent p-0 text-slate-100;
 }
 
 .prose a {
-  @apply text-primary-400 hover:text-primary-300;
+  @apply text-emerald-600 hover:text-emerald-500;
 }
 
 .prose ul, .prose ol {
@@ -70,9 +76,9 @@
   @apply text-primary-400 animate-pulse;
 }
 
-/* Markdown content styles */
+/* Markdown content styles - Light theme */
 .markdown-content {
-  @apply text-dark-200 leading-relaxed;
+  @apply text-slate-700 leading-relaxed;
 }
 
 .markdown-content > *:first-child {
@@ -89,7 +95,7 @@
 }
 
 .code-line:hover {
-  @apply bg-dark-800/50;
+  @apply bg-slate-100;
 }
 
 /* Table hover effects */
@@ -98,7 +104,7 @@
 }
 
 .markdown-content table tbody tr:nth-child(even) {
-  @apply bg-dark-800/30;
+  @apply bg-slate-50;
 }
 
 /* Smooth scroll for anchor links */
@@ -137,7 +143,7 @@
 
 /* Code block syntax highlighting colors */
 .markdown-content pre {
-  @apply bg-dark-900;
+  @apply bg-slate-800;
 }
 
 /* Blockquote styling */
@@ -151,7 +157,7 @@
 }
 
 /* ========================================
-   CLERK AUTH STYLING - HIDE BRANDING
+   CLERK AUTH STYLING - LIGHT THEME
    ======================================== */
 
 /* Hide only Clerk branding elements - NOT the form */
@@ -165,109 +171,351 @@
   display: none !important;
 }
 
-/* Clerk card styling */
-.cl-card {
-  background: #1f1f35 !important;
-  border: 1px solid #2d2d4a !important;
+/* Clerk card styling - Light theme */
+.cl-card,
+.cl-rootBox,
+.cl-cardBox,
+.cl-signIn-root,
+.cl-signUp-root {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 1rem !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1) !important;
 }
 
 .cl-headerTitle,
-.cl-headerSubtitle {
+.cl-headerSubtitle,
+.cl-header {
   display: none !important;
 }
 
-/* Form styling */
-.cl-formFieldInput {
-  background: #252538 !important;
-  border-color: #3d3d5c !important;
+/* Main container */
+.cl-main {
+  background: #ffffff !important;
+}
+
+/* Form styling - Light theme */
+.cl-formFieldInput,
+.cl-input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
   border-radius: 0.75rem !important;
-  color: #f5f5f7 !important;
+  color: #1e293b !important;
 }
 
-.cl-formFieldInput:focus {
-  border-color: #22c55e !important;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+.cl-formFieldInput:focus,
+.cl-input:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
 }
 
-.cl-formFieldLabel {
-  color: #a3a3a3 !important;
+.cl-formFieldInput::placeholder,
+.cl-input::placeholder {
+  color: #94a3b8 !important;
 }
 
-/* Primary button */
-.cl-formButtonPrimary {
-  background: linear-gradient(to right, #22c55e, #16a34a) !important;
+.cl-formFieldLabel,
+.cl-formFieldLabelRow {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.cl-formFieldAction {
+  color: #10b981 !important;
+}
+
+.cl-formFieldAction:hover {
+  color: #059669 !important;
+}
+
+/* Primary button - Gradient */
+.cl-formButtonPrimary,
+.cl-button-primary {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%) !important;
+  border: none !important;
   border-radius: 0.75rem !important;
   font-weight: 600 !important;
-  box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.3) !important;
+  box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4) !important;
   transition: all 0.2s ease !important;
+  color: #ffffff !important;
 }
 
-.cl-formButtonPrimary:hover {
-  background: linear-gradient(to right, #16a34a, #15803d) !important;
+.cl-formButtonPrimary:hover,
+.cl-button-primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%) !important;
   transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px -3px rgba(16, 185, 129, 0.5) !important;
 }
 
-/* Social buttons */
-.cl-socialButtonsBlockButton {
-  background: #252538 !important;
-  border-color: #3d3d5c !important;
+/* Social buttons - Light theme */
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 0.75rem !important;
-  color: #e5e5e5 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
-.cl-socialButtonsBlockButton:hover {
-  background: #2d2d4a !important;
-  border-color: #4d4d6a !important;
+.cl-socialButtonsBlockButton:hover,
+.cl-socialButtonsIconButton:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Divider */
+.cl-socialButtonsBlockButtonText {
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+/* Divider - Light theme */
 .cl-dividerLine {
-  background: #3d3d5c !important;
+  background: #e2e8f0 !important;
 }
 
-.cl-dividerText {
-  background: #1f1f35 !important;
-  color: #6b7280 !important;
+.cl-dividerText,
+.cl-dividerRow {
+  background: #ffffff !important;
+  color: #94a3b8 !important;
 }
 
-/* Footer links */
+/* Footer links - Light theme */
 .cl-footerActionLink {
-  color: #22c55e !important;
+  color: #10b981 !important;
+  font-weight: 500 !important;
 }
 
 .cl-footerActionLink:hover {
-  color: #4ade80 !important;
+  color: #059669 !important;
 }
 
-.cl-footerActionText {
-  color: #9ca3af !important;
+.cl-footerActionText,
+.cl-footerAction {
+  color: #64748b !important;
 }
 
-/* Alert styling */
+/* Alert styling - Light theme */
 .cl-alert {
-  background: #252538 !important;
-  border-color: #3d3d5c !important;
+  background: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  border-radius: 0.75rem !important;
+  color: #166534 !important;
+}
+
+.cl-alertText {
+  color: #166534 !important;
+}
+
+/* Error alert */
+.cl-alert--danger {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.cl-alert--danger .cl-alertText {
+  color: #dc2626 !important;
+}
+
+/* OTP input - Light theme */
+.cl-otpCodeFieldInput {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  border-radius: 0.5rem !important;
+}
+
+.cl-otpCodeFieldInput:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+}
+
+/* Identity preview - Light theme */
+.cl-identityPreview {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 0.75rem !important;
 }
 
-/* OTP input */
-.cl-otpCodeFieldInput {
-  background: #252538 !important;
-  border-color: #3d3d5c !important;
-  color: #f5f5f7 !important;
+.cl-identityPreviewText {
+  color: #334155 !important;
+}
+
+.cl-identityPreviewEditButton,
+.cl-identityPreviewEditButtonIcon {
+  color: #10b981 !important;
+}
+
+/* Internal elements */
+.cl-internal-button {
+  color: #64748b !important;
+}
+
+.cl-internal-button:hover {
+  color: #334155 !important;
+  background: #f1f5f9 !important;
+}
+
+/* Password show/hide button */
+.cl-formFieldInputShowPasswordButton {
+  color: #94a3b8 !important;
+}
+
+.cl-formFieldInputShowPasswordButton:hover {
+  color: #64748b !important;
+}
+
+/* Development mode banner - subtle warning */
+[data-testid="sign-up-create-account-development-mode-warning"],
+.cl-devModeNotice {
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.75rem !important;
+  padding: 0.5rem 0.75rem !important;
+  color: #92400e !important;
+}
+
+/* Form field row */
+.cl-formFieldRow,
+.cl-formField {
+  background: transparent !important;
+}
+
+/* Form hint text */
+.cl-formFieldHintText {
+  color: #94a3b8 !important;
+}
+
+/* Form error text */
+.cl-formFieldErrorText {
+  color: #dc2626 !important;
+}
+
+/* Success text */
+.cl-formFieldSuccessText {
+  color: #16a34a !important;
+}
+
+/* Avatar */
+.cl-avatarBox {
+  border-radius: 0.75rem !important;
+}
+
+/* Badge */
+.cl-badge {
+  background: #ecfdf5 !important;
+  color: #10b981 !important;
   border-radius: 0.5rem !important;
 }
 
-/* Development mode banner - make it subtle */
-[data-testid="sign-up-create-account-development-mode-warning"],
-.cl-devModeNotice {
-  background: rgba(251, 191, 36, 0.1) !important;
-  border-color: rgba(251, 191, 36, 0.2) !important;
-  border-radius: 0.5rem !important;
-  font-size: 0.75rem !important;
-  padding: 0.5rem !important;
+/* Fix card sizing and positioning */
+.cl-rootBox {
+  width: 100% !important;
+  max-width: 400px !important;
+  margin: 0 auto !important;
+}
+
+.cl-card {
+  width: 100% !important;
+  padding: 1.5rem !important;
+  margin: 0 !important;
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Social buttons container */
+.cl-socialButtons {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+.cl-socialButtonsBlockButtonRow {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+/* Hide BaatCheet/custom OAuth button - aggressive selectors */
+.cl-socialButtonsBlockButton__BaatCheet,
+.cl-socialButtonsBlockButton__baatcheet,
+.cl-socialButtonsIconButton__BaatCheet,
+.cl-socialButtonsIconButton__baatcheet,
+/* Hide by provider attribute */
+[data-provider*="baatcheet"],
+[data-provider*="BaatCheet"],
+[data-provider*="custom"],
+/* Hide first button if it's not Google (BaatCheet shows first) */
+.cl-socialButtonsBlockButton:first-child:not([data-provider="oauth_google"]),
+/* Hide by button text content - using attribute contains */
+button[aria-label*="BaatCheet"],
+button[aria-label*="baatcheet"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Style ALL social block buttons (Google will show) */
+.cl-socialButtonsBlockButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+  padding: 0.875rem 1rem !important;
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+}
+
+.cl-socialButtonsBlockButton:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Social button text */
+.cl-socialButtonsBlockButtonText {
+  font-weight: 500 !important;
+  color: #334155 !important;
+  font-size: 0.9375rem !important;
+}
+
+/* Social button icon */
+.cl-socialButtonsProviderIcon {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+/* Hide icon-only social buttons, show block buttons */
+.cl-socialButtonsIconButton {
+  display: none !important;
+}
+
+/* Form inputs */
+.cl-formFieldInput {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  color: #1e293b !important;
+  font-size: 0.9375rem !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+  outline: none !important;
 }
 
 /* ========================================

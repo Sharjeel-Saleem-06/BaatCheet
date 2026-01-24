@@ -1,6 +1,6 @@
 /**
  * Privacy Policy Page
- * Legal privacy policy for BaatCheet
+ * Legal privacy policy for BaatCheet - Light Theme
  */
 
 import { Link } from 'react-router-dom';
@@ -91,27 +91,27 @@ Each service has its own privacy policy. We ensure all partners meet our data pr
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Header */}
       <Header transparent={false} />
 
       {/* Hero */}
       <section className="pt-24 pb-12 relative">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-gradient-to-br from-primary-500/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-gradient-to-br from-emerald-200/40 to-transparent rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-medium mb-6">
             <Shield size={16} />
             <span>Your Privacy Matters</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-dark-100 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             Privacy Policy
           </h1>
-          <p className="text-xl text-dark-400 mb-4">
+          <p className="text-xl text-slate-600 mb-4">
             We're committed to protecting your privacy and being transparent about our data practices.
           </p>
-          <p className="text-dark-500">
+          <p className="text-slate-500">
             Last updated: {lastUpdated}
           </p>
         </div>
@@ -121,8 +121,8 @@ Each service has its own privacy policy. We ensure all partners meet our data pr
       <section className="py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Introduction */}
-          <div className="bg-dark-800 rounded-2xl border border-dark-700 p-8 mb-8">
-            <p className="text-dark-300 leading-relaxed">
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 mb-8 shadow-sm">
+            <p className="text-slate-600 leading-relaxed">
               This Privacy Policy describes how BaatCheet ("we", "our", or "us") collects, uses, and shares 
               information about you when you use our AI chat application and related services. By using 
               BaatCheet, you agree to the collection and use of information in accordance with this policy.
@@ -132,14 +132,14 @@ Each service has its own privacy policy. We ensure all partners meet our data pr
           {/* Sections */}
           <div className="space-y-6">
             {sections.map((section, i) => (
-              <div key={i} className="bg-dark-800 rounded-2xl border border-dark-700 p-8">
+              <div key={i} className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
-                    <section.icon className="text-primary-400" size={20} />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <section.icon className="text-emerald-600" size={20} />
                   </div>
-                  <h2 className="text-xl font-bold text-dark-100">{section.title}</h2>
+                  <h2 className="text-xl font-bold text-slate-800">{section.title}</h2>
                 </div>
-                <div className="text-dark-300 leading-relaxed whitespace-pre-line">
+                <div className="text-slate-600 leading-relaxed whitespace-pre-line">
                   {section.content}
                 </div>
               </div>
@@ -147,15 +147,15 @@ Each service has its own privacy policy. We ensure all partners meet our data pr
           </div>
 
           {/* Contact */}
-          <div className="mt-8 bg-gradient-to-br from-primary-500/10 to-purple-500/10 rounded-2xl border border-primary-500/20 p-8 text-center">
-            <Mail className="text-primary-400 mx-auto mb-4" size={32} />
-            <h2 className="text-2xl font-bold text-dark-100 mb-2">Questions?</h2>
-            <p className="text-dark-400 mb-4">
+          <div className="mt-8 bg-gradient-to-br from-emerald-50 to-cyan-50 rounded-2xl border border-emerald-200 p-8 text-center">
+            <Mail className="text-emerald-500 mx-auto mb-4" size={32} />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Questions?</h2>
+            <p className="text-slate-600 mb-4">
               If you have any questions about this Privacy Policy, please contact us.
             </p>
             <a
               href="mailto:sharry00010@gmail.com"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all font-medium shadow-lg shadow-emerald-500/25"
             >
               <Mail size={18} />
               sharry00010@gmail.com
@@ -166,19 +166,19 @@ Each service has its own privacy policy. We ensure all partners meet our data pr
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link
               to="/terms"
-              className="px-4 py-2 bg-dark-800 text-dark-300 rounded-lg hover:bg-dark-700 hover:text-dark-100 transition-colors"
+              className="px-4 py-2 bg-white text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors border border-slate-200"
             >
               Terms of Service
             </Link>
             <Link
               to="/help"
-              className="px-4 py-2 bg-dark-800 text-dark-300 rounded-lg hover:bg-dark-700 hover:text-dark-100 transition-colors"
+              className="px-4 py-2 bg-white text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors border border-slate-200"
             >
               Help Center
             </Link>
             <Link
               to="/contact"
-              className="px-4 py-2 bg-dark-800 text-dark-300 rounded-lg hover:bg-dark-700 hover:text-dark-100 transition-colors"
+              className="px-4 py-2 bg-white text-slate-600 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors border border-slate-200"
             >
               Contact Us
             </Link>

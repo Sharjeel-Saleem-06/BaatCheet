@@ -329,8 +329,8 @@ export default function Projects() {
   return (
     <div className="flex h-full">
       {/* Projects list */}
-      <div className="w-80 border-r border-dark-700 bg-dark-800/50 flex flex-col">
-        <div className="p-4 border-b border-dark-700">
+      <div className="w-80 border-r border-slate-200 bg-white/50 flex flex-col">
+        <div className="p-4 border-b border-slate-200">
           <button
             onClick={() => {
               setEditProject(null);
@@ -363,21 +363,23 @@ export default function Projects() {
                 'group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors',
                 selectedProject?.id === project.id
                   ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
-                  : 'text-dark-400 hover:bg-dark-700 hover:text-dark-200'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
               )}
               onClick={() => setSelectedProject(project)}
             >
               <span className="text-lg">{project.emoji || '📁'}</span>
               <span className="flex-1 truncate">{project.name}</span>
               {project._count?.collaborators && project._count.collaborators > 0 && (
-                <div className="flex items-center gap-1 text-xs text-dark-500">
+                <div className="flex items-center gap-1 text-xs text-slate-400">
                   <Users size={12} />
                   {project._count.collaborators}
                 </div>
               )}
-              <span className="text-xs text-dark-500">
-                {project._count?.conversations || 0}
-              </span>
+              {project._count?.conversations && project._count.conversations > 0 && (
+                <span className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  {project._count.conversations}
+                </span>
+              )}
               <div className="hidden group-hover:flex items-center gap-1">
                 <button
                   onClick={(e) => {
@@ -404,7 +406,7 @@ export default function Projects() {
           ))}
 
           {projectList.length === 0 && (
-            <div className="text-center py-8 text-dark-500">
+            <div className="text-center py-8 text-slate-400">
               <FolderOpen className="mx-auto mb-2" size={32} />
               <p>No projects yet</p>
             </div>
@@ -425,11 +427,11 @@ export default function Projects() {
                   {selectedProject.emoji || '📁'}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-dark-100">
+                  <h1 className="text-2xl font-bold text-slate-800">
                     {selectedProject.name}
                   </h1>
                   {selectedProject.description && (
-                    <p className="text-dark-400">{selectedProject.description}</p>
+                    <p className="text-slate-500">{selectedProject.description}</p>
                   )}
                 </div>
               </div>
@@ -439,7 +441,7 @@ export default function Projects() {
                 {(selectedProject.isOwner || selectedProject.collaborators?.some(c => c.canInvite)) && (
                   <button
                     onClick={() => setShowInviteModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
                   >
                     <UserPlus size={18} />
                     <span>Invite</span>
@@ -448,7 +450,7 @@ export default function Projects() {
                 {selectedProject.isOwner && (
                   <button
                     onClick={() => openEditModal(selectedProject)}
-                    className="flex items-center gap-2 px-4 py-2 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
                   >
                     <Settings size={18} />
                     <span>Settings</span>
@@ -459,19 +461,19 @@ export default function Projects() {
 
             {/* Context Instructions */}
             {selectedProject.contextInstructions && (
-              <div className="mb-6 p-4 bg-dark-800 rounded-xl border border-dark-700">
-                <div className="flex items-center gap-2 mb-2 text-dark-300">
+              <div className="mb-6 p-4 bg-white rounded-xl border border-slate-200">
+                <div className="flex items-center gap-2 mb-2 text-slate-600">
                   <FileText size={16} />
                   <span className="font-medium">Project Context</span>
                 </div>
-                <p className="text-dark-400 text-sm">{selectedProject.contextInstructions}</p>
+                <p className="text-slate-500 text-sm">{selectedProject.contextInstructions}</p>
               </div>
             )}
 
             {/* Collaborators */}
             {selectedProject.collaborators && selectedProject.collaborators.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-dark-300 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-slate-600 mb-3 flex items-center gap-2">
                   <Users size={16} />
                   Collaborators ({selectedProject.collaborators.length})
                 </h3>
@@ -481,13 +483,13 @@ export default function Projects() {
                     return (
                       <div
                         key={collab.id}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-dark-800 rounded-lg border border-dark-700"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200"
                       >
                         <RoleIcon size={14} className={getRoleColor(collab.role)} />
-                        <span className="text-sm text-dark-300">
+                        <span className="text-sm text-slate-600">
                           {collab.user?.displayName || collab.user?.email || 'Unknown'}
                         </span>
-                        <span className="text-xs text-dark-500 capitalize">{collab.role}</span>
+                        <span className="text-xs text-slate-400 capitalize">{collab.role}</span>
                       </div>
                     );
                   })}
@@ -507,7 +509,7 @@ export default function Projects() {
               </div>
             )}
 
-            <h2 className="text-lg font-medium text-dark-200 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-medium text-slate-700 mb-4 flex items-center gap-2">
               <MessageSquare size={20} />
               Conversations ({projectConversations.length})
             </h2>
@@ -517,14 +519,14 @@ export default function Projects() {
                 <button
                   key={conv.id}
                   onClick={() => navigate(`/app/chat/${conv.id}`)}
-                  className="flex items-center gap-3 p-4 bg-dark-800 hover:bg-dark-700 rounded-xl text-left transition-colors border border-dark-700 hover:border-dark-600"
+                  className="flex items-center gap-3 p-4 bg-white hover:bg-slate-100 rounded-xl text-left transition-colors border border-slate-200 hover:border-slate-300"
                 >
-                  <MessageSquare className="text-dark-500" size={20} />
+                  <MessageSquare className="text-slate-400" size={20} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-dark-200 truncate">
+                    <p className="text-slate-700 truncate">
                       {conv.title || 'Untitled'}
                     </p>
-                    <p className="text-xs text-dark-500">
+                    <p className="text-xs text-slate-400">
                       {new Date(conv.updatedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -532,7 +534,7 @@ export default function Projects() {
               ))}
 
               {projectConversations.length === 0 && (
-                <div className="text-center py-12 text-dark-500">
+                <div className="text-center py-12 text-slate-400">
                   <MessageSquare className="mx-auto mb-2" size={32} />
                   <p>No conversations in this project</p>
                   <button
@@ -547,11 +549,11 @@ export default function Projects() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <FolderOpen className="text-dark-600 mb-4" size={64} />
-            <h2 className="text-2xl font-bold text-dark-300 mb-2">
+            <FolderOpen className="text-slate-300 mb-4" size={64} />
+            <h2 className="text-2xl font-bold text-slate-600 mb-2">
               Select a Project
             </h2>
-            <p className="text-dark-500 max-w-md">
+            <p className="text-slate-400 max-w-md">
               Choose a project from the sidebar to view its conversations and collaborators
             </p>
           </div>
@@ -561,14 +563,14 @@ export default function Projects() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-lg">
-            <div className="flex items-center justify-between p-4 border-b border-dark-700">
-              <h2 className="text-lg font-semibold text-dark-100">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-800">
                 {editProject ? 'Edit Project' : 'New Project'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-dark-500 hover:text-dark-300"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
@@ -577,7 +579,7 @@ export default function Projects() {
             <form onSubmit={handleCreateProject} className="p-4 space-y-5">
               {/* Name Input */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Project Name
                 </label>
                 <input
@@ -586,13 +588,13 @@ export default function Projects() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                   placeholder="Enter project name"
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-lg"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-lg"
                 />
               </div>
 
               {/* Emoji Selection */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Icon
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -605,7 +607,7 @@ export default function Projects() {
                         'w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-all',
                         formData.emoji === emoji 
                           ? 'bg-primary-500/20 ring-2 ring-primary-500 scale-110' 
-                          : 'bg-dark-700 hover:bg-dark-600 hover:scale-105'
+                          : 'bg-slate-100 hover:bg-slate-200 hover:scale-105'
                       )}
                     >
                       {emoji}
@@ -616,35 +618,35 @@ export default function Projects() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-2">
-                  Description <span className="text-dark-500">(optional)</span>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
+                  Description <span className="text-slate-400">(optional)</span>
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
                   placeholder="Brief description of your project"
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
                 />
               </div>
 
               {/* Context Instructions */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-2">
-                  Context Instructions <span className="text-dark-500">(AI follows these for all chats)</span>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
+                  Context Instructions <span className="text-slate-400">(AI follows these for all chats)</span>
                 </label>
                 <textarea
                   value={formData.contextInstructions}
                   onChange={(e) => setFormData({ ...formData, contextInstructions: e.target.value })}
                   rows={3}
                   placeholder="e.g., Always respond in formal English. This project is about mobile app development."
-                  className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
+                  className="w-full px-4 py-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
                 />
               </div>
 
               {/* Color Selection */}
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   Color Theme
                 </label>
                 <div className="flex gap-3">
@@ -664,11 +666,11 @@ export default function Projects() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-3 border-t border-dark-700">
+              <div className="flex gap-3 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors font-medium"
+                  className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors font-medium"
                 >
                   Cancel
                 </button>
@@ -687,9 +689,9 @@ export default function Projects() {
       {/* Invite Modal */}
       {showInviteModal && selectedProject && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b border-dark-700">
-              <h2 className="text-lg font-semibold text-dark-100">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-800">
                 Invite Collaborator
               </h2>
               <button
@@ -697,7 +699,7 @@ export default function Projects() {
                   setShowInviteModal(false);
                   setInviteError(null);
                 }}
-                className="text-dark-500 hover:text-dark-300"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
@@ -705,7 +707,7 @@ export default function Projects() {
 
             <form onSubmit={handleInviteCollaborator} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -714,12 +716,12 @@ export default function Projects() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   required
                   placeholder="colleague@example.com"
-                  className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-lg text-dark-100 focus:outline-none focus:border-primary-500"
+                  className="w-full px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-primary-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">
                   Role
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -734,16 +736,16 @@ export default function Projects() {
                           'flex flex-col items-center gap-1 p-3 rounded-lg border transition-all',
                           inviteRole === role
                             ? 'bg-primary-500/10 border-primary-500/50'
-                            : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+                            : 'bg-slate-100 border-slate-300 hover:border-dark-500'
                         )}
                       >
                         <RoleIcon size={20} className={getRoleColor(role)} />
-                        <span className="text-sm capitalize text-dark-200">{role}</span>
+                        <span className="text-sm capitalize text-slate-700">{role}</span>
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-xs text-dark-500 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   {inviteRole === 'admin' && 'Full access: edit, delete, invite others'}
                   {inviteRole === 'moderator' && 'Can edit context and invite others'}
                   {inviteRole === 'viewer' && 'Can only view and create chats'}
@@ -763,7 +765,7 @@ export default function Projects() {
                     setShowInviteModal(false);
                     setInviteError(null);
                   }}
-                  className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -793,14 +795,14 @@ export default function Projects() {
       {/* Pending Invitations Modal */}
       {showInvitations && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b border-dark-700">
-              <h2 className="text-lg font-semibold text-dark-100">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-800">
                 Pending Invitations
               </h2>
               <button
                 onClick={() => setShowInvitations(false)}
-                className="text-dark-500 hover:text-dark-300"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
@@ -810,20 +812,20 @@ export default function Projects() {
               {pendingInvitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="p-4 bg-dark-700 rounded-xl border border-dark-600"
+                  className="p-4 bg-slate-100 rounded-xl border border-slate-300"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-xl">{invitation.project?.emoji || '📁'}</span>
                     <div>
-                      <p className="font-medium text-dark-200">
+                      <p className="font-medium text-slate-700">
                         {invitation.project?.name}
                       </p>
-                      <p className="text-xs text-dark-500">
+                      <p className="text-xs text-slate-400">
                         Invited by {invitation.inviter?.displayName || invitation.inviter?.email}
                       </p>
                     </div>
                   </div>
-                  <p className="text-sm text-dark-400 mb-3">
+                  <p className="text-sm text-slate-500 mb-3">
                     Role: <span className="capitalize">{invitation.role}</span>
                   </p>
                   <div className="flex gap-2">
@@ -846,7 +848,7 @@ export default function Projects() {
               ))}
 
               {pendingInvitations.length === 0 && (
-                <div className="text-center py-8 text-dark-500">
+                <div className="text-center py-8 text-slate-400">
                   <Mail className="mx-auto mb-2" size={32} />
                   <p>No pending invitations</p>
                 </div>

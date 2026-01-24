@@ -700,7 +700,7 @@ export default function AdminPanel() {
   
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-green-500" />
       </div>
     );
@@ -711,9 +711,9 @@ export default function AdminPanel() {
   }
   
   return (
-    <div className="min-h-screen bg-dark-900 text-white overflow-y-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 overflow-y-auto">
       {/* Header */}
-      <header className="bg-dark-800 border-b border-dark-700 sticky top-0 z-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -722,7 +722,7 @@ export default function AdminPanel() {
               </div>
               <div>
                 <h1 className="text-xl font-bold">Admin Panel</h1>
-                <p className="text-sm text-dark-400">BaatCheet API Management • {totalEndpoints} Endpoints</p>
+                <p className="text-sm text-slate-500">BaatCheet API Management • {totalEndpoints} Endpoints</p>
               </div>
             </div>
             
@@ -730,7 +730,7 @@ export default function AdminPanel() {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="flex items-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 <RefreshCw className={clsx('w-4 h-4', refreshing && 'animate-spin')} />
                 Refresh
@@ -763,7 +763,7 @@ export default function AdminPanel() {
                   'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-green-500/20 text-green-400'
-                    : 'text-dark-400 hover:text-white hover:bg-dark-700'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                 )}
               >
                 {tab.icon}
@@ -830,7 +830,7 @@ export default function AdminPanel() {
             </div>
             
             {/* Services Status */}
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Server className="w-5 h-5 text-green-500" />
                 Services Status
@@ -853,10 +853,10 @@ export default function AdminPanel() {
                       {service.status === 'unhealthy' && <XCircle className="w-5 h-5 text-red-500" />}
                     </div>
                     {service.latency !== undefined && (
-                      <p className="text-sm text-dark-400 mt-1">Latency: {service.latency}ms</p>
+                      <p className="text-sm text-slate-500 mt-1">Latency: {service.latency}ms</p>
                     )}
                     {service.message && (
-                      <p className="text-sm text-dark-400 mt-1">{service.message}</p>
+                      <p className="text-sm text-slate-500 mt-1">{service.message}</p>
                     )}
                   </div>
                 ))}
@@ -864,7 +864,7 @@ export default function AdminPanel() {
             </div>
             
             {/* Quick Actions */}
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Settings className="w-5 h-5 text-green-500" />
                 Quick Actions
@@ -904,7 +904,7 @@ export default function AdminPanel() {
             </div>
             
             {/* API Categories Overview */}
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Database className="w-5 h-5 text-green-500" />
                 API Categories ({Object.keys(groupedEndpoints).length})
@@ -917,14 +917,14 @@ export default function AdminPanel() {
                       setActiveTab('apis');
                       setExpandedCategories(new Set([category]));
                     }}
-                    className="flex items-center gap-3 p-3 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors text-left"
+                    className="flex items-center gap-3 p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-left"
                   >
-                    <div className="p-2 bg-dark-600 rounded-lg">
+                    <div className="p-2 bg-slate-200 rounded-lg">
                       {CATEGORY_ICONS[category] || <Code className="w-4 h-4" />}
                     </div>
                     <div>
                       <p className="font-medium text-sm">{category}</p>
-                      <p className="text-xs text-dark-400">{endpoints.length} endpoints</p>
+                      <p className="text-xs text-slate-500">{endpoints.length} endpoints</p>
                     </div>
                   </button>
                 ))}
@@ -937,39 +937,39 @@ export default function AdminPanel() {
         {activeTab === 'apis' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
             {/* Endpoints List */}
-            <div className="bg-dark-800 rounded-xl border border-dark-700 overflow-hidden">
-              <div className="p-4 border-b border-dark-700">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="p-4 border-b border-slate-200">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type="text"
                     placeholder="Search APIs..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-green-500"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:border-green-500"
                   />
                 </div>
-                <p className="text-xs text-dark-400 mt-2">
+                <p className="text-xs text-slate-500 mt-2">
                   {filteredEndpoints.length} of {totalEndpoints} endpoints
                 </p>
               </div>
               
               <div className="max-h-[600px] overflow-y-auto">
                 {Object.entries(groupedEndpoints).map(([category, endpoints]) => (
-                  <div key={category} className="border-b border-dark-700 last:border-b-0">
+                  <div key={category} className="border-b border-slate-200 last:border-b-0">
                     <button
                       onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-dark-700 transition-colors"
+                      className="w-full flex items-center justify-between p-3 hover:bg-slate-100 transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         {CATEGORY_ICONS[category] || <Code className="w-4 h-4" />}
                         <span className="font-medium">{category}</span>
-                        <span className="text-xs text-dark-400">({endpoints.length})</span>
+                        <span className="text-xs text-slate-500">({endpoints.length})</span>
                       </div>
                       {expandedCategories.has(category) ? (
-                        <ChevronDown className="w-4 h-4 text-dark-400" />
+                        <ChevronDown className="w-4 h-4 text-slate-500" />
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-dark-400" />
+                        <ChevronRight className="w-4 h-4 text-slate-500" />
                       )}
                     </button>
                     
@@ -994,8 +994,8 @@ export default function AdminPanel() {
                               }
                             }}
                             className={clsx(
-                              'w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-dark-700 transition-colors',
-                              selectedEndpoint?.path === endpoint.path && 'bg-dark-700'
+                              'w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-slate-100 transition-colors',
+                              selectedEndpoint?.path === endpoint.path && 'bg-slate-100'
                             )}
                           >
                             <span className={clsx(
@@ -1006,7 +1006,7 @@ export default function AdminPanel() {
                             </span>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-mono truncate">{endpoint.path}</p>
-                              <p className="text-xs text-dark-400 truncate">{endpoint.description}</p>
+                              <p className="text-xs text-slate-500 truncate">{endpoint.description}</p>
                             </div>
                             <div className="flex items-center gap-1">
                               {endpoint.testable && (
@@ -1026,7 +1026,7 @@ export default function AdminPanel() {
             </div>
             
             {/* Endpoint Details & Testing */}
-            <div className="bg-dark-800 rounded-xl border border-dark-700 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               {selectedEndpoint ? (
                 <div className="p-4 space-y-4 max-h-[700px] overflow-y-auto">
                   <div className="flex items-center justify-between">
@@ -1040,16 +1040,16 @@ export default function AdminPanel() {
                     </div>
                     <button
                       onClick={() => copyToClipboard(`/api/v1${selectedEndpoint.path}`)}
-                      className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                      className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                       title="Copy path"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
                   </div>
                   
-                  <code className="block text-sm bg-dark-900 p-2 rounded">/api/v1{selectedEndpoint.path}</code>
+                  <code className="block text-sm bg-gradient-to-br from-slate-50 via-white to-slate-100 p-2 rounded">/api/v1{selectedEndpoint.path}</code>
                   
-                  <p className="text-dark-300">{selectedEndpoint.description}</p>
+                  <p className="text-slate-600">{selectedEndpoint.description}</p>
                   
                   <div className="flex items-center gap-2 text-sm flex-wrap">
                     <span className={clsx(
@@ -1069,13 +1069,13 @@ export default function AdminPanel() {
                   {selectedEndpoint.params && selectedEndpoint.params.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2">Query Parameters</h3>
-                      <div className="bg-dark-700 rounded-lg p-3 space-y-2">
+                      <div className="bg-slate-100 rounded-lg p-3 space-y-2">
                         {selectedEndpoint.params.map((param, idx) => (
                           <div key={idx} className="text-sm">
                             <code className="text-green-400">{param.name}</code>
-                            <span className="text-dark-400 ml-2">({param.type})</span>
+                            <span className="text-slate-500 ml-2">({param.type})</span>
                             {param.required && <span className="text-red-400 ml-1">*</span>}
-                            <p className="text-dark-300 text-xs mt-0.5">{param.description}</p>
+                            <p className="text-slate-600 text-xs mt-0.5">{param.description}</p>
                           </div>
                         ))}
                       </div>
@@ -1086,20 +1086,20 @@ export default function AdminPanel() {
                   {selectedEndpoint.body && selectedEndpoint.body.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2">Request Body</h3>
-                      <div className="bg-dark-700 rounded-lg p-3 space-y-2 mb-2">
+                      <div className="bg-slate-100 rounded-lg p-3 space-y-2 mb-2">
                         {selectedEndpoint.body.map((field, idx) => (
                           <div key={idx} className="text-sm">
                             <code className="text-green-400">{field.name}</code>
-                            <span className="text-dark-400 ml-2">({field.type})</span>
+                            <span className="text-slate-500 ml-2">({field.type})</span>
                             {field.required && <span className="text-red-400 ml-1">*</span>}
-                            <p className="text-dark-300 text-xs mt-0.5">{field.description}</p>
+                            <p className="text-slate-600 text-xs mt-0.5">{field.description}</p>
                           </div>
                         ))}
                       </div>
                       <textarea
                         value={requestBody}
                         onChange={(e) => setRequestBody(e.target.value)}
-                        className="w-full h-32 bg-dark-900 border border-dark-600 rounded-lg p-3 font-mono text-sm text-white focus:outline-none focus:border-green-500"
+                        className="w-full h-32 bg-gradient-to-br from-slate-50 via-white to-slate-100 border border-slate-300 rounded-lg p-3 font-mono text-sm text-slate-800 focus:outline-none focus:border-green-500"
                         placeholder="Request body (JSON)"
                       />
                     </div>
@@ -1138,11 +1138,11 @@ export default function AdminPanel() {
                             Status: {testResult.status}
                           </span>
                         </div>
-                        <span className="text-sm text-dark-400">
+                        <span className="text-sm text-slate-500">
                           {testResult.time}ms
                         </span>
                       </div>
-                      <pre className="bg-dark-900 rounded p-3 text-xs overflow-auto max-h-64">
+                      <pre className="bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded p-3 text-xs overflow-auto max-h-64">
                         {JSON.stringify(testResult.data || testResult.error, null, 2)}
                       </pre>
                     </div>
@@ -1151,25 +1151,25 @@ export default function AdminPanel() {
                   {/* cURL Example */}
                   <div>
                     <h3 className="text-sm font-semibold mb-2">cURL Example</h3>
-                    <div className="bg-dark-900 rounded-lg p-3 relative">
+                    <div className="bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-lg p-3 relative">
                       <button
                         onClick={() => {
                           const curl = `curl -X ${selectedEndpoint.method} "https://sharry121-baatcheet.hf.space/api/v1${selectedEndpoint.path}"${selectedEndpoint.auth ? ' \\\n  -H "Authorization: Bearer YOUR_TOKEN"' : ''}${['POST', 'PUT', 'PATCH'].includes(selectedEndpoint.method) ? ` \\\n  -H "Content-Type: application/json" \\\n  -d '${requestBody}'` : ''}`;
                           copyToClipboard(curl);
                         }}
-                        className="absolute top-2 right-2 p-1 hover:bg-dark-700 rounded"
+                        className="absolute top-2 right-2 p-1 hover:bg-slate-100 rounded"
                         title="Copy cURL"
                       >
                         <Copy className="w-4 h-4" />
                       </button>
-                      <pre className="text-xs text-dark-300 overflow-x-auto">
+                      <pre className="text-xs text-slate-600 overflow-x-auto">
 {`curl -X ${selectedEndpoint.method} "https://sharry121-baatcheet.hf.space/api/v1${selectedEndpoint.path}"${selectedEndpoint.auth ? ' \\\n  -H "Authorization: Bearer YOUR_TOKEN"' : ''}${['POST', 'PUT', 'PATCH'].includes(selectedEndpoint.method) ? ` \\\n  -H "Content-Type: application/json" \\\n  -d '...'` : ''}`}
                       </pre>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-96 text-dark-400">
+                <div className="flex flex-col items-center justify-center h-96 text-slate-500">
                   <Code className="w-12 h-12 mb-4" />
                   <p>Select an endpoint to test</p>
                   <p className="text-sm mt-2">Blue dot = Auto-testable</p>
@@ -1188,7 +1188,7 @@ export default function AdminPanel() {
               <div className="flex gap-2">
                 <button
                   onClick={fetchProviders}
-                  className="flex items-center gap-2 px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Refresh
@@ -1213,7 +1213,7 @@ export default function AdminPanel() {
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <Loader2 className="w-8 h-8 animate-spin mx-auto text-green-500 mb-4" />
-                  <p className="text-dark-400">Loading provider data...</p>
+                  <p className="text-slate-500">Loading provider data...</p>
                   <button
                     onClick={fetchProviders}
                     className="mt-4 text-sm text-green-400 hover:underline"
@@ -1232,7 +1232,7 @@ export default function AdminPanel() {
                   <div
                     key={provider.name}
                     className={clsx(
-                      'bg-dark-800 rounded-xl p-6 border',
+                      'bg-white rounded-xl p-6 border',
                       provider.status === 'available' && 'border-green-500/30',
                       provider.status === 'limited' && 'border-yellow-500/30',
                       provider.status === 'unavailable' && 'border-red-500/30',
@@ -1252,20 +1252,20 @@ export default function AdminPanel() {
                     
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-dark-400">API Keys</span>
+                        <span className="text-slate-500">API Keys</span>
                         <span className="font-medium">{provider.available || provider.keys} / {provider.keys}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-dark-400">Daily Capacity</span>
+                        <span className="text-slate-500">Daily Capacity</span>
                         <span className="font-medium">{(provider.dailyCapacity || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-dark-400">Used Today</span>
+                        <span className="text-slate-500">Used Today</span>
                         <span className="font-medium">{(provider.used || 0).toLocaleString()}</span>
                       </div>
                       
                       <div className="mt-2">
-                        <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
                             className={clsx(
                               'h-full rounded-full transition-all',
@@ -1276,7 +1276,7 @@ export default function AdminPanel() {
                             style={{ width: `${Math.min(provider.percentUsed || 0, 100)}%` }}
                           />
                         </div>
-                        <p className="text-xs text-dark-400 mt-1 text-right">
+                        <p className="text-xs text-slate-500 mt-1 text-right">
                           {provider.percentUsed || 0}% used
                         </p>
                       </div>
@@ -1285,7 +1285,7 @@ export default function AdminPanel() {
                       <button
                         onClick={() => testProvider(provider.name)}
                         disabled={testingProvider === provider.name}
-                        className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors text-sm disabled:opacity-50"
+                        className="w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-sm disabled:opacity-50"
                       >
                         {testingProvider === provider.name ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1324,48 +1324,48 @@ export default function AdminPanel() {
             </div>
             
             {/* Provider Summary */}
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <h2 className="text-lg font-semibold mb-4">Provider Summary</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-500">
                     {providers?.summary?.totalKeys || 0}
                   </p>
-                  <p className="text-sm text-dark-400">Total Keys</p>
+                  <p className="text-sm text-slate-500">Total Keys</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-blue-500">
                     {(providers?.summary?.totalCapacity || 0).toLocaleString()}
                   </p>
-                  <p className="text-sm text-dark-400">Daily Capacity</p>
+                  <p className="text-sm text-slate-500">Daily Capacity</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-500">
                     {(providers?.summary?.totalUsed || 0).toLocaleString()}
                   </p>
-                  <p className="text-sm text-dark-400">Used Today</p>
+                  <p className="text-sm text-slate-500">Used Today</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-purple-500">
                     {providers?.summary?.activeProviders || 0} / {providers?.summary?.totalProviders || 0}
                   </p>
-                  <p className="text-sm text-dark-400">Active Providers</p>
+                  <p className="text-sm text-slate-500">Active Providers</p>
                 </div>
               </div>
             </div>
             
             {/* Fallback Chain Info */}
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <h2 className="text-lg font-semibold mb-4">🔄 Fallback Chain</h2>
-              <p className="text-sm text-dark-400 mb-4">
+              <p className="text-sm text-slate-500 mb-4">
                 When an API key fails or is exhausted, the system automatically tries the next available key.
                 If all keys for a provider fail, it falls back to the next provider in the chain.
               </p>
               <div className="flex flex-wrap gap-2 items-center">
                 {['Groq', 'OpenRouter', 'DeepSeek', 'Gemini'].map((name, i) => (
                   <div key={name} className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-dark-700 rounded-lg text-sm">{name}</span>
-                    {i < 3 && <span className="text-dark-500">→</span>}
+                    <span className="px-3 py-1 bg-slate-100 rounded-lg text-sm">{name}</span>
+                    {i < 3 && <span className="text-slate-500">→</span>}
                   </div>
                 ))}
               </div>
@@ -1376,11 +1376,11 @@ export default function AdminPanel() {
         {/* Batch Testing Tab */}
         {activeTab === 'testing' && (
           <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
-            <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+            <div className="bg-white rounded-xl p-6 border border-slate-200">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-semibold">Batch API Testing</h2>
-                  <p className="text-sm text-dark-400">
+                  <p className="text-sm text-slate-500">
                     Test all {testableCount} auto-testable endpoints at once
                   </p>
                 </div>
@@ -1399,7 +1399,7 @@ export default function AdminPanel() {
               </div>
               
               {batchTestResults.size > 0 && (
-                <div className="mb-4 p-4 bg-dark-700 rounded-lg">
+                <div className="mb-4 p-4 bg-slate-100 rounded-lg">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1410,7 +1410,7 @@ export default function AdminPanel() {
                       <span>{batchTestResults.size - passedTests} failed</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-dark-400" />
+                      <Clock className="w-5 h-5 text-slate-500" />
                       <span>{batchTestResults.size} / {testableCount} tested</span>
                     </div>
                   </div>
@@ -1425,7 +1425,7 @@ export default function AdminPanel() {
                       key={endpoint.path}
                       className={clsx(
                         'flex items-center justify-between p-3 rounded-lg border',
-                        !result && 'bg-dark-700 border-dark-600',
+                        !result && 'bg-slate-100 border-slate-300',
                         result?.success && 'bg-green-500/10 border-green-500/30',
                         result && !result.success && 'bg-red-500/10 border-red-500/30',
                       )}
@@ -1439,7 +1439,7 @@ export default function AdminPanel() {
                         </span>
                         <div>
                           <p className="text-sm font-mono">{endpoint.path}</p>
-                          <p className="text-xs text-dark-400">{endpoint.description}</p>
+                          <p className="text-xs text-slate-500">{endpoint.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1450,12 +1450,12 @@ export default function AdminPanel() {
                             ) : (
                               <XCircle className="w-5 h-5 text-red-500" />
                             )}
-                            <span className="text-sm text-dark-400">{result.time}ms</span>
+                            <span className="text-sm text-slate-500">{result.time}ms</span>
                           </>
                         ) : batchTesting ? (
-                          <Loader2 className="w-5 h-5 animate-spin text-dark-400" />
+                          <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
                         ) : (
-                          <span className="text-sm text-dark-400">Not tested</span>
+                          <span className="text-sm text-slate-500">Not tested</span>
                         )}
                       </div>
                     </div>
@@ -1469,7 +1469,7 @@ export default function AdminPanel() {
         {/* Logs Tab */}
         {activeTab === 'logs' && (
           <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pb-8">
-            <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
                 <Terminal className="w-5 h-5 text-green-500" />
                 Debug Endpoints
@@ -1492,22 +1492,22 @@ export default function AdminPanel() {
                     href={`/api/v1${item.path}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-4 bg-dark-700 rounded-lg hover:bg-dark-600 transition-colors"
+                    className="flex items-center justify-between p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {item.icon}
                       <div>
                         <span className="font-medium">{item.label}</span>
-                        <p className="text-xs text-dark-400 font-mono">{item.path}</p>
+                        <p className="text-xs text-slate-500 font-mono">{item.path}</p>
                       </div>
                     </div>
-                    <ExternalLink className="w-4 h-4 text-dark-400" />
+                    <ExternalLink className="w-4 h-4 text-slate-500" />
                   </a>
                 ))}
               </div>
             </div>
             
-            <div className="bg-dark-800 rounded-xl border border-dark-700 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
                 <ExternalLink className="w-5 h-5 text-green-500" />
                 External Links
@@ -1518,64 +1518,64 @@ export default function AdminPanel() {
                   href="https://huggingface.co/spaces/sharry121/baatcheet"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-dark-700 rounded-lg hover:bg-dark-600 transition-colors"
+                  className="flex items-center justify-between p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Server className="w-5 h-5 text-yellow-500" />
                     <div>
                       <span className="font-medium">HuggingFace Space</span>
-                      <p className="text-xs text-dark-400">View logs & settings</p>
+                      <p className="text-xs text-slate-500">View logs & settings</p>
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-dark-400" />
+                  <ExternalLink className="w-4 h-4 text-slate-500" />
                 </a>
                 
                 <a
                   href="https://app.netlify.com/projects/baatcheet-web"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-dark-700 rounded-lg hover:bg-dark-600 transition-colors"
+                  className="flex items-center justify-between p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Globe className="w-5 h-5 text-cyan-500" />
                     <div>
                       <span className="font-medium">Netlify Dashboard</span>
-                      <p className="text-xs text-dark-400">Frontend deployments</p>
+                      <p className="text-xs text-slate-500">Frontend deployments</p>
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-dark-400" />
+                  <ExternalLink className="w-4 h-4 text-slate-500" />
                 </a>
                 
                 <a
                   href="https://dashboard.clerk.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-dark-700 rounded-lg hover:bg-dark-600 transition-colors"
+                  className="flex items-center justify-between p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5 text-purple-500" />
                     <div>
                       <span className="font-medium">Clerk Dashboard</span>
-                      <p className="text-xs text-dark-400">User management</p>
+                      <p className="text-xs text-slate-500">User management</p>
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-dark-400" />
+                  <ExternalLink className="w-4 h-4 text-slate-500" />
                 </a>
                 
                 <a
                   href="https://console.neon.tech"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-dark-700 rounded-lg hover:bg-dark-600 transition-colors"
+                  className="flex items-center justify-between p-4 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Database className="w-5 h-5 text-green-500" />
                     <div>
                       <span className="font-medium">Neon Database</span>
-                      <p className="text-xs text-dark-400">PostgreSQL console</p>
+                      <p className="text-xs text-slate-500">PostgreSQL console</p>
                     </div>
                   </div>
-                  <ExternalLink className="w-4 h-4 text-dark-400" />
+                  <ExternalLink className="w-4 h-4 text-slate-500" />
                 </a>
               </div>
             </div>
@@ -1598,9 +1598,9 @@ function StatCard({ title, value, icon, color }: { title: string; value: string 
   };
   
   return (
-    <div className="bg-dark-800 rounded-xl p-6 border border-dark-700">
+    <div className="bg-white rounded-xl p-6 border border-slate-200">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-dark-400 text-sm">{title}</span>
+        <span className="text-slate-500 text-sm">{title}</span>
         <div className={clsx('p-2 rounded-lg', colorClasses[color])}>
           {icon}
         </div>
@@ -1614,9 +1614,9 @@ function QuickActionButton({ label, icon, onClick }: { label: string; icon: Reac
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-4 bg-dark-700 hover:bg-dark-600 rounded-lg transition-colors"
+      className="flex flex-col items-center gap-2 p-4 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
     >
-      <div className="p-3 bg-dark-600 rounded-lg">
+      <div className="p-3 bg-slate-200 rounded-lg">
         {icon}
       </div>
       <span className="text-sm text-center">{label}</span>

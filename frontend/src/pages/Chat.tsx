@@ -20,7 +20,6 @@ import {
   StopCircle,
   X,
   Paperclip,
-  ChevronDown,
   ThumbsUp,
   ThumbsDown,
   Volume2,
@@ -181,7 +180,6 @@ export default function Chat() {
   // AI Modes
   const [availableModes, setAvailableModes] = useState<AIMode[]>([]);
   const [selectedMode, setSelectedMode] = useState<string>('chat');
-  const [showModeSelector, setShowModeSelector] = useState(false);
   
   // TTS
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
@@ -234,7 +232,6 @@ export default function Chat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const modeSelectorRef = useRef<HTMLDivElement>(null);
 
   // Load available modes
   useEffect(() => {
@@ -271,16 +268,6 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamContent]);
 
-  // Close mode selector on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modeSelectorRef.current && !modeSelectorRef.current.contains(event.target as Node)) {
-        setShowModeSelector(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Default modes for fallback when API is unavailable
   const defaultModes: AIMode[] = [
@@ -1174,81 +1161,40 @@ export default function Chat() {
   const selectedModeData = availableModes.find(m => m.id === selectedMode);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Conversation sidebar */}
-      <div className="hidden md:flex w-72 flex-col border-r border-dark-700 bg-dark-800/50">
+      <div className="hidden md:flex w-72 flex-col border-r border-slate-200 bg-white">
         <div className="p-4">
           <button
             onClick={handleNewChat}
-            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl transition-all shadow-lg shadow-primary-500/20"
+            className="group w-full flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:scale-[1.02]"
           >
             <Plus size={20} />
-            <span>New Chat</span>
+            <span className="font-semibold">New Chat</span>
           </button>
         </div>
 
-        {/* Mode selector in sidebar */}
+        {/* Chat label in sidebar */}
         <div className="px-4 pb-4">
-          <div className="relative" ref={modeSelectorRef}>
-            <button
-              onClick={() => setShowModeSelector(!showModeSelector)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 bg-dark-700/50 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors"
-            >
-              {(() => {
-                const ModeIcon = getModeIcon(selectedMode);
-                return <ModeIcon size={18} className="text-primary-400" />;
-              })()}
-              <span className="flex-1 text-left text-sm text-dark-200">
-                {selectedModeData?.name || 'Chat'}
-              </span>
-              <ChevronDown size={16} className={`text-dark-400 transition-transform ${showModeSelector ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showModeSelector && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-dark-800 border border-dark-700 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto">
-                {availableModes.map((mode) => {
-                  const ModeIcon = getModeIcon(mode.id);
-                  return (
-                    <button
-                      key={mode.id}
-                      onClick={() => {
-                        setSelectedMode(mode.id);
-                        setShowModeSelector(false);
-                      }}
-                      className={clsx(
-                        'w-full flex items-center gap-3 px-3 py-2.5 hover:bg-dark-700 transition-colors',
-                        selectedMode === mode.id && 'bg-primary-500/10'
-                      )}
-                    >
-                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${modeColors[mode.id] || 'from-gray-500 to-gray-600'} flex items-center justify-center`}>
-                        <ModeIcon size={16} className="text-white" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-dark-200">{mode.name}</p>
-                        <p className="text-xs text-dark-500 truncate">{mode.description}</p>
-                      </div>
-                      {selectedMode === mode.id && (
-                        <Check size={16} className="text-primary-400" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          <div className="w-full flex items-center gap-3 px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <Bot size={18} className="text-emerald-600" />
+            <span className="text-sm text-slate-700 font-medium">Chat</span>
           </div>
         </div>
 
         {/* Recent Conversations Header */}
-        <div className="px-4 py-2 border-b border-dark-700">
-          <span className="text-xs text-dark-500 font-medium uppercase tracking-wider">Recent Chats</span>
+        <div className="px-4 py-2.5 border-b border-slate-200">
+          <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Recent Chats</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {(recentConversations || []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <MessageSquare className="text-dark-600 mb-2" size={24} />
-              <p className="text-dark-500 text-sm">No conversations yet</p>
-              <p className="text-dark-600 text-xs mt-1">Start a new chat to begin</p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-3">
+                <MessageSquare className="text-slate-400" size={24} />
+              </div>
+              <p className="text-slate-600 text-sm font-medium">No conversations yet</p>
+              <p className="text-slate-400 text-xs mt-1">Start a new chat to begin</p>
             </div>
           ) : (
             (recentConversations || []).map((conv) => (
@@ -1256,20 +1202,20 @@ export default function Chat() {
                 key={conv.id}
                 onClick={() => navigate(`/app/chat/${conv.id}`)}
                 className={clsx(
-                  'w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors group',
+                  'w-full text-left px-3 py-3 rounded-xl text-sm transition-all group',
                   conv.id === conversationId
-                    ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
-                    : 'text-dark-400 hover:bg-dark-700 hover:text-dark-200'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={14} className="flex-shrink-0" />
-                  <span className="truncate flex-1">{conv.title || 'New Conversation'}</span>
+                <div className="flex items-center gap-2.5">
+                  <MessageSquare size={14} className="flex-shrink-0 opacity-50" />
+                  <span className="truncate flex-1 font-medium">{conv.title || 'New Conversation'}</span>
                 </div>
                 {conv.tags && conv.tags.length > 0 && (
-                  <div className="flex gap-1 mt-1 ml-5">
+                  <div className="flex gap-1 mt-1.5 ml-5">
                     {conv.tags.slice(0, 2).map((tag, i) => (
-                      <span key={i} className="text-xs px-1.5 py-0.5 bg-dark-600 rounded text-dark-400">
+                      <span key={i} className="text-xs px-2 py-0.5 bg-slate-100 rounded-full text-slate-500">
                         {tag}
                       </span>
                     ))}
@@ -1282,90 +1228,96 @@ export default function Chat() {
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Voice call indicator */}
-{/* Voice call modal is now handled separately */}
-
+      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-b from-slate-50 to-white">
         {/* Chat header with share button */}
         {conversationId && conversation && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-dark-700 bg-dark-800/50">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0">
-              <h2 className="text-dark-200 font-medium truncate">
-                {conversation.title || 'New Conversation'}
-              </h2>
-              {selectedModeData && (
-                <span className="px-2 py-1 bg-primary-500/10 text-primary-400 rounded-lg text-xs">
-                  {selectedModeData.name}
-                </span>
-              )}
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                <Bot className="text-white" size={20} />
+              </div>
+              <div>
+                <h2 className="text-slate-800 font-semibold truncate">
+                  {conversation.title || 'New Conversation'}
+                </h2>
+                {selectedModeData && (
+                  <span className="text-xs text-emerald-600 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    {selectedModeData.name} Mode
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {/* Voice call button */}
               <button
                 onClick={openVoiceCall}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-dark-400 hover:text-dark-200 hover:bg-dark-700"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl transition-all text-slate-600 hover:text-emerald-600 hover:bg-emerald-50"
                 title="Start voice call"
               >
-                <Phone size={16} />
-                <span className="hidden sm:inline text-sm">Call</span>
+                <Phone size={18} />
+                <span className="hidden sm:inline text-sm font-medium">Call</span>
               </button>
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 px-3 py-1.5 text-dark-400 hover:text-dark-200 hover:bg-dark-700 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
                 title="Share conversation"
               >
-                <Share2 size={16} />
-                <span className="hidden sm:inline text-sm">Share</span>
+                <Share2 size={18} />
+                <span className="hidden sm:inline text-sm font-medium">Share</span>
               </button>
             </div>
           </div>
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {messages.length === 0 && !streaming && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/20 flex items-center justify-center mb-6">
-                <Bot className="text-primary-400" size={40} />
+            <div className="flex flex-col items-center justify-center min-h-full text-center px-4 py-8">
+              {/* Logo and Welcome - with top margin to prevent cut-off */}
+              <div className="relative mb-8 mt-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400 rounded-3xl blur-3xl opacity-30 animate-pulse" />
+                <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-2xl flex items-center justify-center overflow-hidden backdrop-blur-sm">
+                  <img src="/logo.png" alt="BaatCheet" className="w-20 h-20 object-contain drop-shadow-sm" />
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-dark-100 mb-2">
-                Start a Conversation
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-3">
+                How can I help you today?
               </h2>
-              <p className="text-dark-400 max-w-md mb-6">
-                Ask me anything! I can help with coding, writing, research, image generation, and more.
+              <p className="text-slate-500 max-w-md mb-8 text-base">
+                I can help with coding, writing, research, image generation, and much more.
               </p>
               
-              {/* Voice Call Button - More prominent with phone icon */}
+              {/* Voice Call Button */}
               <button
                 onClick={openVoiceCall}
-                className="flex items-center gap-3 px-6 py-3 mb-8 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-full transition-all shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 hover:-translate-y-0.5"
+                className="group flex items-center gap-3 px-8 py-4 mb-8 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] border border-white/20"
               >
-                <Phone size={20} />
-                <span className="font-medium">Start Voice Call</span>
+                <Phone size={22} className="group-hover:animate-pulse" />
+                <span className="font-semibold text-lg">Start Voice Call</span>
               </button>
               
-              {/* Quick Action Tags - Compact chips like ChatGPT */}
+              {/* Quick Action Tags */}
               <div className="mb-8">
-                <p className="text-dark-500 text-sm mb-3">Quick Actions</p>
-                <div className="flex flex-wrap justify-center gap-2 max-w-xl">
+                <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-4">Quick Actions</p>
+                <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
                   {quickTags.map((tag) => (
                     <button
                       key={tag.id}
                       onClick={() => handleQuickTag(tag.prompt, tag.id)}
-                      className="group flex items-center gap-2 px-3 py-1.5 bg-dark-800/60 border border-dark-700 rounded-full hover:border-primary-500/50 hover:bg-dark-700 transition-all"
+                      className="group flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 rounded-xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-200"
                     >
-                      <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${tag.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
-                        <tag.icon size={10} className="text-white" />
+                      <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${tag.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-md`}>
+                        <tag.icon size={14} className="text-white" />
                       </div>
-                      <span className="text-xs font-medium text-dark-400 group-hover:text-dark-200">{tag.label}</span>
-                      <Plus size={12} className="text-dark-600 group-hover:text-primary-400 transition-colors" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-emerald-600">{tag.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
               
               {/* Quick mode suggestions */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
                 {availableModes.slice(0, 8).map((mode) => {
                   const ModeIcon = getModeIcon(mode.id);
                   return (
@@ -1373,16 +1325,16 @@ export default function Chat() {
                       key={mode.id}
                       onClick={() => setSelectedMode(mode.id)}
                       className={clsx(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+                        'flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all duration-200',
                         selectedMode === mode.id
-                          ? 'bg-primary-500/10 border-primary-500/50'
-                          : 'bg-dark-800 border-dark-700 hover:border-dark-600'
+                          ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400 shadow-lg shadow-emerald-500/15 ring-2 ring-emerald-400/30'
+                          : 'bg-gradient-to-br from-white to-slate-50 border-slate-200/80 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-500/10'
                       )}
                     >
-                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${modeColors[mode.id] || 'from-gray-500 to-gray-600'} flex items-center justify-center`}>
-                        <ModeIcon size={20} className="text-white" />
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${modeColors[mode.id] || 'from-gray-500 to-gray-600'} flex items-center justify-center shadow-lg shadow-black/10`}>
+                        <ModeIcon size={22} className="text-white drop-shadow" />
                       </div>
-                      <span className="text-sm text-dark-300">{mode.name}</span>
+                      <span className="text-sm font-medium text-slate-700">{mode.name}</span>
                     </button>
                   );
                 })}
@@ -1394,40 +1346,40 @@ export default function Chat() {
             <div
               key={msg.id}
               className={clsx(
-                'flex gap-3',
+                'flex gap-4',
                 msg.role === 'user' ? 'flex-row-reverse' : ''
               )}
             >
               <div
                 className={clsx(
-                  'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+                  'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
                   msg.role === 'user'
-                    ? 'bg-primary-500/20'
-                    : 'bg-dark-700'
+                    ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-lg shadow-emerald-500/20'
+                    : 'bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 shadow-lg shadow-slate-500/10'
                 )}
               >
                 {msg.role === 'user' ? (
-                  <User className="text-primary-400" size={18} />
+                  <User className="text-white drop-shadow" size={20} />
                 ) : (
-                  <Bot className="text-dark-300" size={18} />
+                  <img src="/logo.png" alt="AI" className="w-7 h-7 object-contain" />
                 )}
               </div>
 
               <div
                 className={clsx(
-                  'flex-1 max-w-3xl rounded-xl p-4',
+                  'flex-1 max-w-3xl rounded-2xl p-5',
                   msg.role === 'user'
-                    ? 'bg-primary-500/10 ml-12'
-                    : 'bg-dark-800 mr-12'
+                    ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white ml-12 shadow-xl shadow-emerald-500/25 border border-white/10'
+                    : 'bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 mr-12 shadow-lg shadow-slate-500/10'
                 )}
               >
                 {/* Image attachment */}
                 {msg.imageUrl && (
-                  <div className="mb-3">
+                  <div className="mb-4">
                     <img
                       src={msg.imageUrl}
                       alt="Attached"
-                      className="max-w-sm max-h-64 rounded-lg border border-dark-600 cursor-pointer hover:opacity-90 transition-opacity"
+                      className="max-w-sm max-h-64 rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-md"
                       onClick={() => window.open(msg.imageUrl, '_blank')}
                     />
                   </div>
@@ -1435,11 +1387,11 @@ export default function Chat() {
 
                 {/* Generated image */}
                 {msg.generatedImageUrl && (
-                  <div className="mb-3">
+                  <div className="mb-4">
                     <img
                       src={msg.generatedImageUrl}
                       alt="Generated"
-                      className="max-w-md rounded-lg border border-dark-600 cursor-pointer hover:opacity-90 transition-opacity"
+                      className="max-w-md rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-md"
                       onClick={() => window.open(msg.generatedImageUrl, '_blank')}
                     />
                   </div>
@@ -1455,8 +1407,8 @@ export default function Chat() {
 
                 {/* Language indicator */}
                 {msg.role === 'user' && msg.isRomanUrdu && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-dark-600/50 text-dark-400">
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs bg-white/20 text-white/90">
                       {msg.isMixedLanguage ? '🌐 Mixed' : '🇵🇰 Roman Urdu'}
                       {msg.inputMethod === 'voice' && ' • Voice'}
                     </span>
@@ -1469,15 +1421,15 @@ export default function Chat() {
 
                 {/* Assistant message actions */}
                 {msg.role === 'assistant' && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-dark-700">
+                  <div className="flex items-center gap-1 mt-4 pt-4 border-t border-slate-100">
                     {/* Copy */}
                     <button
                       onClick={() => handleCopy(msg.content, msg.id)}
-                      className="p-1.5 text-dark-500 hover:text-dark-300 transition-colors"
+                      className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
                       title="Copy"
                     >
                       {copied === msg.id ? (
-                        <Check size={16} className="text-primary-400" />
+                        <Check size={16} className="text-emerald-500" />
                       ) : (
                         <Copy size={16} />
                       )}
@@ -1487,10 +1439,10 @@ export default function Chat() {
                     <button
                       onClick={() => handleSpeak(msg.id, msg.content)}
                       className={clsx(
-                        'p-1.5 transition-colors',
+                        'p-2 rounded-lg transition-all',
                         speakingMessageId === msg.id
-                          ? 'text-primary-400'
-                          : 'text-dark-500 hover:text-dark-300'
+                          ? 'text-emerald-500 bg-emerald-50'
+                          : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'
                       )}
                       title={speakingMessageId === msg.id ? 'Stop' : 'Listen'}
                     >
@@ -1502,15 +1454,15 @@ export default function Chat() {
                     </button>
 
                     {/* Feedback */}
-                    <div className="flex items-center gap-1 ml-2">
+                    <div className="flex items-center gap-0.5 ml-2 px-1 py-0.5 rounded-lg bg-slate-50 border border-slate-200">
                       <button
                         onClick={() => handleFeedback(msg.id, 'like')}
                         disabled={feedbackLoading === msg.id}
                         className={clsx(
-                          'p-1.5 transition-colors',
+                          'p-1.5 rounded-md transition-all',
                           msg.feedback === 'like'
-                            ? 'text-green-500'
-                            : 'text-dark-500 hover:text-green-400'
+                            ? 'text-emerald-500 bg-emerald-100'
+                            : 'text-slate-400 hover:text-emerald-500 hover:bg-emerald-50'
                         )}
                         title="Good response"
                       >
@@ -1520,10 +1472,10 @@ export default function Chat() {
                         onClick={() => handleFeedback(msg.id, 'dislike')}
                         disabled={feedbackLoading === msg.id}
                         className={clsx(
-                          'p-1.5 transition-colors',
+                          'p-1.5 rounded-md transition-all',
                           msg.feedback === 'dislike'
-                            ? 'text-red-500'
-                            : 'text-dark-500 hover:text-red-400'
+                            ? 'text-red-500 bg-red-100'
+                            : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
                         )}
                         title="Bad response"
                       >
@@ -1532,7 +1484,7 @@ export default function Chat() {
                     </div>
 
                     {msg.model && (
-                      <span className="text-xs text-dark-500 ml-auto">
+                      <span className="text-xs text-slate-500 ml-auto px-2 py-1 bg-slate-100 rounded-lg">
                         {msg.model}
                       </span>
                     )}
@@ -1544,13 +1496,13 @@ export default function Chat() {
 
           {/* Streaming message */}
           {streaming && streamContent && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-lg bg-dark-700 flex items-center justify-center flex-shrink-0">
-                <Bot className="text-dark-300" size={18} />
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 flex items-center justify-center flex-shrink-0 shadow-lg shadow-slate-500/10">
+                <img src="/logo.png" alt="AI" className="w-7 h-7 object-contain" />
               </div>
-              <div className="flex-1 max-w-3xl bg-dark-800 rounded-xl p-4 mr-12">
+              <div className="flex-1 max-w-3xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 rounded-2xl p-5 mr-12 shadow-lg shadow-slate-500/10">
                 <MarkdownRenderer content={streamContent} />
-                <span className="streaming-cursor" />
+                <span className="inline-block w-2 h-5 bg-gradient-to-b from-emerald-500 to-teal-500 animate-pulse rounded-sm ml-1" />
               </div>
             </div>
           )}
@@ -1558,31 +1510,31 @@ export default function Chat() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area - mobile responsive with safe area */}
-        <div className="border-t border-dark-700 p-3 sm:p-4 bg-dark-800/50 safe-area-bottom">
+        {/* Input area */}
+        <div className="border-t border-slate-200 p-4 sm:p-5 bg-white safe-area-bottom">
           {/* Error message */}
           {error && (
-            <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-between">
-              <span className="text-red-400 text-sm">{error}</span>
-              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-                <X size={16} />
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+              <span className="text-red-600 text-sm font-medium">{error}</span>
+              <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700 p-1 hover:bg-red-100 rounded-lg transition-all">
+                <X size={18} />
               </button>
             </div>
           )}
 
           {/* File previews */}
           {uploadedImages.length > 0 && (
-            <div className="mb-3">
+            <div className="mb-4">
               {imagesProcessing && (
-                <div className="mb-2 p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center gap-2">
-                  <Loader2 className="animate-spin text-primary-400" size={16} />
-                  <span className="text-primary-400 text-sm">
+                <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3">
+                  <Loader2 className="animate-spin text-emerald-500" size={18} />
+                  <span className="text-emerald-600 text-sm font-medium">
                     Analyzing file{uploadedImages.length > 1 ? 's' : ''}... Please wait
                   </span>
                 </div>
               )}
               
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {uploadedImages.map((file) => (
                   <div key={file.id} className="relative group">
                     {file.type === 'image' && file.previewUrl ? (
@@ -1590,24 +1542,24 @@ export default function Chat() {
                         src={file.previewUrl}
                         alt="To upload"
                         className={clsx(
-                          "w-20 h-20 object-cover rounded-lg border-2 transition-all",
-                          file.status === 'ready' ? "border-green-500" :
+                          "w-20 h-20 object-cover rounded-xl border-2 transition-all shadow-lg",
+                          file.status === 'ready' ? "border-emerald-500" :
                           file.status === 'failed' ? "border-red-500" :
-                          "border-primary-500 animate-pulse"
+                          "border-cyan-500 animate-pulse"
                         )}
                       />
                     ) : (
                       <div className={clsx(
-                        "w-20 h-20 rounded-lg border-2 transition-all flex flex-col items-center justify-center bg-dark-700 p-1",
-                        file.status === 'ready' ? "border-green-500" :
+                        "w-20 h-20 rounded-xl border-2 transition-all flex flex-col items-center justify-center bg-slate-50 p-2",
+                        file.status === 'ready' ? "border-emerald-500" :
                         file.status === 'failed' ? "border-red-500" :
-                        "border-primary-500 animate-pulse"
+                        "border-teal-500 animate-pulse"
                       )}>
-                        <Paperclip className="text-dark-400" size={20} />
-                        <span className="text-dark-300 text-xs mt-1 truncate w-full text-center px-1">
+                        <Paperclip className="text-slate-500" size={20} />
+                        <span className="text-slate-700 text-xs mt-1 truncate w-full text-center px-1 font-medium">
                           {file.name?.split('.').pop()?.toUpperCase() || 'DOC'}
                         </span>
-                        <span className="text-dark-500 text-xs">
+                        <span className="text-slate-500 text-xs">
                           {formatFileSize(file.size || 0)}
                         </span>
                       </div>
@@ -1616,21 +1568,21 @@ export default function Chat() {
                     <button
                       type="button"
                       onClick={() => removeImage(file.id)}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                     
                     {file.status === 'uploading' && (
-                      <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
-                        <Loader2 className="animate-spin text-white" size={20} />
-                        <span className="text-white text-xs mt-1">Uploading</span>
+                      <div className="absolute inset-0 bg-black/70 rounded-xl flex flex-col items-center justify-center backdrop-blur-sm">
+                        <Loader2 className="animate-spin text-white" size={22} />
+                        <span className="text-white text-xs mt-1 font-medium">Uploading</span>
                       </div>
                     )}
                     {file.status === 'processing' && (
-                      <div className="absolute inset-0 bg-black/60 rounded-lg flex flex-col items-center justify-center">
-                        <Loader2 className="animate-spin text-primary-400" size={20} />
-                        <span className="text-primary-400 text-xs mt-1">Reading</span>
+                      <div className="absolute inset-0 bg-black/70 rounded-xl flex flex-col items-center justify-center backdrop-blur-sm">
+                        <Loader2 className="animate-spin text-emerald-400" size={22} />
+                        <span className="text-emerald-400 text-xs mt-1 font-medium">Reading</span>
                       </div>
                     )}
                     {file.status === 'ready' && (
@@ -1653,15 +1605,15 @@ export default function Chat() {
             {/* File upload */}
             <label 
               className={clsx(
-                "p-2.5 cursor-pointer transition-colors rounded-lg hover:bg-dark-700",
-                uploading ? "text-primary-400" : "text-dark-500 hover:text-dark-300"
+                "p-3 cursor-pointer transition-all rounded-xl hover:bg-slate-100",
+                uploading ? "text-emerald-500" : "text-slate-500 hover:text-emerald-600"
               )}
               title="Upload images or documents"
             >
               {uploading ? (
-                <Loader2 className="animate-spin" size={20} />
+                <Loader2 className="animate-spin" size={22} />
               ) : (
-                <Paperclip size={20} />
+                <Paperclip size={22} />
               )}
               <input
                 ref={fileInputRef}
@@ -1679,27 +1631,27 @@ export default function Chat() {
               type="button"
               onClick={recording ? stopRecording : startRecording}
               className={clsx(
-                'p-2.5 transition-colors relative rounded-lg hover:bg-dark-700',
+                'p-3 transition-all relative rounded-xl hover:bg-slate-100',
                 recording
-                  ? 'text-red-400'
+                  ? 'text-red-500 bg-red-50'
                   : transcribing
-                    ? 'text-primary-400'
-                    : 'text-dark-500 hover:text-dark-300'
+                    ? 'text-emerald-500 bg-emerald-50'
+                    : 'text-slate-500 hover:text-emerald-600'
               )}
               disabled={loading || transcribing}
               title={recording ? "Click to stop recording" : "Click to start voice input"}
             >
               {transcribing ? (
-                <Loader2 className="animate-spin" size={20} />
+                <Loader2 className="animate-spin" size={22} />
               ) : (
                 <>
-                  <Mic size={20} />
+                  <Mic size={22} />
                   {recording && (
                     <span 
-                      className="absolute inset-0 rounded-full bg-red-400/30 animate-ping"
+                      className="absolute inset-0 rounded-xl bg-red-100 animate-ping"
                       style={{ 
-                        transform: `scale(${1 + audioLevel * 0.5})`,
-                        opacity: 0.3 + audioLevel * 0.4
+                        transform: `scale(${1 + audioLevel * 0.3})`,
+                        opacity: 0.4 + audioLevel * 0.4
                       }}
                     />
                   )}
@@ -1710,14 +1662,14 @@ export default function Chat() {
             {/* Text input */}
             <div className="flex-1 relative">
               {recording && (
-                <div className="absolute inset-0 z-10 bg-dark-700 border border-red-500/50 rounded-xl flex items-center px-3 gap-2">
-                  <div className="flex items-center gap-0.5 h-6 flex-shrink-0">
+                <div className="absolute inset-0 z-10 bg-white border border-red-200 rounded-2xl flex items-center px-4 gap-3 shadow-lg">
+                  <div className="flex items-center gap-1 h-8 flex-shrink-0">
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
-                        className="w-1 bg-red-400 rounded-full transition-all duration-75"
+                        className="w-1.5 bg-gradient-to-t from-red-500 to-red-400 rounded-full transition-all duration-75"
                         style={{
-                          height: `${Math.max(4, Math.min(24, 4 + audioLevel * 20 * (1 + Math.sin(Date.now() / 100 + i) * 0.3)))}px`,
+                          height: `${Math.max(6, Math.min(28, 6 + audioLevel * 22 * (1 + Math.sin(Date.now() / 100 + i) * 0.3)))}px`,
                         }}
                       />
                     ))}
@@ -1725,11 +1677,11 @@ export default function Chat() {
                   
                   <div className="flex-1 overflow-hidden min-w-0">
                     {liveTranscript ? (
-                      <p className="text-dark-100 text-sm truncate">
+                      <p className="text-slate-800 text-sm truncate font-medium">
                         {liveTranscript}
                       </p>
                     ) : (
-                      <p className="text-dark-400 text-sm flex items-center gap-2">
+                      <p className="text-slate-500 text-sm flex items-center gap-2 font-medium">
                         <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse flex-shrink-0" />
                         <span className="truncate">Listening... Speak now</span>
                       </p>
@@ -1739,7 +1691,7 @@ export default function Chat() {
                   <button
                     type="button"
                     onClick={cancelRecording}
-                    className="px-2 py-1 text-dark-400 hover:text-dark-200 text-sm transition-colors flex-shrink-0"
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all flex-shrink-0"
                     title="Cancel recording"
                   >
                     <X size={18} />
@@ -1748,10 +1700,10 @@ export default function Chat() {
                   <button
                     type="button"
                     onClick={stopRecording}
-                    className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 flex-shrink-0"
+                    className="px-4 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 flex-shrink-0"
                     title="Done - use transcribed text"
                   >
-                    <Check size={14} />
+                    <Check size={16} />
                     Done
                   </button>
                 </div>
@@ -1781,10 +1733,10 @@ export default function Chat() {
                 }
                 rows={1}
                 className={clsx(
-                  "w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none transition-colors",
+                  "w-full px-5 py-3.5 bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/50 focus:shadow-lg focus:shadow-emerald-500/10 resize-none transition-all duration-200",
                   recording && "opacity-0"
                 )}
-                style={{ minHeight: '44px', maxHeight: '200px' }}
+                style={{ minHeight: '52px', maxHeight: '200px' }}
                 disabled={loading || streaming || imagesProcessing || recording}
               />
             </div>
@@ -1794,28 +1746,30 @@ export default function Chat() {
               <button
                 type="button"
                 onClick={handleStop}
-                className="p-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors"
+                className="p-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg shadow-red-500/25 hover:shadow-red-500/40 border border-white/10"
               >
-                <StopCircle size={20} />
+                <StopCircle size={22} className="drop-shadow" />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={!input.trim() || loading || imagesProcessing}
                 className={clsx(
-                  "p-2.5 rounded-xl transition-colors",
+                  "p-3 rounded-xl transition-all duration-200 flex items-center justify-center",
                   imagesProcessing
-                    ? "bg-primary-500/50 text-white/50 cursor-not-allowed"
-                    : "bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:bg-dark-700 disabled:text-dark-500 text-white"
+                    ? "bg-gradient-to-r from-emerald-200 to-teal-200 text-emerald-500 cursor-not-allowed border border-emerald-300"
+                    : input.trim() && !loading
+                      ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 border border-white/10"
+                      : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed"
                 )}
                 title={imagesProcessing ? "Wait for file analysis to complete" : "Send message"}
               >
                 {loading ? (
-                  <Loader2 className="animate-spin" size={20} />
+                  <Loader2 className="animate-spin" size={22} />
                 ) : imagesProcessing ? (
-                  <Loader2 className="animate-spin" size={20} />
+                  <Loader2 className="animate-spin" size={22} />
                 ) : (
-                  <Send size={20} />
+                  <Send size={22} className={input.trim() ? "drop-shadow text-white" : "text-slate-400"} />
                 )}
               </button>
             )}
@@ -1823,11 +1777,11 @@ export default function Chat() {
 
           {/* Regenerate button */}
           {messages.length > 0 && !streaming && (
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center mt-3">
               <button
                 onClick={() => {}}
                 disabled={loading}
-                className="flex items-center gap-1.5 text-xs text-dark-500 hover:text-dark-300 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
               >
                 <RefreshCw size={14} />
                 <span>Regenerate response</span>
@@ -1839,19 +1793,19 @@ export default function Chat() {
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-dark-700">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <Share2 className="text-primary-400" size={20} />
-                <h2 className="text-lg font-semibold text-dark-100">Share Conversation</h2>
+                <Share2 className="text-emerald-500" size={20} />
+                <h2 className="text-lg font-semibold text-slate-800">Share Conversation</h2>
               </div>
               <button
                 onClick={() => {
                   setShowShareModal(false);
                   setShareLink(null);
                 }}
-                className="text-dark-500 hover:text-dark-300 transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all"
               >
                 <X size={20} />
               </button>
@@ -1860,12 +1814,12 @@ export default function Chat() {
             <div className="p-6">
               {shareLoading ? (
                 <div className="flex flex-col items-center py-8">
-                  <Loader2 className="animate-spin text-primary-400 mb-3" size={32} />
-                  <p className="text-dark-400">Creating share link...</p>
+                  <Loader2 className="animate-spin text-emerald-500 mb-3" size={32} />
+                  <p className="text-slate-500 font-medium">Creating share link...</p>
                 </div>
               ) : shareLink ? (
-                <div className="space-y-4">
-                  <p className="text-dark-400 text-sm">
+                <div className="space-y-5">
+                  <p className="text-slate-500 text-sm">
                     Anyone with this link can view this conversation. The link expires in 7 days.
                   </p>
                   <div className="flex items-center gap-2">
@@ -1873,15 +1827,15 @@ export default function Chat() {
                       type="text"
                       value={shareLink}
                       readOnly
-                      className="flex-1 px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-200 text-sm focus:outline-none"
+                      className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm focus:outline-none"
                     />
                     <button
                       onClick={copyShareLink}
                       className={clsx(
-                        'px-4 py-3 rounded-xl transition-all flex items-center gap-2',
+                        'px-4 py-3 rounded-xl transition-all flex items-center gap-2 font-medium',
                         shareCopied
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-primary-500/20 text-primary-400 hover:bg-primary-500/30'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600'
                       )}
                     >
                       {shareCopied ? (
@@ -1902,7 +1856,7 @@ export default function Chat() {
                       href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent('Check out my AI conversation on BaatCheet!')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-300 rounded-xl transition-colors text-center text-sm"
+                      className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all text-center text-sm font-medium border border-slate-200"
                     >
                       Share on Twitter
                     </a>
@@ -1910,7 +1864,7 @@ export default function Chat() {
                       href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareLink)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-300 rounded-xl transition-colors text-center text-sm"
+                      className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all text-center text-sm font-medium border border-slate-200"
                     >
                       Share on LinkedIn
                     </a>
@@ -1918,7 +1872,7 @@ export default function Chat() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-red-400">Failed to create share link. Please try again.</p>
+                  <p className="text-red-500 font-medium">Failed to create share link. Please try again.</p>
                 </div>
               )}
             </div>

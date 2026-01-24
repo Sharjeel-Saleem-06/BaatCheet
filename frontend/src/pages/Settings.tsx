@@ -391,10 +391,10 @@ export default function Settings() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-dark-100 mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold text-slate-800 mb-6">Settings</h1>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-1 mb-6 bg-dark-800 rounded-xl p-1">
+        <div className="flex flex-wrap gap-1 mb-6 bg-white rounded-xl p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -403,7 +403,7 @@ export default function Settings() {
                 'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all',
                 activeTab === tab.id
                   ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20'
-                  : 'text-dark-400 hover:text-dark-200 hover:bg-dark-700'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
               )}
             >
               <tab.icon size={18} />
@@ -422,7 +422,7 @@ export default function Settings() {
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 {/* User Info */}
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="relative group">
                       {profileAvatar ? (
@@ -462,26 +462,26 @@ export default function Settings() {
                       />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-dark-100">
+                      <h2 className="text-xl font-bold text-slate-800">
                         {user?.fullName || user?.username || 'User'}
                       </h2>
-                      <p className="text-dark-400">{user?.primaryEmailAddress?.emailAddress}</p>
-                      <p className="text-xs text-dark-500 mt-1">Click avatar to change</p>
+                      <p className="text-slate-500">{user?.primaryEmailAddress?.emailAddress}</p>
+                      <p className="text-xs text-slate-400 mt-1">Click avatar to change</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Custom Instructions */}
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Brain className="text-primary-400" size={20} />
-                      <h3 className="text-lg font-semibold text-dark-100">Custom Instructions</h3>
+                      <h3 className="text-lg font-semibold text-slate-800">Custom Instructions</h3>
                     </div>
                     {!editingInstructions ? (
                       <button
                         onClick={() => setEditingInstructions(true)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-dark-400 hover:text-dark-200 transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
                       >
                         <Edit2 size={14} />
                         Edit
@@ -501,7 +501,7 @@ export default function Settings() {
                       </button>
                     )}
                   </div>
-                  <p className="text-dark-500 text-sm mb-3">
+                  <p className="text-slate-400 text-sm mb-3">
                     Tell the AI how you'd like it to respond. These instructions apply to all conversations.
                   </p>
                   {editingInstructions ? (
@@ -510,22 +510,22 @@ export default function Settings() {
                       onChange={(e) => setCustomInstructions(e.target.value)}
                       rows={4}
                       placeholder="e.g., Always respond in a professional tone. I'm a software developer working with React and Node.js."
-                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none"
+                      className="w-full px-4 py-3 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 placeholder-dark-500 focus:outline-none focus:border-primary-500 resize-none"
                     />
                   ) : (
-                    <div className="px-4 py-3 bg-dark-700 rounded-xl text-dark-300 min-h-[100px]">
-                      {customInstructions || <span className="text-dark-500 italic">No custom instructions set</span>}
+                    <div className="px-4 py-3 bg-slate-100 rounded-xl text-slate-600 min-h-[100px]">
+                      {customInstructions || <span className="text-slate-400 italic">No custom instructions set</span>}
                     </div>
                   )}
                 </div>
 
                 {/* Learned Facts */}
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="text-primary-400" size={20} />
-                    <h3 className="text-lg font-semibold text-dark-100">What I Know About You</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">What I Know About You</h3>
                   </div>
-                  <p className="text-dark-500 text-sm mb-4">
+                  <p className="text-slate-400 text-sm mb-4">
                     The AI learns these facts from your conversations to personalize responses.
                   </p>
                   <div className="space-y-2">
@@ -535,8 +535,8 @@ export default function Settings() {
                         className={clsx(
                           'flex items-center gap-3 p-3 rounded-lg border transition-colors',
                           fact.isActive
-                            ? 'bg-dark-700 border-dark-600'
-                            : 'bg-dark-800 border-dark-700 opacity-50'
+                            ? 'bg-slate-100 border-slate-300'
+                            : 'bg-white border-slate-200 opacity-50'
                         )}
                       >
                         <button
@@ -545,17 +545,17 @@ export default function Settings() {
                             'w-5 h-5 rounded flex items-center justify-center transition-colors',
                             fact.isActive
                               ? 'bg-primary-500 text-white'
-                              : 'bg-dark-600 text-dark-400'
+                              : 'bg-slate-200 text-slate-500'
                           )}
                         >
                           {fact.isActive && <Check size={12} />}
                         </button>
-                        <span className="flex-1 text-dark-300 text-sm">{fact.fact}</span>
-                        <span className="text-xs text-dark-500 capitalize">{fact.category}</span>
+                        <span className="flex-1 text-slate-600 text-sm">{fact.fact}</span>
+                        <span className="text-xs text-slate-400 capitalize">{fact.category}</span>
                       </div>
                     ))}
                     {profileFacts.length === 0 && (
-                      <div className="text-center py-8 text-dark-500">
+                      <div className="text-center py-8 text-slate-400">
                         <MessageSquare className="mx-auto mb-2" size={24} />
                         <p>No facts learned yet. Start chatting!</p>
                       </div>
@@ -568,18 +568,18 @@ export default function Settings() {
             {/* Preferences Tab */}
             {activeTab === 'preferences' && (
               <div className="space-y-6">
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Appearance</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Appearance</h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Theme</p>
-                        <p className="text-sm text-dark-500">Choose your preferred color scheme</p>
+                        <p className="text-slate-700">Theme</p>
+                        <p className="text-sm text-slate-400">Choose your preferred color scheme</p>
                       </div>
                       <select
                         value={preferences.theme}
                         onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
-                        className="px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-dark-200"
+                        className="px-4 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-700"
                       >
                         <option value="dark">Dark</option>
                         <option value="light">Light</option>
@@ -589,18 +589,18 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Chat</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Chat</h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Default AI Mode</p>
-                        <p className="text-sm text-dark-500">Mode to use for new conversations</p>
+                        <p className="text-slate-700">Default AI Mode</p>
+                        <p className="text-sm text-slate-400">Mode to use for new conversations</p>
                       </div>
                       <select
                         value={preferences.defaultMode}
                         onChange={(e) => setPreferences({ ...preferences, defaultMode: e.target.value })}
-                        className="px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-dark-200"
+                        className="px-4 py-2 bg-slate-100 border border-slate-300 rounded-lg text-slate-700"
                       >
                         <option value="chat">Chat</option>
                         <option value="code">Code</option>
@@ -610,14 +610,14 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Auto Text-to-Speech</p>
-                        <p className="text-sm text-dark-500">Automatically read AI responses aloud</p>
+                        <p className="text-slate-700">Auto Text-to-Speech</p>
+                        <p className="text-sm text-slate-400">Automatically read AI responses aloud</p>
                       </div>
                       <button
                         onClick={() => setPreferences({ ...preferences, autoTTS: !preferences.autoTTS })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          preferences.autoTTS ? 'bg-primary-500' : 'bg-dark-600'
+                          preferences.autoTTS ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -631,19 +631,19 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Notifications</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Notifications</h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Sound Effects</p>
-                        <p className="text-sm text-dark-500">Play sounds for messages</p>
+                        <p className="text-slate-700">Sound Effects</p>
+                        <p className="text-sm text-slate-400">Play sounds for messages</p>
                       </div>
                       <button
                         onClick={() => setPreferences({ ...preferences, soundEffects: !preferences.soundEffects })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          preferences.soundEffects ? 'bg-primary-500' : 'bg-dark-600'
+                          preferences.soundEffects ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -656,14 +656,14 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Push Notifications</p>
-                        <p className="text-sm text-dark-500">Get notified about updates</p>
+                        <p className="text-slate-700">Push Notifications</p>
+                        <p className="text-sm text-slate-400">Get notified about updates</p>
                       </div>
                       <button
                         onClick={() => setPreferences({ ...preferences, notifications: !preferences.notifications })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          preferences.notifications ? 'bg-primary-500' : 'bg-dark-600'
+                          preferences.notifications ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -682,12 +682,12 @@ export default function Settings() {
             {/* Voice Tab */}
             {activeTab === 'voice' && (
               <div className="space-y-6">
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Mic className="text-primary-400" size={20} />
-                    <h3 className="text-lg font-semibold text-dark-100">Voice Selection</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">Voice Selection</h3>
                   </div>
-                  <p className="text-dark-500 text-sm mb-4">
+                  <p className="text-slate-400 text-sm mb-4">
                     Choose your preferred voice for text-to-speech and voice calls.
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -699,7 +699,7 @@ export default function Settings() {
                           'p-4 rounded-xl border transition-all text-left',
                           voiceSettings.selectedVoice === voice.id
                             ? 'bg-primary-500/10 border-primary-500/50'
-                            : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+                            : 'bg-slate-100 border-slate-300 hover:border-dark-500'
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -710,8 +710,8 @@ export default function Settings() {
                             <Volume2 size={18} className={voice.language === 'ur' ? 'text-green-400' : 'text-blue-400'} />
                           </div>
                           <div>
-                            <p className="font-medium text-dark-200">{voice.name}</p>
-                            <p className="text-xs text-dark-500">{voice.language === 'ur' ? 'Urdu' : 'English'}</p>
+                            <p className="font-medium text-slate-700">{voice.name}</p>
+                            <p className="text-xs text-slate-400">{voice.language === 'ur' ? 'Urdu' : 'English'}</p>
                           </div>
                         </div>
                       </button>
@@ -719,13 +719,13 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Voice Settings</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Voice Settings</h3>
                   <div className="space-y-6">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-dark-300">Speed</span>
-                        <span className="text-dark-500">{voiceSettings.speed.toFixed(1)}x</span>
+                        <span className="text-slate-600">Speed</span>
+                        <span className="text-slate-400">{voiceSettings.speed.toFixed(1)}x</span>
                       </div>
                       <input
                         type="range"
@@ -739,8 +739,8 @@ export default function Settings() {
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-dark-300">Pitch</span>
-                        <span className="text-dark-500">{voiceSettings.pitch.toFixed(1)}x</span>
+                        <span className="text-slate-600">Pitch</span>
+                        <span className="text-slate-400">{voiceSettings.pitch.toFixed(1)}x</span>
                       </div>
                       <input
                         type="range"
@@ -754,14 +754,14 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Auto-speak Responses</p>
-                        <p className="text-sm text-dark-500">Automatically read AI responses aloud</p>
+                        <p className="text-slate-700">Auto-speak Responses</p>
+                        <p className="text-sm text-slate-400">Automatically read AI responses aloud</p>
                       </div>
                       <button
                         onClick={() => setVoiceSettings({ ...voiceSettings, autoSpeak: !voiceSettings.autoSpeak })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          voiceSettings.autoSpeak ? 'bg-primary-500' : 'bg-dark-600'
+                          voiceSettings.autoSpeak ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -775,8 +775,8 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Test Voice</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Test Voice</h3>
                   <button className="flex items-center gap-2 px-4 py-2.5 bg-primary-500/20 hover:bg-primary-500/30 text-primary-400 rounded-xl transition-colors">
                     <Volume2 size={18} />
                     <span>Play Sample</span>
@@ -788,22 +788,22 @@ export default function Settings() {
             {/* Privacy Tab */}
             {activeTab === 'privacy' && (
               <div className="space-y-6">
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Shield className="text-primary-400" size={20} />
-                    <h3 className="text-lg font-semibold text-dark-100">Privacy Settings</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">Privacy Settings</h3>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Save Chat History</p>
-                        <p className="text-sm text-dark-500">Keep your conversation history for future reference</p>
+                        <p className="text-slate-700">Save Chat History</p>
+                        <p className="text-sm text-slate-400">Keep your conversation history for future reference</p>
                       </div>
                       <button
                         onClick={() => setPrivacySettings({ ...privacySettings, saveHistory: !privacySettings.saveHistory })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          privacySettings.saveHistory ? 'bg-primary-500' : 'bg-dark-600'
+                          privacySettings.saveHistory ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -816,14 +816,14 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Share Analytics</p>
-                        <p className="text-sm text-dark-500">Help improve BaatCheet with anonymous usage data</p>
+                        <p className="text-slate-700">Share Analytics</p>
+                        <p className="text-sm text-slate-400">Help improve BaatCheet with anonymous usage data</p>
                       </div>
                       <button
                         onClick={() => setPrivacySettings({ ...privacySettings, shareAnalytics: !privacySettings.shareAnalytics })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          privacySettings.shareAnalytics ? 'bg-primary-500' : 'bg-dark-600'
+                          privacySettings.shareAnalytics ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -836,14 +836,14 @@ export default function Settings() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-dark-200">Allow Data Training</p>
-                        <p className="text-sm text-dark-500">Let AI learn from your conversations to improve</p>
+                        <p className="text-slate-700">Allow Data Training</p>
+                        <p className="text-sm text-slate-400">Let AI learn from your conversations to improve</p>
                       </div>
                       <button
                         onClick={() => setPrivacySettings({ ...privacySettings, allowDataTraining: !privacySettings.allowDataTraining })}
                         className={clsx(
                           'w-12 h-6 rounded-full transition-colors',
-                          privacySettings.allowDataTraining ? 'bg-primary-500' : 'bg-dark-600'
+                          privacySettings.allowDataTraining ? 'bg-primary-500' : 'bg-slate-200'
                         )}
                       >
                         <div
@@ -857,17 +857,17 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Data Management</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Data Management</h3>
                   <div className="space-y-3">
                     <button
                       onClick={handleExportData}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-dark-700 hover:bg-dark-600 rounded-xl transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                     >
                       <Download className="text-primary-400" size={20} />
                       <div className="text-left flex-1">
-                        <p className="text-dark-200 font-medium">Export Data</p>
-                        <p className="text-sm text-dark-500">Download all your conversations and settings</p>
+                        <p className="text-slate-700 font-medium">Export Data</p>
+                        <p className="text-sm text-slate-400">Download all your conversations and settings</p>
                       </div>
                     </button>
                     <button
@@ -883,14 +883,14 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Account</h3>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Account</h3>
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-3 px-4 py-3 bg-dark-700 hover:bg-dark-600 rounded-xl transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
                   >
-                    <LogOut className="text-dark-400" size={20} />
-                    <span className="text-dark-200">Sign Out</span>
+                    <LogOut className="text-slate-500" size={20} />
+                    <span className="text-slate-700">Sign Out</span>
                   </button>
                 </div>
               </div>
@@ -899,11 +899,11 @@ export default function Settings() {
             {/* Usage Tab */}
             {activeTab === 'usage' && (
               <div className="space-y-6">
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-dark-100">Your Plan</h3>
-                      <p className="text-dark-400 capitalize">{usageData?.tier || 'Free'} Tier</p>
+                      <h3 className="text-lg font-semibold text-slate-800">Your Plan</h3>
+                      <p className="text-slate-500 capitalize">{usageData?.tier || 'Free'} Tier</p>
                     </div>
                     <button 
                       onClick={() => setShowUpgradeModal(true)}
@@ -917,12 +917,12 @@ export default function Settings() {
                     {/* Messages */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-dark-300">Messages</span>
-                        <span className="text-dark-400 text-sm">
+                        <span className="text-slate-600">Messages</span>
+                        <span className="text-slate-500 text-sm">
                           {usageData?.messagesUsed || 0} / {usageData?.messagesLimit || 50}
                         </span>
                       </div>
-                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
                           style={{
@@ -935,12 +935,12 @@ export default function Settings() {
                     {/* Images */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-dark-300">Image Generations</span>
-                        <span className="text-dark-400 text-sm">
+                        <span className="text-slate-600">Image Generations</span>
+                        <span className="text-slate-500 text-sm">
                           {usageData?.imagesUsed || 0} / {usageData?.imagesLimit || 5}
                         </span>
                       </div>
-                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
                           style={{
@@ -953,12 +953,12 @@ export default function Settings() {
                     {/* Voice */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-dark-300">Voice Messages</span>
-                        <span className="text-dark-400 text-sm">
+                        <span className="text-slate-600">Voice Messages</span>
+                        <span className="text-slate-500 text-sm">
                           {usageData?.voiceUsed || 0} / {usageData?.voiceLimit || 10}
                         </span>
                       </div>
-                      <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all"
                           style={{
@@ -970,9 +970,9 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h3 className="text-lg font-semibold text-dark-100 mb-4">Usage Resets</h3>
-                  <p className="text-dark-400">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Usage Resets</h3>
+                  <p className="text-slate-500">
                     Your daily limits reset at midnight UTC. Upgrade to Pro for unlimited access.
                   </p>
                 </div>
@@ -990,31 +990,31 @@ export default function Settings() {
                         <p className="text-primary-400 font-medium mb-2">
                           Save your API key now - it won't be shown again!
                         </p>
-                        <div className="flex items-center gap-2 bg-dark-800 rounded-lg p-2">
-                          <code className="flex-1 text-sm text-dark-200 font-mono break-all">
+                        <div className="flex items-center gap-2 bg-white rounded-lg p-2">
+                          <code className="flex-1 text-sm text-slate-700 font-mono break-all">
                             {newApiKey}
                           </code>
                           <button
                             onClick={() => copyToClipboard(newApiKey)}
-                            className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                           >
                             {copied ? (
                               <Check className="text-primary-400" size={18} />
                             ) : (
-                              <Copy className="text-dark-400" size={18} />
+                              <Copy className="text-slate-500" size={18} />
                             )}
                           </button>
                         </div>
                       </div>
-                      <button onClick={() => setNewApiKey(null)} className="text-dark-500 hover:text-dark-300">
+                      <button onClick={() => setNewApiKey(null)} className="text-slate-400 hover:text-slate-600">
                         <X size={20} />
                       </button>
                     </div>
                   </div>
                 )}
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700 p-6">
-                  <h2 className="text-lg font-semibold text-dark-100 mb-4">Create API Key</h2>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <h2 className="text-lg font-semibold text-slate-800 mb-4">Create API Key</h2>
                   <form onSubmit={handleCreateApiKey} className="flex gap-3">
                     <input
                       type="text"
@@ -1022,7 +1022,7 @@ export default function Settings() {
                       onChange={(e) => setKeyName(e.target.value)}
                       placeholder="Key name (e.g., My App)"
                       required
-                      className="flex-1 px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500"
+                      className="flex-1 px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-primary-500"
                     />
                     <button
                       type="submit"
@@ -1034,16 +1034,16 @@ export default function Settings() {
                   </form>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700">
-                  <div className="p-4 border-b border-dark-700">
-                    <h2 className="text-lg font-semibold text-dark-100">Your API Keys</h2>
+                <div className="bg-white rounded-2xl border border-slate-200">
+                  <div className="p-4 border-b border-slate-200">
+                    <h2 className="text-lg font-semibold text-slate-800">Your API Keys</h2>
                   </div>
                   <div className="divide-y divide-dark-700">
                     {apiKeyList.map((key) => (
                       <div key={key.id} className="p-4 flex items-center gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-dark-200">{key.name}</span>
+                            <span className="font-medium text-slate-700">{key.name}</span>
                             <span
                               className={clsx(
                                 'px-2 py-0.5 text-xs rounded-full',
@@ -1055,7 +1055,7 @@ export default function Settings() {
                               {key.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-sm text-dark-500">
+                          <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
                             <code className="font-mono">{key.keyPrefix}...</code>
                             <span>•</span>
                             <span>{key.usageCount} requests</span>
@@ -1064,14 +1064,14 @@ export default function Settings() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleRotateApiKey(key.id)}
-                            className="p-2 text-dark-500 hover:text-dark-300 transition-colors"
+                            className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
                             title="Rotate key"
                           >
                             <RefreshCw size={18} />
                           </button>
                           <button
                             onClick={() => handleDeleteApiKey(key.id)}
-                            className="p-2 text-dark-500 hover:text-red-400 transition-colors"
+                            className="p-2 text-slate-400 hover:text-red-400 transition-colors"
                             title="Revoke key"
                           >
                             <Trash2 size={18} />
@@ -1080,7 +1080,7 @@ export default function Settings() {
                       </div>
                     ))}
                     {apiKeyList.length === 0 && (
-                      <div className="p-8 text-center text-dark-500">No API keys yet</div>
+                      <div className="p-8 text-center text-slate-400">No API keys yet</div>
                     )}
                   </div>
                 </div>
@@ -1098,9 +1098,9 @@ export default function Settings() {
                   <span>Create Webhook</span>
                 </button>
 
-                <div className="bg-dark-800 rounded-2xl border border-dark-700">
-                  <div className="p-4 border-b border-dark-700">
-                    <h2 className="text-lg font-semibold text-dark-100">Your Webhooks</h2>
+                <div className="bg-white rounded-2xl border border-slate-200">
+                  <div className="p-4 border-b border-slate-200">
+                    <h2 className="text-lg font-semibold text-slate-800">Your Webhooks</h2>
                   </div>
                   <div className="divide-y divide-dark-700">
                     {webhookList.map((webhook) => (
@@ -1108,7 +1108,7 @@ export default function Settings() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <code className="text-sm text-dark-200 font-mono truncate">
+                              <code className="text-sm text-slate-700 font-mono truncate">
                                 {webhook.url}
                               </code>
                               <span
@@ -1126,7 +1126,7 @@ export default function Settings() {
                               {webhook.events.map((event) => (
                                 <span
                                   key={event}
-                                  className="px-2 py-0.5 text-xs bg-dark-700 text-dark-400 rounded"
+                                  className="px-2 py-0.5 text-xs bg-slate-100 text-slate-500 rounded"
                                 >
                                   {event}
                                 </span>
@@ -1136,13 +1136,13 @@ export default function Settings() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleTestWebhook(webhook.id)}
-                              className="px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-lg transition-colors"
+                              className="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
                             >
                               Test
                             </button>
                             <button
                               onClick={() => handleDeleteWebhook(webhook.id)}
-                              className="p-2 text-dark-500 hover:text-red-400 transition-colors"
+                              className="p-2 text-slate-400 hover:text-red-400 transition-colors"
                             >
                               <Trash2 size={18} />
                             </button>
@@ -1151,7 +1151,7 @@ export default function Settings() {
                       </div>
                     ))}
                     {webhookList.length === 0 && (
-                      <div className="p-8 text-center text-dark-500">No webhooks yet</div>
+                      <div className="p-8 text-center text-slate-400">No webhooks yet</div>
                     )}
                   </div>
                 </div>
@@ -1163,34 +1163,34 @@ export default function Settings() {
         {/* Create Webhook Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md">
-              <div className="flex items-center justify-between p-4 border-b border-dark-700">
-                <h2 className="text-lg font-semibold text-dark-100">Create Webhook</h2>
-                <button onClick={() => setShowModal(false)} className="text-dark-500 hover:text-dark-300">
+            <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md">
+              <div className="flex items-center justify-between p-4 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-800">Create Webhook</h2>
+                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
                   <X size={20} />
                 </button>
               </div>
 
               <form onSubmit={handleCreateWebhook} className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">URL</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">URL</label>
                   <input
                     type="url"
                     value={webhookUrl}
                     onChange={(e) => setWebhookUrl(e.target.value)}
                     placeholder="https://example.com/webhook"
                     required
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 focus:outline-none focus:border-primary-500"
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">Events</label>
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">Events</label>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {availableEvents.map(({ event, description }) => (
                       <label
                         key={event}
-                        className="flex items-start gap-3 p-2 rounded-lg hover:bg-dark-700 cursor-pointer"
+                        className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-100 cursor-pointer"
                       >
                         <input
                           type="checkbox"
@@ -1205,8 +1205,8 @@ export default function Settings() {
                           className="mt-1"
                         />
                         <div>
-                          <p className="text-sm text-dark-200">{event}</p>
-                          <p className="text-xs text-dark-500">{description}</p>
+                          <p className="text-sm text-slate-700">{event}</p>
+                          <p className="text-xs text-slate-400">{description}</p>
                         </div>
                       </label>
                     ))}
@@ -1217,14 +1217,14 @@ export default function Settings() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={webhookEvents.length === 0}
-                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:bg-dark-700 disabled:text-dark-500 text-white rounded-xl transition-all"
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-xl transition-all"
                   >
                     Create
                   </button>
@@ -1289,20 +1289,20 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
   
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-dark-800 rounded-2xl border border-dark-700 w-full max-w-md overflow-hidden">
-        <div className="p-6 border-b border-dark-700">
+      <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+        <div className="p-6 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
                 <Sparkles className="text-white" size={20} />
               </div>
-              <h2 className="text-xl font-bold text-dark-100">Upgrade to Pro</h2>
+              <h2 className="text-xl font-bold text-slate-800">Upgrade to Pro</h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
             >
-              <X className="text-dark-400" size={20} />
+              <X className="text-slate-500" size={20} />
             </button>
           </div>
         </div>
@@ -1313,8 +1313,8 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
               <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                 <Check className="text-green-400" size={32} />
               </div>
-              <h3 className="text-lg font-semibold text-dark-100 mb-2">Request Sent!</h3>
-              <p className="text-dark-400">We'll get back to you within 24 hours.</p>
+              <h3 className="text-lg font-semibold text-slate-800 mb-2">Request Sent!</h3>
+              <p className="text-slate-500">We'll get back to you within 24 hours.</p>
             </div>
           ) : (
             <>
@@ -1324,7 +1324,7 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
                   <Zap size={16} />
                   Pro Benefits
                 </h3>
-                <ul className="space-y-2 text-sm text-dark-300">
+                <ul className="space-y-2 text-sm text-slate-600">
                   <li className="flex items-center gap-2">
                     <Check size={14} className="text-green-400" />
                     50 image generations/day
@@ -1349,13 +1349,13 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
               </div>
               
               {/* Notice */}
-              <p className="text-sm text-dark-400">
+              <p className="text-sm text-slate-500">
                 We haven't added payment yet. Contact admin to upgrade your account manually.
               </p>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     Your Name
                   </label>
                   <input
@@ -1364,12 +1364,12 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
                     onChange={(e) => setName(e.target.value)}
                     required
                     placeholder="Muhammad Sharjeel"
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     Your Email
                   </label>
                   <input
@@ -1378,12 +1378,12 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="your@email.com"
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-600 mb-1.5">
                     Message (optional)
                   </label>
                   <textarea
@@ -1391,23 +1391,23 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
                     placeholder="Why do you want to upgrade?"
-                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-slate-800 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
                   />
                 </div>
                 
                 {/* Admin contact */}
-                <div className="p-3 bg-dark-700 rounded-lg flex items-center gap-3">
+                <div className="p-3 bg-slate-100 rounded-lg flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center">
                     <MessageSquare className="text-primary-400" size={16} />
                   </div>
-                  <span className="text-sm text-dark-300">sharry00010@gmail.com</span>
+                  <span className="text-sm text-slate-600">sharry00010@gmail.com</span>
                 </div>
                 
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
                   >
                     Cancel
                   </button>

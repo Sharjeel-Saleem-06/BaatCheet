@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    id("com.google.gms.google-services")
+    id("com.google.firebase.appdistribution")
 }
 
 android {
@@ -22,19 +24,37 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            // For now, use debug keystore for testing
+            // Replace with your production keystore for Play Store
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+    
     buildTypes {
         debug {
             isDebuggable = true
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:5001/api/v1/\"")
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false  // Disabled for testing, enable for production
+            isShrinkResources = false  // Disabled for testing, enable for production
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://api.baatcheet.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://baatcheet-backend.onrender.com/api/v1/\"")
+            
+            // Firebase App Distribution
+            firebaseAppDistribution {
+                artifactType = "APK"
+                releaseNotes = "BaatCheet - AI Chat Application Release"
+            }
         }
     }
     compileOptions {

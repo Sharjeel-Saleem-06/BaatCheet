@@ -98,3 +98,42 @@ android/build/
 *.apk
 *.aab
 android/local.properties
+
+# iOS project files (build separately)
+IOS/
+ios/
+*.xcworkspace/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Unused project folders
+JetpackComposeMasterclass/
+BaatCheet-Android/
+
+# Huggingface deployment files (keep only main backend)
+huggingface/
+huggingface-deploy/
+
+# Documentation and prompt files (not needed in production)
+*.md
+!README.md
+!backend/README.md
+!android/README.md
+
+# Resource files (keep only needed assets)
+resources/*.md
+resources/*.svg
+resources/*.png
+resources/*.jpg
+resources/sql/
+
+# Log files
+logs
+logs_og*
+
+# Test files
+tests/

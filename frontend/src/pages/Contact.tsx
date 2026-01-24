@@ -1,6 +1,6 @@
 /**
  * Contact Page
- * Professional contact form with EmailJS integration
+ * Professional contact form with EmailJS integration - Light Theme
  */
 
 import { useState } from 'react';
@@ -101,10 +101,10 @@ export default function Contact() {
   ];
 
   const socialLinks = [
-    { icon: Globe, href: 'https://muhammad-sharjeel-portfolio.netlify.app/', label: 'Portfolio', color: 'hover:text-primary-400' },
-    { icon: Github, href: 'https://github.com/Sharjeel-Saleem-06', label: 'GitHub', color: 'hover:text-gray-400' },
-    { icon: Linkedin, href: 'https://linkedin.com/in/sharjeel-saleem', label: 'LinkedIn', color: 'hover:text-blue-400' },
-    { icon: Twitter, href: 'https://twitter.com/sharjeel_dev', label: 'Twitter', color: 'hover:text-sky-400' },
+    { icon: Globe, href: 'https://muhammad-sharjeel-portfolio.netlify.app/', label: 'Portfolio', color: 'hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50' },
+    { icon: Github, href: 'https://github.com/Sharjeel-Saleem-06', label: 'GitHub', color: 'hover:text-slate-800 hover:border-slate-300 hover:bg-slate-100' },
+    { icon: Linkedin, href: 'https://linkedin.com/in/sharjeel-saleem', label: 'LinkedIn', color: 'hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50' },
+    { icon: Twitter, href: 'https://twitter.com/sharjeel_dev', label: 'Twitter', color: 'hover:text-sky-500 hover:border-sky-300 hover:bg-sky-50' },
   ];
 
   const faqItems = [
@@ -123,26 +123,26 @@ export default function Contact() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Header */}
       <Header transparent={false} />
 
       {/* Hero Section */}
       <section className="pt-24 pb-12 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-gradient-to-bl from-primary-500/20 to-transparent rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-gradient-to-bl from-emerald-200/40 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-gradient-to-tr from-purple-200/30 to-transparent rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-medium mb-6">
             <Headphones size={16} />
             <span>We're here to help</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-dark-100 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             Get in Touch
           </h1>
-          <p className="text-xl text-dark-400 max-w-2xl mx-auto">
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
             Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
           </p>
         </div>
@@ -153,27 +153,27 @@ export default function Contact() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
-            <div className="bg-dark-800 rounded-2xl border border-dark-700 p-8">
-              <h2 className="text-2xl font-bold text-dark-100 mb-6">Send a Message</h2>
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-800 mb-6">Send a Message</h2>
 
               {sent && (
-                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
-                  <CheckCircle className="text-green-400" size={20} />
-                  <span className="text-green-400">Message sent successfully! We'll get back to you soon.</span>
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
+                  <CheckCircle className="text-green-600" size={20} />
+                  <span className="text-green-700">Message sent successfully! We'll get back to you soon.</span>
                 </div>
               )}
 
               {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
-                  <AlertCircle className="text-red-400" size={20} />
-                  <span className="text-red-400">{error}</span>
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+                  <AlertCircle className="text-red-600" size={20} />
+                  <span className="text-red-700">{error}</span>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-dark-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Your Name
                     </label>
                     <input
@@ -182,11 +182,11 @@ export default function Contact() {
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                       placeholder="Muhammad Sharjeel"
-                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-colors"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-dark-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
                       Email Address
                     </label>
                     <input
@@ -195,13 +195,13 @@ export default function Contact() {
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
                       placeholder="your@email.com"
-                      className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Subject
                   </label>
                   <input
@@ -210,12 +210,12 @@ export default function Contact() {
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required
                     placeholder="How can we help?"
-                    className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-dark-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Message
                   </label>
                   <textarea
@@ -224,14 +224,14 @@ export default function Contact() {
                     required
                     rows={5}
                     placeholder="Tell us more about your inquiry..."
-                    className="w-full px-4 py-3 bg-dark-700 border border-dark-600 rounded-xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors resize-none"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-colors resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={sending}
-                  className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 font-semibold disabled:opacity-70"
+                  className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 font-semibold disabled:opacity-70"
                 >
                   {sending ? (
                     <>
@@ -255,24 +255,24 @@ export default function Contact() {
                 {contactInfo.map((info, i) => (
                   <div
                     key={i}
-                    className="p-6 bg-dark-800 rounded-2xl border border-dark-700 flex items-center gap-4 hover:border-dark-600 transition-colors"
+                    className="p-6 bg-white rounded-2xl border border-slate-200 flex items-center gap-4 hover:border-emerald-200 hover:shadow-lg transition-all"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary-500/20 flex items-center justify-center">
-                      <info.icon className="text-primary-400" size={24} />
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                      <info.icon className="text-emerald-600" size={24} />
                     </div>
                     <div>
-                      <p className="text-dark-500 text-sm">{info.label}</p>
+                      <p className="text-slate-500 text-sm">{info.label}</p>
                       {info.href ? (
                         <a
                           href={info.href}
                           target={info.href.startsWith('http') ? '_blank' : undefined}
                           rel="noopener noreferrer"
-                          className="text-dark-100 hover:text-primary-400 transition-colors font-medium"
+                          className="text-slate-800 hover:text-emerald-600 transition-colors font-medium"
                         >
                           {info.value}
                         </a>
                       ) : (
-                        <p className="text-dark-100 font-medium">{info.value}</p>
+                        <p className="text-slate-800 font-medium">{info.value}</p>
                       )}
                     </div>
                   </div>
@@ -280,8 +280,8 @@ export default function Contact() {
               </div>
 
               {/* Social Links */}
-              <div className="p-6 bg-dark-800 rounded-2xl border border-dark-700">
-                <h3 className="text-lg font-semibold text-dark-100 mb-4">Connect With Me</h3>
+              <div className="p-6 bg-white rounded-2xl border border-slate-200">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">Connect With Me</h3>
                 <div className="flex gap-3">
                   {socialLinks.map((social) => (
                     <a
@@ -290,7 +290,7 @@ export default function Contact() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className={clsx(
-                        'w-12 h-12 rounded-xl bg-dark-700 border border-dark-600 flex items-center justify-center text-dark-400 transition-all',
+                        'w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 transition-all',
                         social.color
                       )}
                       title={social.label}
@@ -302,24 +302,24 @@ export default function Contact() {
               </div>
 
               {/* Developer Info */}
-              <div className="p-6 bg-gradient-to-br from-primary-500/10 to-purple-500/10 rounded-2xl border border-primary-500/20">
+              <div className="p-6 bg-gradient-to-br from-emerald-50 to-cyan-50 rounded-2xl border border-emerald-200">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white text-2xl font-bold">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
                     MS
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-dark-100">Muhammad Sharjeel</h3>
-                    <p className="text-dark-400">Full Stack Developer</p>
+                    <h3 className="text-xl font-bold text-slate-800">Muhammad Sharjeel</h3>
+                    <p className="text-slate-600">Full Stack Developer</p>
                   </div>
                 </div>
-                <p className="text-dark-400 text-sm mb-4">
+                <p className="text-slate-600 text-sm mb-4">
                   Passionate developer building innovative solutions. Check out my portfolio for more projects!
                 </p>
                 <a
                   href="https://muhammad-sharjeel-portfolio.netlify.app/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 rounded-lg hover:bg-primary-500/30 transition-colors text-sm font-medium"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors text-sm font-medium"
                 >
                   <Globe size={16} />
                   Visit Portfolio
@@ -331,13 +331,13 @@ export default function Contact() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-dark-800/30">
+      <section className="py-16 bg-slate-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-dark-100 mb-4">
+            <h2 className="text-3xl font-bold text-slate-800 mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-dark-400">
+            <p className="text-slate-600">
               Quick answers to common questions
             </p>
           </div>
@@ -346,10 +346,10 @@ export default function Contact() {
             {faqItems.map((item, i) => (
               <div
                 key={i}
-                className="p-6 bg-dark-800 rounded-xl border border-dark-700"
+                className="p-6 bg-white rounded-xl border border-slate-200"
               >
-                <h3 className="text-lg font-semibold text-dark-100 mb-2">{item.question}</h3>
-                <p className="text-dark-400">{item.answer}</p>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">{item.question}</h3>
+                <p className="text-slate-600">{item.answer}</p>
               </div>
             ))}
           </div>
@@ -357,7 +357,7 @@ export default function Contact() {
           <div className="mt-8 text-center">
             <Link
               to="/help"
-              className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
+              className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 transition-colors font-medium"
             >
               <MessageSquare size={18} />
               View all FAQs and Help Center

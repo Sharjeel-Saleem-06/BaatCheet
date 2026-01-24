@@ -46,11 +46,11 @@ export default function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-dark-900">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -58,21 +58,21 @@ export default function Layout() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-dark-800 border-r border-dark-700 transform transition-transform duration-200 lg:transform-none',
+          'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 lg:transform-none shadow-xl lg:shadow-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-4 border-b border-dark-700">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-              <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
-                <span className="text-white font-bold">B</span>
+          <div className="flex items-center justify-between p-4 border-b border-slate-200">
+            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/')}>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 flex items-center justify-center shadow-lg shadow-slate-500/10 overflow-hidden">
+                <img src="/logo.png" alt="BaatCheet" className="w-7 h-7 object-contain" />
               </div>
-              <span className="text-xl font-semibold text-dark-100">BaatCheet</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">BaatCheet</span>
             </div>
             <button
-              className="lg:hidden text-dark-400 hover:text-dark-200"
+              className="lg:hidden text-slate-400 hover:text-slate-600"
               onClick={() => setSidebarOpen(false)}
             >
               <X size={20} />
@@ -88,10 +88,10 @@ export default function Layout() {
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-medium',
                     isActive
-                      ? 'bg-primary-500/10 text-primary-400'
-                      : 'text-dark-400 hover:bg-dark-700 hover:text-dark-200'
+                      ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-600 border border-emerald-200/80 shadow-sm shadow-emerald-500/10'
+                      : 'text-slate-600 hover:bg-gradient-to-r hover:from-slate-50 hover:to-slate-100 hover:text-slate-800'
                   )
                 }
               >
@@ -101,11 +101,11 @@ export default function Layout() {
             ))}
             
             {/* Additional links */}
-            <div className="pt-4 mt-4 border-t border-dark-700 space-y-1">
+            <div className="pt-4 mt-4 border-t border-slate-200 space-y-1">
               <NavLink
                 to="/help"
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-dark-400 hover:bg-dark-700 hover:text-dark-200 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
               >
                 <HelpCircle size={20} />
                 <span>Help & Support</span>
@@ -113,7 +113,7 @@ export default function Layout() {
               <NavLink
                 to="/privacy"
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-dark-400 hover:bg-dark-700 hover:text-dark-200 transition-colors"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors"
               >
                 <Lock size={20} />
                 <span>Privacy Policy</span>
@@ -126,10 +126,10 @@ export default function Layout() {
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors font-medium',
                       isActive
-                        ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                        : 'text-amber-600 hover:bg-amber-50 hover:text-amber-700'
                     )
                   }
                 >
@@ -141,7 +141,7 @@ export default function Layout() {
           </nav>
 
           {/* User section with Clerk UserButton */}
-          <div className="p-4 border-t border-dark-700">
+          <div className="p-4 border-t border-slate-200 bg-slate-50">
             <div className="flex items-center gap-3 mb-3">
               <UserButton 
                 appearance={{
@@ -151,10 +151,10 @@ export default function Layout() {
                 }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-dark-100 truncate">
+                <p className="text-sm font-medium text-slate-800 truncate">
                   {user?.fullName || user?.username || 'User'}
                 </p>
-                <p className="text-xs text-dark-500 truncate">
+                <p className="text-xs text-slate-500 truncate">
                   {user?.primaryEmailAddress?.emailAddress || ''}
                 </p>
               </div>
@@ -162,10 +162,10 @@ export default function Layout() {
             {/* Logout button */}
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
             >
               <LogOut size={18} />
-              <span className="text-sm">Sign Out</span>
+              <span className="text-sm font-medium">Sign Out</span>
             </button>
           </div>
         </div>
@@ -174,14 +174,14 @@ export default function Layout() {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center gap-4 p-4 border-b border-dark-700 bg-dark-800">
+        <header className="lg:hidden flex items-center gap-4 p-4 border-b border-slate-200 bg-white">
           <button
-            className="text-dark-400 hover:text-dark-200"
+            className="text-slate-500 hover:text-slate-700"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu size={24} />
           </button>
-          <span className="text-lg font-semibold text-dark-100">BaatCheet</span>
+          <span className="text-lg font-semibold text-slate-800">BaatCheet</span>
           <div className="ml-auto">
             <UserButton />
           </div>

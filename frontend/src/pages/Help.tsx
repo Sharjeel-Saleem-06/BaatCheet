@@ -1,6 +1,6 @@
 /**
  * Help & Support Page
- * Comprehensive help center with FAQs and guides
+ * Comprehensive help center with FAQs and guides - Light Theme
  */
 
 import { useState } from 'react';
@@ -236,36 +236,36 @@ export default function Help() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Header */}
       <Header transparent={false} />
 
       {/* Hero */}
       <section className="pt-24 pb-12 relative">
         <div className="absolute inset-0">
-          <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-gradient-to-bl from-primary-500/15 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 right-1/4 w-[500px] h-[400px] bg-gradient-to-bl from-emerald-200/40 to-transparent rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-medium mb-6">
             <HelpCircle size={16} />
             <span>Help Center</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-dark-100 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
             How can we help you?
           </h1>
-          <p className="text-xl text-dark-400 mb-8">
+          <p className="text-xl text-slate-600 mb-8">
             Find answers to common questions and learn how to get the most out of BaatCheet.
           </p>
 
           {/* Search */}
           <div className="max-w-xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for help..."
-              className="w-full pl-12 pr-4 py-4 bg-dark-800 border border-dark-700 rounded-2xl text-dark-100 placeholder-dark-500 focus:outline-none focus:border-primary-500 transition-colors text-lg"
+              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-colors text-lg shadow-sm"
             />
           </div>
         </div>
@@ -279,10 +279,10 @@ export default function Help() {
               <Link
                 key={i}
                 to={link.href}
-                className="flex items-center gap-3 p-4 bg-dark-800 rounded-xl border border-dark-700 hover:border-primary-500/50 transition-all group"
+                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all group"
               >
-                <link.icon className="text-dark-400 group-hover:text-primary-400 transition-colors" size={20} />
-                <span className="text-dark-300 group-hover:text-dark-100 transition-colors font-medium">
+                <link.icon className="text-slate-400 group-hover:text-emerald-600 transition-colors" size={20} />
+                <span className="text-slate-600 group-hover:text-slate-800 transition-colors font-medium">
                   {link.label}
                 </span>
               </Link>
@@ -298,23 +298,23 @@ export default function Help() {
             {filteredCategories.map(([key, category]) => (
               <div
                 key={key}
-                className="bg-dark-800 rounded-2xl border border-dark-700 overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"
               >
                 {/* Category Header */}
                 <button
                   onClick={() => setExpandedCategory(expandedCategory === key ? null : key)}
-                  className="w-full flex items-center gap-4 p-6 text-left hover:bg-dark-700/50 transition-colors"
+                  className="w-full flex items-center gap-4 p-6 text-left hover:bg-slate-50 transition-colors"
                 >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center shadow-lg`}>
                     <category.icon className="text-white" size={24} />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-dark-100">{category.title}</h2>
-                    <p className="text-dark-500 text-sm">{category.description}</p>
+                    <h2 className="text-lg font-semibold text-slate-800">{category.title}</h2>
+                    <p className="text-slate-500 text-sm">{category.description}</p>
                   </div>
                   <ChevronDown
                     className={clsx(
-                      'text-dark-400 transition-transform',
+                      'text-slate-400 transition-transform',
                       expandedCategory === key && 'rotate-180'
                     )}
                     size={20}
@@ -323,27 +323,27 @@ export default function Help() {
 
                 {/* FAQs */}
                 {expandedCategory === key && (
-                  <div className="border-t border-dark-700 divide-y divide-dark-700">
+                  <div className="border-t border-slate-200 divide-y divide-slate-100">
                     {category.faqs.map((faq, i) => {
                       const faqKey = `${key}-${i}`;
                       return (
                         <div key={i}>
                           <button
                             onClick={() => setExpandedFaq(expandedFaq === faqKey ? null : faqKey)}
-                            className="w-full flex items-start gap-3 p-5 text-left hover:bg-dark-700/30 transition-colors"
+                            className="w-full flex items-start gap-3 p-5 text-left hover:bg-slate-50 transition-colors"
                           >
                             <ChevronRight
                               className={clsx(
-                                'text-dark-500 mt-1 flex-shrink-0 transition-transform',
+                                'text-slate-400 mt-1 flex-shrink-0 transition-transform',
                                 expandedFaq === faqKey && 'rotate-90'
                               )}
                               size={16}
                             />
-                            <span className="text-dark-200 font-medium">{faq.question}</span>
+                            <span className="text-slate-700 font-medium">{faq.question}</span>
                           </button>
                           {expandedFaq === faqKey && (
                             <div className="px-5 pb-5 pl-12">
-                              <p className="text-dark-400 leading-relaxed">{faq.answer}</p>
+                              <p className="text-slate-600 leading-relaxed">{faq.answer}</p>
                             </div>
                           )}
                         </div>
@@ -357,9 +357,9 @@ export default function Help() {
 
           {filteredCategories.length === 0 && (
             <div className="text-center py-12">
-              <HelpCircle className="mx-auto text-dark-600 mb-4" size={48} />
-              <p className="text-dark-400 text-lg">No results found for "{searchQuery}"</p>
-              <p className="text-dark-500 mt-2">Try a different search term or browse the categories above.</p>
+              <HelpCircle className="mx-auto text-slate-300 mb-4" size={48} />
+              <p className="text-slate-600 text-lg">No results found for "{searchQuery}"</p>
+              <p className="text-slate-500 mt-2">Try a different search term or browse the categories above.</p>
             </div>
           )}
         </div>
@@ -368,16 +368,16 @@ export default function Help() {
       {/* Still need help */}
       <section className="py-16">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gradient-to-br from-primary-500/10 to-purple-500/10 rounded-2xl border border-primary-500/20 p-8">
-            <Sparkles className="mx-auto text-primary-400 mb-4" size={40} />
-            <h2 className="text-2xl font-bold text-dark-100 mb-2">Still need help?</h2>
-            <p className="text-dark-400 mb-6">
+          <div className="bg-gradient-to-br from-emerald-50 to-cyan-50 rounded-2xl border border-emerald-200 p-8">
+            <Sparkles className="mx-auto text-emerald-500 mb-4" size={40} />
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Still need help?</h2>
+            <p className="text-slate-600 mb-6">
               Can't find what you're looking for? Our support team is here to help.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/contact"
-                className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all font-medium flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all font-medium flex items-center gap-2 shadow-lg shadow-emerald-500/25"
               >
                 <Mail size={18} />
                 Contact Support
@@ -386,7 +386,7 @@ export default function Help() {
                 href="https://muhammad-sharjeel-portfolio.netlify.app/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-dark-700 text-dark-200 rounded-xl hover:bg-dark-600 transition-colors font-medium flex items-center gap-2"
+                className="px-6 py-3 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium flex items-center gap-2 border border-slate-200"
               >
                 <ExternalLink size={18} />
                 Developer Portfolio

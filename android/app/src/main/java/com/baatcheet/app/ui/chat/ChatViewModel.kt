@@ -2361,6 +2361,73 @@ class ChatViewModel @Inject constructor(
     }
     
     /**
+     * Send a team chat message with an image attachment
+     * Uploads the image first, then sends the message with the image URL
+     */
+    fun sendTeamChatMessageWithImage(
+        projectId: String,
+        content: String,
+        imageUri: android.net.Uri,
+        context: android.content.Context,
+        replyToId: String? = null
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(isSendingTeamMessage = true, teamChatError = null) }
+            
+            try {
+                // Read the image file and convert to base64
+                val inputStream = context.contentResolver.openInputStream(imageUri)
+                val bytes = inputStream?.readBytes()
+                inputStream?.close()
+                
+                if (bytes == null) {
+                    _state.update { it.copy(
+                        isSendingTeamMessage = false,
+                        teamChatError = "Failed to read image file"
+                    ) }
+                    return@launch
+                }
+                
+                // Get mime type
+                val mimeType = context.contentResolver.getType(imageUri) ?: "image/jpeg"
+                
+                // Convert to base64 data URL (backend accepts this format)
+                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                val imageDataUrl = "data:$mimeType;base64,$base64"
+                
+                // Send message with image
+                when (val result = chatRepository.sendProjectChatMessage(
+                    projectId = projectId,
+                    content = content.ifBlank { "Image" },
+                    messageType = "image",
+                    imageUrl = imageDataUrl,
+                    replyToId = replyToId
+                )) {
+                    is ApiResult.Success -> {
+                        _state.update { it.copy(
+                            teamChatMessages = it.teamChatMessages + result.data,
+                            isSendingTeamMessage = false,
+                            teamChatError = null
+                        ) }
+                    }
+                    is ApiResult.Error -> {
+                        _state.update { it.copy(
+                            isSendingTeamMessage = false,
+                            teamChatError = result.message
+                        ) }
+                    }
+                    is ApiResult.Loading -> { /* Already handled */ }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(
+                    isSendingTeamMessage = false,
+                    teamChatError = "Failed to upload image: ${e.message}"
+                ) }
+            }
+        }
+    }
+    
+    /**
      * Edit a team chat message
      */
     fun editTeamChatMessage(projectId: String, messageId: String, newContent: String) {
