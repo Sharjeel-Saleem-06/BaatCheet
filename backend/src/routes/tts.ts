@@ -36,10 +36,10 @@ router.get('/health', async (_req: Request, res: Response) => {
 });
 
 /**
- * GET /tts/debug (PUBLIC - no auth for debugging)
+ * GET /tts/debug (PROTECTED - admin only)
  * Debug endpoint - shows detailed TTS status and tests each provider
  */
-router.get('/debug', async (req: Request, res: Response) => {
+router.get('/debug', clerkAuth, async (req: Request, res: Response) => {
   try {
     const status = ttsService.getProviderInfo();
     
@@ -88,10 +88,10 @@ router.get('/debug', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /tts/reset-keys (PUBLIC - for debugging)
+ * POST /tts/reset-keys (PROTECTED - admin only)
  * Reset exhausted ElevenLabs keys
  */
-router.post('/reset-keys', async (_req: Request, res: Response) => {
+router.post('/reset-keys', clerkAuth, async (_req: Request, res: Response) => {
   try {
     // Get current status
     const beforeStatus = ttsService.getProviderInfo();
