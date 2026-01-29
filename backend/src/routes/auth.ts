@@ -426,6 +426,199 @@ router.get(
 // ============================================
 
 /**
+ * POST /api/v1/auth/apple
+ * Authenticate with Apple Sign-In
+ * Used by iOS app to sign in with Apple credentials
+ */
+router.post(
+  '/apple',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { idToken, authorizationCode, firstName, lastName, platform = 'ios' } = req.body;
+
+      if (!idToken || !authorizationCode) {
+        res.status(400).json({
+          success: false,
+          error: 'Apple ID token and authorization code are required',
+        });
+        return;
+      }
+
+      logger.info('Processing Apple Sign-In', { platform });
+
+      // Decode the Apple ID token (JWT)
+      const jwt = await import('jsonwebtoken');
+      const jwksClient = await import('jwks-rsa');
+      
+      // Create JWKS client for Apple's public keys
+      const client = jwksClient.default({
+        jwksUri: 'https://appleid.apple.com/auth/keys',
+        cache: true,
+        rateLimit: true,
+      });
+
+      // Decode token header to get key ID
+      const decodedHeader = jwt.default.decode(idToken, { complete: true });
+      
+      if (!decodedHeader || !decodedHeader.header || !decodedHeader.header.kid) {
+        res.status(401).json({
+          success: false,
+          error: 'Invalid Apple ID token format',
+        });
+        return;
+      }
+
+      // Get the signing key
+      const key = await client.getSigningKey(decodedHeader.header.kid);
+      const publicKey = key.getPublicKey();
+
+      // Verify the token
+      let payload: any;
+      try {
+        payload = jwt.default.verify(idToken, publicKey, {
+          algorithms: ['RS256'],
+          issuer: 'https://appleid.apple.com',
+          audience: process.env.APPLE_CLIENT_ID || 'com.baatcheet.app',
+        });
+      } catch (verifyError) {
+        logger.error('Apple token verification failed:', verifyError);
+        res.status(401).json({
+          success: false,
+          error: 'Invalid Apple ID token',
+        });
+        return;
+      }
+
+      const { sub: appleId, email: appleEmail } = payload;
+      
+      // Apple only provides email on first sign-in
+      // Use appleId to find existing user if email not provided
+      let email = appleEmail;
+      
+      if (!email) {
+        // Look up user by Apple ID
+        const existingUser = await prisma.user.findFirst({
+          where: { clerkId: `apple_${appleId}` },
+        });
+        
+        if (existingUser) {
+          email = existingUser.email;
+        } else {
+          res.status(400).json({
+            success: false,
+            error: 'Email not provided by Apple. Please try again or use another sign-in method.',
+          });
+          return;
+        }
+      }
+
+      logger.info('Apple token verified', { email, appleId });
+
+      // Check if user exists
+      let user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: email.toLowerCase() },
+            { clerkId: `apple_${appleId}` },
+          ],
+        },
+      });
+
+      if (user) {
+        // Update user with Apple info if not already set
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            clerkId: user.clerkId.startsWith('apple_') ? user.clerkId : `apple_${appleId}`,
+            firstName: user.firstName || firstName,
+            lastName: user.lastName || lastName,
+            lastLoginAt: new Date(),
+            loginCount: { increment: 1 },
+          },
+        });
+
+        logger.info('Existing user logged in via Apple', { userId: user.id, email });
+      } else {
+        // Create new user
+        const username = email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
+        
+        user = await prisma.user.create({
+          data: {
+            clerkId: `apple_${appleId}`,
+            email: email.toLowerCase(),
+            username,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            role: 'user',
+            tier: 'free',
+            lastLoginAt: new Date(),
+            loginCount: 1,
+          },
+        });
+
+        // Create default quota
+        await prisma.imageGenerationQuota.create({
+          data: {
+            userId: user.id,
+            dailyLimit: 5,
+            monthlyLimit: 50,
+          },
+        });
+
+        logger.info('New user created via Apple Sign-In', { userId: user.id, email });
+      }
+
+      // Generate a session token
+      const sessionToken = jwt.default.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          provider: 'apple',
+        },
+        process.env.JWT_SECRET || 'baatcheet-secret-key',
+        { expiresIn: '30d' }
+      );
+
+      // Create audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'user.apple_signin',
+          resource: 'user',
+          resourceId: user.id,
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          metadata: { platform, appleId },
+        },
+      });
+
+      res.json({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatar: user.avatar,
+            tier: user.tier,
+          },
+          token: sessionToken,
+          isNewUser: user.loginCount === 1,
+        },
+      });
+    } catch (error) {
+      logger.error('Apple Sign-In error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to authenticate with Apple',
+      });
+    }
+  }
+);
+
+/**
  * POST /api/v1/auth/google
  * Authenticate with Google ID Token
  * Used by Android app to sign in with Google credentials
