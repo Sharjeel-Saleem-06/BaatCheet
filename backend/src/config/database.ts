@@ -18,7 +18,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Configure Prisma with optimized settings
+// Configure Prisma with optimized settings for Neon serverless
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -30,9 +30,12 @@ export const prisma =
         ]
       : [{ emit: 'stdout', level: 'error' }],
     
-    // Enable metrics in development
-    // @ts-ignore - metrics is available in newer Prisma versions
-    // metrics: config.server.isDevelopment,
+    // Datasources configuration for connection handling
+    datasources: {
+      db: {
+        url: config.database.url,
+      },
+    },
   });
 
 // Log slow queries in development
@@ -58,22 +61,76 @@ let redisConnected = false;
 let redisAttempted = false;
 
 /**
- * Connect to PostgreSQL via Prisma with connection test
+ * Connect to PostgreSQL via Prisma with connection test and retry logic
+ * Handles Neon serverless cold starts
  */
-export const connectPostgreSQL = async (): Promise<void> => {
-  try {
-    // Test connection with a simple query
-    await prisma.$connect();
-    await prisma.$queryRaw`SELECT 1`;
-    
-    logger.info('✅ PostgreSQL connected successfully via Prisma');
-    
-    // Log connection pool info
-    logger.info(`   Connection URL: ${config.database.url.replace(/:[^:@]+@/, ':***@')}`);
-  } catch (error) {
-    logger.error('❌ PostgreSQL connection error:', error);
-    throw error;
+export const connectPostgreSQL = async (retries = 3): Promise<void> => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      // Test connection with a simple query
+      await prisma.$connect();
+      await prisma.$queryRaw`SELECT 1`;
+      
+      logger.info('✅ PostgreSQL connected successfully via Prisma');
+      
+      // Log connection pool info
+      logger.info(`   Connection URL: ${config.database.url.replace(/:[^:@]+@/, ':***@')}`);
+      return;
+    } catch (error: any) {
+      const isLastAttempt = attempt === retries;
+      
+      if (isLastAttempt) {
+        logger.error('❌ PostgreSQL connection error after all retries:', error);
+        throw error;
+      }
+      
+      logger.warn(`⚠️ PostgreSQL connection attempt ${attempt}/${retries} failed, retrying in ${attempt * 1000}ms...`);
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+      
+      // Disconnect before retry to clean up stale connections
+      try {
+        await prisma.$disconnect();
+      } catch {}
+    }
   }
+};
+
+/**
+ * Execute query with automatic reconnection on connection errors
+ */
+export const executeWithRetry = async <T>(
+  operation: () => Promise<T>,
+  maxRetries = 2
+): Promise<T> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      const isConnectionError = 
+        error.message?.includes('Connection') ||
+        error.message?.includes('closed') ||
+        error.code === 'P1017' ||
+        error.code === 'P2024';
+      
+      if (!isConnectionError || attempt === maxRetries) {
+        throw error;
+      }
+      
+      logger.warn(`Database operation failed, reconnecting (attempt ${attempt}/${maxRetries})...`);
+      
+      try {
+        await prisma.$disconnect();
+        await prisma.$connect();
+      } catch (reconnectError) {
+        logger.error('Reconnection failed:', reconnectError);
+      }
+      
+      // Small delay before retry
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
 };
 
 /**
@@ -179,7 +236,7 @@ export const disconnectDatabases = async (): Promise<void> => {
 };
 
 /**
- * Health check for database connections
+ * Health check for database connections with automatic reconnection
  */
 export const checkDatabaseHealth = async (): Promise<{
   postgres: { connected: boolean; latency: number };
@@ -190,16 +247,25 @@ export const checkDatabaseHealth = async (): Promise<{
     redis: { connected: false, latency: 0 },
   };
 
-  // Check PostgreSQL
+  // Check PostgreSQL with retry on connection error
   try {
     const start = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
+    await executeWithRetry(async () => {
+      await prisma.$queryRaw`SELECT 1`;
+    }, 2);
     result.postgres = {
       connected: true,
       latency: Date.now() - start,
     };
-  } catch {
+  } catch (error: any) {
+    logger.warn('PostgreSQL health check failed:', error.message);
     result.postgres.connected = false;
+    
+    // Try to reconnect for next request
+    try {
+      await prisma.$disconnect();
+      await prisma.$connect();
+    } catch {}
   }
 
   // Check Redis
