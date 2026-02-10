@@ -572,6 +572,7 @@ router.post(
       const sessionToken = jwt.default.sign(
         {
           userId: user.id,
+          clerkId: user.clerkId,
           email: user.email,
           provider: 'apple',
         },
@@ -717,6 +718,7 @@ router.post(
       const sessionToken = jwt.default.sign(
         {
           userId: user.id,
+          clerkId: user.clerkId,
           email: user.email,
           provider: 'google',
         },

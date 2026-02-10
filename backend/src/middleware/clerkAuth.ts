@@ -50,10 +50,18 @@ async function tryMobileJwtAuth(req: Request): Promise<boolean> {
     const token = authHeader.split(' ')[1];
     
     // Try to verify as mobile JWT
-    const decoded = jwt.verify(token, jwtSecret) as MobileJwtPayload;
+    let decoded: MobileJwtPayload;
+    try {
+      decoded = jwt.verify(token, jwtSecret) as MobileJwtPayload;
+    } catch (jwtError: any) {
+      // Log JWT verification errors for debugging
+      logger.debug(`Mobile JWT verification failed: ${jwtError.message}`);
+      return false;
+    }
     
     // Must have userId to be a mobile JWT
     if (!decoded.userId) {
+      logger.debug('Mobile JWT missing userId');
       return false;
     }
 
@@ -72,10 +80,12 @@ async function tryMobileJwtAuth(req: Request): Promise<boolean> {
     });
 
     if (!user) {
+      logger.debug(`Mobile JWT user not found: ${decoded.userId}`);
       return false;
     }
 
     if (user.isBanned) {
+      logger.debug(`Mobile JWT user banned: ${decoded.userId}`);
       return false;
     }
 
@@ -87,8 +97,10 @@ async function tryMobileJwtAuth(req: Request): Promise<boolean> {
       tier: user.tier,
     };
 
+    logger.debug(`Mobile JWT auth successful for user: ${user.email}`);
     return true;
-  } catch {
+  } catch (error: any) {
+    logger.error('Mobile JWT auth error:', error.message);
     return false;
   }
 }
