@@ -194,18 +194,21 @@ export default function VoiceCall({ isOpen, onClose, onConversationCreated }: Vo
     setError(null);
     
     try {
-      const response = await api.post('/chat', {
+      const response = await api.post('/chat/completions', {
         message: text,
         conversationId,
-        mode: 'voice',
-        maxTokens: 150, // Short responses for voice
+        mode: 'chat',
+        stream: false,
+        isVoiceChat: true, // Enables short, voice-friendly responses
       });
       
       const data = response.data;
       if (data.success) {
-        const aiText = data.data.content || data.data.message;
+        const aiText = data.data.message || data.data.content;
         // AI response received - speak it
-        setConversationId(data.data.conversationId);
+        if (data.data.conversationId) {
+          setConversationId(data.data.conversationId);
+        }
         
         // Speak the response
         speakResponse(aiText);

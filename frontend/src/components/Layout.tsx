@@ -152,10 +152,10 @@ export default function Layout() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800 truncate">
-                  {user?.fullName || user?.username || 'User'}
+                  {user?.fullName || user?.firstName || user?.username || user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 'User'}
                 </p>
                 <p className="text-xs text-slate-500 truncate">
-                  {user?.primaryEmailAddress?.emailAddress || ''}
+                  {user?.primaryEmailAddress?.emailAddress || 'Loading...'}
                 </p>
               </div>
             </div>
