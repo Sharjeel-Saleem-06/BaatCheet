@@ -13,9 +13,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.baatcheet.app.di.SessionManager as AppSessionManager
 import com.baatcheet.app.ui.theme.BaatCheetTheme
 import com.baatcheet.app.ui.splash.SplashViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * MainActivity - Entry point for the BaatCheet Android app
@@ -28,6 +30,9 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
     private val splashViewModel: SplashViewModel by viewModels()
+    
+    @Inject
+    lateinit var appSessionManager: AppSessionManager
     
     // Deep link state
     companion object {
@@ -59,7 +64,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Main app navigation will go here
                     BaatCheetNavHost(
-                        deepLinkConversationId = pendingDeepLink.value
+                        deepLinkConversationId = pendingDeepLink.value,
+                        appSessionManager = appSessionManager
                     )
                 }
             }

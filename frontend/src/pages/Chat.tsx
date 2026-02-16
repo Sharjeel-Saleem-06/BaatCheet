@@ -197,14 +197,14 @@ export default function Chat() {
   // Voice Call
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   
-  // Quick action tags
+  // Quick action tags - matching mobile app
   const quickTags = [
-    { id: 'image', icon: ImageIcon, label: 'Image', color: 'from-purple-500 to-pink-500', prompt: 'Generate an image of ' },
-    { id: 'code', icon: Code, label: 'Code', color: 'from-orange-500 to-amber-500', prompt: 'Write code for ' },
-    { id: 'research', icon: Search, label: 'Research', color: 'from-green-500 to-emerald-500', prompt: 'Research about ' },
-    { id: 'translate', icon: Languages, label: 'Translate', color: 'from-blue-500 to-cyan-500', prompt: 'Translate to Urdu: ' },
-    { id: 'explain', icon: Lightbulb, label: 'Explain', color: 'from-yellow-500 to-amber-500', prompt: 'Explain in simple terms: ' },
-    { id: 'summarize', icon: FileText, label: 'Summarize', color: 'from-violet-500 to-purple-500', prompt: 'Summarize this: ' },
+    { id: 'image-generation', icon: Wand2, label: 'Generate Image', color: 'from-purple-500 to-pink-500', prompt: 'Generate an image of ', mode: 'image-generation' },
+    { id: 'code', icon: Code, label: 'Code', color: 'from-orange-500 to-amber-500', prompt: 'Write code for ', mode: 'code' },
+    { id: 'web-search', icon: Globe, label: 'Web Search', color: 'from-green-500 to-emerald-500', prompt: 'Search the web for ', mode: 'web-search' },
+    { id: 'translate', icon: Languages, label: 'Translate', color: 'from-blue-500 to-cyan-500', prompt: 'Translate to Urdu: ', mode: 'translate' },
+    { id: 'explain', icon: Lightbulb, label: 'Explain', color: 'from-yellow-500 to-amber-500', prompt: 'Explain in simple terms: ', mode: 'explain' },
+    { id: 'summarize', icon: FileText, label: 'Summarize', color: 'from-violet-500 to-purple-500', prompt: 'Summarize this: ', mode: 'summarize' },
   ];
   
   // Language metadata for voice input
@@ -227,11 +227,16 @@ export default function Chat() {
   const [uploadedImages, setUploadedImages] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Plus menu state
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const plusMenuRef = useRef<HTMLDivElement>(null);
 
   // Load available modes
   useEffect(() => {
@@ -643,13 +648,55 @@ export default function Chat() {
     }
   };
   
+  // Plus menu items - matching mobile app functionality
+  const plusMenuItems = [
+    { id: 'image-gen', icon: Wand2, label: 'Generate Image', color: 'from-purple-500 to-pink-500', mode: 'image-generation', prompt: 'Generate an image of ' },
+    { id: 'camera', icon: ImageIcon, label: 'Upload Image', color: 'from-blue-500 to-cyan-500', action: 'image' },
+    { id: 'document', icon: FileText, label: 'Upload Document', color: 'from-orange-500 to-amber-500', action: 'document' },
+    { id: 'code', icon: Code, label: 'Code Assistant', color: 'from-green-500 to-emerald-500', mode: 'code', prompt: 'Help me with code: ' },
+    { id: 'search', icon: Search, label: 'Web Search', color: 'from-indigo-500 to-violet-500', mode: 'web-search', prompt: 'Search the web for: ' },
+    { id: 'translate', icon: Languages, label: 'Translate', color: 'from-teal-500 to-cyan-500', mode: 'translate', prompt: 'Translate to Urdu: ' },
+  ];
+  
+  // Handle plus menu item click
+  const handlePlusMenuItem = (item: typeof plusMenuItems[0]) => {
+    setShowPlusMenu(false);
+    
+    if (item.action === 'image') {
+      imageInputRef.current?.click();
+    } else if (item.action === 'document') {
+      fileInputRef.current?.click();
+    } else if (item.mode) {
+      setSelectedMode(item.mode);
+      if (item.prompt) {
+        setInput(item.prompt);
+        inputRef.current?.focus();
+      }
+    }
+  };
+  
+  // Close plus menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
+        setShowPlusMenu(false);
+      }
+    };
+    
+    if (showPlusMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showPlusMenu]);
+  
   // Quick tag handler
-  const handleQuickTag = (prompt: string, modeId: string) => {
+  const handleQuickTag = (prompt: string, mode: string) => {
     setInput(prompt);
-    if (modeId === 'image') setSelectedMode('image-generation');
-    else if (modeId === 'code') setSelectedMode('code');
-    else if (modeId === 'research') setSelectedMode('research');
-    else if (modeId === 'translate') setSelectedMode('translate');
+    setSelectedMode(mode);
+    inputRef.current?.focus();
     inputRef.current?.focus();
   };
   
@@ -1304,7 +1351,7 @@ export default function Chat() {
                   {quickTags.map((tag) => (
                     <button
                       key={tag.id}
-                      onClick={() => handleQuickTag(tag.prompt, tag.id)}
+                      onClick={() => handleQuickTag(tag.prompt, tag.mode)}
                       className="group flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-br from-white to-slate-50 border border-slate-200/80 rounded-xl hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-200"
                     >
                       <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${tag.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-md`}>
@@ -1602,29 +1649,70 @@ export default function Chat() {
           )}
 
           <form onSubmit={handleSubmit} className="flex items-end gap-2">
-            {/* File upload */}
-            <label 
-              className={clsx(
-                "p-3 cursor-pointer transition-all rounded-xl hover:bg-slate-100",
-                uploading ? "text-emerald-500" : "text-slate-500 hover:text-emerald-600"
+            {/* Plus Button with Popup Menu */}
+            <div className="relative" ref={plusMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowPlusMenu(!showPlusMenu)}
+                className={clsx(
+                  "p-3 transition-all rounded-xl",
+                  showPlusMenu 
+                    ? "bg-emerald-100 text-emerald-600 rotate-45" 
+                    : uploading 
+                      ? "bg-emerald-50 text-emerald-500"
+                      : "text-slate-500 hover:text-emerald-600 hover:bg-slate-100"
+                )}
+                disabled={loading || uploading}
+                title="Open actions menu"
+              >
+                {uploading ? (
+                  <Loader2 className="animate-spin" size={22} />
+                ) : (
+                  <Plus size={22} className="transition-transform duration-200" />
+                )}
+              </button>
+              
+              {/* Plus Menu Popup */}
+              {showPlusMenu && (
+                <div className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="p-2">
+                    {plusMenuItems.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handlePlusMenuItem(item)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-all group"
+                      >
+                        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                          <item.icon size={18} className="text-white" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-              title="Upload images or documents"
-            >
-              {uploading ? (
-                <Loader2 className="animate-spin" size={22} />
-              ) : (
-                <Paperclip size={22} />
-              )}
+              
+              {/* Hidden file inputs */}
               <input
-                ref={fileInputRef}
+                ref={imageInputRef}
                 type="file"
-                accept="image/*,.pdf,.txt,.md,.doc,.docx,.csv,.json"
+                accept="image/*"
                 multiple
                 className="hidden"
                 onChange={handleFileUpload}
                 disabled={loading || uploading}
               />
-            </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.txt,.md,.doc,.docx,.csv,.json"
+                multiple
+                className="hidden"
+                onChange={handleFileUpload}
+                disabled={loading || uploading}
+              />
+            </div>
 
             {/* Voice input */}
             <button

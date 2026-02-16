@@ -51,6 +51,7 @@ export {
   validateFileUpload,
   validateUrl,
   securityMiddleware,
+  apiAccessControl,
 } from './security.js';
 
 // Advanced Rate Limiting (Tiered)

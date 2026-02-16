@@ -5,10 +5,20 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,8 +26,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -29,6 +43,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.baatcheet.app.di.SessionManager as AppSessionManager
 import com.baatcheet.app.ui.analytics.AnalyticsScreen
 import com.baatcheet.app.ui.chat.ChatScreen
 import com.baatcheet.app.ui.imagegen.ImageGenScreen
@@ -85,15 +100,85 @@ object SessionManager {
     }
 }
 
+/**
+ * Session Expired Dialog
+ */
+@Composable
+fun SessionExpiredDialog(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { /* Don't allow dismissing without action */ },
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = Color(0xFFE67E22),
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Session Expired",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Text(
+                text = "Your session has expired. Please sign in again to continue using BaatCheet.",
+                textAlign = TextAlign.Center,
+                color = Color.Gray,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Sign In Again",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
 @Composable
 fun BaatCheetNavHost(
-    deepLinkConversationId: String? = null
+    deepLinkConversationId: String? = null,
+    appSessionManager: AppSessionManager? = null
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
     
     // Check if user is already logged in
     val isLoggedIn = remember { SessionManager.isLoggedIn(context) }
+    
+    // Session expiry state
+    val showSessionExpiredDialog by appSessionManager?.showSessionExpiredDialog?.collectAsState() 
+        ?: remember { mutableStateOf(false) }
+    
+    // Show session expired dialog
+    if (showSessionExpiredDialog) {
+        SessionExpiredDialog(
+            onDismiss = {
+                appSessionManager?.acknowledgeSessionExpired()
+                // Clear session and navigate to login
+                SessionManager.clearSession(context)
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        )
+    }
     
     // Skip splash screen entirely if user is logged in - go directly to main
     // The system splash (Android 12+) already provides a nice transition

@@ -71,24 +71,42 @@ export const securityHeaders = helmet({
 // ============================================
 // CORS Configuration
 // ============================================
+
+// Allowed origins for API access
+const ALLOWED_ORIGINS = [
+  // Development
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  // Production - Your official domains only
+  'https://baatcheet-web.netlify.app',
+  'https://baatcheet.netlify.app',
+  // HuggingFace Space (same-origin access)
+  'https://sharry121-baatcheet.hf.space',
+  'https://huggingface.co',
+];
+
+// Allowed User-Agents for mobile apps
+const ALLOWED_MOBILE_AGENTS = [
+  'BaatCheet-Android',
+  'BaatCheet-iOS',
+  'okhttp', // OkHttp for Android
+];
+
 export const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // In development, allow all
+    if (config.server.nodeEnv === 'development') {
+      return callback(null, true);
+    }
+    
+    // Allow requests with no origin (mobile apps, server-to-server)
     if (!origin) {
       return callback(null, true);
     }
 
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:3000',
-      // Add production domains here
-      // 'https://baatcheet.com',
-      // 'https://www.baatcheet.com',
-    ];
-
-    if (config.server.nodeEnv === 'development' || allowedOrigins.includes(origin)) {
+    if (ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       logger.warn(`CORS blocked request from origin: ${origin}`);
@@ -97,9 +115,84 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-API-Key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-API-Key', 'X-Client-App'],
   exposedHeaders: ['X-Request-ID', 'X-Response-Time', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
   maxAge: 86400, // 24 hours
+};
+
+// ============================================
+// API Access Control Middleware
+// ============================================
+// This middleware ensures only authorized clients can access the API
+export const apiAccessControl = (req: Request, res: Response, next: NextFunction) => {
+  // In development, allow all
+  if (config.server.nodeEnv === 'development') {
+    return next();
+  }
+  
+  // Allow health check endpoints
+  if (req.path === '/health' || req.path === '/ready' || req.path === '/live') {
+    return next();
+  }
+  
+  // Allow webhook endpoints (they have their own verification)
+  if (req.path.includes('/webhook')) {
+    return next();
+  }
+  
+  const origin = req.headers.origin || req.headers.referer;
+  const userAgent = req.headers['user-agent'] || '';
+  const clientApp = req.headers['x-client-app'] as string;
+  
+  // Check 1: Valid origin (web clients)
+  if (origin) {
+    const isAllowedOrigin = ALLOWED_ORIGINS.some(allowed => 
+      origin.startsWith(allowed) || origin === allowed
+    );
+    if (isAllowedOrigin) {
+      return next();
+    }
+  }
+  
+  // Check 2: Mobile app with valid client header
+  if (clientApp === 'BaatCheet-Android' || clientApp === 'BaatCheet-iOS') {
+    // Mobile apps must have valid authorization
+    if (req.headers.authorization) {
+      return next();
+    }
+  }
+  
+  // Check 3: Allow known mobile HTTP clients with auth
+  const isMobileClient = ALLOWED_MOBILE_AGENTS.some(agent => 
+    userAgent.toLowerCase().includes(agent.toLowerCase())
+  );
+  if (isMobileClient && req.headers.authorization) {
+    return next();
+  }
+  
+  // Check 4: Allow authenticated requests (they passed our auth middleware)
+  // This happens after auth middleware, so we can trust req.user
+  if (req.user && req.user.id) {
+    return next();
+  }
+  
+  // Public endpoints that don't need origin check
+  const publicPaths = [
+    '/api/v1/share/', // Shared chat viewing
+    '/api/v1/modes', // Available modes (read-only)
+  ];
+  
+  if (publicPaths.some(path => req.path.startsWith(path))) {
+    return next();
+  }
+  
+  // Block unauthorized access
+  logger.warn(`API access blocked - Origin: ${origin}, UA: ${userAgent?.substring(0, 50)}, Path: ${req.path}`);
+  
+  return res.status(403).json({
+    success: false,
+    error: 'Access denied. This API is restricted to authorized applications only.',
+  });
 };
 
 // ============================================
@@ -444,6 +537,7 @@ export const securityMiddleware = [
   responseTime,
   securityHeaders,
   globalRateLimiter,
+  apiAccessControl,
   sanitizeInput,
   preventInjection,
 ];

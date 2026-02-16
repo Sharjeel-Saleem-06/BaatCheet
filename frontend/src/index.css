@@ -567,6 +567,41 @@ button[aria-label*="baatcheet"] {
   animation: scaleIn 0.3s ease-out;
 }
 
+/* Tailwind-like animate-in utilities */
+.animate-in {
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.slide-in-from-bottom-2 {
+  --slide-from: 0.5rem;
+  animation-name: slideInFromBottom;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(var(--slide-from, 0.5rem));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}
+
 /* Gradient text */
 .gradient-text {
   background: linear-gradient(to right, #22c55e, #16a34a);

@@ -80,30 +80,44 @@ app.use(helmet({
 // CORS Configuration
 // ============================================
 
-const allowedOrigins = config.server.isProduction
-  ? ['https://baatcheet.app', 'https://www.baatcheet.app']
-  : [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
-    ];
+// Allowed origins - restrictive in production
+const allowedOrigins = [
+  // Development
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  // Production - Your official domains
+  'https://baatcheet-web.netlify.app',
+  'https://baatcheet.netlify.app',
+  'https://baatcheet.app',
+  'https://www.baatcheet.app',
+  // HuggingFace Space (same-origin)
+  'https://sharry121-baatcheet.hf.space',
+  'https://huggingface.co',
+];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
+      // Allow requests with no origin (mobile apps, server-to-server, Postman)
       if (!origin) return callback(null, true);
+      
+      // In development, allow all
+      if (!config.server.isProduction) {
+        return callback(null, true);
+      }
       
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        logger.warn(`CORS blocked: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Client-App'],
     exposedHeaders: ['X-Request-ID', 'X-Response-Time', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
     maxAge: 86400, // 24 hours
   })
